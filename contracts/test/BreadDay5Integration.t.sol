@@ -39,7 +39,7 @@ contract BreadDay5IntegrationTest is BreadDay5Fixture {
         assert(tokensOut == sellable);
         assert(BreadLaunchToken(token).balanceOf(address(this)) == sellable);
         assert(f.usdc.balanceOf(address(this)) == extra);
-        assert(BreadBondingCurve(curveAddress).graduated());
+        require(BreadBondingCurve(curveAddress).graduated(), "AUTO_SWEEP_DID_NOT_CLOSE_CURVE");
         assert(swept.phase == IGraduationCoordinator.GraduationPhase.SWEPT);
         assert(swept.sweptUsdc != 0);
         assert(swept.sweptTokens != 0);
