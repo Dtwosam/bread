@@ -146,7 +146,7 @@ contract BreadTradingFeeEscrowIntegrationTest {
         BreadFeeClaimRecipient nextRecipient = new BreadFeeClaimRecipient();
         f.curve.setCreatorFeeRecipient(address(nextRecipient));
         FeeExpectation memory second = _buy(f, 500 * ONE_USDC);
-        f.curve.sweepFees();
+        nextRecipient.sweepFees(f.curve);
 
         assert(f.escrow.balanceOf(address(this)) == oldCreatorClaim);
         assert(f.escrow.balanceOf(address(nextRecipient)) == second.creatorAmount);
