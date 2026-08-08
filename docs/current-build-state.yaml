@@ -1,72 +1,51 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T14:15:00+02:00
+updated_at: 2026-08-08T14:20:00+02:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2 Lane 1: DAY_2_CORE_MATH_TOKEN_INTEGRATED_PASS"
-active_checkpoint: "Day 2"
-active_lane: "Tracked-reserve curve state — implemented and reviewed; final exact-head gate pending"
+  - "Day 2 Lane 2: DAY_2_TRACKED_CURVE_STATE_INTEGRATED_PASS"
+active_checkpoint: "Day 2 closeout"
+active_lane: "End-of-day 06C acceptance gate — requirements satisfied; durable closeout CI pending"
 integration_baseline:
-  id: D2-L1-CLOSEOUT
+  id: D2-CODE
   branch: main
-  commit: aca14483ef5d8bee707a39e7ea628569d22d1828
-  status: ACCEPTED_DAY_2_LANE_1_DURABLE_CLOSEOUT_BASELINE
+  commit: 57b48940b71491ff9780764653c278b237eddd8d
+  status: ACCEPTED_DAY_2_IMPLEMENTATION_BASELINE_PENDING_METADATA_CLOSEOUT
 working_branches:
-  - checkpoint/day2-tracked-curve-state
+  - checkpoint/day2-closeout
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  pull_request_1: merged
-  c0_merge_commit: 768b4706b51335795e33d8d9642fe1b1a4c70f1a
-  pull_request_2: merged
-  day1_code_merge_commit: d5d7091c13393418d45f1f70505c72c0a1f04d3d
-  pull_request_3: merged
   day1_closeout_merge_commit: 86abb75ef96cfca340afec8a755e94ed366c379e
-  pull_request_4: merged
-  day2_core_math_token_final_head: d65a45c9da6c23f40a0a1861c75acf96bc8f8b33
-  day2_core_math_token_merge_commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
-  pull_request_5: merged
+  day2_lane1_code_merge_commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
   day2_lane1_closeout_merge_commit: aca14483ef5d8bee707a39e7ea628569d22d1828
-  pull_request_6: open-draft
-  day2_lane2_branch: checkpoint/day2-tracked-curve-state
-  day2_lane2_design_commit: 39b276f2497959176737cdfc3759ce685851de79
-  day2_lane2_plan_commit: f4bfa476750e7fe639e7728ec1510150fbf6fbe3
-  day2_lane2_state_implementation_commit: 0574b8c272d7aa599e53809b7c647986b676c2bc
-  day2_lane2_tiny_trade_commit: f8c0ffd51f44d555d3bb39d1ea7130d41735f588
-  day2_lane2_provenance_head: 625c5cfa391d65f26d54cf09878f7f4dde769144
-  day2_lane2_review_cleanup_head: 747eb2c764b39940bb76732dc2784cb6ea530406
-  day2_lane2_evidence_commit: 3934fdc2b1c0c39d4e87fbc3391cb99c5f6b7559
-  status: DAY_2_TRACKED_CURVE_STATE_REVIEWED_FINAL_EXACT_HEAD_GATE_PENDING
+  day2_lane2_final_head: 4d2cd11f9aedf912997857486b88e850ca3a6ecb
+  day2_lane2_code_merge_commit: 57b48940b71491ff9780764653c278b237eddd8d
+  day2_closeout_branch: checkpoint/day2-closeout
+  status: DAY_2_REQUIREMENTS_SATISFIED_CLOSEOUT_GATE_PENDING
 verification:
-  checkpoint_7b_final_run: 31249373096
-  day1_final_exact_head_run: 31249916544
-  day1_closeout_run: 31250062856
   day2_math_red_run: 31254865534
   day2_math_green_run: 31254898416
   day2_token_red_run: 31255073347
   day2_token_green_run: 31255097370
-  day2_integrity_red_run: 31255285593
-  day2_integrity_green_run: 31255322107
-  day2_final_exact_head_run: 31255399674
+  day2_lane1_integrity_red_run: 31255285593
+  day2_lane1_integrity_green_run: 31255322107
+  day2_lane1_final_exact_head_run: 31255399674
   day2_lane1_closeout_run: 31255527782
   day2_lane2_state_red_run: 31256434625
-  day2_lane2_state_red_head: 310d2f75c4302c68cbd2f0dd99232553d4ab8d35
   day2_lane2_state_green_run: 31256521989
-  day2_lane2_state_green_head: 0574b8c272d7aa599e53809b7c647986b676c2bc
   day2_lane2_tiny_trade_run: 31256566172
-  day2_lane2_tiny_trade_head: f8c0ffd51f44d555d3bb39d1ea7130d41735f588
   day2_lane2_integrity_red_run: 31256620643
-  day2_lane2_integrity_red_head: 41a331412c695b33ef4cd3a9f0b6cae7e73fc7d7
   day2_lane2_integrity_green_run: 31256663164
-  day2_lane2_integrity_green_head: 625c5cfa391d65f26d54cf09878f7f4dde769144
   day2_lane2_review_run: 31256713514
-  day2_lane2_review_head: 747eb2c764b39940bb76732dc2784cb6ea530406
-  day2_lane2_final_exact_head_run: null
-  day2_lane2_final_exact_head: null
+  day2_lane2_final_exact_head_run: 31256808903
+  day2_lane2_final_exact_head: 4d2cd11f9aedf912997857486b88e850ca3a6ecb
+  day2_closeout_run: null
   jobs:
     bootstrap_validation: PASS
     day2_frozen_source_integrity: PASS_NINE_FILES
@@ -96,25 +75,19 @@ tooling:
   supabase: not-selected
   cloudflare: not-selected
 decisions_since_last_state:
-  - "Lane-2 tracked-state RED was specific: only Foundry failed because BreadTrackedCurveState.sol was absent; all unrelated jobs passed."
-  - "BreadTrackedCurveState is abstract and contains only tracked reserve state, source-verified reserved-allocation initialization, reserve readers and readiness logic."
-  - "Bread V1 Lane-2 quote state is ERC20-only and stores six-decimal USDC-like values directly in quote base units; no native quote or Arc mainnet address is present."
-  - "Raw quote/token donations are proven unable to alter tracked reserves or graduation readiness in the Day-2 state model."
-  - "Tiny-trade tests prove integer rounding alone cannot produce quote profit across single or repeated bounded round trips; fee/tax stateful proof remains deferred."
-  - "Frozen Math.sol, Panic.sol and SafeCast.sol from the same Pons commit match exact Git blob SHAs and extend the enforced frozen OpenZeppelin surface from six to nine files."
-  - "The Day-2 inventory records PonsV2BondingCurve.sol blob a5d84b3c355a1661e1bf61a4dd4e29591fbf6074 with port mode BOUNDED_TRACKED_RESERVE_EXTRACTION; CI enforces that boundary."
-  - "Integrated review fixed two test-only lint warnings; review head 747eb2c764b39940bb76732dc2784cb6ea530406 passed all four CI jobs and 48 Foundry tests."
-  - "No Buy/Sell, FeeEscrow, snipe, Launch+Buy, native quote, fee sweep, graduation transfer, DEX or Arc-mainnet behavior entered Lane 2."
-next_action: "Run the full four-job CI on the exact PR #6 head containing this evidence and handoff state. Merge only that exact head if every job passes. Then write a post-merge Lane-2 closeout from current main and re-read the controlling Day-2 checklist before deciding whether Day 2 can be marked complete or another Day-2 lane is required."
+  - "PR #6 exact tested head 4d2cd11f9aedf912997857486b88e850ca3a6ecb passed all four CI jobs in run 31256808903 and merged with an expected-head guard at 57b48940b71491ff9780764653c278b237eddd8d."
+  - "Controlling 06C v1.1 Day-2 checklist was re-read after Lane-2 integration. Required work is minimal LaunchToken/BondingCurveMath, fixed-supply/6-decimal/allocation-graduation/rounding unit-fuzz coverage, differential unchanged math, tracked-reserve skeleton and donation/tiny-trade invariants."
+  - "Lane 1 + Lane 2 evidence covers every listed Day-2 work item and all Day-2 end-of-day gates: core math fuzz PASS, supply invariants PASS, and no unexplained reference divergence."
+  - "Daily continuity is satisfied for the Day-2 layer boundary: lanes integrated serially from the prior baseline; existing regressions remain green; no already-existing downstream SDK/indexer/API/web consumer is left on placeholder semantics; BreadTrackedCurveState is abstract rather than a fake concrete trading interface."
+  - "Day-2 tiny-trade proof is rounding-only; stateful fee/tax conservation and escrow invariants remain Day-3 work and are not claimed by the Day-2 verdict."
+  - "All 7A blockers remain active and especially constrain Day-3 FeeEscrow/buyback work and Day-4 Launch+Buy/snipe work."
+next_action: "Run the four-job CI on the Day-2 closeout branch containing the final Lane-2 evidence, 06C requirement-by-requirement closeout, and this handoff. If green, merge the closeout to main and begin Day-3 source preflight/reconciliation for Buy/Sell, FeePolicy, FeeEscrow and buyback semantics before writing Day-3 production code."
 do_not_do:
-  - "Do not claim Day 2 end-of-day PASS before re-reading the controlling Day-2 checklist after Lane-2 integration."
+  - "Do not start Day-3 production code before the Day-2 closeout branch is green and merged."
   - "Do not claim exact current-live Pons parity."
-  - "Do not implement snipe protection from guesses."
-  - "Do not implement Launch+Buy from guesses."
-  - "Do not implement FeeEscrow from guesses."
-  - "Do not implement Buy/Sell in Lane 2."
-  - "Do not implement native quote handling in Bread V1 Lane 2."
+  - "Do not implement FeeEscrow from guesses; FEE_ESCROW_SOURCE remains active."
+  - "Do not implement buyback/vesting semantics until their Day-3 dependencies are reconciled."
+  - "Do not implement snipe protection or Launch+Buy in Day 3; those remain Day-4 gated and blocked."
   - "Do not treat raw token/USDC balances as tracked pricing reserves."
-  - "Do not dynamically install or modify the frozen OpenZeppelin dependency bytes without updating and re-proving the source boundary."
-  - "Do not treat reconciliation observations as Bread implementation values without explicit reconciliation."
+  - "Do not dynamically install or silently modify frozen financial dependencies."
   - "Do not hardcode Arc mainnet values before official publication."
