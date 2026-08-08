@@ -8,6 +8,7 @@ import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
 import {BreadFeeClaimRecipient} from "./helpers/BreadTradingActors.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
 contract BreadTradingInvariantTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -185,5 +186,6 @@ contract BreadTradingInvariantTest {
         });
         f.token = new BreadLaunchToken(metadata, context);
         f.curve.initialize(address(f.token));
+        BreadTestTime.expireOpening(f.curve);
     }
 }
