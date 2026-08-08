@@ -31,6 +31,22 @@ contract BreadGraduationCurveHandoffTest is BreadDay4Fixture {
         uint256 spent;
     }
 
+    struct ReleaseExpectation {
+        uint256 seedUsdc;
+        uint256 tokenOut;
+        uint256 protocolFee;
+        uint256 creatorFee;
+        uint256 usdcDonation;
+        uint256 tokenDonation;
+    }
+
+    struct ReleaseResult {
+        uint256 seedUsdc;
+        uint256 tokenOut;
+        uint256 protocolFee;
+        uint256 creatorFee;
+    }
+
     function testFailedAutomaticGraduationLeavesCrossingBuySuccessfulAndReady() public {
         Day4Fixture memory f = _deployDay4Fixture(0);
         f.graduationCoordinator.setFailSweep(true);
@@ -57,41 +73,57 @@ contract BreadGraduationCurveHandoffTest is BreadDay4Fixture {
 
     function testCoordinatorOnlyReleaseExcludesDonationsAndReturnsFrozenFeeBreakdown() public {
         FinalFillResult memory r = _completeFinalFill();
-        uint256 expectedSeedUsdc = r.curve.realQuoteReserve();
-        uint256 expectedTokens = r.curve.trackedTokens();
-        uint256 pendingBaseFee = r.curve.quoteFeeBalance();
-        uint256 pendingTax = r.curve.creatorTaxBalance();
-        uint256 expectedProtocolFee = pendingBaseFee * r.curve.protocolFeeShareBps() / 10_000;
-        uint256 expectedCreatorFee = pendingBaseFee - expectedProtocolFee + pendingTax;
-
-        uint256 usdcDonation = 7;
-        uint256 tokenDonation = 1 ether;
-        r.fixture.usdc.mint(address(this), usdcDonation);
-        assert(r.fixture.usdc.transfer(address(r.curve), usdcDonation));
-        assert(r.token.transfer(address(r.curve), tokenDonation));
+        ReleaseExpectation memory expected = _releaseExpectation(r.curve);
+        _donate(r, expected.usdcDonation, expected.tokenDonation);
 
         (bool outsiderOk,) = address(r.curve).call(
             abi.encodeWithSelector(BreadBondingCurve.releaseForGraduation.selector)
         );
         assert(!outsiderOk);
 
-        (uint256 seedUsdc, uint256 tokenOut, uint256 protocolFeeAmount, uint256 creatorFeeAmount) =
+        ReleaseResult memory actual;
+        (actual.seedUsdc, actual.tokenOut, actual.protocolFee, actual.creatorFee) =
             r.fixture.graduationCoordinator.releaseCurve(r.curve);
 
-        assert(seedUsdc == expectedSeedUsdc);
-        assert(tokenOut == expectedTokens);
-        assert(protocolFeeAmount == expectedProtocolFee);
-        assert(creatorFeeAmount == expectedCreatorFee);
+        _assertRelease(r, expected, actual);
+    }
+
+    function _releaseExpectation(BreadBondingCurve curve) private view returns (ReleaseExpectation memory e) {
+        e.seedUsdc = curve.realQuoteReserve();
+        e.tokenOut = curve.trackedTokens();
+        uint256 pendingBaseFee = curve.quoteFeeBalance();
+        uint256 pendingTax = curve.creatorTaxBalance();
+        e.protocolFee = pendingBaseFee * curve.protocolFeeShareBps() / 10_000;
+        e.creatorFee = pendingBaseFee - e.protocolFee + pendingTax;
+        e.usdcDonation = 7;
+        e.tokenDonation = 1 ether;
+    }
+
+    function _donate(FinalFillResult memory r, uint256 usdcDonation, uint256 tokenDonation) private {
+        r.fixture.usdc.mint(address(this), usdcDonation);
+        assert(r.fixture.usdc.transfer(address(r.curve), usdcDonation));
+        assert(r.token.transfer(address(r.curve), tokenDonation));
+    }
+
+    function _assertRelease(
+        FinalFillResult memory r,
+        ReleaseExpectation memory expected,
+        ReleaseResult memory actual
+    ) private view {
+        assert(actual.seedUsdc == expected.seedUsdc);
+        assert(actual.tokenOut == expected.tokenOut);
+        assert(actual.protocolFee == expected.protocolFee);
+        assert(actual.creatorFee == expected.creatorFee);
         assert(r.curve.graduated());
         assert(r.curve.trackedQuote() == 0);
         assert(r.curve.trackedTokens() == 0);
-        assert(r.fixture.usdc.balanceOf(address(r.curve)) == usdcDonation);
-        assert(r.token.balanceOf(address(r.curve)) == tokenDonation);
+        assert(r.fixture.usdc.balanceOf(address(r.curve)) == expected.usdcDonation);
+        assert(r.token.balanceOf(address(r.curve)) == expected.tokenDonation);
         assert(
             r.fixture.usdc.balanceOf(address(r.fixture.graduationCoordinator))
-                == expectedSeedUsdc + expectedProtocolFee + expectedCreatorFee
+                == expected.seedUsdc + expected.protocolFee + expected.creatorFee
         );
-        assert(r.token.balanceOf(address(r.fixture.graduationCoordinator)) == expectedTokens);
+        assert(r.token.balanceOf(address(r.fixture.graduationCoordinator)) == expected.tokenOut);
     }
 
     function _completeFinalFill() private returns (FinalFillResult memory r) {
