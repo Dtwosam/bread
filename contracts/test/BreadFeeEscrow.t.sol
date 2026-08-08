@@ -174,6 +174,20 @@ contract BreadFeeEscrowTest {
         assert(!escrow.authorizedCreditor(address(outsider)));
     }
 
+    function testOwnerCannotAuthorizeEoaAsCreditor() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        address eoa = address(0xE0A);
+        assert(eoa.code.length == 0);
+
+        (bool ok,) = address(escrow).call(
+            abi.encodeWithSelector(BreadFeeEscrow.setAuthorizedCreditor.selector, eoa, true)
+        );
+
+        assert(!ok);
+        assert(!escrow.authorizedCreditor(eoa));
+    }
+
     function testOverClaimRevertsAndPreservesAccounting() public {
         MockUSDC6 usdc = new MockUSDC6();
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
