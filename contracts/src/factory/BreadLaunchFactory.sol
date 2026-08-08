@@ -30,6 +30,25 @@ contract BreadLaunchFactory is Ownable {
     error CreatorTaxAboveCurrentMaximum(uint16 creatorTaxBps, uint16 maxCreatorTaxBps);
     error StaleEconomics(bytes32 expected, bytes32 actual);
 
+    struct EconomicsDigestInput {
+        address usdc;
+        uint256 supply;
+        uint256 phantomQuote;
+        uint256 graduationThreshold;
+        address protocolFeeRecipient;
+        uint16 tradeFeeBps;
+        uint16 protocolFeeShareBps;
+        uint16 maxCreatorTaxBps;
+        uint256 launchFeeUsdc;
+        bytes32 stackVersion;
+        uint64 configVersion;
+        uint16 startingSnipeTaxBps;
+        uint8 snipeDurationSeconds;
+        uint16 terminalSnipeTaxBps;
+        bytes32 openingProtectionPolicyId;
+        bytes32 openingTaxRoutingId;
+    }
+
     address public immutable usdc;
     IBreadFeePolicy public immutable feePolicy;
     address public immutable feeEscrow;
@@ -99,26 +118,24 @@ contract BreadLaunchFactory is Ownable {
     function previewLaunchEconomics() public view returns (bytes32 digest) {
         IBreadLaunchFactory.LaunchConfig memory config = _launchConfig;
         BreadFeePolicySnapshot memory policy = feePolicy.currentFeePolicy();
-        return keccak256(
-            abi.encode(
-                usdc,
-                config.supply,
-                config.phantomQuote,
-                config.graduationThreshold,
-                policy.protocolFeeRecipient,
-                policy.tradeFeeBps,
-                policy.protocolFeeShareBps,
-                policy.maxCreatorTaxBps,
-                config.launchFeeUsdc,
-                stackVersion,
-                configVersion,
-                STARTING_SNIPE_TAX_BPS,
-                SNIPE_DURATION_SECONDS,
-                TERMINAL_SNIPE_TAX_BPS,
-                OPENING_PROTECTION_POLICY_ID,
-                OPENING_TAX_ROUTING_ID
-            )
-        );
+        EconomicsDigestInput memory input;
+        input.usdc = usdc;
+        input.supply = config.supply;
+        input.phantomQuote = config.phantomQuote;
+        input.graduationThreshold = config.graduationThreshold;
+        input.protocolFeeRecipient = policy.protocolFeeRecipient;
+        input.tradeFeeBps = policy.tradeFeeBps;
+        input.protocolFeeShareBps = policy.protocolFeeShareBps;
+        input.maxCreatorTaxBps = policy.maxCreatorTaxBps;
+        input.launchFeeUsdc = config.launchFeeUsdc;
+        input.stackVersion = stackVersion;
+        input.configVersion = configVersion;
+        input.startingSnipeTaxBps = STARTING_SNIPE_TAX_BPS;
+        input.snipeDurationSeconds = SNIPE_DURATION_SECONDS;
+        input.terminalSnipeTaxBps = TERMINAL_SNIPE_TAX_BPS;
+        input.openingProtectionPolicyId = OPENING_PROTECTION_POLICY_ID;
+        input.openingTaxRoutingId = OPENING_TAX_ROUTING_ID;
+        return keccak256(abi.encode(input));
     }
 
     function getLaunch(address token) external view returns (IBreadLaunchFactory.LaunchRecord memory record) {
