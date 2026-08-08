@@ -109,11 +109,17 @@ abstract contract BreadDay5Fixture {
         f.usdc.mint(address(this), quoteIn);
         assert(f.usdc.approve(address(f.factory), quoteIn));
 
+        // These helpers intentionally need the post-crossing READY state before
+        // Stage 1. Make the automatic attempt fail at adapter preflight, then
+        // restore the healthy adapter so the test can drive sweep/retry itself.
+        f.adapter.setFailValidation(true);
         address curveAddress;
         uint256 tokensOut;
         (token, curveAddress, tokensOut) = IBreadLaunchFactory(address(f.factory)).launchTokenAndBuy(
             _day5Params(f.factory.previewLaunchEconomics()), quoteIn, sellable, address(this)
         );
+        f.adapter.setFailValidation(false);
+
         assert(tokensOut == sellable);
         curve = BreadBondingCurve(curveAddress);
         assert(curve.readyToGraduate());
