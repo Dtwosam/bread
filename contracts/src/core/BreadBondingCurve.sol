@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {BreadTrackedCurveState} from "./BreadTrackedCurveState.sol";
 import {BreadBondingCurveMath} from "../libraries/BreadBondingCurveMath.sol";
@@ -25,7 +26,6 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     error CreatorTaxAboveSnapshotMaximum(uint16 creatorTaxBps, uint16 maxCreatorTaxBps);
     error UnexpectedReceivedAmount(uint256 expected, uint256 received);
     error SlippageExceeded(uint256 minimum, uint256 actual);
-    error FinalBuyRequiresPartialFill(uint256 requestedTokensOut, uint256 sellableTokens);
 
     address public creatorFeeRecipient;
     address public immutable factory;
@@ -46,6 +46,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 fee,
         uint256 tax
     );
+    event CurveBuyRefunded(address indexed buyer, uint256 refund);
     event CurveSell(
         address indexed seller,
         address indexed recipient,
@@ -108,22 +109,46 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         if (received != quoteIn) revert UnexpectedReceivedAmount(quoteIn, received);
 
         (uint256 quoteReserve_, uint256 tokenReserve_) = getReserves();
-        uint256 fee = quoteIn * tradeFeeBps / BASIS_POINTS;
-        uint256 tax = quoteIn * creatorTaxBps / BASIS_POINTS;
-        uint256 netQuote = quoteIn - fee - tax;
-        tokensOut = BreadBondingCurveMath.getAmountOut(netQuote, quoteReserve_, tokenReserve_, 0);
+        uint256 spent = received;
+        uint256 fee = spent * tradeFeeBps / BASIS_POINTS;
+        uint256 tax = spent * creatorTaxBps / BASIS_POINTS;
+        tokensOut = BreadBondingCurveMath.getAmountOut(spent - fee - tax, quoteReserve_, tokenReserve_, 0);
 
-        uint256 available = sellableTokens();
-        if (tokensOut > available) revert FinalBuyRequiresPartialFill(tokensOut, available);
-        if (tokensOut < minTokensOut) revert SlippageExceeded(minTokensOut, tokensOut);
+        uint256 available = tokenReserve_ > reservedTokens ? tokenReserve_ - reservedTokens : 0;
+        if (available == 0) revert CurveClosed();
+
+        if (tokensOut > available) {
+            tokensOut = available;
+            uint256 net = BreadBondingCurveMath.getAmountIn(available, quoteReserve_, tokenReserve_, 0);
+            spent = Math.min(
+                Math.mulDiv(
+                    net,
+                    BASIS_POINTS,
+                    BASIS_POINTS - uint256(tradeFeeBps) - uint256(creatorTaxBps),
+                    Math.Rounding.Ceil
+                ),
+                received
+            );
+            fee = spent * tradeFeeBps / BASIS_POINTS;
+            tax = spent * creatorTaxBps / BASIS_POINTS;
+        }
+
+        if (spent * minTokensOut > received * tokensOut) revert SlippageExceeded(minTokensOut, tokensOut);
 
         quoteFeeBalance += fee;
         creatorTaxBalance += tax;
-        trackedQuote += quoteIn;
+        trackedQuote += spent;
         trackedTokens -= tokensOut;
 
         IERC20(token).safeTransfer(recipient, tokensOut);
-        emit CurveBuy(msg.sender, recipient, quoteIn, tokensOut, fee, tax);
+
+        uint256 refund = received - spent;
+        if (refund != 0) {
+            emit CurveBuyRefunded(msg.sender, refund);
+            quoteToken.safeTransfer(msg.sender, refund);
+        }
+
+        emit CurveBuy(msg.sender, recipient, spent, tokensOut, fee, tax);
     }
 
     function sell(uint256 tokensIn, uint256 minQuoteOut, address recipient)
