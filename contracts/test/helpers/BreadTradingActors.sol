@@ -15,6 +15,10 @@ contract BreadTradingExternalCaller {
 }
 
 contract BreadFeeClaimRecipient {
+    function sweepFees(BreadBondingCurve curve) external {
+        curve.sweepFees();
+    }
+
     function claim(BreadFeeEscrow escrow) external returns (uint256 amount) {
         return escrow.claim();
     }
