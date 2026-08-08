@@ -1,7 +1,7 @@
-schema_version: 1.7
+schema_version: 1.8
 project: Bread
 source_pack_expected: v1.4-day4-design
-updated_at: 2026-08-08T21:25:00+01:00
+updated_at: 2026-08-08T21:28:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -10,12 +10,11 @@ completed_checkpoints:
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
   - "Day 4 source gate: PROJECT_SOURCE_V1_4_DAY4_RATIFICATION_RATIFIED"
-  - "Day 4 implementation plan: COMMITTED_SELF_REVIEWED"
-  - "Day 4 implementation candidate: MERGED_TO_MAIN"
-  - "Day 4 closeout prerequisite: PASS_ALL_FOUR"
-active_checkpoint: "Day 4 — Fresh merged-main closeout"
-active_lane: "Stamped exact-head closeout CI -> guarded closeout merge -> merged-main identity verification"
-active_gate: DAY4_MERGED_MAIN_CLOSEOUT_STAMPED_HEAD_CI
+  - "Day 4 implementation: MERGED_PR_15"
+  - "Day 4 closeout: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
+active_checkpoint: "Day 5 — preflight not started"
+active_lane: "Review Day-5 controlling source requirements and unresolved blockers before production planning"
+active_gate: DAY5_PREFLIGHT_NOT_STARTED
 project_source_state:
   pack: v1.4-day4-design
   upload: UPLOADED
@@ -25,31 +24,35 @@ project_source_state:
   day4_production_ratification: RATIFIED
   ratification_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
 integration_baseline:
-  id: DAY4-MERGED-IMPLEMENTATION
+  id: DAY4-CLOSED-MAIN
   branch: main
-  current_main_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
+  current_main_commit: 7533b9f243e1c53106188aa662919f6166448f2e
   implementation_pr: 15
   implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
   implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
+  closeout_pr: 23
+  closeout_head: 8e0eaac8f1ce21f4654286a6e3f9113fd4de7a4b
+  closeout_merge_commit: 7533b9f243e1c53106188aa662919f6166448f2e
   accepted_day3_closeout_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
-  status: DAY4_IMPLEMENTATION_MERGED_CLOSEOUT_PREREQUISITE_PASS
+  status: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS
 working_branches:
-  - checkpoint/day4-closeout
+  - checkpoint/day4-post-closeout-handoff
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  current_main_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
+  current_main_commit: 7533b9f243e1c53106188aa662919f6166448f2e
   day4_implementation_pr: 15
   day4_implementation_pr_state: MERGED
   day4_implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
-  day4_closeout_branch: checkpoint/day4-closeout
   day4_closeout_pr: 23
+  day4_closeout_pr_state: MERGED
+  day4_closeout_merge_commit: 7533b9f243e1c53106188aa662919f6166448f2e
   day4_closeout_evidence_path: docs/evidence/day4-merged-main-closeout.md
   day4_primary_evidence_path: docs/evidence/day4-factory-launch-buy-snipe-emergency.md
   day4_plan_path: docs/superpowers/plans/2026-08-08-day4-factory-launch-buy-snipe-emergency.md
-  day4_closeout_state: STAMPED_HEAD_CI_PENDING
+  day4_closeout_state: PASS
 day4_design:
-  status: APPROVED_SELF_REVIEWED_SOURCE_RATIFIED_IMPLEMENTATION_MERGED
+  status: CLOSED_INTEGRATED_PASS
   factory_deployer: "Bread-owned canonical Factory/Deployer with economics pinning; no CREATE2 promise"
   launch_fee: "canonical USDC; zero allowed; nonzero through canonical FeeEscrow to economics-pinned protocol recipient"
   launch_and_buy: "atomic canonical-USDC lifecycle; shared curve buy path; exact caller refund; whole-intent rollback"
@@ -61,8 +64,6 @@ day4_design:
 verification:
   day4_expanded_integrated_run: 31274793743
   day4_expanded_foundry: PASS_162_TESTS_24_SUITES
-  day4_pre_stamp_run: 31275313178
-  day4_pre_stamp_jobs: PASS_ALL_FOUR
   day4_final_implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
   day4_final_implementation_run: 31275557000
   day4_final_implementation_jobs: PASS_ALL_FOUR
@@ -70,7 +71,10 @@ verification:
   day4_closeout_prerequisite_head: a9f0cf839cda7b67b5e38fe199367c3b7757d2ea
   day4_closeout_prerequisite_run: 31276781025
   day4_closeout_prerequisite_jobs: PASS_ALL_FOUR
-  day4_closeout_stamped_run: PENDING
+  day4_closeout_stamped_head: 8e0eaac8f1ce21f4654286a6e3f9113fd4de7a4b
+  day4_closeout_stamped_run: 31276843224
+  day4_closeout_stamped_jobs: PASS_ALL_FOUR
+  day4_closeout_merge_commit: 7533b9f243e1c53106188aa662919f6166448f2e
 security_review:
   candidate_review: "manual diff-oriented review plus executable integration/invariant tests; no reportable finding recorded"
   external_audit_claim: NONE
@@ -81,16 +85,15 @@ blockers:
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "truthfulness/parity claims only"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "truthfulness/parity claims only; does not invalidate closed Bread-owned Day-4 architecture"
   LIVE_RUNTIME_CONFIG: "real deployment values; do not guess"
   PONS_AUDIT_FINDINGS: "release/security gate"
   ARC_MAINNET_VALUES: "mainnet deployment gate"
 next_action: >-
-  Run all four repository CI jobs on the documentation-stamped PR #23 head. If and only if bootstrap-validation, dependency-build including scoped formatting/typecheck/build/workspace-clean, foundry-bootstrap, and infrastructure-health all PASS on that exact unchanged head, merge PR #23 with expected-head protection. Verify the resulting main merge identity before issuing DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS.
+  Preserve Day-4 as closed. Before any Day-5 production code, read and reconcile the controlling Project Sources for Day 5 against current main 7533b9f243e1c53106188aa662919f6166448f2e, identify any Day-5-specific source or external-reference gates, and write/review the Day-5 design/implementation plan required by the execution protocol. Do not silently reuse unresolved live-runtime, audit, parity, or Arc-mainnet assumptions.
 do_not_do:
-  - "Do not issue the Day-4 PASS before the stamped closeout head passes and PR #23 merges."
-  - "Do not add Day-5 production work to the closeout branch."
-  - "Do not change the ratified Day-4 formula, exemption, fee routing, final-fill rounding, emergency authority, or FeeEscrow authority boundary in closeout."
+  - "Do not reopen or mutate closed Day-4 economics/security semantics without a new ratified source change."
+  - "Do not start Day-5 production code before its source/preflight/design gates are satisfied."
   - "Do not claim exact current-live Pons Factory parity."
   - "Do not invent live runtime or Arc mainnet values."
   - "Do not clear PONS_AUDIT_FINDINGS without its own evidence."
