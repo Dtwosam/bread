@@ -4,14 +4,16 @@ pragma solidity ^0.8.26;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title BreadFeeEscrow
 /// @notice Canonical-USDC recipient ledger for Bread fee claims.
-contract BreadFeeEscrow is Ownable {
+contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     error UnauthorizedCreditor();
     error UnexpectedReceivedAmount(uint256 expected, uint256 received);
+    error NoFeesToClaim();
 
     IERC20 public immutable usdc;
 
@@ -26,6 +28,12 @@ contract BreadFeeEscrow is Ownable {
         address indexed recipient,
         uint256 amount,
         uint256 recipientBalance,
+        uint256 totalOutstanding
+    );
+    event FeeClaimed(
+        address indexed recipient,
+        uint256 amount,
+        uint256 remainingBalance,
         uint256 totalOutstanding
     );
 
@@ -51,6 +59,17 @@ contract BreadFeeEscrow is Ownable {
         totalOutstanding += received;
 
         emit FeeCredited(msg.sender, recipient, received, recipientBalance, totalOutstanding);
+    }
+
+    function claim() external nonReentrant returns (uint256 amount) {
+        amount = balanceOf[msg.sender];
+        if (amount == 0) revert NoFeesToClaim();
+
+        balanceOf[msg.sender] = 0;
+        totalOutstanding -= amount;
+
+        usdc.safeTransfer(msg.sender, amount);
+        emit FeeClaimed(msg.sender, amount, 0, totalOutstanding);
     }
 
     function surplus() external view returns (uint256 amount) {
