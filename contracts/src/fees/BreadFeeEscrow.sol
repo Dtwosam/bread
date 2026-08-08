@@ -11,6 +11,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    error TokenZeroAddress();
     error UnauthorizedCreditor();
     error RecipientZeroAddress();
     error ZeroAmount();
@@ -40,6 +41,7 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     );
 
     constructor(address usdc_, address owner_) Ownable(owner_) {
+        if (usdc_ == address(0)) revert TokenZeroAddress();
         usdc = IERC20(usdc_);
     }
 
