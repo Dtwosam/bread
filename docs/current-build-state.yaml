@@ -1,7 +1,7 @@
 schema_version: 1.4
 project: Bread
 source_pack_expected: v1.4-day4-design
-updated_at: 2026-08-08T18:20:00+01:00
+updated_at: 2026-08-08T18:31:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -81,6 +81,26 @@ resolved_day4_source_gates:
   DAY4_OPENING_TAX_ROUTING: RESOLVED_REUSE_CANONICAL_BASE_FEE_ESCROW_PATH
   DAY4_FINAL_FILL_ROUNDING: RESOLVED_TWO_STAGE_FULL_PRECISION_CEILING_GROSS_UP
   DAY4_EMERGENCY_STATE_MODEL: RESOLVED_RESTRICTION_ONLY
+verification:
+  day2_closeout_run: 31256962864
+  ratification_recovery_pr_10_run: 31264567398
+  eoa_creditor_red_run: 31265939060
+  eoa_creditor_red_result: "94 PASS / exactly 1 intended FAIL"
+  eoa_creditor_green_run: 31266017924
+  adversarial_proof_run: 31266099983
+  adversarial_proof_foundry: PASS_98_TESTS
+  day3_implementation_final_run: 31266530130
+  day3_implementation_foundry: PASS_98_TESTS
+  day3_implementation_jobs: PASS_ALL_FOUR
+  fresh_closeout_initial_run: 31266693398
+  fresh_closeout_initial_foundry: PASS_99_TESTS
+  fresh_closeout_initial_jobs: PASS_ALL_FOUR
+  fresh_closeout_stamped_run: 31266796631
+  fresh_closeout_stamped_jobs: PASS_ALL_FOUR
+  day3_post_closeout_handoff_run: 31266935184
+  day3_post_closeout_handoff_jobs: PASS_ALL_FOUR
+  day4_preflight_docs_first_run: 31269550733
+  day4_preflight_docs_first_result: "BLOCKED — build-state validator required historical verification section; Foundry/infrastructure passed; no production code affected"
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - LIVE_RUNTIME_CONFIG
@@ -92,9 +112,10 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "release/security gate"
   ARC_MAINNET_VALUES: "mainnet deployment gate"
 next_action: >-
-  Verify the checkpoint/day4-preflight-design branch is documentation-only relative to accepted main c6fcb53c854e45843b60720e3be859a49965bad2. Run/require the full repository gate including format check on the exact docs head, open a docs-only PR, merge only the exact green head with expected-head protection, and verify the resulting main. Then create checkpoint/day4-launch-control from that actual merged main and begin Task 1 with Factory/Deployer behavior-specific RED tests. No Day-4 production Solidity before the docs-only exact-head merge.
+  Require a fresh exact-head CI run on PR #14 after restoring the mandatory verification section. Merge only the exact green docs head with expected-head protection, verify the resulting main contains the ratified v1.4 source state and self-reviewed implementation plan, then create checkpoint/day4-launch-control from that actual merged main and begin Task 1 with Factory/Deployer behavior-specific RED tests. No Day-4 production Solidity before the docs-only exact-head merge.
 do_not_do:
   - "Do not write Day-4 production Solidity before the ratified design/plan documentation is exact-head-green and merged to main."
+  - "Do not weaken or bypass scripts/validation/validate-build-state.mjs to make the preflight pass; preserve the required verification section instead."
   - "Do not silently change the ratified opening formula, exemption, routing, final-fill rounding or emergency authority; a change requires a new approved Project Source amendment."
   - "Do not add an automatic FeeEscrow creditor registrar in Day 4; that would change the ratified credit-authority boundary."
   - "Do not create parallel fee, claim, trading, launch-record or emergency-accounting authorities."
