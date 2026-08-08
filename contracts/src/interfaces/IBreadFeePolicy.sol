@@ -9,6 +9,9 @@ struct BreadFeePolicySnapshot {
 }
 
 interface IBreadFeePolicy {
+    event FeePolicyUpdated(BreadFeePolicySnapshot previousPolicy, BreadFeePolicySnapshot nextPolicy);
+    event FeeSweepOperatorUpdated(address indexed previousOperator, address indexed nextOperator);
+
     function currentFeePolicy() external view returns (BreadFeePolicySnapshot memory policy);
     function feeSweepOperator() external view returns (address operator);
     function setCurrentFeePolicy(BreadFeePolicySnapshot calldata nextPolicy) external;
