@@ -7,6 +7,7 @@ import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 import {
     BreadFeeClaimRecipient,
     BreadTradingExternalCaller
@@ -224,5 +225,6 @@ contract BreadTradingFeeEscrowIntegrationTest {
         });
         f.token = new BreadLaunchToken(metadata, context);
         f.curve.initialize(address(f.token));
+        BreadTestTime.expireOpening(f.curve);
     }
 }
