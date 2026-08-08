@@ -10,6 +10,7 @@ import {BreadLaunchDeployer} from "../src/factory/BreadLaunchDeployer.sol";
 import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
 
 interface BreadFinalFillVm {
     function warp(uint256 newTimestamp) external;
@@ -168,6 +169,7 @@ contract BreadOpeningFinalFillTest {
         });
         f.policy = new BreadFeePolicy(address(this), snapshot, address(this));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         IBreadLaunchFactory.LaunchConfig memory config = IBreadLaunchFactory.LaunchConfig({
             supply: SUPPLY,
             phantomQuote: PHANTOM_QUOTE,
@@ -176,7 +178,7 @@ contract BreadOpeningFinalFillTest {
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
-            address(this), address(f.usdc), address(f.policy), address(f.escrow), config, STACK_VERSION
+            address(this), address(f.usdc), address(f.policy), address(f.escrow), address(emergencyController), config, STACK_VERSION
         );
         BreadLaunchDeployer deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(deployer);
