@@ -1,6 +1,6 @@
 # Day 4 merged-main closeout
 
-Status: **CLOSEOUT IN PROGRESS — NO DAY-4 PASS YET**
+Status: **PREREQUISITE PASS — STAMPED-HEAD CLOSEOUT CI PENDING**
 
 ## Merged implementation identity
 
@@ -11,6 +11,7 @@ Status: **CLOSEOUT IN PROGRESS — NO DAY-4 PASS YET**
 - implementation merge commit on `main`: `aec8eb1f90693d8883e4849503c8e50a0ed79b80`
 - closeout branch: `checkpoint/day4-closeout`
 - closeout branch base: exactly `aec8eb1f90693d8883e4849503c8e50a0ed79b80`
+- closeout PR: `#23`
 
 PR #15 merged the ratified Day-4 implementation candidate containing Factory/Deployer economics pinning, canonical-USDC launch fee routing, atomic Launch+Buy, exact opening protection, snipe-aware final fill, restriction-only emergency control, real vertical integration, INV-040–044, INV-060–063, and the executable Day-4 source-integrity validator.
 
@@ -32,19 +33,41 @@ The exact PR head `d08a33c00bb17eb96ef342ee25d48fb696f7ea4d` passed CI run `3127
 
 This evidence proves the implementation candidate that was merged. It does not by itself issue the Day-4 closeout verdict.
 
+## Fresh merged-main closeout prerequisite
+
+The closeout branch was created fresh from the actual implementation merge commit `aec8eb1f90693d8883e4849503c8e50a0ed79b80`, not from the old implementation branch.
+
+Exact prerequisite head:
+
+`a9f0cf839cda7b67b5e38fe199367c3b7757d2ea`
+
+Exact prerequisite CI:
+
+`31276781025`
+
+Result:
+
+- `bootstrap-validation`: PASS
+- `dependency-build`: PASS
+- `foundry-bootstrap`: PASS
+- `infrastructure-health`: PASS
+- `pnpm validate`: PASS
+- bootstrap tests: PASS
+- scoped Day-4 formatting gate: PASS
+- typecheck: PASS
+- build: PASS
+- workspace-clean check: PASS
+- merged Day-4 Foundry production tree: PASS
+
+No Solidity, test, runtime-config, economics, or Day-5 code was changed in the closeout prerequisite branch. The branch contained only durable closeout evidence/build-state changes on top of the actual merged implementation tree.
+
 ## Closeout rule
 
-The closeout branch was created fresh from the actual merged `main` commit, not from the old implementation branch. No Day-5 work and no new Day-4 production behavior is authorized in this branch.
+The prerequisite proof is now stamped. Because this evidence stamp changes the branch head, the verdict remains withheld until the new stamped head passes all four repository CI jobs again.
 
-The closeout must prove the merged production tree again through exact-head CI. The verdict remains withheld until:
+After the stamped-head CI passes, PR #23 may merge only with exact-head protection. The resulting merge identity must then be verified on `main`.
 
-1. the closeout prerequisite head passes all four repository CI jobs;
-2. the closeout evidence/build-state is stamped with that exact run;
-3. the stamped closeout head passes all four repository CI jobs again;
-4. the closeout PR merges using the exact tested head;
-5. the merge identity is verified on `main`.
-
-Only then may Bread issue:
+Only after those steps may Bread issue:
 
 `DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS`
 
@@ -59,4 +82,4 @@ None of these are silently cleared by Day-4 closeout.
 
 ## Current closeout state
 
-`DAY4_MERGED_MAIN_CLOSEOUT_PREREQUISITE_CI_PENDING`
+`DAY4_MERGED_MAIN_CLOSEOUT_STAMPED_HEAD_CI_PENDING`
