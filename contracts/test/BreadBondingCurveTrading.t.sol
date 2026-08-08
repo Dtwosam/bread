@@ -187,18 +187,20 @@ contract BreadBondingCurveTradingTest {
             GRADUATION_THRESHOLD
         );
 
-        BreadLaunchToken.Socials memory socials;
-        token = new BreadLaunchToken(
-            "Bread Test",
-            "BREAD",
-            "",
-            "",
-            socials,
-            address(this),
-            address(curve),
-            address(this),
-            TOKEN_SUPPLY
-        );
+        BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
+            name: "Bread Test",
+            symbol: "BREAD",
+            logo: "",
+            description: "",
+            socials: BreadLaunchToken.Socials({twitter: "", telegram: "", discord: "", website: "", farcaster: ""})
+        });
+        BreadLaunchToken.LaunchContext memory context = BreadLaunchToken.LaunchContext({
+            deployer: address(this),
+            curve: address(curve),
+            launchFactory: address(this),
+            supply: TOKEN_SUPPLY
+        });
+        token = new BreadLaunchToken(metadata, context);
         curve.initialize(address(token));
     }
 
