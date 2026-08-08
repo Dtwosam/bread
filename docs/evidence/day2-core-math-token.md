@@ -1,6 +1,6 @@
 # Day 2 — Core Math & Token Evidence
 
-Status: IMPLEMENTED + REVIEW-HARDENED — PENDING FINAL EXACT-HEAD CI / MERGE
+Status: INTEGRATED LANE PASS — DAY 2 CONTINUES
 
 ## Approved bounded scope
 
@@ -14,28 +14,19 @@ Status: IMPLEMENTED + REVIEW-HARDENED — PENDING FINAL EXACT-HEAD CI / MERGE
 The test-only `FrozenPonsBondingCurveMathReference` independently encodes the frozen arithmetic and does not import Bread production code.
 
 ### RED
-
-- PR branch: `checkpoint/day2-core-math-token`
-- RED head: `8028213a6bccec4c0c054677e186a3108f92f74e`
+- Head: `8028213a6bccec4c0c054677e186a3108f92f74e`
 - CI run: `31254865534`
-- `bootstrap-validation`: PASS
-- `dependency-build`: PASS
-- `infrastructure-health`: PASS
-- `foundry-bootstrap`: EXPECTED FAIL
-- Exact failure: `contracts/src/libraries/BreadBondingCurveMath.sol` absent.
+- Three unrelated jobs PASS; Foundry failed specifically because `BreadBondingCurveMath.sol` did not exist.
 
 ### GREEN
-
-- Production math commit/head: `f511a7d5d55fec64bf21580d17b4716403557e36`
+- Production math head: `f511a7d5d55fec64bf21580d17b4716403557e36`
 - CI run: `31254898416`
-- Source-faithful formulas, error conditions and `getAmountIn` `+1` round-up rule implemented.
-- Deterministic differential tests: PASS.
-- Bounded fuzz/property tests: PASS.
-- Existing repository CI gates remained healthy.
+- Frozen formulas, errors, branch ordering and exact-output `+1` rounding preserved.
+- Deterministic differential + bounded fuzz/property tests PASS.
 
 ## Frozen OpenZeppelin dependency provenance
 
-Bread does not dynamically install a floating OpenZeppelin package for the launch token. The exact six files required by the frozen token import graph were copied from the same frozen Pons commit and verified using Git blob SHA before commit.
+The exact six files required by the frozen token import graph were copied from the same frozen Pons commit and verified by Git blob SHA before commit. Bread does not dynamically install a floating OpenZeppelin package for this token.
 
 | Frozen upstream path | Exact Git blob SHA |
 | --- | --- |
@@ -46,76 +37,66 @@ Bread does not dynamically install a floating OpenZeppelin package for the launc
 | `contractsV2/lib/openzeppelin-contracts/contracts/utils/Context.sol` | `4e535fe03c243f864568b8f4430c17c25dbadb47` |
 | `contractsV2/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol` | `e9d6249ef521e073253a8681aa8f022af7640850` |
 
-The frozen file headers contain different "last updated" version markers (`v5.0.0`, `v5.0.1`, `v5.4.0`, `v5.5.0`). Bread therefore makes **no package-level OpenZeppelin version claim**; the exact blob map above is controlling.
-
-A one-time branch-scoped vendor workflow was used only to fetch and verify these files because manually retyping security-sensitive upstream code would be less reliable. It committed the verified files and was immediately deleted. Normal Bread CI remains read-only and does not fetch OpenZeppelin dynamically.
+The frozen file headers contain different last-updated markers, so Bread makes **no package-level OpenZeppelin version claim**. The exact blob map is controlling.
 
 - Verified vendor branch head observed: `4071c4ecacff3b645e118ea56fc1c479728f5ccb`
-- Temporary workflow deletion commit: `c9e684f207f0382c733b47051f2ec303c68e6e2b`
+- Temporary write-enabled vendor workflow removed at commit: `c9e684f207f0382c733b47051f2ec303c68e6e2b`
+- Normal CI remains read-only.
 
 ## Token TDD
 
 ### RED
-
-- RED head: `53e143d47ede2358c779176509f4b6e27f1a81d6`
+- Head: `53e143d47ede2358c779176509f4b6e27f1a81d6`
 - CI run: `31255073347`
-- OpenZeppelin remapping/dependency resolution succeeded.
-- `foundry-bootstrap`: EXPECTED FAIL
-- Exact failure: `contracts/src/BreadLaunchToken.sol` absent.
+- OpenZeppelin remapping resolved correctly; Foundry failed specifically because `BreadLaunchToken.sol` did not exist.
 
 ### GREEN
-
-- Production token commit/head: `69b85dbcf795af1f98e3e1d323c5a10ce4a98329`
+- Production token head: `69b85dbcf795af1f98e3e1d323c5a10ce4a98329`
 - CI run: `31255097370`
-- `bootstrap-validation`: PASS
-- `dependency-build`: PASS, including frozen lockfile and clean tracked-worktree gate
-- `foundry-bootstrap`: PASS
-- `infrastructure-health`: PASS
-- Foundry at this stage: 27 tests passed, 0 failed, 0 skipped.
-  - Math suite: 14 PASS, including 5 fuzz tests at 256 runs each.
-  - Token suite: 12 PASS, including supply fuzz at 256 runs.
-  - Bootstrap compile: 1 PASS.
+- All four jobs PASS.
+- At that stage: 27 Foundry tests PASS, 0 fail, including 14 math tests and 12 token tests.
 
-The token preserves the frozen source behavior: complete declared supply minted once to `curve`, immutable `deployer` / `launchFactory` / `curve`, metadata/social getters, standard ERC-20 transfer/allowance behavior, and holder `burn` / `burnFrom`. There is no owner/admin role, external/public mint, pause, blacklist or transfer tax.
+The token preserves complete declared-supply mint to `curve`, immutable attribution/factory/curve metadata, metadata/social getters, standard ERC-20 transfer/allowance behavior, and holder burn support. There is no owner/admin role, post-construction mint, pause, blacklist or transfer tax.
 
 ## Integrated review and hardening
 
-Review scope covered production token/math, deterministic/fuzz tests, Foundry remapping, source inventory and all six vendored OpenZeppelin files.
+Three issues were found and fixed before integration:
 
-### Finding 1 — dependency provenance wording was too broad
+1. **Dependency provenance wording too broad.** Replaced an inferred package version with `packageVersionClaim: null`, per-file markers, and exact blob authority.
+2. **Zero-supply parity not explicit.** Added `testAllowsZeroSupplyAndMintsNothing()` because the frozen source permits `supply_ == 0`.
+3. **Blob inventory not executable.** Added `validate-day2-source-integrity.mjs`, wired it into bootstrap validation, and made CI recompute every vendored Git blob SHA.
 
-The first inventory called the frozen dependency "OpenZeppelin 5.5.0" based on the `ERC20.sol` header. Other frozen required files carry older last-updated markers and no package-version file was verified at the vendored Pons path. Fixed by setting `packageVersionClaim: null`, recording each observed file marker separately, and treating exact Git blob SHAs as authority.
+Integrity hardening RED:
+- head `7e217592e46c6fb2cc6559b63718e0b82d3e9fe3`
+- run `31255285593`
+- expected bootstrap failure because integrity validation was not yet wired.
 
-### Finding 2 — zero-supply frozen behavior was not explicitly covered
+Integrity hardening GREEN:
+- head `9c57a8e2239af5c165de22023268632a35d991cd`
+- run `31255322107`
+- all four jobs PASS.
 
-The frozen Pons token constructor permits `supply_ == 0`. Added `testAllowsZeroSupplyAndMintsNothing()` so Bread does not silently introduce a minimum-supply divergence later.
+Foundry's non-failing naming notes for immutable `deployer`, `launchFactory`, and `curve` were deliberately not applied because those public names are part of the approved source-faithful ABI.
 
-### Finding 3 — recorded dependency blobs were not enforced automatically
+## Final exact-head integration proof
 
-The exact blob map was initially evidence only. Added `scripts/validation/validate-day2-source-integrity.mjs`, wired it into `validate-all.mjs`, and added a bootstrap regression requiring the integrity gate.
+- Final PR #4 head: `d65a45c9da6c23f40a0a1861c75acf96bc8f8b33`
+- Final CI run: `31255399674`
+- `bootstrap-validation`: PASS
+- frozen Day-2 dependency integrity: PASS
+- `foundry-bootstrap`: PASS
+- `dependency-build`: PASS
+- frozen lockfile: PASS
+- full TypeScript/build gate: PASS
+- clean tracked-worktree gate: PASS
+- `infrastructure-health`: PASS
+- PR #4 merge commit: `0051d86f635ee4dfa9e2422f6f2fac7231e4f915`
 
-Hardening RED:
-- head: `7e217592e46c6fb2cc6559b63718e0b82d3e9fe3`
-- CI run: `31255285593`
-- bootstrap regression failed exactly because the new integrity validator was not yet wired.
-- Foundry remained PASS.
+## Lane verdict
 
-Hardening GREEN:
-- head: `9c57a8e2239af5c165de22023268632a35d991cd`
-- CI run: `31255322107`
-- all four CI jobs: PASS
-- validator recomputes Git blob SHA-1 using the canonical `blob <length>\0<bytes>` format and fails if any vendored file drifts.
+`DAY_2_CORE_MATH_TOKEN_INTEGRATED_PASS`
 
-### Non-finding — immutable naming lint notes
-
-Foundry notes that immutable variables conventionally use screaming-snake-case. Bread retains observable names `deployer`, `launchFactory`, and `curve` because those names are part of the approved frozen-source-faithful public ABI. This is a lint style note, not a correctness/security failure.
-
-## Review verdict
-
-No unresolved privilege, post-construction mint, formula, reserve-custody, snipe, Launch+Buy, FeeEscrow, graduation, hook, pool/router or Arc-mainnet leakage was found in the Day-2 production scope.
-
-Final exact-head CI run/head: PENDING after this evidence + handoff update.
-Merge: PENDING.
+This is **not** a Day-2 end-of-day PASS. Controlling 06C still requires the tracked-reserve curve skeleton plus donation-resistance/tiny-trade invariants and the remaining applicable Day-2 math/allocation/graduation coverage before the Day-2 gate can close.
 
 ## Retained blockers
 
