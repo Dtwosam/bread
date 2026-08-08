@@ -24,6 +24,7 @@ contract BreadLaunchDeployer {
         address factory;
         address feePolicy;
         address feeEscrow;
+        address emergencyController;
         uint256 phantomQuote;
         uint16 creatorTaxBps;
         uint256 graduationThreshold;
@@ -69,6 +70,7 @@ contract BreadLaunchDeployer {
                 core.factory,
                 core.feePolicy,
                 core.feeEscrow,
+                core.emergencyController,
                 core.phantomQuote,
                 core.creatorTaxBps,
                 core.graduationThreshold
