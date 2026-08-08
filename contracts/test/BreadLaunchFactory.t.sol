@@ -59,9 +59,7 @@ contract BreadLaunchFactoryTest {
     function testDisabledLaunchRejectsWithoutCreatingRecord() public {
         Fixture memory f = _deployFixture(false);
         IBreadLaunchFactory.LaunchParams memory p = _params(bytes32(0));
-
         (bool ok,) = address(f.factory).call(abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, p));
-
         assert(!ok);
     }
 
@@ -86,13 +84,14 @@ contract BreadLaunchFactoryTest {
         (address token,) = f.factory.launchToken(p);
         IBreadLaunchFactory.LaunchRecord memory beforeRecord = f.factory.getLaunch(token);
 
-        BreadFeePolicySnapshot memory nextPolicy = BreadFeePolicySnapshot({
-            protocolFeeRecipient: address(0xBEEF),
-            tradeFeeBps: 150,
-            protocolFeeShareBps: 3_000,
-            maxCreatorTaxBps: 450
-        });
-        f.policy.setCurrentFeePolicy(nextPolicy);
+        f.policy.setCurrentFeePolicy(
+            BreadFeePolicySnapshot({
+                protocolFeeRecipient: address(0xBEEF),
+                tradeFeeBps: 150,
+                protocolFeeShareBps: 3_000,
+                maxCreatorTaxBps: 450
+            })
+        );
 
         bytes32 nextDigest = f.factory.previewLaunchEconomics();
         IBreadLaunchFactory.LaunchRecord memory afterRecord = f.factory.getLaunch(token);
@@ -106,9 +105,7 @@ contract BreadLaunchFactoryTest {
         Fixture memory f = _deployFixture(true);
         IBreadLaunchFactory.LaunchParams memory p = _params(f.factory.previewLaunchEconomics());
         p.name = _repeat("N", 65);
-
         (bool ok,) = address(f.factory).call(abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, p));
-
         assert(!ok);
     }
 
@@ -126,39 +123,27 @@ contract BreadLaunchFactoryTest {
         p.farcaster = _repeat("F", 256);
 
         (address token, address curve) = f.factory.launchToken(p);
-
         assert(token != address(0));
         assert(curve != address(0));
     }
 
     function testDeployerRejectsDirectNonFactoryDeployment() public {
         Fixture memory f = _deployFixture(true);
-        BreadLaunchDeployer.BreadLaunchDeployment memory p = BreadLaunchDeployer.BreadLaunchDeployment({
-            usdc: address(f.usdc),
-            creatorFeeRecipient: CREATOR_RECIPIENT,
-            originalDeployer: address(this),
-            factory: address(f.factory),
-            feePolicy: address(f.policy),
-            feeEscrow: address(f.escrow),
-            phantomQuote: PHANTOM_QUOTE,
-            creatorTaxBps: CREATOR_TAX_BPS,
-            graduationThreshold: GRADUATION_THRESHOLD,
-            supply: SUPPLY,
-            name: "Direct",
-            symbol: "DIR",
-            logo: "",
-            description: "",
-            twitter: "",
-            telegram: "",
-            discord: "",
-            website: "",
-            farcaster: ""
-        });
+        BreadLaunchDeployer.BreadLaunchDeployment memory p;
+        p.core.usdc = address(f.usdc);
+        p.core.creatorFeeRecipient = CREATOR_RECIPIENT;
+        p.core.originalDeployer = address(this);
+        p.core.factory = address(f.factory);
+        p.core.feePolicy = address(f.policy);
+        p.core.feeEscrow = address(f.escrow);
+        p.core.phantomQuote = PHANTOM_QUOTE;
+        p.core.creatorTaxBps = CREATOR_TAX_BPS;
+        p.core.graduationThreshold = GRADUATION_THRESHOLD;
+        p.core.supply = SUPPLY;
+        p.metadata.name = "Direct";
+        p.metadata.symbol = "DIR";
 
-        (bool ok,) = address(f.deployer).call(
-            abi.encodeWithSelector(BreadLaunchDeployer.deployLaunch.selector, p)
-        );
-
+        (bool ok,) = address(f.deployer).call(abi.encodeWithSelector(BreadLaunchDeployer.deployLaunch.selector, p));
         assert(!ok);
     }
 
@@ -172,16 +157,9 @@ contract BreadLaunchFactoryTest {
         IBreadLaunchFactory.LaunchParams memory emptySymbol = _params(expected);
         emptySymbol.symbol = "";
 
-        (bool zeroOk,) = address(f.factory).call(
-            abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, zeroCreator)
-        );
-        (bool nameOk,) = address(f.factory).call(
-            abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, emptyName)
-        );
-        (bool symbolOk,) = address(f.factory).call(
-            abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, emptySymbol)
-        );
-
+        (bool zeroOk,) = address(f.factory).call(abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, zeroCreator));
+        (bool nameOk,) = address(f.factory).call(abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, emptyName));
+        (bool symbolOk,) = address(f.factory).call(abi.encodeWithSelector(BreadLaunchFactory.launchToken.selector, emptySymbol));
         assert(!zeroOk);
         assert(!nameOk);
         assert(!symbolOk);
@@ -205,12 +183,7 @@ contract BreadLaunchFactoryTest {
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
-            address(this),
-            address(f.usdc),
-            address(f.policy),
-            address(f.escrow),
-            config,
-            STACK_VERSION
+            address(this), address(f.usdc), address(f.policy), address(f.escrow), config, STACK_VERSION
         );
         f.deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(f.deployer);
