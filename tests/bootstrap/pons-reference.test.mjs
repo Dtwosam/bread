@@ -25,6 +25,8 @@ test('Pons reference inventory and reconciliation reader are explicit before Day
     'utf8',
   );
   assert.match(reader, /createPublicClient/);
+  assert.match(reader, /getChainId/);
+  assert.match(reader, /actualChainId/);
   assert.match(reader, /getBytecode/);
   assert.match(reader, /launchConfigCount/);
   assert.match(reader, /getLaunchConfig/);
