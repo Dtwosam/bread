@@ -11,6 +11,7 @@ import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
 import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
+import {BreadDay5TestWiring} from "./helpers/BreadDay5TestWiring.sol";
 
 interface BreadFinalFillVm {
     function warp(uint256 newTimestamp) external;
@@ -203,6 +204,8 @@ contract BreadOpeningFinalFillTest {
             phantomQuote: PHANTOM_QUOTE,
             graduationThreshold: GRADUATION_THRESHOLD,
             launchFeeUsdc: 0,
+            graduationAdapter: address(0),
+            graduationConfigHash: bytes32(0),
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
@@ -210,8 +213,7 @@ contract BreadOpeningFinalFillTest {
         );
         BreadLaunchDeployer deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(deployer);
-        config.enabled = true;
-        f.factory.setLaunchConfig(config);
+        BreadDay5TestWiring.wire(f.factory, address(f.usdc), f.escrow, address(emergencyController));
     }
 
     function _params(bytes32 expectedEconomics)
