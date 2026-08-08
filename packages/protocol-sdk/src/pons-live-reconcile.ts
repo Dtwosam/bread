@@ -50,6 +50,7 @@ export type PonsLiveReconciliationReport = {
   mode: 'READ_ONLY';
   referenceCommit: typeof PONS_V2_REFERENCE_COMMIT;
   expectedChainId: typeof PONS_V2_CURRENT_DOCS_CHAIN_ID;
+  actualChainId: number;
   factoryAddress: Address;
   runtimeCode: Observation;
   factory: Record<string, Observation>;
@@ -82,6 +83,12 @@ export async function reconcilePonsLiveConfig(
   const factoryAddress = options.factoryAddress ?? PONS_V2_CURRENT_DOCS_FACTORY;
   const maxLaunchConfigs = Math.max(0, Math.min(options.maxLaunchConfigs ?? 64, 256));
   const client = createPublicClient({ transport: http(options.rpcUrl) });
+  const actualChainId = await client.getChainId();
+  if (actualChainId !== PONS_V2_CURRENT_DOCS_CHAIN_ID) {
+    throw new Error(
+      `Pons V2 reconciliation requires chain ${PONS_V2_CURRENT_DOCS_CHAIN_ID}; RPC reported ${actualChainId}`,
+    );
+  }
 
   const factory: Record<string, Observation> = {};
   const launchConfigs: Observation[] = [];
@@ -216,6 +223,7 @@ export async function reconcilePonsLiveConfig(
     mode: 'READ_ONLY',
     referenceCommit: PONS_V2_REFERENCE_COMMIT,
     expectedChainId: PONS_V2_CURRENT_DOCS_CHAIN_ID,
+    actualChainId,
     factoryAddress,
     runtimeCode: bytecodeObservation,
     factory,
