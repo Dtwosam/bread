@@ -1,6 +1,6 @@
 # Day 4 — Factory, Launch+Buy, Snipe & Emergency Design
 
-Status: **APPROVED DESIGN BUNDLE — SPEC REVIEW REQUIRED BEFORE IMPLEMENTATION PLAN**
+Status: **APPROVED DESIGN BUNDLE — SELF-REVIEWED; USER SPEC REVIEW + PROJECT-SOURCE PROMOTION REQUIRED BEFORE IMPLEMENTATION PLAN**
 
 Date: 2026-08-08
 
@@ -17,7 +17,29 @@ This design starts from the accepted Day-3 durable closeout baseline `a67f42cae2
 
 No Day-5 graduation execution, DEX seeding, permanent locker, buyback/vesting or Arc-mainnet address activation is implemented in this lane.
 
-## Controlling Project Source requirements
+## Project Source ratification disposition
+
+The uploaded Project Source v1.3 pack is ratified and remains controlling for the already-integrated Day-1 through Day-3 baseline. However, this Day-4 design freezes new exact fork details that v1.3 intentionally left gated:
+
+- the exact Bread snipe decay formula;
+- the one-use Launch+Buy-only exemption model;
+- exact opening-tax proceeds routing;
+- canonical-USDC launch-fee routing;
+- the exact EmergencyController restriction state machine.
+
+Under the permanent Project Source Ratification Gate, this repository design is **evidence/approved design, not yet controlling Project Source**. Therefore:
+
+```text
+PROJECT_SOURCE_PACK = v1.3-post-research
+PROJECT_SOURCE_RATIFICATION_FOR_EXISTING_BASELINE = RATIFIED
+DAY4_PROJECT_SOURCE_AMENDMENT = APPROVED_PENDING_PROMOTION
+PROJECT_SOURCE_RATIFICATION_FOR_DAY4_PRODUCTION = NOT_RATIFIED
+CANDIDATE_CODE_STATUS = NO_DAY4_PRODUCTION_CODE_AUTHORIZED
+```
+
+After the user reviews this committed spec, the affected consolidated Project Sources must be regenerated/replaced, uploaded by the user, read back in the active chat, and reconciled against GitHub/current-build-state. Only then may a Day-4 implementation plan authorize production Solidity work.
+
+## Controlling v1.3 requirements being specialized
 
 Ratified Project Source v1.3 requires Day 4 to:
 
@@ -112,14 +134,18 @@ No Arc mainnet addresses are hardcoded in Day 4. Tests and deployment fixtures i
 
 Day 4 uses a narrowly scoped future-launch configuration rather than a foreign super-factory configuration model.
 
-The launch configuration must contain the exact terms necessary to instantiate the existing curve/token pair, including:
+The launch configuration contains the exact terms necessary to instantiate the existing curve/token pair, including:
 
 - fixed launch token supply;
 - `phantomQuote` in canonical six-decimal USDC base units;
 - `graduationThreshold` in canonical six-decimal USDC base units;
-- launch fee if Bread charges one at this stage;
+- explicit `launchFeeUsdc` in canonical six-decimal USDC base units;
 - enabled/disabled state for future launches only;
 - stack version/config identity required for the economics digest.
+
+No production launch-fee value is guessed in code. Tests/deployment fixtures supply explicit values. `LIVE_RUNTIME_CONFIG` continues to gate the value selected for a real deployment.
+
+If `launchFeeUsdc` is non-zero, it is 100% protocol revenue. The Factory must collect the exact USDC amount and create an exact FeeEscrow credit to the launch-snapshotted `protocolFeeRecipient`; it may not retain the launch fee in Factory custody, send it to an arbitrary treasury, or mix it with trading reserve accounting. A failure to custody/credit the launch fee reverts the entire launch intent.
 
 Existing launches keep constructor/snapshot values and are never rewritten by later future-launch changes.
 
@@ -127,7 +153,7 @@ Existing launches keep constructor/snapshot values and are never rewritten by la
 
 Before deployment the Factory exposes a preview of the economics digest for the launch terms a creator is about to accept.
 
-The digest must bind every protocol-controlled or stack-controlled term that could change the economic meaning of the launch between preview and submission:
+The digest binds every protocol-controlled or stack-controlled term that could change the economic meaning of the launch between preview and submission:
 
 ```text
 canonical USDC
@@ -138,7 +164,7 @@ current FeePolicy.protocolFeeRecipient
 current FeePolicy.tradeFeeBps
 current FeePolicy.protocolFeeShareBps
 current FeePolicy.maxCreatorTaxBps
-launch fee
+launchFeeUsdc
 stack version/config identity
 opening protection start tax = 9900 bps
 opening protection duration = 5 seconds
@@ -235,20 +261,29 @@ Implementation naming may vary if the implementation plan finds a cleaner interf
 
 ### Canonical USDC custody flow
 
+For a launch-only intent:
+
+1. validate launch/economics/emergency permissions;
+2. if `launchFeeUsdc != 0`, custody exactly that amount from the caller;
+3. deploy and initialize the launch pair;
+4. credit the exact launch fee through FeeEscrow to the snapshotted protocol recipient;
+5. finish with no launch-fee USDC stranded in the Factory.
+
 For `launchTokenAndBuy`:
 
 1. validate launch/economics/permissions before taking user USDC where possible;
-2. transfer exactly `quoteIn` canonical USDC from the caller to the Factory and verify the exact balance delta;
+2. custody exactly `launchFeeUsdc + quoteIn` canonical USDC from the caller, using exact balance-delta checks;
 3. deploy and initialize the curve/token pair;
-4. temporarily approve exactly the required amount to the curve;
-5. call the canonical curve buy path on behalf of the launch intent;
-6. deliver purchased launch tokens directly to `recipient`;
-7. forward any final-fill quote refund back to the original launch+buy caller;
-8. clear temporary USDC approval where the chosen SafeERC20 flow leaves one;
-9. require no temporary Factory custody attributable to the intent after successful completion;
-10. emit one launch record plus a Launch+Buy orchestration event.
+4. route/credit the launch-fee portion exactly as above;
+5. temporarily approve exactly the `quoteIn` buy portion to the curve;
+6. call the canonical curve buy path on behalf of the launch intent;
+7. deliver purchased launch tokens directly to `recipient`;
+8. forward any final-fill quote refund back to the original launch+buy caller;
+9. clear temporary USDC approval where the chosen SafeERC20 flow leaves one;
+10. require no temporary Factory custody attributable to the intent after successful completion;
+11. emit one launch record plus a Launch+Buy orchestration event.
 
-Any failure at deployment, initialization, economics-pin validation, USDC transfer, approval, buy, slippage, token transfer or refund must revert the **entire** transaction. A failed initial buy must not leave a successfully created launch behind.
+Any failure at launch-fee credit, deployment, initialization, economics-pin validation, USDC transfer, approval, buy, slippage, token transfer or refund reverts the **entire** transaction. A failed initial buy must not leave a successfully created launch or paid launch fee behind.
 
 ### Reuse of canonical Buy semantics
 
@@ -264,14 +299,14 @@ The Factory must not copy `BreadBondingCurveMath` calculations merely to simulat
 
 ### Final partial fill
 
-If the initial buy itself crosses the reserved floor, it follows the exact Day-3 final-buy behavior:
+If the initial buy or an ordinary buy crosses the reserved floor, it follows the Day-3 final-buy structure:
 
 - clamp tokens out to sellable allocation;
-- reprice from token side;
-- charge only actual quote spent;
-- apply standard fee/tax/opening protection only to the actual spent amount under the formula/order below;
-- refund all unused quote to the original Launch+Buy caller;
-- leave no quote stranded in the Factory.
+- derive required net curve input from the token side with `BreadBondingCurveMath.getAmountIn(..., feeBps=0)`;
+- gross up under the exact coded rule below;
+- charge only `spent` under that rule;
+- refund all `received - spent` quote;
+- preserve the reserved floor.
 
 ## Component 4 — Bread opening protection
 
@@ -338,20 +373,21 @@ The only exemption is the one initial buy executed as part of the same atomic `l
 Required authorization shape:
 
 - only the canonical Factory launch orchestration may invoke the exempt buy path;
-- the exemption is consumed by that one launch-time buy only;
-- it cannot be reused on later buys;
+- the exemption exists for that one launch-time buy call only;
+- there is no reusable exemption bit/address grant after the call;
 - recipient identity does not create future exemption;
 - deployer identity does not create future exemption;
 - creator-fee-recipient identity does not create future exemption;
 - users cannot pass a boolean or arbitrary exemption address to public curve buy.
 
-A launch with no initial buy consumes no public-wallet exemption and ordinary subsequent buys are taxed according to elapsed time.
+A launch with no initial buy creates no exemption state. Ordinary subsequent buys are taxed according to elapsed time.
 
 ### Tax order
 
-For an ordinary buy, once the Day-3 actual `spent` amount is established:
+For an ordinary buy before a final clamp:
 
 ```text
+spent = received
 baseFee = floor(spent * tradeFeeBps / 10000)
 creatorTax = floor(spent * creatorTaxBps / 10000)
 quoteAfterStandardCharges = spent - baseFee - creatorTax
@@ -361,9 +397,55 @@ netCurveInput = quoteAfterStandardCharges - snipeTax
 
 Tokens out are priced from `netCurveInput` using the existing Bread constant-product math.
 
-For a final partial fill, the implementation must solve the inverse gross-up consistently so the user is charged only the actual quote required for the clamped token output while applying the same charge ordering. The implementation plan must derive one deterministic integer-rounding algorithm and prove it does not overcharge or violate the reserved floor.
+The exempt atomic Launch+Buy uses `snipeTaxBps = 0`; base fee and creator tax remain fully active.
 
-This is a required TDD target; no ad hoc approximation is permitted.
+### Exact final-fill gross-up rule
+
+If the initially quoted output exceeds the remaining sellable allocation:
+
+```text
+netRequired = BreadBondingCurveMath.getAmountIn(
+    available,
+    quoteReserve,
+    tokenReserve,
+    0
+)
+
+quoteAfterStandardRequired = ceil(
+    netRequired * 10000 / (10000 - snipeTaxBps)
+)
+
+grossRequired = ceil(
+    quoteAfterStandardRequired * 10000 /
+    (10000 - tradeFeeBps - creatorTaxBps)
+)
+
+spent = min(grossRequired, received)
+```
+
+Both ceilings must use overflow-safe full-precision multiplication/division such as the already-vendored OpenZeppelin `Math.mulDiv(..., Math.Rounding.Ceil)`.
+
+Then recompute from exact `spent` using the ordinary floor rules:
+
+```text
+baseFee = floor(spent * tradeFeeBps / 10000)
+creatorTax = floor(spent * creatorTaxBps / 10000)
+quoteAfterStandardCharges = spent - baseFee - creatorTax
+snipeTax = floor(quoteAfterStandardCharges * snipeTaxBps / 10000)
+netCurveInput = quoteAfterStandardCharges - snipeTax
+```
+
+Required postcondition for the clamped fill:
+
+```text
+netCurveInput >= netRequired
+```
+
+and the buyer receives exactly `available` launch tokens with refund `received - spent`.
+
+This deliberately preserves the Day-3 source-derived **ceiling gross-up** convention. When `snipeTaxBps == 0`, the first gross-up is identity and the rule reduces to the existing Day-3 combined base-fee/creator-tax ceiling gross-up. It does not introduce a new minimal-input search or silently rewrite already-accepted Day-3 rounding semantics.
+
+Tests must prove six-decimal boundaries, overflow safety, no underfunded clamped output, exact refund and no rounding-extraction sequence.
 
 ### Snipe-tax proceeds
 
@@ -432,7 +514,7 @@ Guardian may not:
 - unpause any mode;
 - move USDC or launch tokens;
 - change FeePolicy;
-- change creator tax or fee recipients;
+- change launch fee, creator tax or fee recipients;
 - redirect FeeEscrow claims;
 - alter launch configuration/economics digest inputs;
 - change Factory/deployer dependencies;
@@ -493,7 +575,8 @@ Day-4 events must be sufficient for later SDK/indexer work to reconstruct canoni
 
 At minimum design for deterministic events covering:
 
-- launch created: token, curve, deployer, creator recipient, creator tax, economics digest, launch timestamp, version/config id;
+- launch created: token, curve, deployer, creator recipient, creator tax, launch fee, economics digest, launch timestamp, version/config id;
+- launch-fee credit: token/curve or launch identity, protocol recipient and exact USDC amount, reconciled with canonical FeeEscrow credit;
 - atomic Launch+Buy result: caller, token/curve, recipient, offered quote, actual spent quote, refund, tokens out;
 - opening protection applied: buyer/caller, applied tax bps, tax amount, exempt/non-exempt reason code;
 - future launch configuration/economics updates;
@@ -514,17 +597,19 @@ Events are observability/provenance, not substitute accounting state.
 - later FeePolicy/future Factory configuration changes do not rewrite an existing launch;
 - stale/wrong `expectedEconomics` reverts before a launch becomes durable;
 - digest changes when any bound economic term changes and remains stable when unrelated operational state changes;
+- launch fee is exact canonical USDC, goes only through the ratified protocol FeeEscrow recipient path, and leaves no Factory-held balance;
 - no CREATE2/deterministic address promise exists in the public Day-4 API.
 
 ### Launch+Buy
 
-- launch-only succeeds without temporary USDC custody;
+- launch-only succeeds without temporary USDC custody remaining after success;
 - atomic launch+buy succeeds and uses canonical curve pricing/state;
 - launch+buy with zero/invalid input rejects;
 - short-transfer/adversarial quote token cannot create underfunded launch/buy state in fixtures;
-- slippage failure rolls back token/curve deployment and all USDC movement;
+- launch-fee credit failure rolls back the whole launch;
+- slippage failure rolls back token/curve deployment, launch-fee credit and all USDC movement;
 - initialization failure rolls back all deployment/custody;
-- final partial fill charges exact actual quote, refunds all excess and preserves reserved floor;
+- final partial fill uses the exact sequential ceiling gross-up, charges exact coded `spent`, refunds all excess and preserves reserved floor;
 - refund transfer failure reverts whole launch+buy;
 - Factory has no residual per-intent USDC after success;
 - temporary allowance does not create a reusable drain path;
@@ -541,11 +626,11 @@ Prove every integer timestamp in and around the protection window:
 - launch timestamp cannot reset;
 - ordinary buy is taxed, sell is not;
 - only same-transaction Factory Launch+Buy can use the exemption;
-- the exemption cannot replay;
+- no reusable exemption state remains after the atomic call;
 - launcher/creator/recipient receives no continuing exemption;
 - opening-tax USDC exactly joins `quoteFeeBalance` and later reconciles through the existing protocol/creator split and FeeEscrow path;
-- six-decimal USDC boundary/fuzz cases do not overcharge, underflow or create rounding-extraction loops;
-- final partial fill with opening tax reconciles `spent = curve effect + base fee + creator tax + snipe tax` under the chosen rounding algorithm.
+- six-decimal USDC boundary/fuzz cases do not overcharge beyond the explicit coded ceiling-gross-up rule, underflow or create rounding-extraction loops;
+- final partial fill with opening tax satisfies `netCurveInput >= netRequired`, refunds `received - spent`, and reconciles `spent = netCurveInput + base fee + creator tax + snipe tax` exactly.
 
 ### Emergency / INV-060–063
 
@@ -556,7 +641,7 @@ Prove every integer timestamp in and around the protection window:
 - Protocol Admin can reduce restrictions/unpause;
 - unauthorized callers cannot change restrictions;
 - no EmergencyController function moves USDC/token funds;
-- no EmergencyController function changes FeePolicy, creator tax, recipients, economics hash, launch timestamp or exemption state;
+- no EmergencyController function changes FeePolicy, launch fee, creator tax, recipients, economics hash, launch timestamp or exemption state;
 - future config changes leave existing launch snapshots unchanged;
 - production ownership handoff fixtures prove the intended multisig-compatible control path and no durable single-EOA admin configuration is accepted as release-ready.
 
@@ -578,11 +663,12 @@ Preserve all previously applicable Day-3 invariants plus INV-040–044 and INV-0
 
 ## Security / failure boundaries
 
-- Factory, Deployer and EmergencyController are non-custodial except for tightly bounded transient Launch+Buy USDC custody inside one reverting transaction.
+- Factory, Deployer and EmergencyController are non-custodial except for tightly bounded transient Launch/Launch+Buy USDC custody inside one reverting transaction.
+- Launch-fee revenue is not left as raw Factory balance; it becomes an exact FeeEscrow credit to the snapshotted protocol recipient.
 - No rescue path may consume FeeEscrow backing or creator/user claims.
 - No arbitrary-call admin surface is introduced.
-- No unbounded permanent allowance from Factory to curve is allowed.
-- Reentrancy protection must cover Factory Launch+Buy orchestration and any curve path that adds new external-transfer ordering.
+- No unbounded permanent allowance from Factory to curve or FeeEscrow is allowed.
+- Reentrancy protection must cover Factory launch orchestration and any curve path that adds new external-transfer ordering.
 - External reference code is evidence, not authority; all new/reconstructed money-path behavior is re-proven under Bread USDC and permission semantics.
 - Static/manual review and later independent review requirements remain active; Day-4 PASS is not equivalent to unrestricted public-money launch approval.
 
@@ -598,7 +684,7 @@ Day 4 MUST NOT implement or infer:
 - Permit2/Universal Router merely because references use them;
 - CREATE2/deterministic launch-address guarantees;
 - guessed Arc mainnet addresses;
-- guessed current-live Pons configuration;
+- guessed current-live Pons fee/config values;
 - a claim that the Bread quadratic opening tax is exact Pons parity;
 - permanent creator/deployer exemption from opening protection;
 - Guardian unpause/economic/fund authority;
@@ -621,31 +707,43 @@ Day 4 may be closed only when one exact integrated candidate proves:
 
 Day 5 must not begin before the Day-4 integrated closeout is durably merged and verified.
 
-## Remaining blockers after this design freeze
+## Blocker disposition after design approval
 
-This design resolves the Day-4 architecture-level gate:
+The architecture/economic decision is approved in this repo design, but the Project Source gate is not yet cleared:
 
 ```text
-BREAD_SNIPE_DECAY_FORMULA = FROZEN_BY_APPROVED_DAY4_DESIGN
+BREAD_SNIPE_DECAY_FORMULA = DECISION_APPROVED_PENDING_PROJECT_SOURCE_RATIFICATION
 ```
 
 The following broader blockers remain active and are not silently cleared:
 
 - `CURRENT_PONS_FACTORY_SOURCE_PARITY` — no exact current-live factory parity claim;
-- `LIVE_RUNTIME_CONFIG` — deployment values remain unresolved;
+- `LIVE_RUNTIME_CONFIG` — production launch fee and other deployment values remain unresolved;
 - `PONS_AUDIT_FINDINGS` — independent source/audit reconciliation remains outstanding;
 - `ARC_MAINNET_VALUES` — do not hardcode until officially published/reconciled.
 
 These blockers do not authorize alternate Day-4 economics. They remain release/integration gates where applicable.
 
-## Implementation transition rule
+## Self-review result
 
-This document is the approved design captured after the user approved the Day-4 bundle. It is not production implementation authorization by itself.
+The committed design has been checked for:
+
+- placeholder/TBD language affecting behavior — none remains;
+- internal contradictions — the opening-tax and final-fill rounding order is now explicit and reduces exactly to Day-3 gross-up when opening tax is zero;
+- scope drift — Day-5 graduation/DEX/locker and buyback remain excluded;
+- duplicated accounting — launch fee and opening tax both route through existing Bread FeeEscrow/fee accounting rather than creating new ledgers;
+- unresolved live values — values such as production launch fee remain explicit deployment configuration blocked by `LIVE_RUNTIME_CONFIG`, not guessed defaults;
+- source-governance compliance — Day-4 production remains a hard stop until affected Project Sources are replaced/uploaded/read back/ratified.
+
+## Implementation transition rule
 
 Before production Solidity work:
 
-1. review this committed spec for contradictions/placeholders/scope drift;
-2. obtain explicit user review/approval of the committed spec;
-3. write a detailed TDD implementation plan;
-4. begin implementation from a clean isolated branch/worktree based on the accepted Day-3 handoff baseline;
-5. require RED before each production behavior repair/addition and exact-head GREEN before merge.
+1. obtain explicit user review/approval of this committed spec;
+2. generate the affected consolidated Project Source replacements carrying these exact Day-4 decisions;
+3. have the user replace/upload those Project Sources;
+4. read them back and reconcile against this spec and `docs/current-build-state.yaml`;
+5. explicitly establish `PROJECT_SOURCE_RATIFICATION_FOR_DAY4_PRODUCTION = RATIFIED`;
+6. write the detailed TDD implementation plan;
+7. begin implementation from a clean isolated branch/worktree based on the accepted Day-3 handoff baseline;
+8. require RED before each production behavior addition/repair and exact-head GREEN before merge.
