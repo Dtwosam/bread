@@ -19,6 +19,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 private constant BASIS_POINTS = 10_000;
+    bytes4 private constant GRADUATION_COORDINATOR_SELECTOR = bytes4(keccak256("graduationCoordinator()"));
     uint16 public constant STARTING_SNIPE_TAX_BPS = 9_900;
     uint8 public constant SNIPE_DURATION_SECONDS = 5;
     uint16 public constant TERMINAL_SNIPE_TAX_BPS = 0;
@@ -59,7 +60,6 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     IBreadFeePolicy public immutable feePolicy;
     IBreadFeeEscrow public immutable feeEscrow;
     IBreadEmergencyController public immutable emergencyController;
-    IGraduationCoordinator public immutable graduationCoordinator;
 
     address public immutable protocolFeeRecipient;
     uint16 public immutable tradeFeeBps;
@@ -113,14 +113,13 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         address feePolicy_,
         address feeEscrow_,
         address emergencyController_,
-        address graduationCoordinator_,
         uint256 phantomQuote_,
         uint16 creatorTaxBps_,
         uint256 graduationThreshold_
     ) BreadTrackedCurveState(pairToken_, phantomQuote_, graduationThreshold_) {
         if (
             creatorFeeRecipient_ == address(0) || factory_ == address(0) || feePolicy_ == address(0)
-                || feeEscrow_ == address(0) || emergencyController_ == address(0) || graduationCoordinator_ == address(0)
+                || feeEscrow_ == address(0) || emergencyController_ == address(0)
         ) revert ZeroAddress();
 
         BreadFeePolicySnapshot memory snapshot = IBreadFeePolicy(feePolicy_).currentFeePolicy();
@@ -133,7 +132,6 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         feePolicy = IBreadFeePolicy(feePolicy_);
         feeEscrow = IBreadFeeEscrow(feeEscrow_);
         emergencyController = IBreadEmergencyController(emergencyController_);
-        graduationCoordinator = IGraduationCoordinator(graduationCoordinator_);
         protocolFeeRecipient = snapshot.protocolFeeRecipient;
         tradeFeeBps = snapshot.tradeFeeBps;
         protocolFeeShareBps = snapshot.protocolFeeShareBps;
@@ -145,6 +143,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         if (msg.sender != factory) revert UnauthorizedFactory();
         _initializeTrackedCurve(token_);
         launchTimestamp = uint64(block.timestamp);
+    }
+
+    /// @notice Resolves the Factory's one-time-bound canonical graduation coordinator.
+    /// @dev Returns zero for isolated legacy/unit-test factory harnesses that do not expose the Day-5 getter.
+    function graduationCoordinator() public view returns (address coordinator) {
+        (bool ok, bytes memory data) = factory.staticcall(abi.encodeWithSelector(GRADUATION_COORDINATOR_SELECTOR));
+        if (!ok || data.length != 32) return address(0);
+        coordinator = abi.decode(data, (address));
     }
 
     function currentSnipeTaxBps() public view returns (uint16) {
@@ -329,7 +335,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         }
 
         (
-            uint256 pendingBaseFee,
+            ,
             uint256 pendingTax,
             uint256 totalPending,
             uint256 protocolAmount,
@@ -351,7 +357,6 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             feeEscrow.credit(creatorFeeRecipient, creatorAmount);
         }
 
-        pendingBaseFee;
         emit FeesSwept(protocolAmount, creatorAmount, pendingTax);
     }
 
@@ -361,7 +366,8 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         external
         returns (uint256 seedUsdc, uint256 tokenOut, uint256 protocolFeeAmount, uint256 creatorFeeAmount)
     {
-        if (msg.sender != address(graduationCoordinator)) revert UnauthorizedGraduationCoordinator();
+        address coordinator = graduationCoordinator();
+        if (coordinator == address(0) || msg.sender != coordinator) revert UnauthorizedGraduationCoordinator();
         if (!readyToGraduate()) revert NotReadyToGraduate();
 
         graduated = true;
@@ -397,8 +403,11 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
 
     function _tryAutoGraduation() private {
         if (!readyToGraduate()) return;
-        emit GraduationReady(token, address(this), address(graduationCoordinator));
-        try graduationCoordinator.sweep(token) {
+        address coordinator = graduationCoordinator();
+        if (coordinator == address(0)) return;
+
+        emit GraduationReady(token, address(this), coordinator);
+        try IGraduationCoordinator(coordinator).sweep(token) {
             // Committed Stage-1 state is emitted by the coordinator.
         } catch (bytes memory reason) {
             emit GraduationAutoAttemptFailed(token, keccak256(reason));
