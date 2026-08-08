@@ -46,6 +46,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 fee,
         uint256 tax
     );
+    event CurveSell(
+        address indexed seller,
+        address indexed recipient,
+        uint256 tokensIn,
+        uint256 quoteOut,
+        uint256 fee,
+        uint256 tax
+    );
 
     constructor(
         address pairToken_,
@@ -116,5 +124,38 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
 
         IERC20(token).safeTransfer(recipient, tokensOut);
         emit CurveBuy(msg.sender, recipient, quoteIn, tokensOut, fee, tax);
+    }
+
+    function sell(uint256 tokensIn, uint256 minQuoteOut, address recipient)
+        external
+        nonReentrant
+        returns (uint256 quoteOut)
+    {
+        if (token == address(0)) revert NotInitialized();
+        if (graduated || readyToGraduate()) revert CurveClosed();
+        if (recipient == address(0)) revert RecipientZeroAddress();
+        if (tokensIn == 0) revert ZeroAmount();
+
+        (uint256 quoteReserve_, uint256 tokenReserve_) = getReserves();
+
+        IERC20 launchToken = IERC20(token);
+        uint256 balanceBefore = launchToken.balanceOf(address(this));
+        launchToken.safeTransferFrom(msg.sender, address(this), tokensIn);
+        uint256 received = launchToken.balanceOf(address(this)) - balanceBefore;
+        if (received != tokensIn) revert UnexpectedReceivedAmount(tokensIn, received);
+
+        uint256 grossQuoteOut = BreadBondingCurveMath.getAmountOut(tokensIn, tokenReserve_, quoteReserve_, 0);
+        uint256 fee = grossQuoteOut * tradeFeeBps / BASIS_POINTS;
+        uint256 tax = grossQuoteOut * creatorTaxBps / BASIS_POINTS;
+        quoteOut = grossQuoteOut - fee - tax;
+        if (quoteOut < minQuoteOut) revert SlippageExceeded(minQuoteOut, quoteOut);
+
+        quoteFeeBalance += fee;
+        creatorTaxBalance += tax;
+        trackedQuote -= quoteOut;
+        trackedTokens += tokensIn;
+
+        IERC20(pairToken).safeTransfer(recipient, quoteOut);
+        emit CurveSell(msg.sender, recipient, tokensIn, quoteOut, fee, tax);
     }
 }
