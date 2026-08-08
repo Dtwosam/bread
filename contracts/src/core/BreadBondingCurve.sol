@@ -40,6 +40,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     uint16 public immutable maxCreatorTaxBps;
     uint16 public immutable creatorTaxBps;
 
+    event CreatorFeeRecipientUpdated(address indexed previousRecipient, address indexed nextRecipient);
     event CurveBuy(
         address indexed buyer,
         address indexed recipient,
@@ -93,6 +94,15 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     function initialize(address token_) external {
         if (msg.sender != factory) revert UnauthorizedFactory();
         _initializeTrackedCurve(token_);
+    }
+
+    function setCreatorFeeRecipient(address nextRecipient) external {
+        if (msg.sender != factory) revert UnauthorizedFactory();
+        if (nextRecipient == address(0)) revert RecipientZeroAddress();
+
+        address previousRecipient = creatorFeeRecipient;
+        creatorFeeRecipient = nextRecipient;
+        emit CreatorFeeRecipientUpdated(previousRecipient, nextRecipient);
     }
 
     function buy(uint256 quoteIn, uint256 minTokensOut, address recipient)
