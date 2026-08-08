@@ -31,6 +31,16 @@ contract BreadBondingCurveTradingTest {
         uint256 expectedQuoteOut;
     }
 
+    struct FinalBuyExpectations {
+        uint256 sellable;
+        uint256 netRequired;
+        uint256 spent;
+        uint256 quoteIn;
+        uint256 refund;
+        uint256 fee;
+        uint256 tax;
+    }
+
     function testOrdinaryBuyUsesQuoteLegFeesAndTrackedReserves() public {
         (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) = _deployFixture();
 
@@ -97,6 +107,38 @@ contract BreadBondingCurveTradingTest {
         assert(tokenReserveAfter == e.tokenReserveBeforeSell + e.tokensIn);
     }
 
+    function testFinalCrossingBuyClampsRepricesAndRefundsExcessQuote() public {
+        (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) = _deployFixture();
+        FinalBuyExpectations memory e;
+
+        e.sellable = curve.sellableTokens();
+        e.netRequired = _amountIn(e.sellable, PHANTOM_QUOTE, TOKEN_SUPPLY);
+        e.spent = _ceilMulDiv(
+            e.netRequired,
+            10_000,
+            10_000 - TRADE_FEE_BPS - CREATOR_TAX_BPS
+        );
+        e.quoteIn = e.spent + 1_000 * ONE_USDC;
+        e.refund = e.quoteIn - e.spent;
+        e.fee = e.spent * TRADE_FEE_BPS / 10_000;
+        e.tax = e.spent * CREATOR_TAX_BPS / 10_000;
+
+        usdc.mint(address(this), e.quoteIn);
+        assert(usdc.approve(address(curve), e.quoteIn));
+
+        uint256 tokensOut = curve.buy(e.quoteIn, e.sellable, address(this));
+
+        assert(tokensOut == e.sellable);
+        assert(token.balanceOf(address(this)) == e.sellable);
+        assert(usdc.balanceOf(address(this)) == e.refund);
+        assert(usdc.balanceOf(address(curve)) == e.spent);
+        assert(curve.quoteFeeBalance() == e.fee);
+        assert(curve.creatorTaxBalance() == e.tax);
+        assert(curve.trackedQuote() == e.spent);
+        assert(curve.trackedTokens() == curve.reservedTokens());
+        assert(curve.readyToGraduate());
+    }
+
     function _deployFixture() private returns (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) {
         usdc = new MockUSDC6();
         BreadFeePolicySnapshot memory snapshot = BreadFeePolicySnapshot({
@@ -141,5 +183,18 @@ contract BreadBondingCurveTradingTest {
         uint256 numerator = amountIn * reserveOut;
         uint256 denominator = reserveIn + amountIn;
         return numerator / denominator;
+    }
+
+    function _amountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        private
+        pure
+        returns (uint256)
+    {
+        return (amountOut * reserveIn * 10_000) / ((reserveOut - amountOut) * 10_000) + 1;
+    }
+
+    function _ceilMulDiv(uint256 x, uint256 y, uint256 denominator) private pure returns (uint256) {
+        uint256 product = x * y;
+        return product / denominator + (product % denominator == 0 ? 0 : 1);
     }
 }
