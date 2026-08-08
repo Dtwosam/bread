@@ -35,6 +35,13 @@ abstract contract BreadDay4Fixture {
     }
 
     function _deployDay4Fixture(uint256 launchFee) internal returns (Day4Fixture memory f) {
+        return _deployDay4FixtureWithGuardian(launchFee, DAY4_GUARDIAN);
+    }
+
+    function _deployDay4FixtureWithGuardian(uint256 launchFee, address guardian)
+        internal
+        returns (Day4Fixture memory f)
+    {
         f.usdc = new MockUSDC6();
         BreadFeePolicySnapshot memory snapshot = BreadFeePolicySnapshot({
             protocolFeeRecipient: DAY4_PROTOCOL_RECIPIENT,
@@ -44,7 +51,7 @@ abstract contract BreadDay4Fixture {
         });
         f.policy = new BreadFeePolicy(address(this), snapshot, address(this));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
-        f.emergencyController = new BreadEmergencyController(address(this), DAY4_GUARDIAN);
+        f.emergencyController = new BreadEmergencyController(address(this), guardian);
 
         IBreadLaunchFactory.LaunchConfig memory config = IBreadLaunchFactory.LaunchConfig({
             supply: DAY4_SUPPLY,
