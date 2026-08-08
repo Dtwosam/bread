@@ -32,6 +32,8 @@ contract BreadLaunchFactory is Ownable {
     error CreatorRecipientZeroAddress();
     error EmptyTokenName();
     error EmptyTokenSymbol();
+    error InitialBuyRecipientZeroAddress();
+    error InitialBuyZeroAmount();
     error CreatorTaxAboveCurrentMaximum(uint16 creatorTaxBps, uint16 maxCreatorTaxBps);
     error StaleEconomics(bytes32 expected, bytes32 actual);
     error UnexpectedReceivedAmount(uint256 expected, uint256 actual);
@@ -56,6 +58,13 @@ contract BreadLaunchFactory is Ownable {
         bytes32 openingTaxRoutingId;
     }
 
+    struct LaunchPreparation {
+        BreadLaunchDeployer deployer;
+        address protocolFeeRecipient;
+        bytes32 digest;
+        uint256 launchFeeUsdc;
+    }
+
     address public immutable usdc;
     IBreadFeePolicy public immutable feePolicy;
     address public immutable feeEscrow;
@@ -78,6 +87,16 @@ contract BreadLaunchFactory is Ownable {
         uint16 creatorTaxBps,
         bytes32 economicsDigest,
         uint64 configVersion
+    );
+    event LaunchAndBuyExecuted(
+        address indexed buyer,
+        address indexed token,
+        address indexed curve,
+        address recipient,
+        uint256 quoteIn,
+        uint256 spent,
+        uint256 refund,
+        uint256 tokensOut
     );
 
     constructor(
@@ -158,9 +177,55 @@ contract BreadLaunchFactory is Ownable {
         external
         returns (address token, address curve)
     {
+        LaunchPreparation memory prep = _prepareLaunch(params);
+        IERC20 quote = IERC20(usdc);
+        uint256 factoryBalanceBefore = quote.balanceOf(address(this));
+        _receiveExactUsdc(quote, msg.sender, prep.launchFeeUsdc);
+
+        (token, curve) = _deployAndInitialize(params, msg.sender, prep.deployer);
+        _creditLaunchFee(quote, token, prep.protocolFeeRecipient, prep.launchFeeUsdc);
+        _recordLaunch(params, token, curve, prep.digest, msg.sender);
+        _requireFactoryBalance(quote, factoryBalanceBefore);
+    }
+
+    function launchTokenAndBuy(
+        IBreadLaunchFactory.LaunchParams calldata params,
+        uint256 quoteIn,
+        uint256 minTokensOut,
+        address recipient
+    ) external returns (address token, address curve, uint256 tokensOut) {
+        if (quoteIn == 0) revert InitialBuyZeroAmount();
+        if (recipient == address(0)) revert InitialBuyRecipientZeroAddress();
+
+        LaunchPreparation memory prep = _prepareLaunch(params);
+        IERC20 quote = IERC20(usdc);
+        uint256 factoryBalanceBefore = quote.balanceOf(address(this));
+        _receiveExactUsdc(quote, msg.sender, prep.launchFeeUsdc + quoteIn);
+
+        (token, curve) = _deployAndInitialize(params, msg.sender, prep.deployer);
+        _creditLaunchFee(quote, token, prep.protocolFeeRecipient, prep.launchFeeUsdc);
+
+        quote.forceApprove(curve, quoteIn);
+        uint256 spent;
+        uint256 refund;
+        (tokensOut, spent, refund) = BreadBondingCurve(curve).buyForLaunch(quoteIn, minTokensOut, recipient);
+        quote.forceApprove(curve, 0);
+
+        if (refund != 0) quote.safeTransfer(msg.sender, refund);
+        _recordLaunch(params, token, curve, prep.digest, msg.sender);
+        _requireFactoryBalance(quote, factoryBalanceBefore);
+
+        emit LaunchAndBuyExecuted(msg.sender, token, curve, recipient, quoteIn, spent, refund, tokensOut);
+    }
+
+    function _prepareLaunch(IBreadLaunchFactory.LaunchParams calldata params)
+        private
+        view
+        returns (LaunchPreparation memory prep)
+    {
         if (!_launchConfig.enabled) revert LaunchDisabled();
-        BreadLaunchDeployer deployer_ = launchDeployer;
-        if (address(deployer_) == address(0)) revert LaunchDeployerNotSet();
+        prep.deployer = launchDeployer;
+        if (address(prep.deployer) == address(0)) revert LaunchDeployerNotSet();
         if (params.creatorFeeRecipient == address(0)) revert CreatorRecipientZeroAddress();
         if (bytes(params.name).length == 0) revert EmptyTokenName();
         if (bytes(params.symbol).length == 0) revert EmptyTokenSymbol();
@@ -170,34 +235,30 @@ contract BreadLaunchFactory is Ownable {
             revert CreatorTaxAboveCurrentMaximum(params.creatorTaxBps, policy.maxCreatorTaxBps);
         }
 
-        bytes32 digest = previewLaunchEconomics();
-        if (params.expectedEconomics != bytes32(0) && params.expectedEconomics != digest) {
-            revert StaleEconomics(params.expectedEconomics, digest);
+        prep.digest = previewLaunchEconomics();
+        if (params.expectedEconomics != bytes32(0) && params.expectedEconomics != prep.digest) {
+            revert StaleEconomics(params.expectedEconomics, prep.digest);
         }
-
-        uint256 launchFee = _launchConfig.launchFeeUsdc;
-        IERC20 quote = IERC20(usdc);
-        uint256 factoryBalanceBefore = quote.balanceOf(address(this));
-        _receiveExactLaunchFee(quote, msg.sender, launchFee);
-
-        BreadLaunchDeployer.BreadLaunchDeployment memory deployment = _buildDeployment(params, msg.sender);
-        (token, curve) = deployer_.deployLaunch(deployment);
-        BreadBondingCurve(curve).initialize(token);
-        _creditLaunchFee(quote, token, policy.protocolFeeRecipient, launchFee);
-        _recordLaunch(params, token, curve, digest, msg.sender);
-
-        uint256 factoryBalanceAfter = quote.balanceOf(address(this));
-        if (factoryBalanceAfter != factoryBalanceBefore) {
-            revert ResidualFactoryCustody(factoryBalanceBefore, factoryBalanceAfter);
-        }
+        prep.protocolFeeRecipient = policy.protocolFeeRecipient;
+        prep.launchFeeUsdc = _launchConfig.launchFeeUsdc;
     }
 
-    function _receiveExactLaunchFee(IERC20 quote, address payer, uint256 amount) private {
+    function _receiveExactUsdc(IERC20 quote, address payer, uint256 amount) private {
         if (amount == 0) return;
         uint256 beforeBalance = quote.balanceOf(address(this));
         quote.safeTransferFrom(payer, address(this), amount);
         uint256 received = quote.balanceOf(address(this)) - beforeBalance;
         if (received != amount) revert UnexpectedReceivedAmount(amount, received);
+    }
+
+    function _deployAndInitialize(
+        IBreadLaunchFactory.LaunchParams calldata params,
+        address originalDeployer,
+        BreadLaunchDeployer deployer_
+    ) private returns (address token, address curve) {
+        BreadLaunchDeployer.BreadLaunchDeployment memory deployment = _buildDeployment(params, originalDeployer);
+        (token, curve) = deployer_.deployLaunch(deployment);
+        BreadBondingCurve(curve).initialize(token);
     }
 
     function _creditLaunchFee(IERC20 quote, address token, address protocolRecipient, uint256 amount) private {
@@ -206,6 +267,11 @@ contract BreadLaunchFactory is Ownable {
         IBreadFeeEscrow(feeEscrow).credit(protocolRecipient, amount);
         quote.forceApprove(feeEscrow, 0);
         emit LaunchFeeCredited(token, protocolRecipient, amount);
+    }
+
+    function _requireFactoryBalance(IERC20 quote, uint256 expectedBalance) private view {
+        uint256 actualBalance = quote.balanceOf(address(this));
+        if (actualBalance != expectedBalance) revert ResidualFactoryCustody(expectedBalance, actualBalance);
     }
 
     function _buildDeployment(IBreadLaunchFactory.LaunchParams calldata params, address originalDeployer)
