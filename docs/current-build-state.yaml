@@ -1,7 +1,7 @@
-schema_version: 1.10
+schema_version: 1.11
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
-updated_at: 2026-08-08T23:07:00+01:00
+updated_at: 2026-08-08T23:31:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -13,9 +13,11 @@ completed_checkpoints:
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
   - "Day 5 preflight: DAY_5_PREFLIGHT_RECONCILIATION_PASS"
   - "Day 5 source gate: PROJECT_SOURCE_V1_5_DAY5_RATIFICATION_RATIFIED"
-active_checkpoint: "Day 5 — graduation/coordinator architecture design"
-active_lane: "Written Day-5 design committed; self-review complete; written-spec user review gate"
-active_gate: DAY5_WRITTEN_DESIGN_USER_REVIEW_REQUIRED
+  - "Day 5 design: WRITTEN_DESIGN_APPROVED"
+  - "Day 5 plan: IMPLEMENTATION_PLAN_V2_SELF_REVIEWED"
+active_checkpoint: "Day 5 — design/plan documentation gate"
+active_lane: "Approved design and self-reviewed v2 implementation plan on PR #26; exact-head documentation CI"
+active_gate: DAY5_DESIGN_PLAN_DOCUMENTATION_CI
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -23,6 +25,8 @@ project_source_state:
   existing_day1_day3_baseline_ratification: RATIFIED
   day4_amendment: RATIFIED
   day4_production_ratification: RATIFIED
+  day4_ratified_source:
+    pack: v1.4-day4-design
   current_ratified_pack: v1.5-day5-preflight-consolidated
   day5_preflight_amendment_required: true
   day5_preflight_amendment_upload: COMPLETE
@@ -53,6 +57,9 @@ repository:
   day5_design_branch: design/day5-graduation-coordinator
   day5_design_spec: docs/superpowers/specs/2026-08-08-day5-graduation-coordinator-design.md
   day5_design_initial_commit: dbd272d002f888b2b4138b8b47f38c1b84c01325
+  day5_plan: docs/superpowers/plans/2026-08-08-day5-graduation-coordinator-v2.md
+  day5_plan_self_review_commit: 32fd667a705851f9c57e1f5796ef5fde8492b456
+  day5_documentation_pr: 26
   day5_production_code_started: false
 day5_scope:
   production_status: NOT_STARTED
@@ -78,7 +85,8 @@ day5_scope:
     adapter_snapshot: "immutable per launch"
     v4: "preferred only when official environment is verified; official-interface fixtures allowed for local/testnet proofs"
     v3: "implemented behind same interface; inactive unless verified environment requires activation"
-    locker: "non-upgradeable permanent principal lock; no withdrawal/arbitrary-call/admin escape"
+    locker: "non-upgradeable permanent principal lock; one-time coordinator wiring only; no withdrawal/arbitrary-call/admin escape"
+    fee_escrow: "canonical claim ledger preserved; graduation coordinator may credit settled curve fee amounts only through explicit authorized-creditor wiring"
     rescue: "Protocol Admin only; exact SWEPT/pause/time preconditions; seven-day Bread recovery constant derived from frozen Pons reference"
 verification:
   day4_final_implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
@@ -126,16 +134,16 @@ source_amendment:
   required: true
   status: RATIFIED
   reason: "split legacy LIVE_RUNTIME_CONFIG into Pons reference evidence and Bread-owned production configuration approval gate"
-  controlling_effect: "Day-5 architecture/design may proceed. Production Solidity remains gated by written design review and detailed implementation-plan completion."
+  controlling_effect: "Day-5 design is approved and the implementation plan is self-reviewed. Production Solidity may begin only from a fresh implementation branch after the documentation gate is durably merged."
 security_review:
   pons_audit_clean_claim: NONE
   bread_independent_review_requirement: ACTIVE
   external_dex_rule: "official DEX interfaces and official Arc/DEX deployment evidence are primary; no guessed canonical Arc deployment"
 next_action: >-
-  Review the committed Day-5 design at docs/superpowers/specs/2026-08-08-day5-graduation-coordinator-design.md. After the written-spec review gate, write and self-review the detailed Day-5 implementation plan. Only then begin RED -> GREEN TDD production implementation. Do not start Day-5 Solidity before that sequence is complete.
+  Obtain exact-head CI PASS for documentation PR #26 and merge only that exact green head. Verify merged main, then create a fresh Day-5 implementation branch from that verified main and begin the self-reviewed v2 RED -> GREEN plan. Re-check official Arc/Uniswap sources before DEX-specific implementation. Do not activate a network adapter or guess production/mainnet values.
 do_not_do:
   - "Do not reopen closed Day-4 economics/security behavior without a newly ratified source change."
-  - "Do not start Day-5 production Solidity before written-design review and detailed implementation-plan completion."
+  - "Do not start Day-5 production Solidity before the approved design/self-reviewed plan documentation gate is durably merged."
   - "Do not claim exact current-live Pons V2 source/runtime parity."
   - "Do not claim Pons V2 is audit-clean; current official docs say all three reviews remain in progress."
   - "Do not infer or guess current Pons numeric runtime config when a read cannot be verified."
