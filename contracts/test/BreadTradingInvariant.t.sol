@@ -27,6 +27,15 @@ contract BreadTradingInvariantTest {
         BreadFeeClaimRecipient protocolRecipient;
     }
 
+    struct SequenceState {
+        uint256 trackedBeforeDonation;
+        uint256 trackedTokensBeforeDonation;
+        uint256 realQuoteBeforeSweep;
+        uint256 pending;
+        uint256 quoteDonation;
+        uint256 tokenDonation;
+    }
+
     function testFuzz_SequentialTradingSweepClaimsAndDonationsPreserveAccounting(
         uint64 rawFirstBuy,
         uint64 rawSecondBuy,
@@ -34,6 +43,17 @@ contract BreadTradingInvariantTest {
         uint64 rawQuoteDonation
     ) public {
         Fixture memory f = _deployFixture();
+        SequenceState memory s = _executeTrades(f, rawFirstBuy, rawSecondBuy, rawSellShare);
+        _applyDonationsAndAssert(f, s, rawQuoteDonation);
+        _updateFuturePolicyAndAssertSnapshot(f);
+        _sweepAndAssert(f, s);
+        _settleAndAssertClaims(f, s.pending);
+    }
+
+    function _executeTrades(Fixture memory f, uint64 rawFirstBuy, uint64 rawSecondBuy, uint64 rawSellShare)
+        private
+        returns (SequenceState memory s)
+    {
         uint256 firstBuy = 100 * ONE_USDC + (uint256(rawFirstBuy) % (400 * ONE_USDC));
         uint256 secondBuy = 100 * ONE_USDC + (uint256(rawSecondBuy) % (400 * ONE_USDC));
         uint256 totalFunding = firstBuy + secondBuy;
@@ -43,36 +63,39 @@ contract BreadTradingInvariantTest {
         f.curve.buy(firstBuy, 0, address(this));
         f.curve.buy(secondBuy, 0, address(this));
 
-        uint256 boughtBalance = f.token.balanceOf(address(this));
-        uint256 sellDivisor = 4 + (uint256(rawSellShare) % 5);
-        uint256 tokensIn = boughtBalance / sellDivisor;
+        uint256 tokensIn = f.token.balanceOf(address(this)) / (4 + (uint256(rawSellShare) % 5));
         assert(tokensIn != 0);
         assert(f.token.approve(address(f.curve), tokensIn));
         f.curve.sell(tokensIn, 0, address(this));
 
-        uint256 trackedBeforeDonation = f.curve.trackedQuote();
-        uint256 trackedTokensBeforeDonation = f.curve.trackedTokens();
-        uint256 realQuoteBeforeSweep = f.curve.realQuoteReserve();
-        uint256 pending = f.curve.quoteFeeBalance() + f.curve.creatorTaxBalance();
-        assert(f.usdc.balanceOf(address(f.curve)) == trackedBeforeDonation);
-        assert(f.token.balanceOf(address(f.curve)) == trackedTokensBeforeDonation);
-        _assertReserveIdentity(f.curve);
+        s.trackedBeforeDonation = f.curve.trackedQuote();
+        s.trackedTokensBeforeDonation = f.curve.trackedTokens();
+        s.realQuoteBeforeSweep = f.curve.realQuoteReserve();
+        s.pending = f.curve.quoteFeeBalance() + f.curve.creatorTaxBalance();
 
-        uint256 quoteDonation = uint256(rawQuoteDonation) % (25 * ONE_USDC);
-        if (quoteDonation != 0) {
-            f.usdc.mint(address(this), quoteDonation);
-            assert(f.usdc.transfer(address(f.curve), quoteDonation));
+        assert(f.usdc.balanceOf(address(f.curve)) == s.trackedBeforeDonation);
+        assert(f.token.balanceOf(address(f.curve)) == s.trackedTokensBeforeDonation);
+        _assertReserveIdentity(f.curve);
+    }
+
+    function _applyDonationsAndAssert(Fixture memory f, SequenceState memory s, uint64 rawQuoteDonation) private {
+        s.quoteDonation = uint256(rawQuoteDonation) % (25 * ONE_USDC);
+        if (s.quoteDonation != 0) {
+            f.usdc.mint(address(this), s.quoteDonation);
+            assert(f.usdc.transfer(address(f.curve), s.quoteDonation));
         }
-        uint256 userTokens = f.token.balanceOf(address(this));
-        uint256 tokenDonation = userTokens / 20;
-        if (tokenDonation != 0) assert(f.token.transfer(address(f.curve), tokenDonation));
 
-        assert(f.curve.trackedQuote() == trackedBeforeDonation);
-        assert(f.curve.trackedTokens() == trackedTokensBeforeDonation);
-        assert(f.usdc.balanceOf(address(f.curve)) == trackedBeforeDonation + quoteDonation);
-        assert(f.token.balanceOf(address(f.curve)) == trackedTokensBeforeDonation + tokenDonation);
+        s.tokenDonation = f.token.balanceOf(address(this)) / 20;
+        if (s.tokenDonation != 0) assert(f.token.transfer(address(f.curve), s.tokenDonation));
+
+        assert(f.curve.trackedQuote() == s.trackedBeforeDonation);
+        assert(f.curve.trackedTokens() == s.trackedTokensBeforeDonation);
+        assert(f.usdc.balanceOf(address(f.curve)) == s.trackedBeforeDonation + s.quoteDonation);
+        assert(f.token.balanceOf(address(f.curve)) == s.trackedTokensBeforeDonation + s.tokenDonation);
         _assertReserveIdentity(f.curve);
+    }
 
+    function _updateFuturePolicyAndAssertSnapshot(Fixture memory f) private {
         BreadFeePolicySnapshot memory nextPolicy = BreadFeePolicySnapshot({
             protocolFeeRecipient: address(0xCAFE),
             tradeFeeBps: 125,
@@ -80,27 +103,33 @@ contract BreadTradingInvariantTest {
             maxCreatorTaxBps: 600
         });
         f.policy.setCurrentFeePolicy(nextPolicy);
+
         assert(f.curve.tradeFeeBps() == TRADE_FEE_BPS);
         assert(f.curve.protocolFeeShareBps() == PROTOCOL_SHARE_BPS);
         assert(f.curve.maxCreatorTaxBps() == CREATOR_TAX_BPS);
         assert(f.curve.protocolFeeRecipient() == address(f.protocolRecipient));
+    }
 
+    function _sweepAndAssert(Fixture memory f, SequenceState memory s) private {
         f.escrow.setAuthorizedCreditor(address(f.curve), true);
         f.curve.sweepFees();
 
         assert(f.curve.quoteFeeBalance() == 0);
         assert(f.curve.creatorTaxBalance() == 0);
-        assert(f.curve.realQuoteReserve() == realQuoteBeforeSweep);
-        assert(f.curve.trackedQuote() == trackedBeforeDonation - pending);
-        assert(f.usdc.balanceOf(address(f.curve)) == f.curve.trackedQuote() + quoteDonation);
+        assert(f.curve.realQuoteReserve() == s.realQuoteBeforeSweep);
+        assert(f.curve.trackedQuote() == s.trackedBeforeDonation - s.pending);
+        assert(f.usdc.balanceOf(address(f.curve)) == f.curve.trackedQuote() + s.quoteDonation);
         _assertReserveIdentity(f.curve);
 
         uint256 protocolClaim = f.escrow.balanceOf(address(f.protocolRecipient));
         uint256 creatorClaim = f.escrow.balanceOf(address(this));
-        assert(protocolClaim + creatorClaim == pending);
-        assert(f.usdc.balanceOf(address(f.escrow)) == pending);
-        assert(f.escrow.totalOutstanding() == pending);
+        assert(protocolClaim + creatorClaim == s.pending);
+        assert(f.usdc.balanceOf(address(f.escrow)) == s.pending);
+        assert(f.escrow.totalOutstanding() == s.pending);
+    }
 
+    function _settleAndAssertClaims(Fixture memory f, uint256 pending) private {
+        assert(pending != 0);
         f.escrow.claim();
         f.protocolRecipient.claim(f.escrow);
 
