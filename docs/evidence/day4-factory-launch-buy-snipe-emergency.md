@@ -169,12 +169,12 @@ The failure was not bypassed. Production was repaired so the same EmergencyContr
 
 Exact permission matrix proved:
 
-| Mode | New launch | Buy | Sell |
-| --- | --- | --- | --- |
-| NORMAL | allowed | allowed | allowed |
-| NO_NEW_LAUNCHES | blocked | allowed | allowed |
-| BUY_PAUSED | blocked | blocked | allowed |
-| TRADING_PAUSED | blocked | blocked | blocked |
+| Mode            | New launch | Buy     | Sell    |
+| --------------- | ---------- | ------- | ------- |
+| NORMAL          | allowed    | allowed | allowed |
+| NO_NEW_LAUNCHES | blocked    | allowed | allowed |
+| BUY_PAUSED      | blocked    | blocked | allowed |
+| TRADING_PAUSED  | blocked    | blocked | blocked |
 
 Emergency transitions do not rewrite launch economics, launch timestamp, tracked reserves, pending fees/tax, or existing FeeEscrow claims.
 
