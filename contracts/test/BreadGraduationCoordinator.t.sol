@@ -146,11 +146,17 @@ contract BreadGraduationCoordinatorTest is BreadDay5Fixture {
         r.fixture.usdc.mint(address(this), quoteIn);
         assert(r.fixture.usdc.approve(address(r.fixture.factory), quoteIn));
 
+        // This suite tests the coordinator's explicit Stage-1 entrypoint. Force
+        // only the automatic preflight to fail, then restore the adapter so
+        // each test can exercise the intended manual sweep path deterministically.
+        r.fixture.adapter.setFailValidation(true);
         address curveAddress;
         uint256 tokensOut;
         (r.token, curveAddress, tokensOut) = IBreadLaunchFactory(address(r.fixture.factory)).launchTokenAndBuy(
             _day5Params(r.fixture.factory.previewLaunchEconomics()), quoteIn, r.sellable, address(this)
         );
+        r.fixture.adapter.setFailValidation(false);
+
         assert(tokensOut == r.sellable);
         r.curve = BreadBondingCurve(curveAddress);
         assert(r.curve.readyToGraduate());
