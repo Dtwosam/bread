@@ -1,100 +1,77 @@
-schema_version: 1.0
+schema_version: 1.1
 project: Bread
-source_pack: v1.3
-updated_at: 2026-08-08T14:35:00+01:00
+source_pack_expected: v1.3-post-research
+updated_at: 2026-08-08T16:24:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
-  - "Day 3 preflight: SOURCE_PACK_V1_3_POST_RESEARCH_ARCHITECTURE_FREEZE_APPROVED"
-  - "Day 3 planning: DAY_3_TRADING_FEES_ESCROW_DESIGN_AND_IMPLEMENTATION_PLAN_FROZEN"
-active_checkpoint: "Day 3"
-active_lane: "Trading, Fees & Escrow — design/TDD/integration plan frozen; ready to create execution branch and capture Task-1 RED"
+active_checkpoint: "Day 3 — Trading, Fees & Escrow"
+active_lane: "Project Source v1.3 ratification recovery — freeze unratified Day-3 candidate code; no production merge"
+active_gate: PROJECT_SOURCE_V1_3_RATIFICATION
+project_source_state:
+  upload: PENDING_USER_UPLOAD
+  ratification: UNRATIFIED
+  rule: "Repository research/amendment docs are evidence, not proof that Project Sources were uploaded. No affected production code may merge until v1.3 is uploaded, read back and reconciled."
 integration_baseline:
   id: D2-CLOSEOUT
   branch: main
   commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
   status: ACCEPTED_DAY_2_DURABLE_BASELINE
 working_branches:
-  - checkpoint/day3-trading-fees-escrow-preflight
-planned_execution_branch: checkpoint/day3-trading-fees-escrow
+  - checkpoint/source-v1-3-ratification-recovery
+  - checkpoint/day3-trading-fees-escrow
+  - checkpoint/day3-closeout
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  day1_closeout_merge_commit: 86abb75ef96cfca340afec8a755e94ed366c379e
-  day2_lane1_code_merge_commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
-  day2_lane1_closeout_merge_commit: aca14483ef5d8bee707a39e7ea628569d22d1828
-  day2_lane2_code_merge_commit: 57b48940b71491ff9780764653c278b237eddd8d
-  day2_closeout_head: 06385e4a561ece563cefe0580317b13309ff035a
-  day2_closeout_merge_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
-  day3_preflight_branch: checkpoint/day3-trading-fees-escrow-preflight
-  day3_component_sourcing_gate_commit: de50a7e635a58891efe42f7db40d231acde7846f
-  day3_external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
-  day3_external_component_matrix_path: docs/source-reconciliation/day3-external-component-research-matrix.md
-  source_pack_v1_3_commit: 6505532e1c66bf666a19f6fa23c06ae890c3c1b6
-  source_pack_v1_3_path: docs/source-reconciliation/bread-source-pack-v1.3.md
-  day3_design_commit: f88892a8f594ba2463d40ad52227b5c23b6f45fd
-  day3_design_path: docs/superpowers/specs/2026-08-08-day3-trading-fees-escrow-design.md
-  day3_plan_commit: f17976c6aae91ac69ce50af62ca7032df1899911
-  day3_plan_path: docs/superpowers/plans/2026-08-08-day3-trading-fees-escrow.md
-  status: DAY_3_IMPLEMENTATION_PLAN_FROZEN_READY_FOR_TDD_EXECUTION
+  accepted_main_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  recovery_pr: 10
+  day3_candidate_pr: 8
+  day3_closeout_candidate_pr: 9
+research:
+  external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
+  post_research_handoff_commit: ee13d00a192040b227a01488fcd73f48699b9093
+  architecture_decisions:
+    fee_escrow: "ADAPT Clanker ClankerFeeLocker pattern into Bread-owned canonical-USDC escrow"
+    fee_policy: "BREAD_OWNED"
+    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE"
+    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY; Clanker technical reference only"
+candidate_prs:
+  pr_8:
+    state: DRAFT_OPEN_UNMERGED_UNRATIFIED
+    head_observed: e8e844bec3946f0f0a1748858e06897572261840
+    title: "[BLOCKED ON PROJECT SOURCE v1.3 RATIFICATION] Day 3: trading fees and escrow"
+    rule: "Freeze; after ratification audit source-to-code, TDD-repair divergence, exact-head CI, then guarded merge only if conforming."
+  pr_9:
+    state: DRAFT_OPEN_UNMERGED_STALE_CLOSEOUT
+    head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
+    title: "[STALE CLOSEOUT — DO NOT MERGE] Close Day 3 trading fees and escrow"
+    rule: "Cannot close Day 3 before a ratified PR #8 is merged and closeout is rerun/rebased from actual main."
 verification:
-  day2_lane2_final_exact_head_run: 31256808903
   day2_closeout_run: 31256962864
-  day2_closeout_head: 06385e4a561ece563cefe0580317b13309ff035a
-  jobs:
-    bootstrap_validation: PASS
-    day2_frozen_source_integrity: PASS_NINE_FILES
-    dependency_build_frozen_lockfile: PASS
-    tracked_workspace_clean_after_build: PASS
-    foundry_bootstrap: PASS_48_TESTS
-    postgres_redis_health: PASS
-deployments: []
+  day2_foundry_tests: PASS_48
+  recovery_pr_10_initial_run: 31264500053
+  recovery_pr_10_initial_result: "EXPECTED_REPAIR_NEEDED — validator required legacy structural fields; production code unchanged"
 blockers:
-  - CURRENT_PONS_FACTORY_SOURCE_PARITY
+  - PROJECT_SOURCE_V1_3_RATIFICATION
   - BREAD_SNIPE_DECAY_FORMULA
+  - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
-resolved_or_superseded_blockers:
+resolved_or_superseded_after_v1_3_ratification:
   FEE_ESCROW_SOURCE: RESOLVED_BY_APPROVED_BREAD_ADAPTATION_ARCHITECTURE
   LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
   EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
-tooling:
-  chatgpt: primary-integration-owner
-  github: connected-admin-Dtwosam
-  node: 24.18.0
-  pnpm: 11.15.1
-  foundry: v1.5.0
-  solidity: 0.8.26
-  vercel: not-configured
-  sentry: not-configured
-  figma: available-optional
-  supabase: not-selected
-  cloudflare: not-selected
-decisions_since_last_state:
-  - "Source Pack v1.3 remains controlling for the approved bundle: Bread-owned FeeEscrow adaptation, Bread-owned FeePolicy, Bread-owned atomic Launch+Buy, and Bread-owned descending buy-only anti-snipe protection."
-  - "The Day-3 production design is frozen at docs/superpowers/specs/2026-08-08-day3-trading-fees-escrow-design.md from commit f88892a8f594ba2463d40ad52227b5c23b6f45fd."
-  - "The Day-3 TDD/integration implementation plan is frozen at docs/superpowers/plans/2026-08-08-day3-trading-fees-escrow.md from commit f17976c6aae91ac69ce50af62ca7032df1899911."
-  - "Day-3 design uses a concrete ERC20-USDC-only BreadBondingCurve extending BreadTrackedCurveState, a Bread-owned future-policy/snapshot contract, and a Bread-owned authorized-credit FeeEscrow with totalOutstanding solvency accounting."
-  - "Frozen Pons Buy/Sell semantics retained for the ERC20 path include quote-leg fee/tax separation, source-derived partial final-buy clamp/reprice/refund, price-bound slippage for clamped buys, sell fee/tax from gross quote output, and closing sells once readyToGraduate. Native quote and automatic graduation remain excluded."
-  - "Day-3 fee sweep is explicitly no-buyback: pending base fee is split by the snapshotted protocol share; creator receives the base-fee remainder plus creator tax; exact USDC is credited to FeeEscrow. Buyback state/execution remains separately gated."
-  - "FeePolicy current values are explicit deployment/test inputs with no guessed defaults. Existing curves snapshot economics; feeSweepOperator remains a rotatable operational role and does not rewrite launch economics."
-  - "FeeEscrow credit callers are owner-authorized Bread components; credit verifies exact USDC custody before increasing recipient ledger/totalOutstanding; claim debits state before transfer and has no alternate-recipient or admin claim-rescue surface."
-  - "Required TDD order is FeeEscrow RED/GREEN -> FeePolicy RED/GREEN -> ordinary trading RED/GREEN -> partial-final-buy RED/GREEN -> fee-sweep/claim RED/GREEN -> stateful invariants -> integrated exact-head CI."
-  - "No Day-3 production money-path code has been written yet. The next code change must be a production-facing test that captures Task-1 RED."
-next_action: "Create checkpoint/day3-trading-fees-escrow from the exact preflight handoff head. Execute Task 1 of docs/superpowers/plans/2026-08-08-day3-trading-fees-escrow.md: freeze Day-3 source/dependency inventory, add FeeEscrow production-facing tests first, and capture a specific RED before creating IBreadFeeEscrow/BreadFeeEscrow production code."
+next_action: >-
+  User replaces the affected Project Sources with the final consolidated v1.3 files. In the next chat, read every uploaded replacement, verify GitHub main plus PR #8/#9, and set PROJECT_SOURCE_RATIFICATION=RATIFIED only if they agree. Then audit PR #8 requirement-by-requirement against v1.3; preserve conforming work, TDD-repair any divergence, run full exact-head CI/security/invariants, and merge only if ratified and green. After PR #8 merges, refresh/rebase/recreate the Day-3 closeout from actual main. Do not start Day 4 until Day 3 is durably closed.
 do_not_do:
-  - "Do not add FeeEscrow production code before the Task-1 production-facing RED is captured."
-  - "Do not treat any sourced component as a standalone mini-product or defer applicable Bread wiring until a late integration phase."
-  - "Do not claim a sourced component PASS from local/upstream tests alone."
-  - "Do not inherit another protocol's fee percentages, recipients, curve economics, snipe schedule, admin powers, custody model or chain constants."
-  - "Do not claim exact current-live Pons V2 parity from third-party code."
-  - "Do not hardcode missing live fee percentages; LIVE_RUNTIME_CONFIG remains unresolved."
-  - "Do not implement buyback/vesting until its separate Day-3 source and invariant boundary is explicitly approved."
-  - "Do not implement Launch+Buy or anti-snipe production code in Day 3; those remain Day-4 scope under 06C."
-  - "Do not implement anti-snipe production code before BREAD_SNIPE_DECAY_FORMULA is frozen."
-  - "Do not add native quote handling; Bread V1 finance remains canonical 6-decimal ERC20 USDC only."
-  - "Do not hardcode Arc mainnet values before official publication."
+  - "Do not merge PR #8 or PR #9 before Project Source v1.3 ratification and conformance review."
+  - "Do not treat a GitHub source-pack markdown file as proof of Project Source upload."
+  - "Do not start Day 4 while Day 3 remains unratified/candidate."
+  - "Do not claim exact current-live Pons parity."
+  - "Do not hardcode unresolved live fee values or Arc mainnet values."
+  - "Do not import external economics, admin powers, custody semantics or duplicate accounting state."
