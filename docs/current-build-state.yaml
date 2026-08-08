@@ -1,7 +1,7 @@
 schema_version: 1.1
 project: Bread
 source_pack_expected: v1.3-post-research
-updated_at: 2026-08-08T18:35:00+02:00
+updated_at: 2026-08-08T18:42:00+02:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -10,40 +10,42 @@ completed_checkpoints:
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
   - "Day 3 source gate: PROJECT_SOURCE_V1_3_RATIFICATION_RATIFIED"
   - "Day 3 candidate audit: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS"
-  - "Day 3 implementation: PR_8_RATIFIED_EXACT_HEAD_GREEN_MERGED"
-  - "Day 3 closeout verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS_STAMPED_PENDING_EXACT_HEAD_CI_AND_MERGE"
-active_checkpoint: "Day 3 — Trading, Fees & Escrow closeout"
-active_lane: "Stamped v1.3 closeout — final exact-head CI and guarded merge"
-active_gate: DAY_3_STAMPED_CLOSEOUT_EXACT_HEAD_MERGE_GATE
+  - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
+active_checkpoint: "Day 4 — NOT STARTED"
+active_lane: "Day 3 durably closed; next session begins Day-4 preflight from the accepted Day-3 closeout baseline"
+active_gate: BREAD_SNIPE_DECAY_FORMULA_PRE_DAY4_PRODUCTION
 project_source_state:
   pack: v1.3-post-research
   upload: UPLOADED
   ratification: RATIFIED
   ratification_rule: "Final v1.3 Project Source replacements were read back and reconciled before affected Day-3 production repair or merge."
 integration_baseline:
-  id: DAY3-IMPLEMENTATION-MERGED
+  id: DAY3-CLOSEOUT
   branch: main
-  commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  status: ACCEPTED_RATIFIED_DAY3_IMPLEMENTATION_AWAITING_STAMPED_CLOSEOUT_MERGE
-working_branches:
-  - checkpoint/day3-v1-3-closeout
+  commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
+  production_code_commit: 4f572bfd61cd57b33be994b895295be4522179b2
+  status: ACCEPTED_DAY3_DURABLE_BASELINE
+working_branches: []
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  accepted_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
+  accepted_day3_production_commit: 4f572bfd61cd57b33be994b895295be4522179b2
+  accepted_day3_closeout_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
   day3_candidate_pr: 8
+  day3_candidate_tested_head: 53c11f450677a204e541ba8468994586f01621b7
   day3_candidate_merge_commit: 4f572bfd61cd57b33be994b895295be4522179b2
   stale_day3_closeout_pr: 9
   fresh_day3_closeout_pr: 12
-  fresh_day3_closeout_branch: checkpoint/day3-v1-3-closeout
+  fresh_day3_closeout_tested_head: fa92a4f244872a7f99b075cc2c639beb46a8831f
+  fresh_day3_closeout_merge_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
 research:
   external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
   post_research_handoff_commit: ee13d00a192040b227a01488fcd73f48699b9093
   architecture_decisions:
-    fee_escrow: "ADAPT Clanker ClankerFeeLocker pattern into Bread-owned canonical-USDC escrow"
-    fee_policy: "BREAD_OWNED"
-    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE — Day 4 only"
-    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY; exact BREAD_SNIPE_DECAY_FORMULA remains gated for Day 4"
+    fee_escrow: "ADAPT Clanker ClankerFeeLocker pattern into Bread-owned canonical-USDC escrow — integrated Day 3"
+    fee_policy: "BREAD_OWNED — integrated Day 3"
+    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE — Day 4, not started"
+    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY — Day 4, exact BREAD_SNIPE_DECAY_FORMULA still gated"
 conformance_audit:
   path: docs/evidence/day3-v1.3-conformance-audit.md
   result: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS
@@ -53,14 +55,10 @@ conformance_audit:
 closeout:
   evidence_path: docs/evidence/day3-v1.3-closeout.md
   presence_test: contracts/test/Day3CloseoutPresence.t.sol
-  base_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  prerequisite_candidate_head: 62fdceb627d10ce6055c1d913046e0cc4de7b897
-  prerequisite_run: 31266693398
-  prerequisite_jobs: PASS_ALL_FOUR
-  prerequisite_foundry: PASS_99_TESTS
-  stamped_verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS
-  status: STAMPED_PENDING_FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE
-  rule: "The stamped verdict becomes durable only after the exact stamped PR #12 head passes all four CI jobs and merges unchanged with expected-head protection."
+  verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS
+  implementation_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
+  closeout_main_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
+  status: DURABLY_CLOSED
 candidate_prs:
   pr_8:
     state: MERGED_RATIFIED
@@ -69,24 +67,27 @@ candidate_prs:
   pr_9:
     state: STALE_DO_NOT_MERGE
     head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
-    rule: "Historical only; never establishes Day-3 PASS."
+    rule: "Historical stale closeout only; it did not establish Day-3 PASS."
   pr_12:
-    state: DRAFT_OPEN_STAMPED_PENDING_FINAL_CI
-    base_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-    rule: "Merge only exact stamped green head."
+    state: MERGED_DURABLE_CLOSEOUT
+    tested_head: fa92a4f244872a7f99b075cc2c639beb46a8831f
+    merge_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
 verification:
   day2_closeout_run: 31256962864
   ratification_recovery_pr_10_run: 31264567398
   eoa_creditor_red_run: 31265939060
+  eoa_creditor_red_result: "94 PASS / exactly 1 intended FAIL"
   eoa_creditor_green_run: 31266017924
   adversarial_proof_run: 31266099983
+  adversarial_proof_foundry: PASS_98_TESTS
   day3_implementation_final_run: 31266530130
   day3_implementation_foundry: PASS_98_TESTS
   day3_implementation_jobs: PASS_ALL_FOUR
   fresh_closeout_initial_run: 31266693398
   fresh_closeout_initial_foundry: PASS_99_TESTS
   fresh_closeout_initial_jobs: PASS_ALL_FOUR
-  fresh_closeout_stamped_run: REQUIRED_ON_EXACT_STAMPED_HEAD_BEFORE_MERGE
+  fresh_closeout_stamped_run: 31266796631
+  fresh_closeout_stamped_jobs: PASS_ALL_FOUR
 blockers:
   - BREAD_SNIPE_DECAY_FORMULA
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -99,11 +100,12 @@ resolved_or_superseded_after_v1_3_ratification:
   LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
   EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
 next_action: >-
-  Run the full four-job repository CI gate on the exact stamped PR #12 head. If and only if all four jobs pass, mark PR #12 ready and merge that exact head with expected-head protection. Verify main contains docs/evidence/day3-v1.3-closeout.md with DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS and the merged Day-3 production surface. Then write the post-closeout handoff from the actual main state. Do not begin Day-4 production work before the durable closeout is verified.
+  Day 4 is not started. In the next Day-4 work session, reconstruct from Source Pack v1.3 and accepted Day-3 closeout baseline a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3. Begin with Day-4 preflight/design gates: Factory/Deployer and economics snapshot/hash, Bread-owned atomic Launch+Buy, and a deliberate freeze/proof of BREAD_SNIPE_DECAY_FORMULA plus exact launch-time exemptions before any anti-snipe production code. Preserve the canonical Day-3 FeePolicy/FeeEscrow/trading interfaces and do not create parallel fee/accounting state.
 do_not_do:
-  - "Do not merge stale PR #9."
-  - "Do not merge PR #12 without full CI on the exact stamped head."
-  - "Do not start Day 4 while the stamped closeout is not durably merged and verified."
-  - "Do not implement anti-snipe before BREAD_SNIPE_DECAY_FORMULA is frozen and proved."
+  - "Do not use stale PR #9 as accepted closeout evidence."
+  - "Do not start Day 4 from a baseline older than a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3."
+  - "Do not implement anti-snipe before BREAD_SNIPE_DECAY_FORMULA and exact exemptions are frozen and proved."
+  - "Do not invent live Pons fee/config values."
   - "Do not claim exact current-live Pons parity."
-  - "Do not hardcode unresolved live fee values or Arc mainnet values."
+  - "Do not hardcode Arc mainnet values before official publication."
+  - "Do not create duplicate fee, claim or accounting authority outside the integrated Day-3 interfaces."
