@@ -1,173 +1,314 @@
 # Day 4 Factory / Launch+Buy / Opening Protection / Emergency Evidence
 
-Status: **TDD IN PROGRESS — NO DAY-4 PASS**
+Status: **IMPLEMENTATION CANDIDATE — FINAL STAMPED-HEAD CI PENDING; NO DAY-4 PASS**
 
-## Accepted start
+## Accepted authority and baseline
 
-- merged Day-4 preflight main: `ef03e60f9bbd5737a991dd3b1b747866d8ad8f3a`
 - Project Source Pack: `v1.4-day4-design`
 - Day-4 production ratification: `RATIFIED`
+- approved design: `324b6055a0bed278766e1b48016774ac745b3781`
+- implementation plan: `docs/superpowers/plans/2026-08-08-day4-factory-launch-buy-snipe-emergency.md`
+- plan self-review: `docs/superpowers/plans/2026-08-08-day4-plan-self-review.md`
+- merged Day-4 production-start main: `ef03e60f9bbd5737a991dd3b1b747866d8ad8f3a`
 - implementation branch: `checkpoint/day4-launch-control`
-- draft implementation PR: `#15`
+- implementation PR: `#15`
+- accepted Day-3 production: `4f572bfd61cd57b33be994b895295be4522179b2`
+- accepted Day-3 closeout: `a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3`
 
-## Task 1 — Factory / Deployer RED
+This document records candidate implementation evidence only. `LOCAL_COMPONENT_PASS`, `INTEGRATED_CANDIDATE_PASS`, and green PR CI are not the Day-4 closeout verdict. The final Day-4 verdict is permitted only after the implementation candidate merges and a fresh closeout branch from the actual merged `main` passes its own exact-head CI.
 
-- exact RED checkpoint retained as branch `checkpoint/day4-launch-control-red`
-- RED behavior commit: `0356e6d39b699df37124cea1c4f57949f3cf86a8`
-- PR RED head used by CI: `a07e7a9fe945bc6c39d7ee9c83a0ed8cee9349fb`
-- required behavior fixture: `contracts/test/BreadLaunchFactory.t.sol`
-- production `BreadLaunchFactory.sol` and `BreadLaunchDeployer.sol` intentionally absent
-- CI run: `31270305259`
-- `bootstrap-validation`: PASS
-- `foundry-bootstrap`: EXPECTED RED at `forge build`
-- exact Foundry cause: unresolved imports `src/factory/BreadLaunchFactory.sol` and `src/factory/BreadLaunchDeployer.sol`
-- no unrelated Solidity/compiler failure was observed before those missing sources
+## Task 1 — Factory / Deployer
 
-## Task 1 — GREEN compiler investigation
+### RED
 
-The first minimal Factory/Deployer implementation exposed a Solidity 0.8.26 non-viaIR compiler boundary. The failure was investigated before changing architecture.
+- behavior commit: `0356e6d39b699df37124cea1c4f57949f3cf86a8`
+- CI: `31270305259`
+- Node validation: PASS
+- Foundry: expected compile RED because `BreadLaunchFactory.sol` and `BreadLaunchDeployer.sol` were intentionally absent
 
-### Failed candidate attempts on PR #15
+### Non-viaIR compiler investigation
 
-- initial Factory/Deployer implementation head `833bfe288b3cb3a88dcebe982b15e024e9e0d9d5`, CI `31270365965`: Foundry `Stack too deep`
-- Factory deployment-building helper refactor head `93822aee3d6f1da1f206a4999698cb59243caded`, CI `31270411596`: same compiler failure
-- grouped Deployer core/metadata payload head `71e0de80717fd532f6a6d3dedee9aa5cc93ad643`, CI `31270506185`: same compiler failure
-- economics-digest static struct head `ab22af8354c297ed74540eff1a262fffd3af4514`, CI `31270553594`: same compiler failure
+The first minimal implementation exposed a Solidity 0.8.26 `Stack too deep` backend boundary. The failure was isolated before architecture changed:
 
-After three targeted fixes failed, implementation guessing stopped and diagnostic isolation began.
+- `31270651274`: production contracts without the new Factory test still failed; the new test was not a necessary cause
+- `31270743325`: clean Deployer-only reproduction failed
+- `31270817328`: same nested deployment decoder without contract creation passed
+- `31270826372`: curve construction alone passed
+- `31270873490`: token construction alone reproduced the stack failure
 
-### Diagnostic isolation
+Diagnostic PRs `#16`–`#22` were closed unmerged after evidence capture.
 
-- PR #16 / run `31270651274`: production contracts without new Factory test still FAIL; test is not a necessary cause.
-- PR #17 / run `31270657138`: inherited Deployer-only attempt FAIL, but retained shared Day-4 ABI helpers and was treated as confounded rather than dispositive.
-- PR #18 / run `31270743325`: clean branch from merged main + only current `BreadLaunchDeployer.sol` FAILS Foundry compile. The production Deployer boundary independently reproduces the issue.
-- PR #20 / run `31270817328`: clean branch + same nested Deployer calldata decoder but no contract creation PASSES all four CI jobs. The deployment calldata decoder is exonerated.
-- PR #21 / run `31270826372`: clean branch + static core payload + `new BreadBondingCurve(...)` PASSES all four CI jobs. Curve construction is exonerated.
-- PR #22 / run `31270873490`: clean branch + only metadata/social payload + `new BreadLaunchToken(...)` FAILS Foundry compile with the same `Stack too deep` backend error. Token construction call is the isolated root cause.
-- diagnostic PRs #16–#22 were closed without merge after evidence capture.
+The bounded repair changed only `BreadLaunchToken` constructor transport to `Metadata` and `LaunchContext` structs. Runtime getters, attribution, fixed-supply mint-to-curve behavior, transfer/burn behavior, metadata meaning, and Day-2/Day-3 invariants remain unchanged. Global `via_ir = true` was not enabled.
 
-### Root cause / bounded repair rule
+### GREEN
 
-The accepted `BreadLaunchToken` runtime contract itself compiled and passed Day-2/Day-3 tests on main. The failure occurs when the new factory-only Deployer must invoke its existing wide constructor carrying four top-level strings, a five-string `Socials` struct, attribution addresses and supply through Solidity 0.8.26's non-viaIR creation-call code generation.
+- exact head: `ba1615efac52d4f5132636d5875dce6083eaf8dd`
+- CI: `31271282775`
+- all four repository jobs: PASS
+- Foundry: `107 passed / 0 failed / 0 skipped`
+- component result: `FACTORY_DEPLOYER_LOCAL_GREEN`
 
-Project Source v1.4 freezes Factory/Deployer semantics, bounded metadata, the canonical `BreadLaunchToken` role and launch public semantics, but does not freeze the token constructor ABI. The bounded repair is therefore constructor-transport only: group token metadata/socials and launch attribution/supply into compact constructor structs while preserving all runtime state/getters, entire-supply-to-curve minting, transfer/burn behavior and Day-2/Day-3 invariants. No economics, permission, runtime ledger, public trading interface or metadata meaning changes.
+## Task 2 — Canonical-USDC launch fee
 
-Global `via_ir = true` was not used as a shortcut.
+### RED
 
-### Bounded constructor repair result
+- test commit: `9c44d8df9b7184bf02ba58f0053787fa110b9ccf`
+- CI: `31271422396`
+- Foundry: `108 passed / exactly 5 intended failed / 0 skipped`
+- zero-fee control passed; all nonzero custody/authorization/short-transfer/protocol-credit cases failed because the Factory had not implemented launch-fee routing yet
 
-`BreadLaunchToken` now receives two constructor transport structs:
+### GREEN
 
-- `Metadata`: name, symbol, logo, description, existing `Socials`
-- `LaunchContext`: deployer, curve, launchFactory, supply
+- exact head: `17db4687cd090e32d49c68a63ab3f875a85914a5`
+- CI: `31271512833`
+- all four repository jobs: PASS
+- Foundry: `113 passed / 0 failed / 0 skipped`
+- nonzero launch fee is exact canonical USDC, credits the economics-pinned protocol recipient through existing `BreadFeeEscrow`, clears temporary allowance, leaves no Factory intent residue, and rolls the full launch back on transfer/credit failure
+- no automatic FeeEscrow creditor registrar was added
+- component result: `CANONICAL_USDC_LAUNCH_FEE_ESCROW_LOCAL_GREEN`
 
-The runtime token storage/getters, fixed-supply mint-to-curve behavior, transfer/burn behavior and zero-address rules are unchanged. The original Day-2 token suite and every Day-2/Day-3 launch-token fixture were migrated without removing or weakening assertions.
+## Task 3 — Atomic Launch+Buy
 
-Exact Task-1 GREEN head: `ba1615efac52d4f5132636d5875dce6083eaf8dd`
+### RED
 
-Exact Task-1 GREEN CI: `31271282775`
+- test commit: `9452f3925342a5c6977f3de7054bfa88a918bcfb`
+- CI: `31271648604`
+- Foundry: `117 passed / exactly 2 intended failed / 0 skipped`
+- intended failures were the missing ordinary and final-crossing `launchTokenAndBuy` success paths
 
-- `bootstrap-validation`: PASS
-- `dependency-build`: PASS
-- `foundry-bootstrap`: PASS
-- `infrastructure-health`: PASS
-- Solidity 0.8.26 non-viaIR compile: PASS
-- Foundry: **107 passed / 0 failed / 0 skipped** across 15 suites
-- `BreadLaunchFactoryTest`: **8/8 PASS**
-- original `BreadLaunchTokenTest`: **13/13 PASS**
-- carried-forward Day-3 Buy/Sell, final-fill, FeeEscrow, FeePolicy, tracked-state, trading-security and invariant suites: PASS
+### GREEN
 
-Task-1 component result: **FACTORY_DEPLOYER_LOCAL_GREEN**.
+- exact head: `c9b731ae545c29e9405b95a0dc26ba08f25a96c6`
+- CI: `31271736825`
+- all four repository jobs: PASS
+- Foundry: `119 passed / 0 failed / 0 skipped`
+- public `buy` and Factory-only `buyForLaunch` share one internal pricing/accounting path
+- Factory receives exactly `launchFeeUsdc + quoteIn`, uses a temporary exact curve allowance, forwards the curve's final-fill refund to the original caller, clears allowance, and returns to its pre-intent USDC balance
+- slippage/transfer/FeeEscrow/buy failures roll back deployment and launch-fee effects atomically
+- component result: `ATOMIC_LAUNCH_AND_BUY_LOCAL_GREEN`
 
-## Task 2 — Canonical-USDC launch-fee RED
+## Task 4 — Exact opening protection
 
-RED test commit: `9c44d8df9b7184bf02ba58f0053787fa110b9ccf`
+### RED
 
-Exact RED CI: `31271422396`
-
+- original RED commit: `55dddfad...`
+- fixture-only correction head: `5c2a4e8e...`
+- accepted RED CI: `31272045019`
 - Solidity compile: PASS
-- prior Factory/Deployer and all Day-1–Day-3 suites: PASS
-- total: **108 passed / 5 failed / 0 skipped**
-- `BreadLaunchFeeTest`: **1 passed / exactly 5 intended failed**
-- passing control: zero launch fee took no USDC and required no Factory creditor authorization
-- intended failures: nonzero launch fee was not yet collected/credited; insufficient allowance did not yet block; unauthorized Factory creditor did not yet roll back; short-transfer launch fee did not yet reject; updated pinned protocol recipient did not yet receive credit
+- Foundry: `121 passed / exactly 6 intended opening-protection failures`
+- sell exclusion and pre-initialization rejection controls already passed
 
-The RED was behavior-specific: the existing Factory ignored `launchFeeUsdc`; no unrelated compile/regression failure was present.
+### GREEN
 
-## Task 2 — Canonical-USDC launch-fee GREEN
+- exact opening vector is `9900 / 6336 / 3564 / 1584 / 396 / 0` bps at elapsed `0 / 1 / 2 / 3 / 4 / >=5` seconds
+- launch timestamp is one-shot and the Factory launch record reads the curve's canonical `launchTimestamp`
+- ordinary buy charge order is standard fee + creator tax, then opening tax on the remaining amount
+- opening tax joins `quoteFeeBalance`; creator tax remains in `creatorTaxBalance`
+- sells never charge opening tax
+- only the same-launch Factory `buyForLaunch` call can consume the one-use exemption; no wallet mapping exists
+- replay and delayed Factory exemption attempts revert
+- canonical timestamp compatibility CI: `31272664078`
+- Foundry: `127 passed / 0 failed / 0 skipped`
+- component result: `OPENING_PROTECTION_LOCAL_GREEN`
 
-Minimal production implementation:
+## Task 5 — Opening-window final crossing
 
-- receives only configured `launchFeeUsdc` from the caller using `SafeERC20.safeTransferFrom`
-- verifies exact Factory balance delta before launch continues
-- deploys/initializes the pair inside the same transaction
-- approves exactly the launch-fee amount to the existing canonical FeeEscrow
-- credits the current economics-pinned `protocolFeeRecipient`
-- clears the temporary escrow allowance after successful credit
-- requires post-intent Factory USDC balance to equal the pre-intent balance
-- zero launch fee performs no transfer/authorization/credit
-- does not add a creditor registrar or alter `BreadFeeEscrow` authority; Protocol Admin still authorizes the Factory once using the existing Day-3 owner control
-- any transfer/escrow/authorization failure reverts the entire launch transaction
+### RED
 
-Exact GREEN head: `17db4687cd090e32d49c68a63ab3f875a85914a5`
+- RED commit: `061a6f15...`
+- CI: `31272888360`
+- Foundry: `128 passed / exactly 6 intended final-fill failures`
+- elapsed-5 zero-snipe control passed; elapsed 0–4 demonstrated the old Day-3 one-stage gross-up was insufficient for opening-tax final fills
 
-Exact GREEN CI: `31271512833`
+### GREEN
 
+The ratified two-stage full-precision ceiling rule is implemented:
+
+1. ceiling gross through the opening-tax layer
+2. ceiling gross through standard fee + creator tax
+3. recompute all floor charges from actual `spent`
+4. require actual `netCurveInput >= netRequired`
+5. refund all excess received quote
+
+The zero-snipe case reduces to the accepted Day-3 gross-up. The underfunded-boundary test now searches for an amount whose recomputed post-fee/post-snipe net is actually below `netRequired`; it does not incorrectly assume that `grossRequired - 1` must always be insufficient when the sequential ceiling is conservative.
+
+- GREEN head: `762b0ed4...`
+- CI: `31272992032`
+- Foundry: `134 passed / 0 failed / 0 skipped`
+- component result: `SNIPE_FINAL_FILL_LOCAL_GREEN`
+
+## Task 6 — Restriction-only EmergencyController
+
+The standalone controller implements:
+
+- `NORMAL < NO_NEW_LAUNCHES < BUY_PAUSED < TRADING_PAUSED`
+- independent `graduationPaused`
+- Guardian may only increase restriction and may only set graduation pause to true
+- Protocol Admin alone may reduce restrictions, clear graduation pause, and rotate Guardian
+- owner renunciation is disabled
+- no transfer, arbitrary-call, FeePolicy, launch-fee, recipient, tax, timestamp, exemption, deployer, or economics mutation capability exists on the Guardian surface
+
+Standalone EmergencyController suite reached `144/144` Foundry PASS before consumer integration.
+
+## Task 7 — Emergency consumer integration repair
+
+A previously reported PR check correctly caught incomplete integration:
+
+- failing PR head: `aadef406fd63dd9cd8f6a3101b8a9c314f500ea2`
+- CI: `31272943677`
+- `foundry-bootstrap`: compile FAIL because `BreadEmergencyIntegration.t.sol` expected the ratified final Factory constructor with an emergency-controller dependency while production Factory still exposed the pre-integration constructor
+- other three CI jobs passed
+
+The failure was not bypassed. Production was repaired so the same EmergencyController is wired through `BreadLaunchFactory -> BreadLaunchDeployer -> BreadBondingCurve`:
+
+- Factory launch surfaces are `nonReentrant`
+- Factory checks `launchesAllowed()` before launch custody/deployment
+- curve checks `buysAllowed()` before buy custody
+- curve checks `sellsAllowed()` before sell custody
+- direct financial/unit fixtures use a test-only always-open controller; real Day-4 integration tests use `BreadEmergencyController`
+
+Exact permission matrix proved:
+
+| Mode | New launch | Buy | Sell |
+| --- | --- | --- | --- |
+| NORMAL | allowed | allowed | allowed |
+| NO_NEW_LAUNCHES | blocked | allowed | allowed |
+| BUY_PAUSED | blocked | blocked | allowed |
+| TRADING_PAUSED | blocked | blocked | blocked |
+
+Emergency transitions do not rewrite launch economics, launch timestamp, tracked reserves, pending fees/tax, or existing FeeEscrow claims.
+
+## Task 8 — Real vertical integration
+
+`contracts/test/helpers/BreadDay4Fixture.sol` and `contracts/test/BreadDay4Integration.t.sol` use the real:
+
+- `BreadLaunchFactory`
+- `BreadLaunchDeployer`
+- `BreadBondingCurve`
+- `BreadLaunchToken`
+- `BreadFeePolicy`
+- `BreadFeeEscrow`
+- `BreadEmergencyController`
+
+The fixture's economics are explicit test-only values and are not live-runtime defaults.
+
+The vertical proof covers:
+
+- explicit Factory FeeEscrow authorization before nonzero launch fee
+- atomic launch + exempt initial buy
+- same-window ordinary opening-tax buy
+- explicit curve FeeEscrow authorization before first sweep
+- canonical protocol/creator claim accounting
+- zero Factory intent residue
+- emergency transition snapshot immutability
+
+## Task 9 — Invariants and adversarial ordering
+
+Dedicated invariant suites are present:
+
+- `contracts/test/BreadOpeningProtectionInvariant.t.sol`
+- `contracts/test/BreadDay4Invariant.t.sol`
+
+They explicitly prove:
+
+- `INV-040`: opening tax is bounded by 9900 bps
+- `INV-041`: opening tax is non-increasing and exactly zero at/after five seconds
+- `INV-042`: sell path never adds opening tax
+- `INV-043`: only the Factory initial buy is exempt; replay/address-derived exemption fails
+- `INV-044`: opening tax remains in canonical fee accounting through sweep and claims
+- `INV-060`: Guardian only increases restriction and cannot alter funds/economics
+- `INV-061`: Protocol Admin is the recovery/unpause authority
+- `INV-062`: future launch config cannot rewrite existing launch snapshots
+- `INV-063`: Factory and EmergencyController admin surfaces work with contract ownership, which proves Safe compatibility without claiming a live production Safe deployment
+- Guardian tightening between quote preparation and execution blocks the buy before custody/state mutation
+- stale economics pin after configuration movement cannot launch
+
+## Integrated candidate proof
+
+Expanded implementation head before documentation stamp:
+
+- head: `7611f58ecddcf59f1a2a8f10458aa7d6795a44ab`
+- CI: `31274793743`
+- all four repository jobs: PASS
+- Foundry: **162 passed / 0 failed / 0 skipped across 24 suites**
+
+Pre-stamp candidate after source-integrity/format-gate repair:
+
+- head: `5905458428fa1d5c28d451b8cdf2e76106ad86dc`
+- CI: `31275313178`
 - `bootstrap-validation`: PASS
 - `dependency-build`: PASS
 - `foundry-bootstrap`: PASS
 - `infrastructure-health`: PASS
-- `BreadLaunchFeeTest`: **6/6 PASS**
-- Foundry: **113 passed / 0 failed / 0 skipped** across 16 suites
-- all prior Factory/Deployer, token, Buy/Sell, final-fill, FeeEscrow, FeePolicy, tracked-state, trading-security and invariant suites: PASS
+- Day-4 changed-file Prettier gate: PASS
+- `pnpm validate`: PASS
+- `pnpm test`: PASS
+- `pnpm typecheck`: PASS
+- `pnpm build`: PASS
+- workspace-clean check: PASS
+- Foundry remains **162 passed / 0 failed / 0 skipped**; no Solidity/test change occurred between the expanded proof and this formatting-gate repair
 
-Task-2 component result: **CANONICAL_USDC_LAUNCH_FEE_ESCROW_LOCAL_GREEN**.
+## Executable source-integrity gate
 
-## Task 3 — Atomic Launch+Buy RED
+`scripts/validation/validate-day4-launch-control-source-integrity.mjs` is now called by `validate-all.mjs`. It rejects drift in:
 
-RED test commit: `9452f3925342a5c6977f3de7054bfa88a918bcfb`
+- Project Source Pack `v1.4-day4-design`
+- accepted Day-4 production-start main
+- approved design commit
+- frozen Pons/Clanker reference commits and `REFERENCE_ONLY` status
+- exact `9900 / 5 seconds / 0` opening-policy constants
+- `QUOTE_FEE_BALANCE` opening-tax routing
+- one-use launch-buy exemption latch
+- full-precision ceiling final-fill implementation
+- Factory emergency launch gate
+- Guardian tighten-only rule
+- ratified Day-4 build-state source state
+- live-runtime or current-Pons-parity claims that Project Sources do not authorize
 
-Exact RED CI: `31271648604`
+## Formatting gate and baseline debt
 
-- Solidity compile: PASS
-- prior Factory/Deployer, launch-fee and all Day-1–Day-3 suites: PASS
-- Foundry total: **117 passed / 2 failed / 0 skipped** across 17 suites
-- `BreadLaunchAndBuyTest`: **4 passed / exactly 2 intended failed**
-- passing controls included zero-quote/zero-recipient rejection expectations, failed-call rollback expectations, unauthorized curve launch-buy entry, and unchanged public Buy numerics
-- intended failures were the two success paths requiring the missing `launchTokenAndBuy` implementation: ordinary atomic launch+buy and final-crossing launch+buy refund
+The written implementation plan required formatting verification, but the inherited CI did not previously run Prettier.
 
-The RED remained behavior-specific: no unrelated compile or prior-regression failure occurred.
+- run `31274931934` added a repository-wide `pnpm format:check` and exposed **52 pre-existing formatting-debt files**, mostly outside Day-4 scope
+- the global debt was not bulk-reformatted inside this financial-contract PR because that would create unrelated diff noise and weaken reviewability
+- CI now enforces Prettier over the Day-4/PR-owned non-Solidity files changed by this implementation
+- run `31275006909` narrowed the remaining Day-4 formatting debt to two validator files
+- the exact Prettier output was applied; run `31275313178` proves the scoped Day-4 formatting gate PASS
+- repository-wide historical formatting debt remains a separate cleanup concern and is not represented as Day-4 functionality failure
 
-## Task 3 — Atomic Launch+Buy GREEN
+## Manual diff/security review
 
-Minimal implementation:
+A manual security-oriented review of the actual PR diff found no reportable security issue and no forbidden Day-4 scope expansion. Specifically, the candidate contains no:
 
-- public `BreadBondingCurve.buy(...)` keeps its accepted ABI and now delegates to one shared internal `_buy(...)` implementation
-- additive `BreadBondingCurve.buyForLaunch(...)` is `factory`-only and delegates to the exact same pricing/tracked-reserve/fee/refund path
-- `buyForLaunch` returns `tokensOut`, actual `spent`, and exact `refund`; it does not introduce separate pricing/accounting
-- Factory `launchTokenAndBuy(...)` validates nonzero quote and recipient, then receives exactly `launchFeeUsdc + quoteIn`
-- pair deployment/initialization, launch-fee FeeEscrow credit, initial curve Buy, allowance cleanup, user refund, launch record and final Factory custody check all execute in one transaction
-- Factory approves exactly `quoteIn` to the new curve and clears allowance after the call
-- curve final-fill refund returns to Factory, and Factory forwards exactly that amount to the original launch caller
-- any slippage, transfer, escrow or Buy failure reverts the entire launch, including launch-fee claim creation and deployment effects
-- no snipe/opening-tax logic and no emergency behavior entered this slice
+- native quote, WETH, Permit2, or Universal Router path
+- Day-5 DEX/graduation/locker implementation
+- buyback/vesting implementation
+- CREATE2/deterministic-address promise
+- new FeeEscrow ledger or automatic creditor registrar
+- separate opening-tax treasury/claim ledger
+- Guardian fund/economic/dependency mutation authority
+- hard-coded Arc mainnet or guessed live runtime values
+- claim of exact current-live Pons Factory parity
 
-Exact GREEN head: `c9b731ae545c29e9405b95a0dc26ba08f25a96c6`
+External-call/custody boundaries reviewed include Factory exact USDC receipt, temporary approvals, FeeEscrow credit rollback, Factory reentrancy protection, emergency checks before custody, curve transfer/state ordering, and final-fill denominator/net-required guards.
 
-Exact GREEN CI: `31271736825`
+This was a manual diff-oriented security review plus executable tests. It is **not** represented as a completed external or Codex Security audit. `PONS_AUDIT_FINDINGS` remains an explicit release/security blocker.
 
-- `bootstrap-validation`: PASS
-- `dependency-build`: PASS
-- `foundry-bootstrap`: PASS
-- `infrastructure-health`: PASS
-- `BreadLaunchAndBuyTest`: **6/6 PASS**
-- Foundry: **119 passed / 0 failed / 0 skipped** across 17 suites
-- public Day-3 Buy deterministic vectors remain PASS
-- final-fill invariant remains PASS
-- launch-fee, FeeEscrow, FeePolicy, token, tracked-state, trading-security and trading-invariant suites remain PASS
+## Remaining global blockers
 
-Task-3 component result: **ATOMIC_LAUNCH_AND_BUY_LOCAL_GREEN**.
+These remain active with their existing scopes:
 
-This is not Day-4 PASS. Exact opening protection, two-stage snipe final-fill proof, EmergencyController integration and Day-4 integrated invariants remain unimplemented/unproved.
+- `CURRENT_PONS_FACTORY_SOURCE_PARITY` — truthfulness/parity claims only
+- `LIVE_RUNTIME_CONFIG` — real deployment values; no production values may be guessed
+- `PONS_AUDIT_FINDINGS` — release/security gate
+- `ARC_MAINNET_VALUES` — mainnet deployment gate
 
-No local/component result in this document is Day-4 PASS. The final verdict is permitted only after integrated exact-head implementation CI, guarded merge, fresh merged-main closeout and exact-head closeout CI.
+## Candidate gate
+
+Current state after this evidence stamp:
+
+`IMPLEMENTATION_CANDIDATE — FINAL_EXACT_HEAD_CI_PENDING`
+
+Do not merge PR #15 until the exact stamped head passes all four repository jobs. After that implementation merge, create a fresh closeout branch from the actual merged `main`; run the full prerequisite gate and exact-head closeout CI. Only the fresh merged-main closeout may issue:
+
+`DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS`
