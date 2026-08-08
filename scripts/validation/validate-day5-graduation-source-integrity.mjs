@@ -19,7 +19,7 @@ const inventory = JSON.parse(fs.readFileSync(inventoryPath, "utf8"));
 if (inventory.projectSourcePack !== "v1.5-day5-preflight-consolidated") {
   fail("unexpected Project Source pack");
 }
-if (inventory.checkedAt !== "2026-08-08") fail("checkedAt must be the current Day-5 source check date");
+if (inventory.checkedAt !== "2026-08-09") fail("checkedAt must be the current Day-5 source check date");
 
 const official = inventory.uniswapV4?.officialSource;
 if (!official) fail("missing official Uniswap V4 source block");
@@ -46,6 +46,30 @@ if (official.lockedByPeriphery !== true) fail("V4 core/Permit2 pins must be deri
 if (inventory.uniswapV4?.arcDeployment?.status !== "NOT_LISTED_IN_OFFICIAL_V4_DEPLOYMENTS") {
   fail("Arc V4 deployment must remain unresolved while the official V4 registry has no Arc entry");
 }
+if (inventory.uniswapV4?.arcDeployment?.checkedAt !== "2026-08-09") {
+  fail("Arc V4 deployment evidence must use the current Day-5 check date");
+}
+
+const v3 = inventory.uniswapV3?.officialSource;
+if (!v3) fail("missing official Uniswap V3 source block");
+if (v3.periphery?.repository !== "https://github.com/Uniswap/v3-periphery") fail("wrong V3 periphery repository");
+if (v3.periphery?.commit !== "0682387198a24c7cd63566a2c58398533860a5d1") fail("wrong V3 periphery commit");
+if (v3.core?.repository !== "https://github.com/Uniswap/v3-core") fail("wrong V3 core repository");
+if (v3.core?.commit !== "d0831dc6b8a318df3872b6d68f6de135c9f3ec29") fail("wrong V3 core commit");
+for (const [name, source] of Object.entries({
+  v3Periphery: v3.periphery,
+  v3Core: v3.core,
+})) {
+  if (!exactSha.test(source.commit ?? "")) fail(`${name} commit must be an exact 40-hex SHA`);
+  if (!Array.isArray(source.files) || source.files.length === 0) fail(`${name} must list exact source files`);
+  for (const file of source.files) {
+    if (!file.path || !file.spdx) fail(`${name} source file is missing path/SPDX identity`);
+  }
+}
+if (inventory.uniswapV3?.activationAllowed !== false) {
+  fail("Arc V3 fallback must remain inactive without verified deployment need and compatibility evidence");
+}
+
 if (inventory.arc?.mainnet?.status !== "WAITING_FOR_OFFICIAL_PUBLICATION") {
   fail("Arc mainnet values must remain an official-publication gate");
 }
