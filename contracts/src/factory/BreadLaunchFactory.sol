@@ -150,38 +150,52 @@ contract BreadLaunchFactory is Ownable {
             revert StaleEconomics(params.expectedEconomics, digest);
         }
 
-        IBreadLaunchFactory.LaunchConfig memory config = _launchConfig;
-        BreadLaunchDeployer.BreadLaunchDeployment memory deployment = BreadLaunchDeployer.BreadLaunchDeployment({
-            usdc: usdc,
-            creatorFeeRecipient: params.creatorFeeRecipient,
-            originalDeployer: msg.sender,
-            factory: address(this),
-            feePolicy: address(feePolicy),
-            feeEscrow: feeEscrow,
-            phantomQuote: config.phantomQuote,
-            creatorTaxBps: params.creatorTaxBps,
-            graduationThreshold: config.graduationThreshold,
-            supply: config.supply,
-            name: params.name,
-            symbol: params.symbol,
-            logo: params.logo,
-            description: params.description,
-            twitter: params.twitter,
-            telegram: params.telegram,
-            discord: params.discord,
-            website: params.website,
-            farcaster: params.farcaster
-        });
-
+        BreadLaunchDeployer.BreadLaunchDeployment memory deployment = _buildDeployment(params, msg.sender);
         (token, curve) = deployer_.deployLaunch(deployment);
         BreadBondingCurve(curve).initialize(token);
+        _recordLaunch(params, token, curve, digest, msg.sender);
+    }
 
+    function _buildDeployment(IBreadLaunchFactory.LaunchParams calldata params, address originalDeployer)
+        private
+        view
+        returns (BreadLaunchDeployer.BreadLaunchDeployment memory deployment)
+    {
+        IBreadLaunchFactory.LaunchConfig memory config = _launchConfig;
+        deployment.usdc = usdc;
+        deployment.creatorFeeRecipient = params.creatorFeeRecipient;
+        deployment.originalDeployer = originalDeployer;
+        deployment.factory = address(this);
+        deployment.feePolicy = address(feePolicy);
+        deployment.feeEscrow = feeEscrow;
+        deployment.phantomQuote = config.phantomQuote;
+        deployment.creatorTaxBps = params.creatorTaxBps;
+        deployment.graduationThreshold = config.graduationThreshold;
+        deployment.supply = config.supply;
+        deployment.name = params.name;
+        deployment.symbol = params.symbol;
+        deployment.logo = params.logo;
+        deployment.description = params.description;
+        deployment.twitter = params.twitter;
+        deployment.telegram = params.telegram;
+        deployment.discord = params.discord;
+        deployment.website = params.website;
+        deployment.farcaster = params.farcaster;
+    }
+
+    function _recordLaunch(
+        IBreadLaunchFactory.LaunchParams calldata params,
+        address token,
+        address curve,
+        bytes32 digest,
+        address originalDeployer
+    ) private {
         uint64 launchedAt = uint64(block.timestamp);
         uint64 version = configVersion;
         _launches[token] = IBreadLaunchFactory.LaunchRecord({
             token: token,
             curve: curve,
-            deployer: msg.sender,
+            deployer: originalDeployer,
             creatorFeeRecipient: params.creatorFeeRecipient,
             creatorTaxBps: params.creatorTaxBps,
             economicsDigest: digest,
@@ -191,7 +205,7 @@ contract BreadLaunchFactory is Ownable {
         _tokenForCurve[curve] = token;
 
         emit LaunchCreated(
-            msg.sender,
+            originalDeployer,
             token,
             curve,
             params.creatorFeeRecipient,
