@@ -1,7 +1,7 @@
 schema_version: 1.8
 project: Bread
 source_pack_expected: v1.4-day4-design
-updated_at: 2026-08-08T21:28:00+01:00
+updated_at: 2026-08-08T21:29:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -26,7 +26,7 @@ project_source_state:
 integration_baseline:
   id: DAY4-CLOSED-MAIN
   branch: main
-  current_main_commit: 7533b9f243e1c53106188aa662919f6166448f2e
+  accepted_day4_closeout_commit: 7533b9f243e1c53106188aa662919f6166448f2e
   implementation_pr: 15
   implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
   implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
@@ -40,7 +40,7 @@ working_branches:
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  current_main_commit: 7533b9f243e1c53106188aa662919f6166448f2e
+  handoff_base_main_commit: 7533b9f243e1c53106188aa662919f6166448f2e
   day4_implementation_pr: 15
   day4_implementation_pr_state: MERGED
   day4_implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
@@ -90,7 +90,7 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "release/security gate"
   ARC_MAINNET_VALUES: "mainnet deployment gate"
 next_action: >-
-  Preserve Day-4 as closed. Before any Day-5 production code, read and reconcile the controlling Project Sources for Day 5 against current main 7533b9f243e1c53106188aa662919f6166448f2e, identify any Day-5-specific source or external-reference gates, and write/review the Day-5 design/implementation plan required by the execution protocol. Do not silently reuse unresolved live-runtime, audit, parity, or Arc-mainnet assumptions.
+  Preserve Day-4 as closed. Before any Day-5 production code, read and reconcile the controlling Project Sources for Day 5 against accepted Day-4 closeout commit 7533b9f243e1c53106188aa662919f6166448f2e, identify any Day-5-specific source or external-reference gates, and write/review the Day-5 design/implementation plan required by the execution protocol. Do not silently reuse unresolved live-runtime, audit, parity, or Arc-mainnet assumptions.
 do_not_do:
   - "Do not reopen or mutate closed Day-4 economics/security semantics without a new ratified source change."
   - "Do not start Day-5 production code before its source/preflight/design gates are satisfied."
