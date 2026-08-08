@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {BreadBondingCurve} from "../../src/core/BreadBondingCurve.sol";
 import {IGraduationCoordinator} from "../../src/interfaces/IGraduationCoordinator.sol";
 
 contract MockGraduationCoordinator is IGraduationCoordinator {
@@ -58,5 +59,12 @@ contract MockGraduationCoordinator is IGraduationCoordinator {
 
     function getGraduation(address token) external view override returns (GraduationRecord memory record) {
         return _graduations[token];
+    }
+
+    function releaseCurve(BreadBondingCurve curve)
+        external
+        returns (uint256 seedUsdc, uint256 tokenOut, uint256 protocolFeeAmount, uint256 creatorFeeAmount)
+    {
+        return curve.releaseForGraduation();
     }
 }
