@@ -33,6 +33,21 @@ contract GraduationCoordinator is Ownable, ReentrancyGuard, IGraduationCoordinat
     error GraduationTransferMismatch();
     error StageTwoNotImplemented();
 
+    struct SweepPlan {
+        address adapter;
+        address curve;
+        uint256 expectedSeedUsdc;
+        uint256 expectedTokens;
+        uint256 poolTokenAmount;
+    }
+
+    struct ReleaseReceipt {
+        uint256 seedUsdc;
+        uint256 tokenOut;
+        uint256 protocolFeeAmount;
+        uint256 creatorFeeAmount;
+    }
+
     address public immutable override factory;
     address public immutable override usdc;
     address public immutable override feeEscrow;
@@ -77,11 +92,24 @@ contract GraduationCoordinator is Ownable, ReentrancyGuard, IGraduationCoordinat
 
     /// @notice Permissionlessly validates and moves one ready curve into exact coordinator custody.
     function sweep(address token) external override nonReentrant {
+        SweepPlan memory plan = _prepareSweep(token);
+        ReleaseReceipt memory receipt = _releaseExact(token, plan);
+        _settleFeesAndRecord(token, plan, receipt);
+    }
+
+    /// @dev Stage 2 is intentionally unavailable until the retry/lock RED suite is committed.
+    function createPool(address) external pure override returns (bytes32, uint256) {
+        revert StageTwoNotImplemented();
+    }
+
+    function getGraduation(address token) external view override returns (GraduationRecord memory record) {
+        return _graduations[token];
+    }
+
+    function _prepareSweep(address token) private view returns (SweepPlan memory plan) {
         IBreadLaunchFactory.LaunchRecord memory launch = IBreadLaunchFactory(factory).getLaunch(token);
         if (launch.token != token || launch.curve == address(0)) revert TokenNotFound();
-
-        GraduationRecord storage graduation = _graduations[token];
-        if (graduation.phase != GraduationPhase.NOT_GRADUATED) revert WrongGraduationPhase();
+        if (_graduations[token].phase != GraduationPhase.NOT_GRADUATED) revert WrongGraduationPhase();
         if (IBreadEmergencyController(emergencyController).graduationPaused()) revert GraduationPaused();
         if (launch.graduationCoordinator != address(this)) revert GraduationCoordinatorMismatch();
 
@@ -93,6 +121,7 @@ contract GraduationCoordinator is Ownable, ReentrancyGuard, IGraduationCoordinat
         uint256 expectedTokens = curve.tokenReserve();
         uint256 virtualQuote = expectedSeedUsdc + curve.phantomQuote();
         if (expectedSeedUsdc == 0 || expectedTokens == 0 || virtualQuote == 0) revert GraduationSeedNotViable();
+
         uint256 poolTokenAmount = Math.mulDiv(expectedTokens, expectedSeedUsdc, virtualQuote);
         if (poolTokenAmount == 0 || poolTokenAmount > expectedTokens) revert GraduationSeedNotViable();
 
@@ -106,49 +135,58 @@ contract GraduationCoordinator is Ownable, ReentrancyGuard, IGraduationCoordinat
         });
         adapter.validateSeed(seed);
 
+        plan = SweepPlan({
+            adapter: launch.graduationAdapter,
+            curve: launch.curve,
+            expectedSeedUsdc: expectedSeedUsdc,
+            expectedTokens: expectedTokens,
+            poolTokenAmount: poolTokenAmount
+        });
+    }
+
+    function _releaseExact(address token, SweepPlan memory plan) private returns (ReleaseReceipt memory receipt) {
         IERC20 quote = IERC20(usdc);
         IERC20 launchToken = IERC20(token);
         uint256 usdcBefore = quote.balanceOf(address(this));
         uint256 tokenBefore = launchToken.balanceOf(address(this));
 
         (
-            uint256 seedUsdc,
-            uint256 tokenOut,
-            uint256 protocolFeeAmount,
-            uint256 creatorFeeAmount
-        ) = curve.releaseForGraduation();
+            receipt.seedUsdc,
+            receipt.tokenOut,
+            receipt.protocolFeeAmount,
+            receipt.creatorFeeAmount
+        ) = BreadBondingCurve(plan.curve).releaseForGraduation();
 
         uint256 receivedUsdc = quote.balanceOf(address(this)) - usdcBefore;
         uint256 receivedTokens = launchToken.balanceOf(address(this)) - tokenBefore;
         if (
-            seedUsdc != expectedSeedUsdc || tokenOut != expectedTokens || receivedTokens != tokenOut
-                || receivedUsdc != seedUsdc + protocolFeeAmount + creatorFeeAmount
+            receipt.seedUsdc != plan.expectedSeedUsdc || receipt.tokenOut != plan.expectedTokens
+                || receivedTokens != receipt.tokenOut
+                || receivedUsdc != receipt.seedUsdc + receipt.protocolFeeAmount + receipt.creatorFeeAmount
         ) revert GraduationTransferMismatch();
+    }
 
-        _creditFee(quote, curve.protocolFeeRecipient(), protocolFeeAmount);
-        _creditFee(quote, curve.creatorFeeRecipient(), creatorFeeAmount);
+    function _settleFeesAndRecord(address token, SweepPlan memory plan, ReleaseReceipt memory receipt) private {
+        IERC20 quote = IERC20(usdc);
+        BreadBondingCurve curve = BreadBondingCurve(plan.curve);
+        uint256 beforeCredits = quote.balanceOf(address(this));
 
-        if (quote.balanceOf(address(this)) - usdcBefore != seedUsdc) revert GraduationTransferMismatch();
-        if (launchToken.balanceOf(address(this)) - tokenBefore != tokenOut) revert GraduationTransferMismatch();
+        _creditFee(quote, curve.protocolFeeRecipient(), receipt.protocolFeeAmount);
+        _creditFee(quote, curve.creatorFeeRecipient(), receipt.creatorFeeAmount);
 
+        uint256 feeTotal = receipt.protocolFeeAmount + receipt.creatorFeeAmount;
+        if (quote.balanceOf(address(this)) + feeTotal != beforeCredits) revert GraduationTransferMismatch();
+
+        GraduationRecord storage graduation = _graduations[token];
         uint64 sweptAt = uint64(block.timestamp);
         graduation.phase = GraduationPhase.SWEPT;
         graduation.sweptAt = sweptAt;
-        graduation.sweptUsdc = seedUsdc;
-        graduation.sweptTokens = tokenOut;
-        graduation.poolTokenAmount = poolTokenAmount;
-        totalSweptUsdc += seedUsdc;
+        graduation.sweptUsdc = receipt.seedUsdc;
+        graduation.sweptTokens = receipt.tokenOut;
+        graduation.poolTokenAmount = plan.poolTokenAmount;
+        totalSweptUsdc += receipt.seedUsdc;
 
-        emit GraduationSwept(token, launch.graduationAdapter, seedUsdc, tokenOut, sweptAt);
-    }
-
-    /// @dev Stage 2 is intentionally unavailable until the retry/lock RED suite is committed.
-    function createPool(address) external pure override returns (bytes32, uint256) {
-        revert StageTwoNotImplemented();
-    }
-
-    function getGraduation(address token) external view override returns (GraduationRecord memory record) {
-        return _graduations[token];
+        emit GraduationSwept(token, plan.adapter, receipt.seedUsdc, receipt.tokenOut, sweptAt);
     }
 
     function _validatedAdapter(IBreadLaunchFactory.LaunchRecord memory launch)
