@@ -1,0 +1,54 @@
+name: day2-vendor-openzeppelin-once
+
+on:
+  push:
+    branches: [checkpoint/day2-core-math-token]
+    paths:
+      - .github/workflows/day2-vendor-openzeppelin.yml
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: checkpoint/day2-core-math-token
+      - name: Fetch and verify exact frozen OpenZeppelin files
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://raw.githubusercontent.com/ponsdotdev/ponsfamily/d5491e20be56051a68abf47136f6890c3ce3ff7d/contractsV2/lib/openzeppelin-contracts/contracts'
+          root='contracts/lib/openzeppelin-contracts/contracts'
+
+          fetch_verify() {
+            rel="$1"
+            expected="$2"
+            target="$root/$rel"
+            mkdir -p "$(dirname "$target")"
+            curl --fail --silent --show-error --location "$base/$rel" --output "$target"
+            actual="$(git hash-object "$target")"
+            if [ "$actual" != "$expected" ]; then
+              echo "blob mismatch for $rel: expected $expected got $actual" >&2
+              exit 1
+            fi
+          }
+
+          fetch_verify 'token/ERC20/ERC20.sol' '4d9d6b6d1c1f33e7cc3013d70e6c5af900bcbe9a'
+          fetch_verify 'token/ERC20/IERC20.sol' 'b493743a10c4fba04d91014cbdb7f69b639480c1'
+          fetch_verify 'token/ERC20/extensions/IERC20Metadata.sol' '87bbafa84b834af1da027455bdc2e8a87beeb438'
+          fetch_verify 'token/ERC20/extensions/ERC20Burnable.sol' '4d482d8ec83617f74febf13917b283c14ebb7760'
+          fetch_verify 'utils/Context.sol' '4e535fe03c243f864568b8f4430c17c25dbadb47'
+          fetch_verify 'interfaces/draft-IERC6093.sol' 'e9d6249ef521e073253a8681aa8f022af7640850'
+      - name: Commit only verified vendored sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'bread-ci-vendor'
+          git config user.email 'bread-ci-vendor@users.noreply.github.com'
+          git add contracts/lib/openzeppelin-contracts/contracts
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore: vendor frozen OpenZeppelin ERC20 surface'
+          git push origin HEAD:checkpoint/day2-core-math-token
