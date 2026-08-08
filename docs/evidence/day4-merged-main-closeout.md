@@ -1,6 +1,6 @@
 # Day 4 merged-main closeout
 
-Status: **PREREQUISITE PASS — STAMPED-HEAD CLOSEOUT CI PENDING**
+Status: **DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS**
 
 ## Merged implementation identity
 
@@ -9,15 +9,14 @@ Status: **PREREQUISITE PASS — STAMPED-HEAD CLOSEOUT CI PENDING**
 - final implementation CI: `31275557000`
 - final implementation CI result: all four repository jobs PASS
 - implementation merge commit on `main`: `aec8eb1f90693d8883e4849503c8e50a0ed79b80`
-- closeout branch: `checkpoint/day4-closeout`
-- closeout branch base: exactly `aec8eb1f90693d8883e4849503c8e50a0ed79b80`
 - closeout PR: `#23`
+- closeout merge commit on `main`: `7533b9f243e1c53106188aa662919f6166448f2e`
 
-PR #15 merged the ratified Day-4 implementation candidate containing Factory/Deployer economics pinning, canonical-USDC launch fee routing, atomic Launch+Buy, exact opening protection, snipe-aware final fill, restriction-only emergency control, real vertical integration, INV-040–044, INV-060–063, and the executable Day-4 source-integrity validator.
+PR #15 merged the ratified Day-4 implementation containing Factory/Deployer economics pinning, canonical-USDC launch fee routing, atomic Launch+Buy, exact opening protection, snipe-aware final fill, restriction-only emergency control, real vertical integration, INV-040–044, INV-060–063, and the executable Day-4 source-integrity validator.
 
-## Final implementation gate already proved before merge
+## Final implementation gate
 
-The exact PR head `d08a33c00bb17eb96ef342ee25d48fb696f7ea4d` passed CI run `31275557000` with:
+The exact implementation head `d08a33c00bb17eb96ef342ee25d48fb696f7ea4d` passed CI run `31275557000` with:
 
 - `bootstrap-validation`: PASS
 - `dependency-build`: PASS
@@ -31,11 +30,9 @@ The exact PR head `d08a33c00bb17eb96ef342ee25d48fb696f7ea4d` passed CI run `3127
 - workspace-clean check: PASS
 - Foundry integrated suite: `162 passed / 0 failed / 0 skipped` across 24 suites
 
-This evidence proves the implementation candidate that was merged. It does not by itself issue the Day-4 closeout verdict.
-
 ## Fresh merged-main closeout prerequisite
 
-The closeout branch was created fresh from the actual implementation merge commit `aec8eb1f90693d8883e4849503c8e50a0ed79b80`, not from the old implementation branch.
+The closeout branch was created fresh from the actual implementation merge commit `aec8eb1f90693d8883e4849503c8e50a0ed79b80`, not from the implementation branch.
 
 Exact prerequisite head:
 
@@ -44,6 +41,18 @@ Exact prerequisite head:
 Exact prerequisite CI:
 
 `31276781025`
+
+All four repository jobs passed, including validation, Foundry, scoped formatting, typecheck, build, workspace-clean, and infrastructure.
+
+## Stamped-head closeout gate
+
+The prerequisite proof was stamped into the closeout evidence/build-state, producing exact stamped head:
+
+`8e0eaac8f1ce21f4654286a6e3f9113fd4de7a4b`
+
+Exact stamped-head CI:
+
+`31276843224`
 
 Result:
 
@@ -59,27 +68,35 @@ Result:
 - workspace-clean check: PASS
 - merged Day-4 Foundry production tree: PASS
 
-No Solidity, test, runtime-config, economics, or Day-5 code was changed in the closeout prerequisite branch. The branch contained only durable closeout evidence/build-state changes on top of the actual merged implementation tree.
+No Solidity, tests, runtime configuration, economics, or Day-5 code changed during closeout.
 
-## Closeout rule
+## Guarded closeout merge
 
-The prerequisite proof is now stamped. Because this evidence stamp changes the branch head, the verdict remains withheld until the new stamped head passes all four repository CI jobs again.
+PR #23 was merged using exact-head protection against:
 
-After the stamped-head CI passes, PR #23 may merge only with exact-head protection. The resulting merge identity must then be verified on `main`.
+`8e0eaac8f1ce21f4654286a6e3f9113fd4de7a4b`
 
-Only after those steps may Bread issue:
+GitHub returned closeout merge commit:
+
+`7533b9f243e1c53106188aa662919f6166448f2e`
+
+A post-merge readback verified PR #23 is closed and merged with that exact merge commit.
+
+## Day-4 verdict
+
+The Day-4 implementation was tested at exact head, merged, re-proved from the actual merged implementation tree, stamped, re-tested at exact stamped closeout head, and merged with exact-head protection.
+
+Verdict:
 
 `DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS`
 
-## Active blockers that remain outside Day-4 closeout
+## Active blockers that remain
+
+Day-4 closure does not clear unrelated release/deployment blockers:
 
 - `CURRENT_PONS_FACTORY_SOURCE_PARITY` — truthfulness/parity claims only
 - `LIVE_RUNTIME_CONFIG` — real deployment values
 - `PONS_AUDIT_FINDINGS` — release/security gate
 - `ARC_MAINNET_VALUES` — mainnet deployment gate
 
-None of these are silently cleared by Day-4 closeout.
-
-## Current closeout state
-
-`DAY4_MERGED_MAIN_CLOSEOUT_STAMPED_HEAD_CI_PENDING`
+No Day-5 production work is included in this closeout.
