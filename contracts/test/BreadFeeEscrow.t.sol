@@ -111,4 +111,14 @@ contract BreadFeeEscrowTest {
         assert(escrow.balanceOf(RECIPIENT) == 0);
         assert(escrow.totalOutstanding() == 0);
     }
+
+    function testConstructorRejectsZeroUsdc() public {
+        bool reverted;
+        try new BreadFeeEscrow(address(0), address(this)) returns (BreadFeeEscrow) {
+            reverted = false;
+        } catch {
+            reverted = true;
+        }
+        assert(reverted);
+    }
 }
