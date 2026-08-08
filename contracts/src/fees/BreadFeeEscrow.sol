@@ -13,6 +13,7 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
 
     error TokenZeroAddress();
     error UnauthorizedCreditor();
+    error CreditorMustBeContract();
     error RecipientZeroAddress();
     error ZeroAmount();
     error UnexpectedReceivedAmount(uint256 expected, uint256 received);
@@ -46,6 +47,7 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     }
 
     function setAuthorizedCreditor(address creditor, bool allowed) external onlyOwner {
+        if (allowed && creditor.code.length == 0) revert CreditorMustBeContract();
         authorizedCreditor[creditor] = allowed;
         emit AuthorizedCreditorUpdated(creditor, allowed);
     }
