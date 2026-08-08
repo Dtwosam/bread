@@ -1,0 +1,41 @@
+schema_version: 1.0
+project: Bread
+source_pack: v1.3
+state_kind: day3-integrated-closeout
+status: POST_MERGE_CLOSEOUT_GATE
+implementation_pr: 8
+closeout_branch: checkpoint/day3-closeout
+integration_target: main
+active_checkpoint: Day 3 closeout
+active_lane: Trading, Fees & Escrow
+candidate_verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS
+verdict_condition: closeout branch must pass complete repository CI and merge to main
+production_scope:
+  fee_escrow: implemented
+  fee_policy: implemented
+  erc20_usdc_buy_sell: implemented
+  partial_final_buy_clamp_reprice_refund: implemented
+  clamped_buy_price_bound_slippage: implemented
+  no_buyback_fee_sweep: implemented
+  protocol_creator_escrow_handoff: implemented
+  creator_recipient_rotation: implemented
+  live_sweep_operator_rotation: implemented
+excluded_scope:
+  buyback_vesting: not_authorized
+  graduation_transfer_dex: not_authorized
+  launch_and_buy: not_day3
+  anti_snipe_production: not_day3
+  native_quote: prohibited_v1
+  guessed_live_fee_values: prohibited
+  arc_mainnet_constants: unresolved
+remaining_gates:
+  - CURRENT_PONS_FACTORY_SOURCE_PARITY
+  - BREAD_SNIPE_DECAY_FORMULA
+  - LIVE_RUNTIME_CONFIG
+  - PONS_AUDIT_FINDINGS
+  - ARC_MAINNET_VALUES
+closeout_evidence:
+  - docs/evidence/day3-trading-fees-escrow.md
+  - docs/evidence/day3-trading-fees-escrow-closeout.md
+  - contracts/test/Day3CloseoutPresence.t.sol
+next_action_after_pass: begin Day 4 only from the new integrated main baseline and re-read Source Pack v1.3 plus the Day-4 build gate before any Launch+Buy or anti-snipe production work
