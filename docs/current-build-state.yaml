@@ -1,7 +1,7 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T12:58:00+01:00
+updated_at: 2026-08-08T13:40:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -9,7 +9,7 @@ completed_checkpoints:
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
 active_checkpoint: "Day 3"
-active_lane: "Trading, Fees & Escrow — source preflight/reconciliation only; no Day-3 production code yet"
+active_lane: "Trading, Fees & Escrow — external component sourcing/reconciliation preflight only; no Day-3 production code yet"
 integration_baseline:
   id: D2-CLOSEOUT
   branch: main
@@ -27,7 +27,8 @@ repository:
   day2_closeout_head: 06385e4a561ece563cefe0580317b13309ff035a
   day2_closeout_merge_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
   day3_preflight_branch: checkpoint/day3-trading-fees-escrow-preflight
-  status: DAY_3_SOURCE_PREFLIGHT_IN_PROGRESS
+  day3_component_sourcing_gate_commit: de50a7e635a58891efe42f7db40d231acde7846f
+  status: DAY_3_COMPONENT_SOURCING_RECONCILIATION_IN_PROGRESS
 verification:
   day2_lane2_final_exact_head_run: 31256808903
   day2_closeout_run: 31256962864
@@ -66,16 +67,23 @@ decisions_since_last_state:
   - "05C applicable Day-3 invariants include INV-001 through INV-006, INV-010 through INV-012 where affected, INV-020 through INV-026, and INV-030 through INV-035 when corresponding fee/buyback functionality exists."
   - "03 explicitly permits FeeEscrow to be reimplemented if needed, but treats it as new security-sensitive financial code requiring explicit unit, fuzz, invariant, integration and independent review. Its minimum invariants include own-ledger-only claims, state update before external control, failed-transfer claim preservation, no admin withdrawal of recipient claims, USDC balance/outstanding-claims reconciliation and deterministic credit/claim events."
   - "The public pons GitHub repository still has no commit newer than frozen d5491e20be56051a68abf47136f6890c3ce3ff7d and no concrete PonsV2FeeEscrow source was found in the public snapshot."
-  - "Current accessible pons docs now describe a materially different Robinhood Chain / direct Uniswap V3 stack with no bonding curve or migration. Bread will not substitute those new semantics for the frozen old Pons V2 baseline. CURRENT_PONS_FACTORY_SOURCE_PARITY and LIVE_RUNTIME_CONFIG therefore remain unresolved."
+  - "Current accessible pons docs describe a materially different Robinhood Chain / direct Uniswap V3 stack with no bonding curve or migration. Bread will not substitute those new semantics for the frozen old Pons V2 baseline. CURRENT_PONS_FACTORY_SOURCE_PARITY and LIVE_RUNTIME_CONFIG remain unresolved."
   - "Frozen old Pons V2 Buy/Sell mechanics are source-visible, including tracked reserves, quote-leg fee/tax, partial final-buy clamp/refund and price-bound slippage; frozen fee/buyback sweep logic is coupled to FeePolicy, FeeEscrow and BuybackVault and must not be copied before those dependencies are explicitly reconciled."
   - "Frozen PonsV2BuybackVault source is available and implements five-year weighted-average vesting, beneficiary/split snapshots, balance-delta locking and escrow-routed releases, but it remains a separate Day-3 reconciliation decision rather than automatically authorized production code."
-next_action: "Choose and approve the Day-3 architecture, including whether Bread will explicitly close FEE_ESCROW_SOURCE by reimplementing a minimal canonical-USDC-only pull escrow under Bread invariants. Do not write Day-3 production code before that design is approved and committed."
+  - "External component sourcing is now allowed only through docs/source-reconciliation/component-sourcing-reuse-gate.md at commit de50a7e635a58891efe42f7db40d231acde7846f. Candidates must have exact provenance/license/assumption review and a REUSE, ADAPT, REFERENCE_ONLY or REJECT verdict before implementation."
+  - "Sourced components do not become standalone Bread entities. Every sourced-component lane starts from the current integrated baseline, defines upstream/downstream/invariant impact, wires every already-existing applicable consumer as soon as its interface is stable, runs affected regressions, and advances the single Bread integration baseline before PASS."
+  - "LOCAL_COMPONENT_PASS != BREAD_PASS. FeeEscrow specifically cannot PASS on contract tests alone; its trade-fee handoff and every currently existing applicable canonical consumer path must agree, while future SDK/indexer/API/dashboard lanes must consume the frozen escrow interface rather than redefine accounting."
+next_action: "Research and produce the Day-3 external-component candidate matrix, starting with FeeEscrow and FeePolicy/fee splitting, then record suitable later candidates for Launch+Buy and snipe protection. For every candidate verify exact repository/commit/path, license, audits/history where available, dependencies, asset/decimal/accounting assumptions, privileges, failure semantics and compatibility with Bread. Classify each as REUSE, ADAPT, REFERENCE_ONLY or REJECT. Do not write production code until the selected Day-3 component architecture is approved and its continuous integration impact map is frozen."
 do_not_do:
-  - "Do not write Day-3 production money-path code during preflight."
-  - "Do not claim exact current-live Pons V2 parity."
+  - "Do not write Day-3 production money-path code during sourcing/preflight."
+  - "Do not treat any sourced component as a standalone mini-product or defer applicable Bread wiring until a late integration phase."
+  - "Do not claim a sourced component PASS from local/upstream tests alone."
+  - "Do not inherit another protocol's fee percentages, recipients, curve economics, snipe schedule, admin powers, custody model or chain constants."
+  - "Do not reuse public code without establishing suitable license/permission."
+  - "Do not claim exact current-live Pons V2 parity from third-party code."
   - "Do not import the current Robinhood/Uniswap-V3 pons stack as Bread semantics."
   - "Do not hardcode old Pons source-default fee percentages as Bread live economics; LIVE_RUNTIME_CONFIG remains unresolved."
-  - "Do not implement FeeEscrow by guesswork; either obtain exact source or explicitly choose Bread invariant-driven reimplementation."
+  - "Do not implement FeeEscrow by guesswork; either obtain exact source or explicitly choose a sourced/adapted/Bread invariant-driven implementation."
   - "Do not implement buyback/vesting until its Day-3 source and invariant boundary is explicitly approved."
   - "Do not implement snipe protection or Launch+Buy in Day 3."
   - "Do not add native quote handling; Bread V1 finance remains canonical 6-decimal ERC20 USDC only."
