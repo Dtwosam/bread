@@ -1,11 +1,52 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "repository": "https://github.com/ponsdotdev/ponsfamily",
   "referenceCommit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
   "sourcePath": "contractsV2/src/v2",
+  "frozenPublicReadmeFactory": "0x7E1EAbd52Ae29598e6483F72dCf1a70b14284dB8",
+  "currentDocsFactory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+  "currentDocsChainId": 4663,
   "parityStatus": "REFERENCE_ONLY_NOT_PROVEN_CURRENT_LIVE_PARITY",
+  "licenseInventory": {
+    "rootLicenseFileObserved": false,
+    "inspectedProjectSourceSpdx": "MIT",
+    "scope": "File-level SPDX inventory for inspected Pons V2 project sources only; this does not assert one license for every vendored dependency.",
+    "inspectedFiles": [
+      {
+        "path": "contractsV2/src/v2/PonsV2LaunchFactory.sol",
+        "blobSha": "2bc506657902f4b829e45e0a10f88e2fd76239e6",
+        "spdx": "MIT"
+      },
+      {
+        "path": "contractsV2/src/v2/interfaces/ILaunchpadV2.sol",
+        "blobSha": "5fac4a72f6be47e51971bc477f65f2447d1770f9",
+        "spdx": "MIT"
+      },
+      {
+        "path": "contractsV2/src/v2/hooks/PonsV2MemeHook.sol",
+        "blobSha": "e59e5a55550b512adddf9a0263210128edbc7abf",
+        "spdx": "MIT"
+      }
+    ]
+  },
+  "sourceInventory": {
+    "contractsV2/src/v2/PonsV2LaunchFactory.sol": {
+      "blobSha": "2bc506657902f4b829e45e0a10f88e2fd76239e6",
+      "spdx": "MIT"
+    },
+    "contractsV2/src/v2/interfaces/ILaunchpadV2.sol": {
+      "blobSha": "5fac4a72f6be47e51971bc477f65f2447d1770f9",
+      "spdx": "MIT"
+    },
+    "contractsV2/src/v2/hooks/PonsV2MemeHook.sol": {
+      "blobSha": "e59e5a55550b512adddf9a0263210128edbc7abf",
+      "spdx": "MIT"
+    }
+  },
   "notes": [
-    "Current official Pons V2 docs and frozen public repository identify different V2 factory deployments.",
+    "Current official Pons V2 docs and the frozen public repository identify different V2 factory deployments.",
+    "The frozen source inventory is reference evidence only; it is not proof that the current documented deployment runs identical bytecode.",
+    "The reconciliation reader is read-only and must report unreadable fields, mismatches, and unknowns rather than converting them into Bread implementation values.",
     "Do not claim exact current-live parity until source/runtime equivalence is proven."
   ]
 }
