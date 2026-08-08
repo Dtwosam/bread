@@ -47,7 +47,7 @@ contract BreadTinyTradeInvariantTest {
         uint64 quoteReserveSeed,
         uint96 tokenReserveSeed
     ) public pure {
-        uint256 quoteIn = uint256(quoteSeed % uint32(10 * ONE_USDC)) + 1;
+        uint256 quoteIn = uint256(quoteSeed) % (10 * ONE_USDC) + 1;
         uint256 quoteReserve = (uint256(quoteReserveSeed % 1_000_000_000) + 1) * ONE_USDC;
         uint256 tokenReserve = uint256(tokenReserveSeed % 10_000_000_000 ether) + 1 ether;
 
@@ -56,7 +56,7 @@ contract BreadTinyTradeInvariantTest {
     }
 
     function testFuzz_RepeatedTinyRoundTripsNeverIncreaseQuote(uint32 quoteSeed) public pure {
-        uint256 startingQuote = uint256(quoteSeed % uint32(10 * ONE_USDC)) + 1;
+        uint256 startingQuote = uint256(quoteSeed) % (10 * ONE_USDC) + 1;
         uint256 currentQuote = startingQuote;
         uint256 quoteReserve = DEFAULT_QUOTE_RESERVE;
         uint256 tokenReserve = DEFAULT_TOKEN_RESERVE;
