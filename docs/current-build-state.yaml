@@ -1,33 +1,37 @@
 schema_version: 1.1
 project: Bread
 source_pack_expected: v1.3-post-research
-updated_at: 2026-08-08T16:24:00+01:00
+updated_at: 2026-08-08T18:10:00+02:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
+  - "Day 3 source gate: PROJECT_SOURCE_V1_3_RATIFICATION_RATIFIED"
+  - "Day 3 candidate audit: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS_PENDING_FINAL_EXACT_HEAD_CI"
 active_checkpoint: "Day 3 — Trading, Fees & Escrow"
-active_lane: "Project Source v1.3 ratification recovery — freeze unratified Day-3 candidate code; no production merge"
-active_gate: PROJECT_SOURCE_V1_3_RATIFICATION
+active_lane: "Ratified PR #8 candidate — final exact-head CI/security/scope review and guarded merge gate"
+active_gate: DAY_3_RATIFIED_CANDIDATE_EXACT_HEAD_MERGE_GATE
 project_source_state:
-  upload: PENDING_USER_UPLOAD
-  ratification: UNRATIFIED
-  rule: "Repository research/amendment docs are evidence, not proof that Project Sources were uploaded. No affected production code may merge until v1.3 is uploaded, read back and reconciled."
+  pack: v1.3-post-research
+  upload: UPLOADED
+  ratification: RATIFIED
+  ratification_rule: "Final v1.3 Project Source replacements were read back in the active chat and reconciled against main f1eb742a8c521e80b66b4fed28df718f2ebdd0d7, PR #8, PR #9, the research matrix and the repo-side v1.3 amendment before affected production repair/merge work continued."
 integration_baseline:
   id: D2-CLOSEOUT
   branch: main
-  commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
-  status: ACCEPTED_DAY_2_DURABLE_BASELINE
+  production_code_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  repository_workflow_head: f1eb742a8c521e80b66b4fed28df718f2ebdd0d7
+  status: ACCEPTED_DAY_2_PRODUCTION_BASELINE_WITH_DOCS_ONLY_RATIFICATION_RECOVERY_HEAD
 working_branches:
-  - checkpoint/source-v1-3-ratification-recovery
   - checkpoint/day3-trading-fees-escrow
   - checkpoint/day3-closeout
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  accepted_main_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  accepted_production_code_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  current_main_workflow_head: f1eb742a8c521e80b66b4fed28df718f2ebdd0d7
   recovery_pr: 10
   day3_candidate_pr: 8
   day3_closeout_candidate_pr: 9
@@ -37,41 +41,61 @@ research:
   architecture_decisions:
     fee_escrow: "ADAPT Clanker ClankerFeeLocker pattern into Bread-owned canonical-USDC escrow"
     fee_policy: "BREAD_OWNED"
-    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE"
-    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY; Clanker technical reference only"
+    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE — Day 4 only"
+    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY; exact BREAD_SNIPE_DECAY_FORMULA remains gated for Day 4"
+conformance_audit:
+  path: docs/evidence/day3-v1.3-conformance-audit.md
+  audit_commit_before_handoff_update: 5504b5bf7b0d7e1f46600c315455390f5bce0a89
+  result: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS_PENDING_FINAL_EXACT_HEAD_CI
+  production_divergences_found: 1
+  production_divergences_repaired: 1
+  repaired_boundary: "FeeEscrow owner could previously enable an EOA creditor; v1.3 forbids arbitrary EOA claim assignment. Enabling a creditor now requires deployed contract code."
+  proof_gaps_closed:
+    - short-transfer custody mismatch rollback
+    - successful claim replay rejection
+    - claim state-before-transfer observation
+    - claim reentry attempt blocked
 candidate_prs:
   pr_8:
-    state: DRAFT_OPEN_UNMERGED_UNRATIFIED
-    head_observed: e8e844bec3946f0f0a1748858e06897572261840
-    title: "[BLOCKED ON PROJECT SOURCE v1.3 RATIFICATION] Day 3: trading fees and escrow"
-    rule: "Freeze; after ratification audit source-to-code, TDD-repair divergence, exact-head CI, then guarded merge only if conforming."
+    state: DRAFT_OPEN_UNMERGED_RATIFIED_PENDING_FINAL_CI
+    code_and_test_head_before_audit_docs: 6ec6c0104c8826c89bae4be129ba6f44e64eafcf
+    audit_head_before_handoff_update: 5504b5bf7b0d7e1f46600c315455390f5bce0a89
+    rule: "Do not merge until the exact current PR head passes all four CI jobs, final diff/scope/security review has no unresolved high/critical finding, and merge uses expected-head protection."
   pr_9:
     state: DRAFT_OPEN_UNMERGED_STALE_CLOSEOUT
-    head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
-    title: "[STALE CLOSEOUT — DO NOT MERGE] Close Day 3 trading fees and escrow"
-    rule: "Cannot close Day 3 before a ratified PR #8 is merged and closeout is rerun/rebased from actual main."
+    head_observed_at_ratification: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
+    rule: "Do not reuse as Day-3 PASS. After PR #8 actually merges, refresh/rebase/recreate closeout from actual main and rerun exact-head closeout CI."
 verification:
   day2_closeout_run: 31256962864
   day2_foundry_tests: PASS_48
-  recovery_pr_10_initial_run: 31264500053
-  recovery_pr_10_initial_result: "EXPECTED_REPAIR_NEEDED — validator required legacy structural fields; production code unchanged"
+  ratification_recovery_pr_10_run: 31264567398
+  eoa_creditor_red_run: 31265939060
+  eoa_creditor_red_foundry: "PASS_94_FAIL_1 — only testOwnerCannotAuthorizeEoaAsCreditor failed"
+  eoa_creditor_green_run: 31266017924
+  eoa_creditor_green_jobs: PASS_ALL_FOUR
+  adversarial_proof_run: 31266099983
+  adversarial_proof_foundry: PASS_98_TESTS
+  adversarial_proof_jobs: PASS_ALL_FOUR
+  final_exact_head_run: PENDING_AFTER_THIS_HANDOFF_COMMIT
 blockers:
-  - PROJECT_SOURCE_V1_3_RATIFICATION
   - BREAD_SNIPE_DECAY_FORMULA
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 resolved_or_superseded_after_v1_3_ratification:
+  PROJECT_SOURCE_V1_3_RATIFICATION: RATIFIED
   FEE_ESCROW_SOURCE: RESOLVED_BY_APPROVED_BREAD_ADAPTATION_ARCHITECTURE
   LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
   EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
 next_action: >-
-  User replaces the affected Project Sources with the final consolidated v1.3 files. In the next chat, read every uploaded replacement, verify GitHub main plus PR #8/#9, and set PROJECT_SOURCE_RATIFICATION=RATIFIED only if they agree. Then audit PR #8 requirement-by-requirement against v1.3; preserve conforming work, TDD-repair any divergence, run full exact-head CI/security/invariants, and merge only if ratified and green. After PR #8 merges, refresh/rebase/recreate the Day-3 closeout from actual main. Do not start Day 4 until Day 3 is durably closed.
+  Run the full repository CI/security/invariant gate on the exact current PR #8 head containing the v1.3 conformance audit and this synchronized handoff. If and only if all four jobs pass and final diff/scope/security review finds no unresolved high/critical issue, update PR #8 metadata from ratification-blocked to ratified/ready, then merge with an expected-head guard. Verify the resulting main commit and tests. After PR #8 merge, refresh/rebase/recreate the Day-3 closeout from actual main, update Day-3 evidence/current-build-state, run full exact-head closeout CI, and merge the exact green closeout. Do not start Day 4 before DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS is durably recorded.
 do_not_do:
-  - "Do not merge PR #8 or PR #9 before Project Source v1.3 ratification and conformance review."
-  - "Do not treat a GitHub source-pack markdown file as proof of Project Source upload."
-  - "Do not start Day 4 while Day 3 remains unratified/candidate."
+  - "Do not merge PR #8 without exact-head final CI and expected-head protection."
+  - "Do not merge or rely on stale PR #9 before PR #8 is merged and closeout is rebuilt from actual main."
+  - "Do not start Day 4 while Day 3 is not durably closed."
+  - "Do not implement Launch+Buy or anti-snipe in Day 3."
+  - "Do not implement anti-snipe before BREAD_SNIPE_DECAY_FORMULA is frozen and proved."
   - "Do not claim exact current-live Pons parity."
   - "Do not hardcode unresolved live fee values or Arc mainnet values."
   - "Do not import external economics, admin powers, custody semantics or duplicate accounting state."
