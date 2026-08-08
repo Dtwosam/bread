@@ -34,6 +34,19 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     error LaunchBuyExemptionAlreadyConsumed();
     error LaunchBuyExemptionExpired();
 
+    struct BuyCharges {
+        uint256 fee;
+        uint256 creatorTax;
+        uint256 snipeTax;
+        uint256 netCurveInput;
+    }
+
+    struct BuyQuote {
+        uint256 tokensOut;
+        uint256 spent;
+        BuyCharges charges;
+    }
+
     address public creatorFeeRecipient;
     address public immutable factory;
     IBreadFeePolicy public immutable feePolicy;
@@ -169,54 +182,79 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 received = quoteToken.balanceOf(address(this)) - balanceBefore;
         if (received != quoteIn) revert UnexpectedReceivedAmount(quoteIn, received);
 
+        BuyQuote memory quoted = _quoteBuy(received, snipeTaxBps);
+        if (quoted.spent * minTokensOut > received * quoted.tokensOut) {
+            revert SlippageExceeded(minTokensOut, quoted.tokensOut);
+        }
+
+        quoteFeeBalance += quoted.charges.fee + quoted.charges.snipeTax;
+        creatorTaxBalance += quoted.charges.creatorTax;
+        trackedQuote += quoted.spent;
+        trackedTokens -= quoted.tokensOut;
+
+        IERC20(token).safeTransfer(recipient, quoted.tokensOut);
+
+        refund = received - quoted.spent;
+        if (refund != 0) {
+            emit CurveBuyRefunded(msg.sender, refund);
+            quoteToken.safeTransfer(msg.sender, refund);
+        }
+
+        emit OpeningProtectionApplied(
+            msg.sender,
+            recipient,
+            snipeTaxBps,
+            quoted.charges.snipeTax,
+            launchBuyExempt
+        );
+        emit CurveBuy(
+            msg.sender,
+            recipient,
+            quoted.spent,
+            quoted.tokensOut,
+            quoted.charges.fee,
+            quoted.charges.creatorTax
+        );
+
+        return (quoted.tokensOut, quoted.spent, refund);
+    }
+
+    function _quoteBuy(uint256 received, uint16 snipeTaxBps) private view returns (BuyQuote memory quoted) {
         (uint256 quoteReserve_, uint256 tokenReserve_) = getReserves();
-        spent = received;
-        uint256 fee = spent * tradeFeeBps / BASIS_POINTS;
-        uint256 tax = spent * creatorTaxBps / BASIS_POINTS;
-        uint256 afterStandard = spent - fee - tax;
-        uint256 snipeTax = afterStandard * snipeTaxBps / BASIS_POINTS;
-        uint256 netCurveInput = afterStandard - snipeTax;
-        tokensOut = BreadBondingCurveMath.getAmountOut(netCurveInput, quoteReserve_, tokenReserve_, 0);
+        quoted.spent = received;
+        quoted.charges = _buyCharges(received, snipeTaxBps);
+        quoted.tokensOut = BreadBondingCurveMath.getAmountOut(
+            quoted.charges.netCurveInput,
+            quoteReserve_,
+            tokenReserve_,
+            0
+        );
 
         uint256 available = tokenReserve_ > reservedTokens ? tokenReserve_ - reservedTokens : 0;
         if (available == 0) revert CurveClosed();
 
-        if (tokensOut > available) {
-            tokensOut = available;
-            uint256 net = BreadBondingCurveMath.getAmountIn(available, quoteReserve_, tokenReserve_, 0);
-            spent = Math.min(
+        if (quoted.tokensOut > available) {
+            quoted.tokensOut = available;
+            uint256 netRequired = BreadBondingCurveMath.getAmountIn(available, quoteReserve_, tokenReserve_, 0);
+            quoted.spent = Math.min(
                 Math.mulDiv(
-                    net,
+                    netRequired,
                     BASIS_POINTS,
                     BASIS_POINTS - uint256(tradeFeeBps) - uint256(creatorTaxBps),
                     Math.Rounding.Ceil
                 ),
                 received
             );
-            fee = spent * tradeFeeBps / BASIS_POINTS;
-            tax = spent * creatorTaxBps / BASIS_POINTS;
-            afterStandard = spent - fee - tax;
-            snipeTax = afterStandard * snipeTaxBps / BASIS_POINTS;
-            netCurveInput = afterStandard - snipeTax;
+            quoted.charges = _buyCharges(quoted.spent, snipeTaxBps);
         }
+    }
 
-        if (spent * minTokensOut > received * tokensOut) revert SlippageExceeded(minTokensOut, tokensOut);
-
-        quoteFeeBalance += fee + snipeTax;
-        creatorTaxBalance += tax;
-        trackedQuote += spent;
-        trackedTokens -= tokensOut;
-
-        IERC20(token).safeTransfer(recipient, tokensOut);
-
-        refund = received - spent;
-        if (refund != 0) {
-            emit CurveBuyRefunded(msg.sender, refund);
-            quoteToken.safeTransfer(msg.sender, refund);
-        }
-
-        emit OpeningProtectionApplied(msg.sender, recipient, snipeTaxBps, snipeTax, launchBuyExempt);
-        emit CurveBuy(msg.sender, recipient, spent, tokensOut, fee, tax);
+    function _buyCharges(uint256 spent, uint16 snipeTaxBps) private view returns (BuyCharges memory charges) {
+        charges.fee = spent * tradeFeeBps / BASIS_POINTS;
+        charges.creatorTax = spent * creatorTaxBps / BASIS_POINTS;
+        uint256 afterStandard = spent - charges.fee - charges.creatorTax;
+        charges.snipeTax = afterStandard * snipeTaxBps / BASIS_POINTS;
+        charges.netCurveInput = afterStandard - charges.snipeTax;
     }
 
     function sell(uint256 tokensIn, uint256 minQuoteOut, address recipient)
