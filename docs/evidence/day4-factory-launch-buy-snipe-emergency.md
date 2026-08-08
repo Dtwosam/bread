@@ -44,6 +44,7 @@ After three targeted fixes failed, implementation guessing stopped and diagnosti
 - PR #20 / run `31270817328`: clean branch + same nested Deployer calldata decoder but no contract creation PASSES all four CI jobs. The deployment calldata decoder is exonerated.
 - PR #21 / run `31270826372`: clean branch + static core payload + `new BreadBondingCurve(...)` PASSES all four CI jobs. Curve construction is exonerated.
 - PR #22 / run `31270873490`: clean branch + only metadata/social payload + `new BreadLaunchToken(...)` FAILS Foundry compile with the same `Stack too deep` backend error. Token construction call is the isolated root cause.
+- diagnostic PRs #16–#22 were closed without merge after evidence capture.
 
 ### Root cause / bounded repair rule
 
@@ -78,6 +79,50 @@ Exact Task-1 GREEN CI: `31271282775`
 
 Task-1 component result: **FACTORY_DEPLOYER_LOCAL_GREEN**.
 
-This is not Day-4 PASS. Launch-fee custody/credit, Launch+Buy, opening protection, emergency control and Day-4 integrated invariants remain unimplemented/unproved.
+## Task 2 — Canonical-USDC launch-fee RED
+
+RED test commit: `9c44d8df9b7184bf02ba58f0053787fa110b9ccf`
+
+Exact RED CI: `31271422396`
+
+- Solidity compile: PASS
+- prior Factory/Deployer and all Day-1–Day-3 suites: PASS
+- total: **108 passed / 5 failed / 0 skipped**
+- `BreadLaunchFeeTest`: **1 passed / exactly 5 intended failed**
+- passing control: zero launch fee took no USDC and required no Factory creditor authorization
+- intended failures: nonzero launch fee was not yet collected/credited; insufficient allowance did not yet block; unauthorized Factory creditor did not yet roll back; short-transfer launch fee did not yet reject; updated pinned protocol recipient did not yet receive credit
+
+The RED was behavior-specific: the existing Factory ignored `launchFeeUsdc`; no unrelated compile/regression failure was present.
+
+## Task 2 — Canonical-USDC launch-fee GREEN
+
+Minimal production implementation:
+
+- receives only configured `launchFeeUsdc` from the caller using `SafeERC20.safeTransferFrom`
+- verifies exact Factory balance delta before launch continues
+- deploys/initializes the pair inside the same transaction
+- approves exactly the launch-fee amount to the existing canonical FeeEscrow
+- credits the current economics-pinned `protocolFeeRecipient`
+- clears the temporary escrow allowance after successful credit
+- requires post-intent Factory USDC balance to equal the pre-intent balance
+- zero launch fee performs no transfer/authorization/credit
+- does not add a creditor registrar or alter `BreadFeeEscrow` authority; Protocol Admin still authorizes the Factory once using the existing Day-3 owner control
+- any transfer/escrow/authorization failure reverts the entire launch transaction
+
+Exact GREEN head: `17db4687cd090e32d49c68a63ab3f875a85914a5`
+
+Exact GREEN CI: `31271512833`
+
+- `bootstrap-validation`: PASS
+- `dependency-build`: PASS
+- `foundry-bootstrap`: PASS
+- `infrastructure-health`: PASS
+- `BreadLaunchFeeTest`: **6/6 PASS**
+- Foundry: **113 passed / 0 failed / 0 skipped** across 16 suites
+- all prior Factory/Deployer, token, Buy/Sell, final-fill, FeeEscrow, FeePolicy, tracked-state, trading-security and invariant suites: PASS
+
+Task-2 component result: **CANONICAL_USDC_LAUNCH_FEE_ESCROW_LOCAL_GREEN**.
+
+This is not Day-4 PASS. Atomic Launch+Buy, opening protection, emergency control and Day-4 integrated invariants remain unimplemented/unproved.
 
 No local/component result in this document is Day-4 PASS. The final verdict is permitted only after integrated exact-head implementation CI, guarded merge, fresh merged-main closeout and exact-head closeout CI.
