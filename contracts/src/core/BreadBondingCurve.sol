@@ -19,10 +19,12 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     uint256 private constant BASIS_POINTS = 10_000;
 
     error UnauthorizedFactory();
+    error UnauthorizedFeeSweep();
     error NotInitialized();
     error CurveClosed();
     error RecipientZeroAddress();
     error ZeroAmount();
+    error NoFeesToSweep();
     error CreatorTaxAboveSnapshotMaximum(uint16 creatorTaxBps, uint16 maxCreatorTaxBps);
     error UnexpectedReceivedAmount(uint256 expected, uint256 received);
     error SlippageExceeded(uint256 minimum, uint256 actual);
@@ -55,6 +57,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 fee,
         uint256 tax
     );
+    event FeesSwept(uint256 protocolAmount, uint256 creatorAmount, uint256 creatorTaxAmount);
 
     constructor(
         address pairToken_,
@@ -182,5 +185,35 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
 
         IERC20(pairToken).safeTransfer(recipient, quoteOut);
         emit CurveSell(msg.sender, recipient, tokensIn, quoteOut, fee, tax);
+    }
+
+    function sweepFees() external nonReentrant {
+        if (msg.sender != creatorFeeRecipient && msg.sender != feePolicy.feeSweepOperator()) {
+            revert UnauthorizedFeeSweep();
+        }
+
+        uint256 pendingBaseFee = quoteFeeBalance;
+        uint256 pendingTax = creatorTaxBalance;
+        uint256 totalPending = pendingBaseFee + pendingTax;
+        if (totalPending == 0) revert NoFeesToSweep();
+
+        uint256 protocolAmount = pendingBaseFee * protocolFeeShareBps / BASIS_POINTS;
+        uint256 creatorAmount = pendingBaseFee - protocolAmount + pendingTax;
+
+        quoteFeeBalance = 0;
+        creatorTaxBalance = 0;
+        trackedQuote -= totalPending;
+
+        IERC20 quoteToken = IERC20(pairToken);
+        if (protocolAmount != 0) {
+            quoteToken.forceApprove(address(feeEscrow), protocolAmount);
+            feeEscrow.credit(protocolFeeRecipient, protocolAmount);
+        }
+        if (creatorAmount != 0) {
+            quoteToken.forceApprove(address(feeEscrow), creatorAmount);
+            feeEscrow.credit(creatorFeeRecipient, creatorAmount);
+        }
+
+        emit FeesSwept(protocolAmount, creatorAmount, pendingTax);
     }
 }
