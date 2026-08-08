@@ -1,0 +1,56 @@
+schema_version: 1.0
+project: Bread
+source_pack: v1.1
+updated_at: 2026-08-08T05:35:00+01:00
+completed_checkpoints:
+  - "1-6I: specification checkpoints complete per Project Sources"
+  - "7A: PARTIAL PASS WITH BLOCKERS"
+  - "7B.1: LOCAL BOOTSTRAP SKELETON PASS"
+active_checkpoint: "7B"
+active_lane: "7B.2 remote repository + pinned dependency/install proof"
+integration_baseline:
+  branch: checkpoint/7b-bootstrap
+  commit: 104e61cc5a4b290c44a68ce1bee4a76214bdadc6
+working_branches:
+  - checkpoint/7b-bootstrap
+repository:
+  local_path: /mnt/data/bread-repo
+  remote: NONE
+  status: clean-local-bootstrap-awaiting-remote-and-dependency-proof
+tests:
+  latest: "dependency-free bootstrap validation PASS; 3 node tests PASS; bootstrap smoke PASS; load harness READY"
+  evidence: docs/evidence/7B-bootstrap.txt
+deployments: []
+blockers:
+  - CURRENT_PONS_FACTORY_SOURCE_PARITY
+  - EXACT_SNIPE_IMPLEMENTATION
+  - LAUNCH_AND_BUY_SOURCE
+  - FEE_ESCROW_SOURCE
+  - LIVE_RUNTIME_CONFIG
+  - PONS_AUDIT_FINDINGS
+  - ARC_MAINNET_VALUES
+  - GITHUB_REMOTE_REPOSITORY_NOT_CREATED
+  - DEPENDENCY_INSTALL_LOCKFILE_NOT_PROVEN_IN_CURRENT_SANDBOX
+  - FOUNDRY_NOT_AVAILABLE_IN_CURRENT_SANDBOX
+  - DOCKER_NOT_AVAILABLE_IN_CURRENT_SANDBOX
+tooling:
+  chatgpt: primary-integration-owner
+  github: connected-user-Dtwosam-no-bread-repo-yet
+  vercel: not-configured
+  sentry: not-configured
+  figma: available-optional
+  supabase: not-selected
+  cloudflare: not-selected
+decisions_since_last_state:
+  - "Repository local name/path is bread-repo; intended GitHub repository is Dtwosam/bread unless changed before remote creation."
+  - "Project target Node runtime pinned to 24.18.0 LTS and pnpm 11.15.1."
+  - "7B contains no financial contract implementation."
+  - "10k hot-launch load harness skeleton exists from bootstrap."
+next_action: "Create empty private GitHub repository Dtwosam/bread, then publish checkpoint/7b-bootstrap and run/install the pinned toolchain to generate lockfile and CI evidence."
+do_not_do:
+  - "Do not claim exact current-live Pons parity."
+  - "Do not implement snipe protection from guesses."
+  - "Do not implement Launch+Buy from guesses."
+  - "Do not implement FeeEscrow from guesses."
+  - "Do not hardcode Arc mainnet values before official publication."
+  - "Do not merge 7B to main until dependency/install/build/CI gates pass."

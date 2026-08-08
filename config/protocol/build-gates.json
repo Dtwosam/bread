@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "7B",
+  "gates": [
+    {
+      "id": "CURRENT_PONS_FACTORY_SOURCE_PARITY",
+      "status": "BLOCKED",
+      "blocks": ["exact-current-live-pons-parity-claim"]
+    },
+    {
+      "id": "EXACT_SNIPE_IMPLEMENTATION",
+      "status": "BLOCKED",
+      "blocks": ["snipe-protection-implementation"]
+    },
+    {
+      "id": "LAUNCH_AND_BUY_SOURCE",
+      "status": "BLOCKED",
+      "blocks": ["launch-and-buy-implementation"]
+    },
+    {
+      "id": "FEE_ESCROW_SOURCE",
+      "status": "BLOCKED",
+      "blocks": ["fee-escrow-implementation"]
+    },
+    {
+      "id": "LIVE_RUNTIME_CONFIG",
+      "status": "BLOCKED",
+      "blocks": ["final-pons-economics-parity-assertion"]
+    },
+    {
+      "id": "PONS_AUDIT_FINDINGS",
+      "status": "MONITOR",
+      "blocks": ["unrestricted-public-release-if-material-findings-unresolved"]
+    },
+    {
+      "id": "ARC_MAINNET_VALUES",
+      "status": "EXPECTED_UNRESOLVED",
+      "blocks": ["arc-mainnet-deployment"],
+      "doesNotBlock": ["arc-testnet-bootstrap"]
+    }
+  ]
+}

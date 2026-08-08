@@ -1,0 +1,30 @@
+{
+  "name": "bread",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bread — Arc-first USDC token launchpad",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": "24.18.0"
+  },
+  "scripts": {
+    "validate": "node scripts/validation/validate-all.mjs",
+    "validate:manifests": "node scripts/validation/validate-manifests.mjs",
+    "validate:state": "node scripts/validation/validate-build-state.mjs",
+    "validate:gates": "node scripts/validation/validate-build-gates.mjs",
+    "bootstrap:smoke": "node tests/bootstrap/bootstrap-smoke.mjs",
+    "load:hot-launch": "node scripts/load/hot-launch-smoke.mjs",
+    "test": "node --test tests/bootstrap/*.test.mjs",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "tsc -b",
+    "build": "pnpm -r --if-present build"
+  },
+  "devDependencies": {
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "tsx": "4.23.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

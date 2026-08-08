@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/ponsdotdev/ponsfamily",
+  "referenceCommit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+  "sourcePath": "contractsV2/src/v2",
+  "parityStatus": "REFERENCE_ONLY_NOT_PROVEN_CURRENT_LIVE_PARITY",
+  "notes": [
+    "Current official Pons V2 docs and frozen public repository identify different V2 factory deployments.",
+    "Do not claim exact current-live parity until source/runtime equivalence is proven."
+  ]
+}

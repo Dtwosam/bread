@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - run: node scripts/validation/validate-all.mjs
+      - run: node --test tests/bootstrap/*.test.mjs
+      - run: node tests/bootstrap/bootstrap-smoke.mjs
+
+  dependency-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm validate
+      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm build

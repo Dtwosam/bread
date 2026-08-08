@@ -1,0 +1,1 @@
+{"name":"@bread/operator","version":"0.0.0","private":true,"type":"module","scripts":{"build":"tsc -b"},"devDependencies":{"typescript":"7.0.2"}}
