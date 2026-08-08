@@ -1,29 +1,21 @@
-schema_version: 1.6
+schema_version: 1.7
 project: Bread
 source_pack_expected: v1.4-day4-design
-updated_at: 2026-08-08T20:02:00+01:00
+updated_at: 2026-08-08T21:25:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
-  - "Day 3 source gate: PROJECT_SOURCE_V1_3_RATIFICATION_RATIFIED"
-  - "Day 3 candidate audit: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
-  - "Day 4 preflight: DESIGN_BUNDLE_APPROVED_SELF_REVIEWED"
   - "Day 4 source gate: PROJECT_SOURCE_V1_4_DAY4_RATIFICATION_RATIFIED"
   - "Day 4 implementation plan: COMMITTED_SELF_REVIEWED"
-  - "Day 4 Task 1: FACTORY_DEPLOYER_LOCAL_GREEN"
-  - "Day 4 Task 2: CANONICAL_USDC_LAUNCH_FEE_ESCROW_LOCAL_GREEN"
-  - "Day 4 Task 3: ATOMIC_LAUNCH_AND_BUY_LOCAL_GREEN"
-  - "Day 4 Task 4: OPENING_PROTECTION_LOCAL_GREEN"
-  - "Day 4 Task 5: SNIPE_FINAL_FILL_LOCAL_GREEN"
-  - "Day 4 Task 6: EMERGENCY_CONTROLLER_LOCAL_GREEN"
-  - "Day 4 Tasks 7-9: REAL_VERTICAL_AND_INV040_044_INV060_063_CANDIDATE_GREEN"
-active_checkpoint: "Day 4 — Final implementation candidate"
-active_lane: "Exact-head implementation CI and guarded/manual merge"
-active_gate: DAY4_IMPLEMENTATION_FINAL_EXACT_HEAD_CI_MERGE
+  - "Day 4 implementation candidate: MERGED_TO_MAIN"
+  - "Day 4 closeout prerequisite: PASS_ALL_FOUR"
+active_checkpoint: "Day 4 — Fresh merged-main closeout"
+active_lane: "Stamped exact-head closeout CI -> guarded closeout merge -> merged-main identity verification"
+active_gate: DAY4_MERGED_MAIN_CLOSEOUT_STAMPED_HEAD_CI
 project_source_state:
   pack: v1.4-day4-design
   upload: UPLOADED
@@ -33,155 +25,73 @@ project_source_state:
   day4_production_ratification: RATIFIED
   ratification_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
 integration_baseline:
-  id: DAY4-PRODUCTION-START
+  id: DAY4-MERGED-IMPLEMENTATION
   branch: main
-  current_main_commit: ef03e60f9bbd5737a991dd3b1b747866d8ad8f3a
+  current_main_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
+  implementation_pr: 15
+  implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
+  implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
   accepted_day3_closeout_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
-  accepted_day3_production_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  status: ACCEPTED_DAY4_RATIFIED_PRODUCTION_START
+  status: DAY4_IMPLEMENTATION_MERGED_CLOSEOUT_PREREQUISITE_PASS
 working_branches:
-  - checkpoint/day4-launch-control
+  - checkpoint/day4-closeout
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  current_main_commit: ef03e60f9bbd5737a991dd3b1b747866d8ad8f3a
-  day4_preflight_pr: 14
-  day4_preflight_merge_commit: ef03e60f9bbd5737a991dd3b1b747866d8ad8f3a
-  day4_implementation_branch: checkpoint/day4-launch-control
+  current_main_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
   day4_implementation_pr: 15
-  day4_implementation_pr_state: CANDIDATE_FINAL_EXACT_HEAD_CI_PENDING_DO_NOT_MERGE_YET
-  day4_evidence_path: docs/evidence/day4-factory-launch-buy-snipe-emergency.md
+  day4_implementation_pr_state: MERGED
+  day4_implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
+  day4_closeout_branch: checkpoint/day4-closeout
+  day4_closeout_pr: 23
+  day4_closeout_evidence_path: docs/evidence/day4-merged-main-closeout.md
+  day4_primary_evidence_path: docs/evidence/day4-factory-launch-buy-snipe-emergency.md
   day4_plan_path: docs/superpowers/plans/2026-08-08-day4-factory-launch-buy-snipe-emergency.md
-  day4_plan_commit: d7b104853b5016305928fd9ea16b989ca1373296
-  day4_plan_self_review_path: docs/superpowers/plans/2026-08-08-day4-plan-self-review.md
-  day4_plan_self_review_commit: 3bf0480708c268f5629c99f220ed13bd79d498a7
+  day4_closeout_state: STAMPED_HEAD_CI_PENDING
 day4_design:
-  status: APPROVED_SELF_REVIEWED_SOURCE_RATIFIED_IMPLEMENTATION_CANDIDATE
-  factory_deployer: "Bread-owned; canonical Day-3 token/curve/FeePolicy/FeeEscrow composition; EmergencyController wired; no duplicate accounting; no CREATE2 promise"
-  launch_fee: "canonical USDC; zero allowed; non-zero credits economics-pinned protocol recipient through canonical FeeEscrow; Factory retains zero intent residue"
-  launch_and_buy: "atomic canonical-USDC lifecycle using shared curve Buy path; exact caller refund; whole-intent rollback; Factory nonReentrant"
-  opening_protection: "implemented and proved: buy-only quadratic 9900/6336/3564/1584/396/0 bps at elapsed 0/1/2/3/4/>=5 seconds"
-  exemption: "implemented and proved: one same-launch Factory Launch+Buy call only; no address exemption; replay/delay rejected"
-  opening_tax_routing: "implemented and proved: opening tax joins quoteFeeBalance; creatorTaxBalance remains separate; canonical FeeEscrow sweep/claim path"
-  final_fill: "implemented and proved: two-stage full-precision ceiling gross-up; actual net guard; zero-snipe reduces to accepted Day-3 rule"
-  emergency: "implemented and proved: NORMAL < NO_NEW_LAUNCHES < BUY_PAUSED < TRADING_PAUSED plus graduationPaused; Guardian tighten-only; Protocol Admin recovery-only"
-  fee_escrow_credit_authority: "unchanged Day-3 owner-controlled authorization; Factory authorized before nonzero launch-fee use; each curve authorized before first sweep; no automatic registrar"
-implementation_progress:
-  task_1_factory_deployer:
-    result: FACTORY_DEPLOYER_LOCAL_GREEN
-    red_commit: 0356e6d39b699df37124cea1c4f57949f3cf86a8
-    red_ci: 31270305259
-    green_head: ba1615efac52d4f5132636d5875dce6083eaf8dd
-    green_ci: 31271282775
-    green_foundry: "107 passed / 0 failed / 0 skipped"
-    compiler_repair: "BreadLaunchToken constructor transport bundled into Metadata + LaunchContext after diagnostic proof; runtime semantics unchanged; no viaIR"
-    diagnostics: "PRs #16-#22 closed unmerged after root-cause isolation"
-  task_2_launch_fee:
-    result: CANONICAL_USDC_LAUNCH_FEE_ESCROW_LOCAL_GREEN
-    red_commit: 9c44d8df9b7184bf02ba58f0053787fa110b9ccf
-    red_ci: 31271422396
-    red_result: "108 passed / exactly 5 intended failed / 0 skipped"
-    green_head: 17db4687cd090e32d49c68a63ab3f875a85914a5
-    green_ci: 31271512833
-    green_foundry: "113 passed / 0 failed / 0 skipped"
-  task_3_launch_and_buy:
-    result: ATOMIC_LAUNCH_AND_BUY_LOCAL_GREEN
-    red_commit: 9452f3925342a5c6977f3de7054bfa88a918bcfb
-    red_ci: 31271648604
-    red_result: "117 passed / exactly 2 intended failed / 0 skipped"
-    green_head: c9b731ae545c29e9405b95a0dc26ba08f25a96c6
-    green_ci: 31271736825
-    green_foundry: "119 passed / 0 failed / 0 skipped"
-  task_4_opening_protection:
-    result: OPENING_PROTECTION_LOCAL_GREEN
-    red_ci: 31272045019
-    red_result: "121 passed / exactly 6 intended failed"
-    canonical_time_green_ci: 31272664078
-    green_foundry: "127 passed / 0 failed / 0 skipped"
-  task_5_final_fill:
-    result: SNIPE_FINAL_FILL_LOCAL_GREEN
-    red_ci: 31272888360
-    red_result: "128 passed / exactly 6 intended failed"
-    green_ci: 31272992032
-    green_foundry: "134 passed / 0 failed / 0 skipped"
-  task_6_emergency_controller:
-    result: EMERGENCY_CONTROLLER_LOCAL_GREEN
-    standalone_foundry: "144 passed / 0 failed / 0 skipped"
-  tasks_7_9_integration_invariants:
-    result: INTEGRATED_CANDIDATE_GREEN
-    expanded_head: 7611f58ecddcf59f1a2a8f10458aa7d6795a44ab
-    expanded_ci: 31274793743
-    foundry: "162 passed / 0 failed / 0 skipped across 24 suites"
-    proofs:
-      - REAL_FACTORY_DEPLOYER_CURVE_POLICY_ESCROW_EMERGENCY_VERTICAL_PASS
-      - INV_040_044_PASS
-      - INV_060_063_PASS
-      - STALE_ECONOMICS_ORDERING_PASS
-      - GUARDIAN_TIGHTEN_BEFORE_EXECUTION_NO_MUTATION_PASS
-  emergency_integration_repair:
-    failing_head: aadef406fd63dd9cd8f6a3101b8a9c314f500ea2
-    failing_ci: 31272943677
-    cause: "Emergency integration test expected the ratified final Factory constructor while production Factory still lacked the EmergencyController dependency"
-    disposition: "REPAIRED — one controller now wires Factory -> Deployer -> curve; launch/buy/sell gates execute before custody"
-source_integrity:
-  validator: scripts/validation/validate-day4-launch-control-source-integrity.mjs
-  result: PASS
-  validated:
-    - v1.4-day4-design source-pack identity
-    - accepted Day-4 main and approved design commit
-    - frozen Pons and Clanker references
-    - exact 9900/5/0 opening policy
-    - QUOTE_FEE_BALANCE routing
-    - one-use launch-buy exemption latch
-    - full-precision final-fill ceiling
-    - Factory emergency launch gate
-    - Guardian tighten-only rule
-    - no live-runtime freeze or current-Pons-parity claim
-formatting:
-  global_probe_ci: 31274931934
-  global_probe_result: "52 pre-existing repository formatting-debt files; not bulk-reformatted in this financial-contract PR"
-  scoped_day4_gate: "Prettier over Day-4/PR-owned non-Solidity changed files"
-  pre_stamp_green_ci: 31275313178
-  pre_stamp_green_result: PASS
-security_review:
-  type: MANUAL_DIFF_ORIENTED_PLUS_EXECUTABLE_TESTS
-  reportable_findings: NONE_FOUND
-  prohibited_scope_review: PASS
-  not_claimed: "No completed external audit or Codex Security scan is claimed"
+  status: APPROVED_SELF_REVIEWED_SOURCE_RATIFIED_IMPLEMENTATION_MERGED
+  factory_deployer: "Bread-owned canonical Factory/Deployer with economics pinning; no CREATE2 promise"
+  launch_fee: "canonical USDC; zero allowed; nonzero through canonical FeeEscrow to economics-pinned protocol recipient"
+  launch_and_buy: "atomic canonical-USDC lifecycle; shared curve buy path; exact caller refund; whole-intent rollback"
+  opening_protection: "buy-only quadratic 9900/6336/3564/1584/396/0 bps at elapsed 0/1/2/3/4/>=5 seconds"
+  exemption: "one same-launch Factory Launch+Buy call only; no persistent address exemption"
+  opening_tax_routing: "opening tax joins quoteFeeBalance; creatorTaxBalance remains separate"
+  final_fill: "two-stage full-precision ceiling gross-up with actual net guard"
+  emergency: "NORMAL < NO_NEW_LAUNCHES < BUY_PAUSED < TRADING_PAUSED plus graduationPaused; Guardian tighten-only"
 verification:
-  day3_implementation_final_run: 31266530130
-  day3_fresh_closeout_stamped_run: 31266796631
-  day3_post_closeout_handoff_run: 31266935184
-  day4_preflight_docs_corrected_run: 31269621153
-  day4_task1_green_run: 31271282775
-  day4_task2_green_run: 31271512833
-  day4_task3_green_run: 31271736825
-  day4_opening_green_run: 31272664078
-  day4_final_fill_green_run: 31272992032
   day4_expanded_integrated_run: 31274793743
   day4_expanded_foundry: PASS_162_TESTS_24_SUITES
   day4_pre_stamp_run: 31275313178
   day4_pre_stamp_jobs: PASS_ALL_FOUR
-  day4_final_stamped_run: PENDING
+  day4_final_implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
+  day4_final_implementation_run: 31275557000
+  day4_final_implementation_jobs: PASS_ALL_FOUR
+  day4_implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
+  day4_closeout_prerequisite_head: a9f0cf839cda7b67b5e38fe199367c3b7757d2ea
+  day4_closeout_prerequisite_run: 31276781025
+  day4_closeout_prerequisite_jobs: PASS_ALL_FOUR
+  day4_closeout_stamped_run: PENDING
+security_review:
+  candidate_review: "manual diff-oriented review plus executable integration/invariant tests; no reportable finding recorded"
+  external_audit_claim: NONE
+  codex_security_scan_claim: NONE
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "truthfulness/parity claims only; does not block ratified Bread-owned Day-4 architecture"
-  LIVE_RUNTIME_CONFIG: "real deployment values; no production launchFeeUsdc/FeePolicy/address values may be guessed"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "truthfulness/parity claims only"
+  LIVE_RUNTIME_CONFIG: "real deployment values; do not guess"
   PONS_AUDIT_FINDINGS: "release/security gate"
   ARC_MAINNET_VALUES: "mainnet deployment gate"
 next_action: >-
-  Run exact-head CI on the documentation-stamped PR #15 head. Require bootstrap-validation, dependency-build including the scoped Day-4 formatting gate, foundry-bootstrap, and infrastructure-health all PASS on that exact head. If and only if the head remains unchanged and all four jobs are green, merge PR #15 using the exact tested head. Then create a fresh checkpoint/day4-closeout branch from the actual merged main and run the separate closeout prerequisite/stamped-head CI before issuing the Day-4 PASS verdict.
+  Run all four repository CI jobs on the documentation-stamped PR #23 head. If and only if bootstrap-validation, dependency-build including scoped formatting/typecheck/build/workspace-clean, foundry-bootstrap, and infrastructure-health all PASS on that exact unchanged head, merge PR #23 with expected-head protection. Verify the resulting main merge identity before issuing DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS.
 do_not_do:
-  - "Do not merge PR #15 before the final documentation-stamped exact head passes all four CI jobs."
-  - "Do not call the integrated candidate green result DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS before fresh merged-main closeout."
-  - "Do not silently change the ratified opening formula, exemption, routing, final-fill rounding, emergency authority, or FeeEscrow credit-authority boundary."
-  - "Do not add a persistent wallet exemption or automatic FeeEscrow creditor registrar."
-  - "Do not create parallel pricing, fee, claim, launch-record, or emergency-accounting authorities."
+  - "Do not issue the Day-4 PASS before the stamped closeout head passes and PR #23 merges."
+  - "Do not add Day-5 production work to the closeout branch."
+  - "Do not change the ratified Day-4 formula, exemption, fee routing, final-fill rounding, emergency authority, or FeeEscrow authority boundary in closeout."
   - "Do not claim exact current-live Pons Factory parity."
-  - "Do not invent live fee/launch-fee values, audit conclusions, or Arc mainnet values."
-  - "Do not start Day 5 before Day 4 is durably closed."
+  - "Do not invent live runtime or Arc mainnet values."
+  - "Do not clear PONS_AUDIT_FINDINGS without its own evidence."
   - "When chat context is roughly 90% full, warn the user and write/verify a durable handoff before continuing in a fresh chat."
