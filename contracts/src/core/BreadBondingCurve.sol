@@ -110,6 +110,24 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         nonReentrant
         returns (uint256 tokensOut)
     {
+        (tokensOut,,) = _buy(quoteIn, minTokensOut, recipient);
+    }
+
+    /// @notice Factory-only initial-buy entry used by the atomic Launch+Buy lifecycle.
+    /// @dev Pricing/accounting is exactly the same shared path as public buy; Day-4 opening protection is added later.
+    function buyForLaunch(uint256 quoteIn, uint256 minTokensOut, address recipient)
+        external
+        nonReentrant
+        returns (uint256 tokensOut, uint256 spent, uint256 refund)
+    {
+        if (msg.sender != factory) revert UnauthorizedFactory();
+        return _buy(quoteIn, minTokensOut, recipient);
+    }
+
+    function _buy(uint256 quoteIn, uint256 minTokensOut, address recipient)
+        private
+        returns (uint256 tokensOut, uint256 spent, uint256 refund)
+    {
         if (token == address(0)) revert NotInitialized();
         if (graduated || readyToGraduate()) revert CurveClosed();
         if (recipient == address(0)) revert RecipientZeroAddress();
@@ -122,7 +140,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         if (received != quoteIn) revert UnexpectedReceivedAmount(quoteIn, received);
 
         (uint256 quoteReserve_, uint256 tokenReserve_) = getReserves();
-        uint256 spent = received;
+        spent = received;
         uint256 fee = spent * tradeFeeBps / BASIS_POINTS;
         uint256 tax = spent * creatorTaxBps / BASIS_POINTS;
         tokensOut = BreadBondingCurveMath.getAmountOut(spent - fee - tax, quoteReserve_, tokenReserve_, 0);
@@ -155,7 +173,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
 
         IERC20(token).safeTransfer(recipient, tokensOut);
 
-        uint256 refund = received - spent;
+        refund = received - spent;
         if (refund != 0) {
             emit CurveBuyRefunded(msg.sender, refund);
             quoteToken.safeTransfer(msg.sender, refund);
