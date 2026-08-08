@@ -193,7 +193,7 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         input.configVersion = configVersion;
         input.startingSnipeTaxBps = STARTING_SNIPE_TAX_BPS;
         input.snipeDurationSeconds = SNIPE_DURATION_SECONDS;
-        input.terminalSniPE_TAX_BPS = TERMINAL_SNIPE_TAX_BPS;
+        input.terminalSnipeTaxBps = TERMINAL_SNIPE_TAX_BPS;
         input.openingProtectionPolicyId = OPENING_PROTECTION_POLICY_ID;
         input.openingTaxRoutingId = OPENING_TAX_ROUTING_ID;
         input.graduationCoordinator = address(graduationCoordinator);
