@@ -51,8 +51,33 @@ The accepted `BreadLaunchToken` runtime contract itself compiled and passed Day-
 
 Project Source v1.4 freezes Factory/Deployer semantics, bounded metadata, the canonical `BreadLaunchToken` role and launch public semantics, but does not freeze the token constructor ABI. The bounded repair is therefore constructor-transport only: group token metadata/socials and launch attribution/supply into compact constructor structs while preserving all runtime state/getters, entire-supply-to-curve minting, transfer/burn behavior and Day-2/Day-3 invariants. No economics, permission, runtime ledger, public trading interface or metadata meaning changes.
 
-Global `via_ir = true` is not used as a shortcut. The constructor refactor must first prove the prior `BreadLaunchToken` regression suite and the Day-4 Deployer fixture GREEN under the existing compiler configuration.
+Global `via_ir = true` was not used as a shortcut.
 
-- Task-1 GREEN: PENDING constructor-transport repair + full focused regressions.
+### Bounded constructor repair result
+
+`BreadLaunchToken` now receives two constructor transport structs:
+
+- `Metadata`: name, symbol, logo, description, existing `Socials`
+- `LaunchContext`: deployer, curve, launchFactory, supply
+
+The runtime token storage/getters, fixed-supply mint-to-curve behavior, transfer/burn behavior and zero-address rules are unchanged. The original Day-2 token suite and every Day-2/Day-3 launch-token fixture were migrated without removing or weakening assertions.
+
+Exact Task-1 GREEN head: `ba1615efac52d4f5132636d5875dce6083eaf8dd`
+
+Exact Task-1 GREEN CI: `31271282775`
+
+- `bootstrap-validation`: PASS
+- `dependency-build`: PASS
+- `foundry-bootstrap`: PASS
+- `infrastructure-health`: PASS
+- Solidity 0.8.26 non-viaIR compile: PASS
+- Foundry: **107 passed / 0 failed / 0 skipped** across 15 suites
+- `BreadLaunchFactoryTest`: **8/8 PASS**
+- original `BreadLaunchTokenTest`: **13/13 PASS**
+- carried-forward Day-3 Buy/Sell, final-fill, FeeEscrow, FeePolicy, tracked-state, trading-security and invariant suites: PASS
+
+Task-1 component result: **FACTORY_DEPLOYER_LOCAL_GREEN**.
+
+This is not Day-4 PASS. Launch-fee custody/credit, Launch+Buy, opening protection, emergency control and Day-4 integrated invariants remain unimplemented/unproved.
 
 No local/component result in this document is Day-4 PASS. The final verdict is permitted only after integrated exact-head implementation CI, guarded merge, fresh merged-main closeout and exact-head closeout CI.
