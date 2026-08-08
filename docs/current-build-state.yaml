@@ -1,51 +1,37 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T14:20:00+02:00
+updated_at: 2026-08-08T12:58:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
-  - "Day 2 Lane 1: DAY_2_CORE_MATH_TOKEN_INTEGRATED_PASS"
-  - "Day 2 Lane 2: DAY_2_TRACKED_CURVE_STATE_INTEGRATED_PASS"
-active_checkpoint: "Day 2 closeout"
-active_lane: "End-of-day 06C acceptance gate — requirements satisfied; durable closeout CI pending"
+  - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
+active_checkpoint: "Day 3"
+active_lane: "Trading, Fees & Escrow — source preflight/reconciliation only; no Day-3 production code yet"
 integration_baseline:
-  id: D2-CODE
+  id: D2-CLOSEOUT
   branch: main
-  commit: 57b48940b71491ff9780764653c278b237eddd8d
-  status: ACCEPTED_DAY_2_IMPLEMENTATION_BASELINE_PENDING_METADATA_CLOSEOUT
+  commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  status: ACCEPTED_DAY_2_DURABLE_BASELINE
 working_branches:
-  - checkpoint/day2-closeout
+  - checkpoint/day3-trading-fees-escrow-preflight
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   day1_closeout_merge_commit: 86abb75ef96cfca340afec8a755e94ed366c379e
   day2_lane1_code_merge_commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
   day2_lane1_closeout_merge_commit: aca14483ef5d8bee707a39e7ea628569d22d1828
-  day2_lane2_final_head: 4d2cd11f9aedf912997857486b88e850ca3a6ecb
   day2_lane2_code_merge_commit: 57b48940b71491ff9780764653c278b237eddd8d
-  day2_closeout_branch: checkpoint/day2-closeout
-  status: DAY_2_REQUIREMENTS_SATISFIED_CLOSEOUT_GATE_PENDING
+  day2_closeout_head: 06385e4a561ece563cefe0580317b13309ff035a
+  day2_closeout_merge_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  day3_preflight_branch: checkpoint/day3-trading-fees-escrow-preflight
+  status: DAY_3_SOURCE_PREFLIGHT_IN_PROGRESS
 verification:
-  day2_math_red_run: 31254865534
-  day2_math_green_run: 31254898416
-  day2_token_red_run: 31255073347
-  day2_token_green_run: 31255097370
-  day2_lane1_integrity_red_run: 31255285593
-  day2_lane1_integrity_green_run: 31255322107
-  day2_lane1_final_exact_head_run: 31255399674
-  day2_lane1_closeout_run: 31255527782
-  day2_lane2_state_red_run: 31256434625
-  day2_lane2_state_green_run: 31256521989
-  day2_lane2_tiny_trade_run: 31256566172
-  day2_lane2_integrity_red_run: 31256620643
-  day2_lane2_integrity_green_run: 31256663164
-  day2_lane2_review_run: 31256713514
   day2_lane2_final_exact_head_run: 31256808903
-  day2_lane2_final_exact_head: 4d2cd11f9aedf912997857486b88e850ca3a6ecb
-  day2_closeout_run: null
+  day2_closeout_run: 31256962864
+  day2_closeout_head: 06385e4a561ece563cefe0580317b13309ff035a
   jobs:
     bootstrap_validation: PASS
     day2_frozen_source_integrity: PASS_NINE_FILES
@@ -75,19 +61,22 @@ tooling:
   supabase: not-selected
   cloudflare: not-selected
 decisions_since_last_state:
-  - "PR #6 exact tested head 4d2cd11f9aedf912997857486b88e850ca3a6ecb passed all four CI jobs in run 31256808903 and merged with an expected-head guard at 57b48940b71491ff9780764653c278b237eddd8d."
-  - "Controlling 06C v1.1 Day-2 checklist was re-read after Lane-2 integration. Required work is minimal LaunchToken/BondingCurveMath, fixed-supply/6-decimal/allocation-graduation/rounding unit-fuzz coverage, differential unchanged math, tracked-reserve skeleton and donation/tiny-trade invariants."
-  - "Lane 1 + Lane 2 evidence covers every listed Day-2 work item and all Day-2 end-of-day gates: core math fuzz PASS, supply invariants PASS, and no unexplained reference divergence."
-  - "Daily continuity is satisfied for the Day-2 layer boundary: lanes integrated serially from the prior baseline; existing regressions remain green; no already-existing downstream SDK/indexer/API/web consumer is left on placeholder semantics; BreadTrackedCurveState is abstract rather than a fake concrete trading interface."
-  - "Day-2 tiny-trade proof is rounding-only; stateful fee/tax conservation and escrow invariants remain Day-3 work and are not claimed by the Day-2 verdict."
-  - "All 7A blockers remain active and especially constrain Day-3 FeeEscrow/buyback work and Day-4 Launch+Buy/snipe work."
-next_action: "Run the four-job CI on the Day-2 closeout branch containing the final Lane-2 evidence, 06C requirement-by-requirement closeout, and this handoff. If green, merge the closeout to main and begin Day-3 source preflight/reconciliation for Buy/Sell, FeePolicy, FeeEscrow and buyback semantics before writing Day-3 production code."
+  - "Day-2 closeout PR #7 head 06385e4a561ece563cefe0580317b13309ff035a passed all four CI jobs in run 31256962864 and merged at 5d13689f1ebc54f609c0fcf61ea43287b207e61a. Day-2 verdict is DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS."
+  - "Day-3 controlling work is Buy/Sell with slippage and partial final buy/refund, FeePolicy snapshot and creator-tax separation, FeeEscrow pull claims, buyback/vesting only after reconciliation, and stateful USDC/fee/escrow invariants."
+  - "05C applicable Day-3 invariants include INV-001 through INV-006, INV-010 through INV-012 where affected, INV-020 through INV-026, and INV-030 through INV-035 when corresponding fee/buyback functionality exists."
+  - "03 explicitly permits FeeEscrow to be reimplemented if needed, but treats it as new security-sensitive financial code requiring explicit unit, fuzz, invariant, integration and independent review. Its minimum invariants include own-ledger-only claims, state update before external control, failed-transfer claim preservation, no admin withdrawal of recipient claims, USDC balance/outstanding-claims reconciliation and deterministic credit/claim events."
+  - "The public pons GitHub repository still has no commit newer than frozen d5491e20be56051a68abf47136f6890c3ce3ff7d and no concrete PonsV2FeeEscrow source was found in the public snapshot."
+  - "Current accessible pons docs now describe a materially different Robinhood Chain / direct Uniswap V3 stack with no bonding curve or migration. Bread will not substitute those new semantics for the frozen old Pons V2 baseline. CURRENT_PONS_FACTORY_SOURCE_PARITY and LIVE_RUNTIME_CONFIG therefore remain unresolved."
+  - "Frozen old Pons V2 Buy/Sell mechanics are source-visible, including tracked reserves, quote-leg fee/tax, partial final-buy clamp/refund and price-bound slippage; frozen fee/buyback sweep logic is coupled to FeePolicy, FeeEscrow and BuybackVault and must not be copied before those dependencies are explicitly reconciled."
+  - "Frozen PonsV2BuybackVault source is available and implements five-year weighted-average vesting, beneficiary/split snapshots, balance-delta locking and escrow-routed releases, but it remains a separate Day-3 reconciliation decision rather than automatically authorized production code."
+next_action: "Choose and approve the Day-3 architecture, including whether Bread will explicitly close FEE_ESCROW_SOURCE by reimplementing a minimal canonical-USDC-only pull escrow under Bread invariants. Do not write Day-3 production code before that design is approved and committed."
 do_not_do:
-  - "Do not start Day-3 production code before the Day-2 closeout branch is green and merged."
-  - "Do not claim exact current-live Pons parity."
-  - "Do not implement FeeEscrow from guesses; FEE_ESCROW_SOURCE remains active."
-  - "Do not implement buyback/vesting semantics until their Day-3 dependencies are reconciled."
-  - "Do not implement snipe protection or Launch+Buy in Day 3; those remain Day-4 gated and blocked."
-  - "Do not treat raw token/USDC balances as tracked pricing reserves."
-  - "Do not dynamically install or silently modify frozen financial dependencies."
+  - "Do not write Day-3 production money-path code during preflight."
+  - "Do not claim exact current-live Pons V2 parity."
+  - "Do not import the current Robinhood/Uniswap-V3 pons stack as Bread semantics."
+  - "Do not hardcode old Pons source-default fee percentages as Bread live economics; LIVE_RUNTIME_CONFIG remains unresolved."
+  - "Do not implement FeeEscrow by guesswork; either obtain exact source or explicitly choose Bread invariant-driven reimplementation."
+  - "Do not implement buyback/vesting until its Day-3 source and invariant boundary is explicitly approved."
+  - "Do not implement snipe protection or Launch+Buy in Day 3."
+  - "Do not add native quote handling; Bread V1 finance remains canonical 6-decimal ERC20 USDC only."
   - "Do not hardcode Arc mainnet values before official publication."
