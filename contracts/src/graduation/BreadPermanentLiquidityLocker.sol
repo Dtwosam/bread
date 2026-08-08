@@ -2,8 +2,11 @@
 pragma solidity ^0.8.26;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+interface IERC721OwnerOf {
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+}
 
 /// @title BreadPermanentLiquidityLocker
 /// @notice Capability-minimal permanent custody for graduated LP positions and locked launch-token residue.
@@ -58,7 +61,7 @@ contract BreadPermanentLiquidityLocker {
     function lockPosition(address token, address positionManager, uint256 positionId) external onlyCoordinator {
         if (token == address(0) || positionManager == address(0)) revert ZeroAddress();
         if (_positions[token].positionManager != address(0)) revert PositionAlreadyLocked();
-        if (IERC721(positionManager).ownerOf(positionId) != address(this)) revert PositionNotHeld();
+        if (IERC721OwnerOf(positionManager).ownerOf(positionId) != address(this)) revert PositionNotHeld();
 
         _positions[token] = LockedPosition({positionManager: positionManager, positionId: positionId});
         emit PositionLocked(token, positionManager, positionId);
