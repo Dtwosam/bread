@@ -1,6 +1,6 @@
 # Day 2 Lane 2 — Tracked Curve State Evidence
 
-Status: IMPLEMENTED + REVIEWED — PENDING FINAL EXACT-HEAD CI / MERGE
+Status: `DAY_2_TRACKED_CURVE_STATE_INTEGRATED_PASS`
 
 ## Integration base
 
@@ -8,6 +8,9 @@ Status: IMPLEMENTED + REVIEWED — PENDING FINAL EXACT-HEAD CI / MERGE
 - Durable Lane-1 closeout baseline: `aca14483ef5d8bee707a39e7ea628569d22d1828`
 - Working branch: `checkpoint/day2-tracked-curve-state`
 - Pull request: #6
+- exact tested PR head: `4d2cd11f9aedf912997857486b88e850ca3a6ecb`
+- final exact-head CI run: `31256808903`
+- merge commit: `57b48940b71491ff9780764653c278b237eddd8d`
 
 ## Approved bounded production scope
 
@@ -154,6 +157,19 @@ The production core remains `abstract`. It contains no external/public state mut
 
 No blocked-feature leakage was found.
 
+## Final exact-head integration gate
+
+Candidate head `4d2cd11f9aedf912997857486b88e850ca3a6ecb` contained implementation, frozen-source enforcement, review cleanup, evidence and the pre-merge handoff.
+
+CI run `31256808903` completed:
+
+- `bootstrap-validation`: PASS
+- `dependency-build`: PASS, including frozen lockfile, validate/test/typecheck/build and tracked-workspace-clean gate
+- `foundry-bootstrap`: PASS, 48 tests / 0 failures
+- `infrastructure-health`: PASS, PostgreSQL + Redis
+
+PR #6 was then merged with an expected-head guard requiring that exact tested SHA. Merge commit: `57b48940b71491ff9780764653c278b237eddd8d`.
+
 ## Retained blockers
 
 - `CURRENT_PONS_FACTORY_SOURCE_PARITY`
@@ -166,11 +182,8 @@ No blocked-feature leakage was found.
 
 No blocker is cleared or weakened by Lane 2.
 
-## Pre-merge verdict
+## Lane verdict
 
-`DAY_2_TRACKED_CURVE_STATE_REVIEWED_FINAL_EXACT_HEAD_GATE_PENDING`
+`DAY_2_TRACKED_CURVE_STATE_INTEGRATED_PASS`
 
-Final exact-head CI run/head: PENDING after this evidence and current-build-state handoff are committed.
-Merge: PENDING.
-
-Do not treat this as a deployable trading curve and do not mark the whole Day 2 complete until the controlling Day-2 checklist is re-read after Lane-2 integration.
+This is still not a deployable trading curve. Stateful Buy/Sell, fee/tax, escrow and graduation-transfer proofs belong to later source-authorized lanes.
