@@ -149,45 +149,43 @@ contract BreadLaunchTokenTest {
         private
         returns (BreadLaunchToken)
     {
-        BreadLaunchToken.Socials memory socialValues = BreadLaunchToken.Socials({
-            twitter: "https://x.com/bread",
-            telegram: "https://t.me/bread",
-            discord: "https://discord.gg/bread",
-            website: "https://bread.example",
-            farcaster: "https://warpcast.com/bread"
+        BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
+            name: "Bread Test",
+            symbol: "BREADT",
+            logo: "ipfs://logo",
+            description: "Bread source-faithful token",
+            socials: BreadLaunchToken.Socials({
+                twitter: "https://x.com/bread",
+                telegram: "https://t.me/bread",
+                discord: "https://discord.gg/bread",
+                website: "https://bread.example",
+                farcaster: "https://warpcast.com/bread"
+            })
         });
-        return new BreadLaunchToken(
-            "Bread Test",
-            "BREADT",
-            "ipfs://logo",
-            "Bread source-faithful token",
-            socialValues,
-            deployer_,
-            curve_,
-            factory_,
-            supply_
-        );
+        BreadLaunchToken.LaunchContext memory context = BreadLaunchToken.LaunchContext({
+            deployer: deployer_,
+            curve: curve_,
+            launchFactory: factory_,
+            supply: supply_
+        });
+        return new BreadLaunchToken(metadata, context);
     }
 
     function _assertConstructorZeroAddressRevert(address deployer_, address curve_, address factory_) private {
-        BreadLaunchToken.Socials memory socialValues = BreadLaunchToken.Socials({
-            twitter: "",
-            telegram: "",
-            discord: "",
-            website: "",
-            farcaster: ""
+        BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
+            name: "Bread Test",
+            symbol: "BREADT",
+            logo: "",
+            description: "",
+            socials: BreadLaunchToken.Socials({twitter: "", telegram: "", discord: "", website: "", farcaster: ""})
         });
-        try new BreadLaunchToken(
-            "Bread Test",
-            "BREADT",
-            "",
-            "",
-            socialValues,
-            deployer_,
-            curve_,
-            factory_,
-            1
-        ) returns (BreadLaunchToken) {
+        BreadLaunchToken.LaunchContext memory context = BreadLaunchToken.LaunchContext({
+            deployer: deployer_,
+            curve: curve_,
+            launchFactory: factory_,
+            supply: 1
+        });
+        try new BreadLaunchToken(metadata, context) returns (BreadLaunchToken) {
             assert(false);
         } catch (bytes memory data) {
             assert(data.length >= 4);
