@@ -8,6 +8,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {BreadTrackedCurveState} from "./BreadTrackedCurveState.sol";
 import {BreadBondingCurveMath} from "../libraries/BreadBondingCurveMath.sol";
+import {IBreadEmergencyController} from "../interfaces/IBreadEmergencyController.sol";
 import {IBreadFeeEscrow} from "../interfaces/IBreadFeeEscrow.sol";
 import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
 
@@ -33,6 +34,9 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     error SlippageExceeded(uint256 minimum, uint256 actual);
     error LaunchBuyExemptionAlreadyConsumed();
     error LaunchBuyExemptionExpired();
+    error BuysRestricted();
+    error SellsRestricted();
+    error InsufficientFinalFillInput(uint256 required, uint256 actual);
 
     struct BuyCharges {
         uint256 fee;
@@ -51,6 +55,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     address public immutable factory;
     IBreadFeePolicy public immutable feePolicy;
     IBreadFeeEscrow public immutable feeEscrow;
+    IBreadEmergencyController public immutable emergencyController;
 
     address public immutable protocolFeeRecipient;
     uint16 public immutable tradeFeeBps;
@@ -94,13 +99,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         address factory_,
         address feePolicy_,
         address feeEscrow_,
+        address emergencyController_,
         uint256 phantomQuote_,
         uint16 creatorTaxBps_,
         uint256 graduationThreshold_
     ) BreadTrackedCurveState(pairToken_, phantomQuote_, graduationThreshold_) {
         if (
             creatorFeeRecipient_ == address(0) || factory_ == address(0) || feePolicy_ == address(0)
-                || feeEscrow_ == address(0)
+                || feeEscrow_ == address(0) || emergencyController_ == address(0)
         ) revert ZeroAddress();
 
         BreadFeePolicySnapshot memory snapshot = IBreadFeePolicy(feePolicy_).currentFeePolicy();
@@ -112,6 +118,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         factory = factory_;
         feePolicy = IBreadFeePolicy(feePolicy_);
         feeEscrow = IBreadFeeEscrow(feeEscrow_);
+        emergencyController = IBreadEmergencyController(emergencyController_);
         protocolFeeRecipient = snapshot.protocolFeeRecipient;
         tradeFeeBps = snapshot.tradeFeeBps;
         protocolFeeShareBps = snapshot.protocolFeeShareBps;
@@ -147,6 +154,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         nonReentrant
         returns (uint256 tokensOut)
     {
+        if (!emergencyController.buysAllowed()) revert BuysRestricted();
         (tokensOut,,) = _buy(quoteIn, minTokensOut, recipient, currentSnipeTaxBps(), false);
     }
 
@@ -157,6 +165,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         returns (uint256 tokensOut, uint256 spent, uint256 refund)
     {
         if (msg.sender != factory) revert UnauthorizedFactory();
+        if (!emergencyController.buysAllowed()) revert BuysRestricted();
         if (token == address(0) || launchTimestamp == 0) revert NotInitialized();
         if (block.timestamp != uint256(launchTimestamp)) revert LaunchBuyExemptionExpired();
         if (launchBuyExemptionConsumed) revert LaunchBuyExemptionAlreadyConsumed();
@@ -236,16 +245,23 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         if (quoted.tokensOut > available) {
             quoted.tokensOut = available;
             uint256 netRequired = BreadBondingCurveMath.getAmountIn(available, quoteReserve_, tokenReserve_, 0);
-            quoted.spent = Math.min(
-                Math.mulDiv(
-                    netRequired,
-                    BASIS_POINTS,
-                    BASIS_POINTS - uint256(tradeFeeBps) - uint256(creatorTaxBps),
-                    Math.Rounding.Ceil
-                ),
-                received
+            uint256 afterStandardRequired = Math.mulDiv(
+                netRequired,
+                BASIS_POINTS,
+                BASIS_POINTS - uint256(snipeTaxBps),
+                Math.Rounding.Ceil
             );
+            uint256 grossRequired = Math.mulDiv(
+                afterStandardRequired,
+                BASIS_POINTS,
+                BASIS_POINTS - uint256(tradeFeeBps) - uint256(creatorTaxBps),
+                Math.Rounding.Ceil
+            );
+            quoted.spent = Math.min(grossRequired, received);
             quoted.charges = _buyCharges(quoted.spent, snipeTaxBps);
+            if (quoted.charges.netCurveInput < netRequired) {
+                revert InsufficientFinalFillInput(netRequired, quoted.charges.netCurveInput);
+            }
         }
     }
 
@@ -262,6 +278,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         nonReentrant
         returns (uint256 quoteOut)
     {
+        if (!emergencyController.sellsAllowed()) revert SellsRestricted();
         if (token == address(0)) revert NotInitialized();
         if (graduated || readyToGraduate()) revert CurveClosed();
         if (recipient == address(0)) revert RecipientZeroAddress();
