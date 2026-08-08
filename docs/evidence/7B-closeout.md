@@ -1,15 +1,57 @@
 # Checkpoint 7B closeout evidence
 
-Status: PRE-C0 candidate awaiting final exact-head CI.
+Verdict candidate: `CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS`
 
-## Repository
-- Remote: `https://github.com/Dtwosam/bread`
-- Branch: `checkpoint/7b-bootstrap`
-- Draft PR: `#1`
-- Base: `main`
+Date: 2026-08-08
+Repository: `Dtwosam/bread`
+Branch: `checkpoint/7b-bootstrap`
+Pull request: `#1`
 
-## Preserved 7A gates
-The repository still blocks:
+## Verified candidate before handoff update
+
+- Commit: `1fdae485e0982178587daa9aa19daa34802fcecc`
+- GitHub Actions run: `31249262308`
+- `bootstrap-validation`: PASS
+- `dependency-build`: PASS
+  - pinned Node 24.18.0
+  - pinned pnpm 11.15.1
+  - `pnpm install --frozen-lockfile`: PASS
+  - manifest/build-state validation: PASS
+  - bootstrap tests: PASS
+  - TypeScript typecheck: PASS
+  - full workspace build: PASS
+  - clean tracked worktree after build: PASS
+- `foundry-bootstrap`: PASS
+  - Foundry v1.5.0
+  - Solidity 0.8.26 bootstrap compile/test: PASS
+- `infrastructure-health`: PASS
+  - pinned PostgreSQL development image starts healthy
+  - pinned Redis development image starts healthy
+
+## Reproducibility / supply-chain controls
+
+- `pnpm-lock.yaml` committed.
+- Normal CI is read-only and uses frozen installs.
+- pnpm dependency build scripts explicitly allow only reviewed `esbuild` and `sharp` builders.
+- GitHub Actions are pinned by commit SHA.
+- Foundry toolchain action is pinned by commit SHA and Foundry version.
+- Next.js TypeScript 7 CLI backend is explicit.
+- Next.js TypeScript config is committed rather than generated during builds.
+- TypeScript incremental `*.tsbuildinfo` files are treated as generated build cache and ignored.
+- CI fails if the tracked workspace is dirty after build.
+
+## Scope / integration review
+
+- Repository contains the integrated contracts/apps/packages/infra boundaries required for bootstrap.
+- Arc testnet manifest remains validated around canonical 6-decimal ERC-20 USDC.
+- Arc mainnet manifest remains intentionally unresolved.
+- The 10,000-concurrent-client hot-launch load harness skeleton remains present.
+- No financial contract behavior was implemented in 7B.
+- No critical-path TODO was found in the 7B candidate.
+- No 7A blocker was silently bypassed.
+
+## Carried blockers
+
 - `CURRENT_PONS_FACTORY_SOURCE_PARITY`
 - `EXACT_SNIPE_IMPLEMENTATION`
 - `LAUNCH_AND_BUY_SOURCE`
@@ -18,42 +60,10 @@ The repository still blocks:
 - `PONS_AUDIT_FINDINGS`
 - `ARC_MAINNET_VALUES`
 
-No blocked financial implementation was added in 7B.
+## Next lane after C0
 
-## Dependency / supply-chain evidence
-- Node: `24.18.0`
-- pnpm: `11.15.1`
-- `pnpm-lock.yaml` committed by GitHub Actions after a successful full bootstrap build.
-- Normal CI restored to `pnpm install --frozen-lockfile` with `contents: read`.
-- pnpm build scripts explicitly allow only reviewed bootstrap builders `esbuild` and `sharp`.
-- GitHub Actions references are pinned to exact SHAs.
+Checkpoint 7B establishes the first integrated repository bootstrap baseline only. Day 1 remains in progress after C0. The next lane must start from C0 and complete the remaining controlling Day-1 source-reconciliation work, including the Pons public baseline/source-hash/license inventory and the live-Pons config/source reconciliation reader, before the Day-1 end gate can PASS.
 
-## Web build evidence
-- Next.js: `16.2.12`
-- TypeScript: `7.0.2`
-- TypeScript 7 CLI backend explicitly enabled in Next config.
-- Next TypeScript configuration is committed rather than generated implicitly during CI.
-- CI verifies the build leaves the tracked workspace clean.
+## Final merge rule
 
-## Solidity evidence
-- Solidity: `0.8.26`
-- Foundry: `v1.5.0`
-- Foundry toolchain action pinned to `50d5a8956f2e319df19e6b57539d7e2acb9f8c1e`.
-- Only a non-financial compiler/bootstrap test exists at this checkpoint.
-
-## Infrastructure evidence
-- PostgreSQL image pinned to `postgres:17.10-alpine`.
-- Redis image pinned to `redis:8.8.1-alpine`.
-- CI starts the exact Compose stack, waits for health, verifies `pg_isready`, verifies Redis `PONG`, and tears it down.
-
-## Previous integrated green proof
-CI run `31241518693` passed all four jobs on head `ded9495ad507ab85e31cfd40389a8fe9e3175ce7`:
-- bootstrap-validation: PASS
-- dependency-build: PASS
-- foundry-bootstrap: PASS
-- infrastructure-health: PASS
-
-Review fixes were added after that run. Therefore this previous run is supporting evidence only, not the final 7B closeout proof.
-
-## Final closeout gate
-The final proof must be a fresh four-job CI run on the exact PR head containing this evidence file and all review fixes. PR #1 must remain unmerged until that run passes and no Critical/Important review finding remains.
+This document is part of the handoff update, so the branch head containing it must itself pass the complete four-job CI gate before PR #1 is merged. After merge, write the exact merge SHA as Integration Baseline `C0` in `docs/current-build-state.yaml` before beginning the next lane.
