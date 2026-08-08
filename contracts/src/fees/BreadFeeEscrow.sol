@@ -74,6 +74,7 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     }
 
     function claim(uint256 amount) external nonReentrant returns (uint256 claimed) {
+        if (amount == 0) revert ZeroAmount();
         return _claim(msg.sender, amount);
     }
 
