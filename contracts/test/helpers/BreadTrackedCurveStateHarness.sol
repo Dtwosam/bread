@@ -29,6 +29,6 @@ contract BreadTrackedCurveStateHarness is BreadTrackedCurveState {
 
     function simulateTrackedTokenOut(address recipient, uint256 amount) external {
         trackedTokens -= amount;
-        IERC20(token).transfer(recipient, amount);
+        assert(IERC20(token).transfer(recipient, amount));
     }
 }
