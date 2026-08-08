@@ -78,4 +78,23 @@ contract BreadFeeEscrowTest {
         assert(escrow.balanceOf(address(this)) == amount - partialAmount);
         assert(escrow.totalOutstanding() == amount - partialAmount);
     }
+
+    function testCreditRejectsZeroRecipient() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 3 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+
+        (bool ok,) = address(escrow).call(
+            abi.encodeWithSelector(BreadFeeEscrow.credit.selector, address(0), amount)
+        );
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(this)) == amount);
+        assert(usdc.balanceOf(address(escrow)) == 0);
+        assert(escrow.totalOutstanding() == 0);
+    }
 }
