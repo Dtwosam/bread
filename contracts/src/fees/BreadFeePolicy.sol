@@ -2,11 +2,11 @@
 pragma solidity ^0.8.26;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
+import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
 
 /// @title BreadFeePolicy
 /// @notice Future-launch fee configuration whose values are copied into each Bread curve at launch.
-contract BreadFeePolicy is Ownable {
+contract BreadFeePolicy is Ownable, IBreadFeePolicy {
     uint16 private constant MAX_COMBINED_TRADE_FEE_BPS = 2_000;
 
     error ProtocolFeeRecipientZeroAddress();
@@ -16,7 +16,7 @@ contract BreadFeePolicy is Ownable {
     error CombinedTradeFeeInvalid(uint16 tradeFeeBps, uint16 maxCreatorTaxBps);
 
     BreadFeePolicySnapshot private _currentFeePolicy;
-    address public feeSweepOperator;
+    address public override feeSweepOperator;
 
     constructor(
         address owner_,
@@ -28,8 +28,21 @@ contract BreadFeePolicy is Ownable {
         feeSweepOperator = initialSweepOperator;
     }
 
-    function currentFeePolicy() external view returns (BreadFeePolicySnapshot memory policy) {
+    function currentFeePolicy() external view override returns (BreadFeePolicySnapshot memory policy) {
         return _currentFeePolicy;
+    }
+
+    function setCurrentFeePolicy(BreadFeePolicySnapshot calldata nextPolicy) external override onlyOwner {
+        _validatePolicy(nextPolicy);
+        BreadFeePolicySnapshot memory previousPolicy = _currentFeePolicy;
+        _currentFeePolicy = nextPolicy;
+        emit FeePolicyUpdated(previousPolicy, nextPolicy);
+    }
+
+    function setFeeSweepOperator(address nextOperator) external override onlyOwner {
+        address previousOperator = feeSweepOperator;
+        feeSweepOperator = nextOperator;
+        emit FeeSweepOperatorUpdated(previousOperator, nextOperator);
     }
 
     function _validatePolicy(BreadFeePolicySnapshot memory policy) private pure {
