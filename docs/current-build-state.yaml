@@ -1,13 +1,13 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T10:04:00+01:00
+updated_at: 2026-08-08T10:08:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
 active_checkpoint: "Day 1"
-active_lane: "Pons public baseline/license inventory + live-Pons config/source reconciliation reader — implemented, pending integrated review/merge"
+active_lane: "Pons public baseline/license inventory + live-Pons config/source reconciliation reader — review-hardened, pending final exact-head CI/merge"
 integration_baseline:
   id: C0
   branch: main
@@ -23,13 +23,15 @@ repository:
   c0_merge_commit: 768b4706b51335795e33d8d9642fe1b1a4c70f1a
   pull_request_2: open-draft
   pull_request_2_branch: checkpoint/day1-pons-reconciliation
-  status: C0-accepted-day1-successor-in-review
+  status: C0-accepted-day1-successor-final-gate
 verification:
   checkpoint_7b_final_run: 31249373096
   checkpoint_7b_final_head: 0c364275aa1c8213b5d142a4f6e59f6639fb43f4
-  day1_pons_red_run: 31249608035
-  day1_pons_green_run: 31249698722
-  day1_pons_green_head: fb526e15ad3e9432a4c5ec887a01dbb4d789b137
+  day1_pons_initial_red_run: 31249608035
+  day1_pons_initial_green_run: 31249698722
+  day1_pons_review_red_run: 31249823428
+  day1_pons_review_green_run: 31249849839
+  day1_pons_review_green_head: cd9a588c8b4fde20f59152bda9d4acfd737081be
   jobs:
     bootstrap_validation: PASS
     pons_reference_regression: PASS
@@ -63,10 +65,11 @@ decisions_since_last_state:
   - "Checkpoint 7B is closed and PR #1 established Integration Baseline C0 at merge commit 768b4706b51335795e33d8d9642fe1b1a4c70f1a."
   - "The Day-1 Pons reference lane records frozen public source/blob hashes and a file-level SPDX inventory without inventing a repository-wide license where no root LICENSE file was observed."
   - "The frozen public Pons V2 factory address and the current Pons V2 docs factory address remain different; exact current-live source parity is not claimed."
-  - "A read-only Pons reconciliation reader now observes factory runtime bytecode, launch configuration, pair-token economics, dependency addresses and current fee policy; unreadable values remain explicit."
+  - "A read-only Pons reconciliation reader observes factory runtime bytecode, launch configuration, pair-token economics, dependency addresses and current fee policy; unreadable values remain explicit."
+  - "Integrated review found a wrong-network risk in the first reader version; the reader now calls getChainId and fails closed unless the RPC reports Robinhood Chain 4663."
   - "The stale 7B-specific build-state validator was repaired so future handoff validation is checkpoint-agnostic while retaining structural and secret-safety checks."
   - "No financial contract implementation was added; all 7A financial blockers remain active."
-next_action: "Perform integrated review of PR #2, run the full exact-head CI after this handoff update, and merge only if the branch remains green. After merge, update the durable handoff and advance to the next source-permitted Day-1/Day-2 action without bypassing 7A blockers."
+next_action: "Run full CI on the exact PR #2 head containing this handoff/evidence state. If all jobs pass, complete the PR merge, update the post-merge durable handoff, and advance only to the next source-permitted build action while retaining all unresolved 7A blockers."
 do_not_do:
   - "Do not claim exact current-live Pons parity."
   - "Do not implement snipe protection from guesses."
