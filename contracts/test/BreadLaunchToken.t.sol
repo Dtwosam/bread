@@ -30,6 +30,14 @@ contract BreadLaunchTokenTest {
         assert(token.balanceOf(FACTORY) == 0);
     }
 
+    function testAllowsZeroSupplyAndMintsNothing() public {
+        BreadLaunchToken token = _deploy(DEPLOYER, address(this), FACTORY, 0);
+        assert(token.totalSupply() == 0);
+        assert(token.balanceOf(address(this)) == 0);
+        assert(token.balanceOf(DEPLOYER) == 0);
+        assert(token.balanceOf(FACTORY) == 0);
+    }
+
     function testStoresImmutableAttributionAddresses() public {
         BreadLaunchToken token = _deploy(DEPLOYER, address(this), FACTORY, SUPPLY);
         assert(token.deployer() == DEPLOYER);
