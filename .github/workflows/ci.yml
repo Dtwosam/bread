@@ -36,3 +36,34 @@ jobs:
       - run: pnpm test
       - run: pnpm typecheck
       - run: pnpm build
+
+  foundry-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Foundry
+        uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e
+        with:
+          version: v1.5.0
+      - name: Verify Foundry version
+        run: forge --version
+      - name: Compile Solidity bootstrap
+        working-directory: contracts
+        run: forge build
+      - name: Run Solidity bootstrap tests
+        working-directory: contracts
+        run: forge test
+
+  infrastructure-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start exact Bread development infrastructure
+        run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
+      - name: Verify PostgreSQL
+        run: docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
+      - name: Verify Redis
+        run: test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose -f infra/docker/compose.yaml down -v
