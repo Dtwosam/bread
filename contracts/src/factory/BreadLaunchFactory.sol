@@ -193,7 +193,7 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         input.configVersion = configVersion;
         input.startingSnipeTaxBps = STARTING_SNIPE_TAX_BPS;
         input.snipeDurationSeconds = SNIPE_DURATION_SECONDS;
-        input.terminalSnipeTaxBps = TERMINAL_SNIPE_TAX_BPS;
+        input.terminalSniPE_TAX_BPS = TERMINAL_SNIPE_TAX_BPS;
         input.openingProtectionPolicyId = OPENING_PROTECTION_POLICY_ID;
         input.openingTaxRoutingId = OPENING_TAX_ROUTING_ID;
         input.graduationCoordinator = address(graduationCoordinator);
@@ -245,6 +245,7 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
 
         (token, curve) = _deployAndInitialize(params, msg.sender, prep.deployer);
         _creditLaunchFee(quote, token, prep.protocolFeeRecipient, prep.launchFeeUsdc);
+        _recordLaunch(params, token, curve, prep.digest, msg.sender);
 
         quote.forceApprove(curve, quoteIn);
         uint256 spent;
@@ -253,7 +254,6 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         quote.forceApprove(curve, 0);
 
         if (refund != 0) quote.safeTransfer(msg.sender, refund);
-        _recordLaunch(params, token, curve, prep.digest, msg.sender);
         _requireFactoryBalance(quote, factoryBalanceBefore);
 
         emit LaunchAndBuyExecuted(msg.sender, token, curve, recipient, quoteIn, spent, refund, tokensOut);
