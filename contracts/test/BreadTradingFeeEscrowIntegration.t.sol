@@ -7,6 +7,7 @@ import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadTradingExternalCaller} from "./helpers/BreadTradingActors.sol";
 
 contract BreadTradingFeeEscrowIntegrationTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -45,6 +46,35 @@ contract BreadTradingFeeEscrowIntegrationTest {
         assert(escrow.balanceOf(PROTOCOL_RECIPIENT) == protocolAmount);
         assert(escrow.balanceOf(address(this)) == creatorAmount);
         assert(escrow.totalOutstanding() == baseFee + creatorTax);
+    }
+
+    function testFactoryCanUpdateCreatorFeeRecipient() public {
+        (, , BreadBondingCurve curve) = _deployFixture();
+        address nextRecipient = address(0xC0DE);
+
+        curve.setCreatorFeeRecipient(nextRecipient);
+
+        assert(curve.creatorFeeRecipient() == nextRecipient);
+    }
+
+    function testCreatorFeeRecipientRejectsZeroAddressAndNonFactoryCaller() public {
+        (, , BreadBondingCurve curve) = _deployFixture();
+        BreadTradingExternalCaller outsider = new BreadTradingExternalCaller();
+
+        (bool zeroOk,) = address(curve).call(
+            abi.encodeWithSelector(BreadBondingCurve.setCreatorFeeRecipient.selector, address(0))
+        );
+        (bool outsiderOk,) = address(outsider).call(
+            abi.encodeWithSelector(
+                BreadTradingExternalCaller.setCreatorFeeRecipient.selector,
+                curve,
+                address(0xC0DE)
+            )
+        );
+
+        assert(!zeroOk);
+        assert(!outsiderOk);
+        assert(curve.creatorFeeRecipient() == address(this));
     }
 
     function _deployFixture()
