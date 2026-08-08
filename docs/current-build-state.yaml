@@ -1,7 +1,7 @@
-schema_version: 1.9
+schema_version: 1.11
 project: Bread
-source_pack_expected: v1.4-day4-design
-updated_at: 2026-08-08T21:51:00+01:00
+source_pack_expected: v1.5-day5-preflight-consolidated
+updated_at: 2026-08-08T23:31:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -11,27 +11,34 @@ completed_checkpoints:
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
   - "Day 4 source gate: PROJECT_SOURCE_V1_4_DAY4_RATIFICATION_RATIFIED"
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
-active_checkpoint: "Day 5 — blocker burn-down/source reconciliation preflight"
-active_lane: "Research evidence complete; replacement Project Source generation/upload/readback ratification"
-active_gate: DAY5_PROJECT_SOURCE_AMENDMENT_RATIFICATION_REQUIRED
+  - "Day 5 preflight: DAY_5_PREFLIGHT_RECONCILIATION_PASS"
+  - "Day 5 source gate: PROJECT_SOURCE_V1_5_DAY5_RATIFICATION_RATIFIED"
+  - "Day 5 design: WRITTEN_DESIGN_APPROVED"
+  - "Day 5 plan: IMPLEMENTATION_PLAN_V2_SELF_REVIEWED"
+active_checkpoint: "Day 5 — design/plan documentation gate"
+active_lane: "Approved design and self-reviewed v2 implementation plan on PR #26; exact-head documentation CI"
+active_gate: DAY5_DESIGN_PLAN_DOCUMENTATION_CI
 project_source_state:
-  pack: v1.4-day4-design
-  upload: UPLOADED
+  pack: v1.5-day5-preflight-consolidated
+  upload: UPLOADED_AND_READ_BACK
   ratification: RATIFIED
   existing_day1_day3_baseline_ratification: RATIFIED
   day4_amendment: RATIFIED
   day4_production_ratification: RATIFIED
-  current_ratified_pack: v1.4-day4-design
-  proposed_next_pack: v1.5-day5-preflight-blocker-burndown
+  day4_ratified_source:
+    pack: v1.4-day4-design
+  current_ratified_pack: v1.5-day5-preflight-consolidated
   day5_preflight_amendment_required: true
-  day5_preflight_amendment_upload: PENDING_USER_UPLOAD
-  day5_preflight_amendment_ratification: PENDING
+  day5_preflight_amendment_upload: COMPLETE
+  day5_preflight_amendment_ratification: RATIFIED
   evidence_path: docs/source-reconciliation/day5-preflight-blocker-burndown.md
 integration_baseline:
-  id: DAY4-CLOSED-DURABLE-MAIN
+  id: DAY5-RATIFIED-DESIGN-BASELINE
   branch: main
   day4_closeout_milestone: 7533b9f243e1c53106188aa662919f6166448f2e
-  day5_continuation_baseline: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
+  day4_durable_handoff_main: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
+  day5_preflight_evidence_main: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
+  day5_start_baseline: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
   implementation_pr: 15
   implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
   closeout_pr: 23
@@ -40,13 +47,19 @@ integration_baseline:
   durable_handoff_merge_commit: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
   status: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS
 working_branches:
-  - checkpoint/day5-preflight-blocker-burndown
+  - design/day5-graduation-coordinator
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  verified_main_before_day5_preflight: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
+  verified_main_for_day5_design: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
   day5_preflight_branch: checkpoint/day5-preflight-blocker-burndown
   day5_preflight_evidence: docs/source-reconciliation/day5-preflight-blocker-burndown.md
+  day5_design_branch: design/day5-graduation-coordinator
+  day5_design_spec: docs/superpowers/specs/2026-08-08-day5-graduation-coordinator-design.md
+  day5_design_initial_commit: dbd272d002f888b2b4138b8b47f38c1b84c01325
+  day5_plan: docs/superpowers/plans/2026-08-08-day5-graduation-coordinator-v2.md
+  day5_plan_self_review_commit: 32fd667a705851f9c57e1f5796ef5fde8492b456
+  day5_documentation_pr: 26
   day5_production_code_started: false
 day5_scope:
   production_status: NOT_STARTED
@@ -58,12 +71,23 @@ day5_scope:
     - permanent liquidity locker
     - failed automatic graduation and retry behavior
     - dust and wrong-dependency handling
-    - complete deployment scripts
+    - complete deployment/configure/verify/smoke scripts and manifest plumbing
   end_gate:
     - FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS
     - INV_050_056_PASS
     - RETRY_CANNOT_DUPLICATE_LIQUIDITY
+    - RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS
   emergency_continuity: "graduationPaused is restriction-only; Guardian tighten/pause only; Protocol Admin alone clears; no financial accounting or custody authority"
+  design:
+    state_authority: GraduationCoordinator
+    lifecycle: "NOT_GRADUATED -> SWEPT -> POOL_CREATED; delayed terminal RESCUED from SWEPT only"
+    trigger: "best-effort automatic Stage 1 after crossing buy plus permissionless Stage 1/Stage 2 retry"
+    adapter_snapshot: "immutable per launch"
+    v4: "preferred only when official environment is verified; official-interface fixtures allowed for local/testnet proofs"
+    v3: "implemented behind same interface; inactive unless verified environment requires activation"
+    locker: "non-upgradeable permanent principal lock; one-time coordinator wiring only; no withdrawal/arbitrary-call/admin escape"
+    fee_escrow: "canonical claim ledger preserved; graduation coordinator may credit settled curve fee amounts only through explicit authorized-creditor wiring"
+    rescue: "Protocol Admin only; exact SWEPT/pause/time preconditions; seven-day Bread recovery constant derived from frozen Pons reference"
 verification:
   day4_final_implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
   day4_final_implementation_run: 31275557000
@@ -79,6 +103,10 @@ verification:
   day4_post_closeout_handoff_run: 31276981183
   day4_post_closeout_handoff_jobs: PASS_ALL_FOUR
   day4_durable_main: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
+  day5_preflight_evidence_head: f914534637d3acbde0a65051599144ff69fd18f1
+  day5_preflight_evidence_run: 31278473599
+  day5_preflight_evidence_jobs: PASS_ALL_FOUR
+  day5_preflight_evidence_main: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
 fresh_external_evidence:
   checked_at: 2026-08-08
   pons_public_source_commit: d5491e20be56051a68abf47136f6890c3ce3ff7d
@@ -98,23 +126,24 @@ blockers:
   - ARC_MAINNET_VALUES
 blocker_scope:
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "OPEN_REFERENCE_GAP_NON_BLOCKING_FOR_BREAD; blocks only exact current-Pons parity claims"
-  PONS_V2_RUNTIME_REFERENCE: "current read surface/addresses verified; numeric current V2 config snapshot pending; reference/parity evidence only"
-  BREAD_PRODUCTION_ECONOMICS_CONFIG: "new proposed Bread-owned public/mainnet release gate for actual production launchFeeUsdc, FeePolicy, recipient/admin/Safe, stack/config and deployment-manifest values; do not guess"
+  PONS_V2_RUNTIME_REFERENCE: "READ_SURFACE_VERIFIED_NUMERIC_STATE_PENDING; reference/parity evidence only"
+  BREAD_PRODUCTION_ECONOMICS_CONFIG: "OPEN_PUBLIC_MAINNET_RELEASE_GATE; actual production launchFeeUsdc, FeePolicy, recipient/admin/Safe, stack/config and deployment-manifest values remain unfrozen; do not guess"
   PONS_AUDIT_FINDINGS: "NO_PUBLIC_PONS_AUDIT_REPORTS_PUBLISHED_AS_OF_2026-08-08; continuing security watch; Bread independent review remains mandatory"
   ARC_MAINNET_VALUES: "WAITING_FOR_OFFICIAL_PUBLICATION; mainnet-deployment blocker only; not Day-5 testnet implementation blocker"
 source_amendment:
   required: true
+  status: RATIFIED
   reason: "split legacy LIVE_RUNTIME_CONFIG into Pons reference evidence and Bread-owned production configuration approval gate"
-  controlling_effect: "No affected Day-5 production code may start until consolidated replacement Project Sources are uploaded, read back, reconciled and explicitly ratified."
+  controlling_effect: "Day-5 design is approved and the implementation plan is self-reviewed. Production Solidity may begin only from a fresh implementation branch after the documentation gate is durably merged."
 security_review:
   pons_audit_clean_claim: NONE
   bread_independent_review_requirement: ACTIVE
   external_dex_rule: "official DEX interfaces and official Arc/DEX deployment evidence are primary; no guessed canonical Arc deployment"
 next_action: >-
-  Generate consolidated v1.5 replacement Project Sources that preserve closed Day 4, type the legacy blockers exactly as recorded in docs/source-reconciliation/day5-preflight-blocker-burndown.md, split LIVE_RUNTIME_CONFIG into PONS_V2_RUNTIME_REFERENCE plus BREAD_PRODUCTION_ECONOMICS_CONFIG, and carry the Day-5 graduation/adapter/locker/invariant requirements without inventing Arc DEX or production economics values. User must upload/replace the generated Project Sources. Active chat must then read them back, reconcile against GitHub and this YAML, and explicitly set PROJECT_SOURCE_RATIFICATION = RATIFIED before any Day-5 production Solidity.
+  Obtain exact-head CI PASS for documentation PR #26 and merge only that exact green head. Verify merged main, then create a fresh Day-5 implementation branch from that verified main and begin the self-reviewed v2 RED -> GREEN plan. Re-check official Arc/Uniswap sources before DEX-specific implementation. Do not activate a network adapter or guess production/mainnet values.
 do_not_do:
   - "Do not reopen closed Day-4 economics/security behavior without a newly ratified source change."
-  - "Do not start Day-5 production Solidity while PROJECT_SOURCE_RATIFICATION is pending."
+  - "Do not start Day-5 production Solidity before the approved design/self-reviewed plan documentation gate is durably merged."
   - "Do not claim exact current-live Pons V2 source/runtime parity."
   - "Do not claim Pons V2 is audit-clean; current official docs say all three reviews remain in progress."
   - "Do not infer or guess current Pons numeric runtime config when a read cannot be verified."
