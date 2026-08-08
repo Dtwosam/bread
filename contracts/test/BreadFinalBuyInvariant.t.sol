@@ -7,6 +7,7 @@ import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
 contract BreadFinalBuyInvariantTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -82,6 +83,7 @@ contract BreadFinalBuyInvariantTest {
         });
         token = new BreadLaunchToken(metadata, context);
         curve.initialize(address(token));
+        BreadTestTime.expireOpening(curve);
     }
 
     function _amountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
