@@ -3,7 +3,12 @@ pragma solidity ^0.8.26;
 
 import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
-import {FeeEscrowExternalCaller, ToggleFailUSDC6} from "./helpers/BreadFeeEscrowAdversaries.sol";
+import {
+    ClaimObservingUSDC6,
+    FeeEscrowExternalCaller,
+    ShortTransferUSDC6,
+    ToggleFailUSDC6
+} from "./helpers/BreadFeeEscrowAdversaries.sol";
 
 contract BreadFeeEscrowTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -188,6 +193,26 @@ contract BreadFeeEscrowTest {
         assert(!escrow.authorizedCreditor(eoa));
     }
 
+    function testShortTransferCannotCreateUnderfundedClaim() public {
+        ShortTransferUSDC6 usdc = new ShortTransferUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 5 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+
+        (bool ok,) = address(escrow).call(
+            abi.encodeWithSelector(BreadFeeEscrow.credit.selector, RECIPIENT, amount)
+        );
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(this)) == amount);
+        assert(usdc.balanceOf(address(escrow)) == 0);
+        assert(escrow.balanceOf(RECIPIENT) == 0);
+        assert(escrow.totalOutstanding() == 0);
+    }
+
     function testOverClaimRevertsAndPreservesAccounting() public {
         MockUSDC6 usdc = new MockUSDC6();
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
@@ -223,6 +248,51 @@ contract BreadFeeEscrowTest {
         assert(usdc.balanceOf(address(escrow)) == amount);
         assert(escrow.balanceOf(address(this)) == amount);
         assert(escrow.totalOutstanding() == amount);
+    }
+
+    function testSuccessfulClaimCannotReplay() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 6 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+        escrow.credit(address(this), amount);
+        escrow.claim();
+
+        (bool replayOk,) = address(escrow).call(abi.encodeWithSignature("claim()"));
+
+        assert(!replayOk);
+        assert(usdc.balanceOf(address(this)) == amount);
+        assert(usdc.balanceOf(address(escrow)) == 0);
+        assert(escrow.balanceOf(address(this)) == 0);
+        assert(escrow.totalOutstanding() == 0);
+    }
+
+    function testClaimDebitsStateBeforeTransferAndBlocksReentry() public {
+        ClaimObservingUSDC6 usdc = new ClaimObservingUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        usdc.setObservedEscrow(escrow);
+        usdc.setAttemptReentry(true);
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 8 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+        escrow.credit(address(usdc), amount);
+
+        uint256 claimed = usdc.claimFromEscrow();
+
+        assert(claimed == amount);
+        assert(usdc.observedClaimTransfer());
+        assert(usdc.observedRecipientBalance() == 0);
+        assert(usdc.observedOutstanding() == 0);
+        assert(usdc.reentryBlocked());
+        assert(escrow.balanceOf(address(usdc)) == 0);
+        assert(escrow.totalOutstanding() == 0);
+        assert(usdc.balanceOf(address(escrow)) == 0);
+        assert(usdc.balanceOf(address(usdc)) == amount);
     }
 
     function testFuzz_PartialClaimsPreserveSolvency(uint96 rawCredit, uint96 rawClaim) public {
