@@ -140,7 +140,7 @@ contract BreadLaunchFactory is Ownable {
         input.configVersion = configVersion;
         input.startingSnipeTaxBps = STARTING_SNIPE_TAX_BPS;
         input.snipeDurationSeconds = SNIPE_DURATION_SECONDS;
-        input.terminalSniPETaxBps = TERMINAL_SNIPE_TAX_BPS;
+        input.terminalSnipeTaxBps = TERMINAL_SNIPE_TAX_BPS;
         input.openingProtectionPolicyId = OPENING_PROTECTION_POLICY_ID;
         input.openingTaxRoutingId = OPENING_TAX_ROUTING_ID;
         return keccak256(abi.encode(input));
