@@ -1,7 +1,7 @@
-schema_version: 1.2
+schema_version: 1.3
 project: Bread
 source_pack_expected: v1.4-day4-design
-updated_at: 2026-08-08T17:59:00+01:00
+updated_at: 2026-08-08T18:14:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -12,16 +12,19 @@ completed_checkpoints:
   - "Day 3 candidate audit: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
   - "Day 4.1 preflight: DESIGN_BUNDLE_APPROVED_SELF_REVIEWED"
-active_checkpoint: "Day 4 — Project Source promotion / ratification"
-active_lane: "Factory + Launch+Buy + opening protection + EmergencyController design promotion"
-active_gate: DAY4_PROJECT_SOURCE_V1_4_UPLOAD_READBACK_RATIFICATION
+  - "Day 4 source gate: PROJECT_SOURCE_V1_4_DAY4_RATIFICATION_RATIFIED"
+active_checkpoint: "Day 4 — Implementation planning"
+active_lane: "Factory + Launch+Buy + opening protection + EmergencyController implementation plan"
+active_gate: DAY4_DETAILED_TDD_IMPLEMENTATION_PLAN
 project_source_state:
-  existing_baseline_pack: v1.3-post-research
-  existing_baseline_ratification: RATIFIED
-  expected_next_pack: v1.4-day4-design
-  day4_amendment: APPROVED_PENDING_UPLOAD_READBACK
-  day4_production_ratification: NOT_RATIFIED
-  rule: "The approved GitHub Day-4 design is evidence only until the generated v1.4 Project Source replacements are uploaded, read back and reconciled."
+  pack: v1.4-day4-design
+  upload: UPLOADED
+  ratification: RATIFIED
+  existing_day1_day3_baseline_ratification: RATIFIED
+  day4_amendment: RATIFIED
+  day4_production_ratification: RATIFIED
+  ratification_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
+  rule: "Uploaded v1.4 replacements were read back and reconciled against main c6fcb53c854e45843b60720e3be859a49965bad2, approved Day-4 design 324b6055a0bed278766e1b48016774ac745b3781 and the living build-state before Day-4 production authorization advanced."
 integration_baseline:
   id: DAY3-CLOSEOUT
   branch: main
@@ -41,9 +44,9 @@ repository:
   stale_day3_closeout_state: CLOSED_UNMERGED
   day4_design_branch: checkpoint/day4-preflight-design
   day4_design_commit: 324b6055a0bed278766e1b48016774ac745b3781
-  day4_source_promotion_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
+  day4_source_ratification_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
 day4_design:
-  status: APPROVED_SELF_REVIEWED_PENDING_PROJECT_SOURCE_PROMOTION
+  status: APPROVED_SELF_REVIEWED_SOURCE_RATIFIED
   design_path: docs/superpowers/specs/2026-08-08-day4-factory-launch-buy-snipe-emergency-design.md
   factory_deployer: "Bread-owned; composes existing Day-3 curve/token/FeePolicy/FeeEscrow; no duplicate accounting; no Day-4 CREATE2 promise"
   economics_pin: "Bind canonical USDC, supply, phantomQuote, graduationThreshold, FeePolicy snapshot, launchFeeUsdc, stack/config version and opening-protection identifiers"
@@ -57,29 +60,33 @@ day4_design:
 source_promotion:
   replacement_count: 12
   pack_label: v1.4-day4-design
-  status: GENERATED_LOCALLY_PENDING_USER_UPLOAD
-  ratification_after_upload: REQUIRED
+  status: UPLOADED_READBACK_RECONCILED_RATIFIED
+  ratification: RATIFIED
   required_reconciliation:
     - c6fcb53c854e45843b60720e3be859a49965bad2
     - 324b6055a0bed278766e1b48016774ac745b3781
     - docs/source-reconciliation/day4-project-source-v1.4-promotion.md
+resolved_day4_source_gates:
+  BREAD_SNIPE_DECAY_FORMULA: RESOLVED_BY_EXPLICIT_BREAD_QUADRATIC_POLICY
+  DAY4_SNIPE_EXEMPTIONS: RESOLVED_ONE_CALL_LAUNCH_AND_BUY_ONLY
+  DAY4_OPENING_TAX_ROUTING: RESOLVED_REUSE_CANONICAL_BASE_FEE_ESCROW_PATH
+  DAY4_FINAL_FILL_ROUNDING: RESOLVED_TWO_STAGE_FULL_PRECISION_CEILING_GROSS_UP
+  DAY4_EMERGENCY_STATE_MODEL: RESOLVED_RESTRICTION_ONLY
 blockers:
-  - DAY4_PROJECT_SOURCE_V1_4_UPLOAD_READBACK_RATIFICATION
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
-conditional_resolution_after_v1_4_ratification:
-  BREAD_SNIPE_DECAY_FORMULA: "RESOLVED_BY_EXPLICIT_BREAD_QUADRATIC_POLICY"
-  DAY4_SNIPE_EXEMPTIONS: "RESOLVED_ONE_CALL_LAUNCH_AND_BUY_ONLY"
-  DAY4_OPENING_TAX_ROUTING: "RESOLVED_REUSE_CANONICAL_BASE_FEE_ESCROW_PATH"
-  DAY4_EMERGENCY_STATE_MODEL: "RESOLVED_RESTRICTION_ONLY"
+blocker_scope:
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "truthfulness/parity claims only; does not block ratified Bread-owned Day-4 architecture"
+  LIVE_RUNTIME_CONFIG: "real deployment values; no production launchFeeUsdc/FeePolicy/address values may be guessed"
+  PONS_AUDIT_FINDINGS: "release/security gate"
+  ARC_MAINNET_VALUES: "mainnet deployment gate"
 next_action: >-
-  User uploads/replaces the 12 v1.4 Project Sources. Active chat reads every replacement back and reconciles them against main c6fcb53c854e45843b60720e3be859a49965bad2, approved Day-4 design commit 324b6055a0bed278766e1b48016774ac745b3781 and the source-promotion record. If and only if they agree, explicitly set PROJECT_SOURCE_RATIFICATION_FOR_DAY4_PRODUCTION = RATIFIED. Then write/self-review the detailed Day-4 implementation plan. Do not write production Solidity before both source ratification and implementation planning are complete.
+  Write and self-review the detailed Day-4 TDD implementation plan from Source Pack v1.4 and approved design commit 324b6055a0bed278766e1b48016774ac745b3781. Freeze exact interfaces, file ownership, RED/GREEN slices, invariant/regression commands and guarded merge/closeout sequence. Only after the plan is committed may Day-4 production Solidity begin, starting with RED tests from the accepted main baseline or a verified descendant. Do not start Day 5 before Day 4 is durably closed.
 do_not_do:
-  - "Do not treat the GitHub Day-4 design or promotion record as uploaded Project Source authority."
-  - "Do not write or merge Day-4 production money-path code while day4_production_ratification is NOT_RATIFIED."
-  - "Do not silently change the exact opening formula, exemption, routing, final-fill rounding or emergency authority during implementation."
+  - "Do not write or merge Day-4 production Solidity before the detailed implementation plan is committed and self-reviewed."
+  - "Do not silently change the ratified opening formula, exemption, routing, final-fill rounding or emergency authority; a change requires a new approved Project Source amendment."
   - "Do not create parallel fee, claim, trading, launch-record or emergency-accounting authorities."
   - "Do not claim exact current-live Pons factory parity."
   - "Do not invent live fee/launch-fee values, audit conclusions or Arc mainnet values."
