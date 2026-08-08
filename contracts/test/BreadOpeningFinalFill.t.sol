@@ -77,7 +77,7 @@ contract BreadOpeningFinalFillTest {
         _assertFinalCrossingAtElapsed(5, 0);
     }
 
-    function testFinalCrossingOneUnitBelowRequiredGrossRevertsWithoutMutation() public {
+    function testActuallyUnderfundedFinalCrossingRevertsWithoutMutation() public {
         VM.warp(20_000);
         Fixture memory f = _deployFixture();
         (address tokenAddress, address curveAddress) =
@@ -85,8 +85,10 @@ contract BreadOpeningFinalFillTest {
         BreadBondingCurve curve = BreadBondingCurve(curveAddress);
         BreadLaunchToken token = BreadLaunchToken(tokenAddress);
         CrossingExpectation memory e = _expectation(curve, 9_900);
-        uint256 offered = e.grossRequired - 1;
+        uint256 offered = _largestUnderfundedAmount(e.grossRequired, e.netRequired, 9_900);
 
+        assert(offered < e.grossRequired);
+        assert(_netCurveInput(offered, 9_900) < e.netRequired);
         f.usdc.mint(address(this), offered);
         assert(f.usdc.approve(curveAddress, offered));
 
@@ -157,6 +159,32 @@ contract BreadOpeningFinalFillTest {
         e.afterStandard = e.grossRequired - e.baseFee - e.creatorTax;
         e.snipeTax = e.afterStandard * snipeBps / 10_000;
         e.netCurveInput = e.afterStandard - e.snipeTax;
+    }
+
+    function _largestUnderfundedAmount(uint256 knownSufficient, uint256 netRequired, uint16 snipeBps)
+        private
+        pure
+        returns (uint256 offered)
+    {
+        uint256 low;
+        uint256 high = knownSufficient;
+        while (low + 1 < high) {
+            uint256 middle = low + (high - low) / 2;
+            if (_netCurveInput(middle, snipeBps) < netRequired) {
+                low = middle;
+            } else {
+                high = middle;
+            }
+        }
+        offered = low;
+    }
+
+    function _netCurveInput(uint256 spent, uint16 snipeBps) private pure returns (uint256) {
+        uint256 baseFee = spent * TRADE_FEE_BPS / 10_000;
+        uint256 creatorTax = spent * CREATOR_TAX_BPS / 10_000;
+        uint256 afterStandard = spent - baseFee - creatorTax;
+        uint256 snipeTax = afterStandard * snipeBps / 10_000;
+        return afterStandard - snipeTax;
     }
 
     function _deployFixture() private returns (Fixture memory f) {
