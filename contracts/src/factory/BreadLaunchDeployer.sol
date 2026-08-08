@@ -4,6 +4,10 @@ pragma solidity ^0.8.26;
 import {BreadBondingCurve} from "../core/BreadBondingCurve.sol";
 import {BreadLaunchToken} from "../BreadLaunchToken.sol";
 
+interface IBreadGraduationCoordinatorSource {
+    function graduationCoordinator() external view returns (address coordinator);
+}
+
 /// @title BreadLaunchDeployer
 /// @notice Factory-only helper that deploys a Bread curve/token pair without owning launch economics.
 contract BreadLaunchDeployer {
@@ -25,7 +29,6 @@ contract BreadLaunchDeployer {
         address feePolicy;
         address feeEscrow;
         address emergencyController;
-        address graduationCoordinator;
         uint256 phantomQuote;
         uint16 creatorTaxBps;
         uint256 graduationThreshold;
@@ -64,6 +67,8 @@ contract BreadLaunchDeployer {
         _validateMetadata(p.metadata);
 
         BreadLaunchCore calldata core = p.core;
+        address coordinator = IBreadGraduationCoordinatorSource(factory).graduationCoordinator();
+        if (coordinator == address(0)) revert ZeroAddress();
         curve = address(
             new BreadBondingCurve(
                 core.usdc,
@@ -72,7 +77,7 @@ contract BreadLaunchDeployer {
                 core.feePolicy,
                 core.feeEscrow,
                 core.emergencyController,
-                core.graduationCoordinator,
+                coordinator,
                 core.phantomQuote,
                 core.creatorTaxBps,
                 core.graduationThreshold
