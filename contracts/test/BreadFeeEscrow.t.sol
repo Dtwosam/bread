@@ -192,7 +192,7 @@ contract BreadFeeEscrowTest {
         assert(escrow.totalOutstanding() == amount);
     }
 
-    function testFailedTransferPreservesClaimAndOutstanding() public {
+    function testClaimTransferFailurePreservesClaimAndOutstanding() public {
         ToggleFailUSDC6 usdc = new ToggleFailUSDC6();
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
         escrow.setAuthorizedCreditor(address(this), true);
