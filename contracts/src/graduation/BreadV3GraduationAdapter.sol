@@ -81,6 +81,26 @@ contract BreadV3GraduationAdapter is IGraduationAdapter {
     error InvalidMintResult();
     error UnexpectedTransferAmount();
 
+    struct SeedPlan {
+        address token0;
+        address token1;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint160 sqrtPriceX96;
+    }
+
+    struct BalanceCheckpoint {
+        uint256 quoteBefore;
+        uint256 tokenBefore;
+    }
+
+    struct MintReceipt {
+        address pool;
+        uint256 positionId;
+        uint256 amount0;
+        uint256 amount1;
+    }
+
     address public immutable coordinator;
     address public immutable override usdc;
     address public immutable override locker;
@@ -112,6 +132,8 @@ contract BreadV3GraduationAdapter is IGraduationAdapter {
 
         int24 spacing = IBreadV3FactoryLike(v3Factory_).feeAmountTickSpacing(fee_);
         if (spacing <= 0) revert InvalidFeeTier();
+        int24 lower = (MIN_TICK / spacing) * spacing;
+        int24 upper = (MAX_TICK / spacing) * spacing;
 
         coordinator = coordinator_;
         usdc = usdc_;
@@ -120,8 +142,8 @@ contract BreadV3GraduationAdapter is IGraduationAdapter {
         v3Factory = v3Factory_;
         fee = fee_;
         tickSpacing = spacing;
-        tickLower = (MIN_TICK / spacing) * spacing;
-        tickUpper = (MAX_TICK / spacing) * spacing;
+        tickLower = lower;
+        tickUpper = upper;
         configHash = keccak256(
             abi.encode(
                 CONFIG_DOMAIN,
@@ -132,8 +154,8 @@ contract BreadV3GraduationAdapter is IGraduationAdapter {
                 v3Factory_,
                 fee_,
                 spacing,
-                tickLower,
-                tickUpper
+                lower,
+                upper
             )
         );
     }
@@ -148,85 +170,98 @@ contract BreadV3GraduationAdapter is IGraduationAdapter {
 
     function execute(Seed calldata seed) external override returns (Result memory result) {
         if (msg.sender != coordinator) revert NotCoordinator();
-        (address token0, address token1, uint256 amount0Desired, uint256 amount1Desired, uint160 sqrtPriceX96) =
-            _validateSeed(seed);
+        SeedPlan memory plan = _validateSeed(seed);
+        BalanceCheckpoint memory checkpoint = _pullExact(seed);
+        MintReceipt memory receipt = _createAndMint(plan);
+        return _reconcileAndReturn(seed, plan, checkpoint, receipt);
+    }
 
+    function _pullExact(Seed calldata seed) private returns (BalanceCheckpoint memory checkpoint) {
         IERC20 quote = IERC20(usdc);
         IERC20 launchToken = IERC20(seed.token);
-        uint256 quoteBefore = quote.balanceOf(address(this));
-        uint256 tokenBefore = launchToken.balanceOf(address(this));
+        checkpoint.quoteBefore = quote.balanceOf(address(this));
+        checkpoint.tokenBefore = launchToken.balanceOf(address(this));
 
         quote.safeTransferFrom(msg.sender, address(this), seed.usdcAmount);
         launchToken.safeTransferFrom(msg.sender, address(this), seed.poolTokenAmount);
         if (
-            quote.balanceOf(address(this)) - quoteBefore != seed.usdcAmount
-                || launchToken.balanceOf(address(this)) - tokenBefore != seed.poolTokenAmount
+            quote.balanceOf(address(this)) - checkpoint.quoteBefore != seed.usdcAmount
+                || launchToken.balanceOf(address(this)) - checkpoint.tokenBefore != seed.poolTokenAmount
         ) revert UnexpectedTransferAmount();
+    }
 
-        address pool = IBreadV3PositionManagerLike(positionManager).createAndInitializePoolIfNecessary(
-            token0, token1, fee, sqrtPriceX96
+    function _createAndMint(SeedPlan memory plan) private returns (MintReceipt memory receipt) {
+        receipt.pool = IBreadV3PositionManagerLike(positionManager).createAndInitializePoolIfNecessary(
+            plan.token0, plan.token1, fee, plan.sqrtPriceX96
         );
         if (
-            pool == address(0) || pool.code.length == 0
-                || IBreadV3FactoryLike(v3Factory).getPool(token0, token1, fee) != pool
+            receipt.pool == address(0) || receipt.pool.code.length == 0
+                || IBreadV3FactoryLike(v3Factory).getPool(plan.token0, plan.token1, fee) != receipt.pool
         ) revert PoolIdentityMismatch();
-        if (_poolSqrtPrice(pool) != sqrtPriceX96) revert PoolPriceMismatch();
+        if (_poolSqrtPrice(receipt.pool) != plan.sqrtPriceX96) revert PoolPriceMismatch();
 
-        IERC20(token0).forceApprove(positionManager, amount0Desired);
-        IERC20(token1).forceApprove(positionManager, amount1Desired);
-        (uint256 positionId, uint128 liquidity, uint256 amount0, uint256 amount1) =
-            IBreadV3PositionManagerLike(positionManager).mint(
-                IBreadV3PositionManagerLike.MintParams({
-                    token0: token0,
-                    token1: token1,
-                    fee: fee,
-                    tickLower: tickLower,
-                    tickUpper: tickUpper,
-                    amount0Desired: amount0Desired,
-                    amount1Desired: amount1Desired,
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: locker,
-                    deadline: block.timestamp
-                })
-            );
-        IERC20(token0).forceApprove(positionManager, 0);
-        IERC20(token1).forceApprove(positionManager, 0);
+        IERC20(plan.token0).forceApprove(positionManager, plan.amount0Desired);
+        IERC20(plan.token1).forceApprove(positionManager, plan.amount1Desired);
+        uint128 liquidity;
+        (receipt.positionId, liquidity, receipt.amount0, receipt.amount1) =
+            IBreadV3PositionManagerLike(positionManager).mint(_mintParams(plan));
+        IERC20(plan.token0).forceApprove(positionManager, 0);
+        IERC20(plan.token1).forceApprove(positionManager, 0);
 
-        if (liquidity == 0 || amount0 > amount0Desired || amount1 > amount1Desired) revert InvalidMintResult();
+        if (
+            liquidity == 0 || receipt.amount0 > plan.amount0Desired || receipt.amount1 > plan.amount1Desired
+        ) revert InvalidMintResult();
+    }
 
-        uint256 amount0Dust = amount0Desired - amount0;
-        uint256 amount1Dust = amount1Desired - amount1;
-        if (amount0Dust != 0) IERC20(token0).safeTransfer(msg.sender, amount0Dust);
-        if (amount1Dust != 0) IERC20(token1).safeTransfer(msg.sender, amount1Dust);
+    function _mintParams(SeedPlan memory plan)
+        private
+        view
+        returns (IBreadV3PositionManagerLike.MintParams memory params)
+    {
+        params = IBreadV3PositionManagerLike.MintParams({
+            token0: plan.token0,
+            token1: plan.token1,
+            fee: fee,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount0Desired: plan.amount0Desired,
+            amount1Desired: plan.amount1Desired,
+            amount0Min: 0,
+            amount1Min: 0,
+            recipient: locker,
+            deadline: block.timestamp
+        });
+    }
 
-        if (quote.balanceOf(address(this)) != quoteBefore || launchToken.balanceOf(address(this)) != tokenBefore) {
-            revert UnexpectedTransferAmount();
-        }
+    function _reconcileAndReturn(
+        Seed calldata seed,
+        SeedPlan memory plan,
+        BalanceCheckpoint memory checkpoint,
+        MintReceipt memory receipt
+    ) private returns (Result memory result) {
+        uint256 amount0Dust = plan.amount0Desired - receipt.amount0;
+        uint256 amount1Dust = plan.amount1Desired - receipt.amount1;
+        if (amount0Dust != 0) IERC20(plan.token0).safeTransfer(msg.sender, amount0Dust);
+        if (amount1Dust != 0) IERC20(plan.token1).safeTransfer(msg.sender, amount1Dust);
 
-        bool quoteIsToken0 = token0 == usdc;
+        if (
+            IERC20(usdc).balanceOf(address(this)) != checkpoint.quoteBefore
+                || IERC20(seed.token).balanceOf(address(this)) != checkpoint.tokenBefore
+        ) revert UnexpectedTransferAmount();
+
+        bool quoteIsToken0 = plan.token0 == usdc;
         result = Result({
-            poolId: bytes32(uint256(uint160(pool))),
+            poolId: bytes32(uint256(uint160(receipt.pool))),
             positionManager: positionManager,
-            positionId: positionId,
-            usdcUsed: quoteIsToken0 ? amount0 : amount1,
-            tokenUsed: quoteIsToken0 ? amount1 : amount0,
+            positionId: receipt.positionId,
+            usdcUsed: quoteIsToken0 ? receipt.amount0 : receipt.amount1,
+            tokenUsed: quoteIsToken0 ? receipt.amount1 : receipt.amount0,
             usdcDust: quoteIsToken0 ? amount0Dust : amount1Dust,
             tokenDust: quoteIsToken0 ? amount1Dust : amount0Dust
         });
     }
 
-    function _validateSeed(Seed calldata seed)
-        private
-        view
-        returns (
-            address token0,
-            address token1,
-            uint256 amount0Desired,
-            uint256 amount1Desired,
-            uint160 sqrtPriceX96
-        )
-    {
+    function _validateSeed(Seed calldata seed) private view returns (SeedPlan memory plan) {
         if (seed.configHash != configHash) revert WrongConfigHash();
         if (
             seed.token == address(0) || seed.token == usdc || seed.token.code.length == 0 || seed.usdc != usdc
@@ -240,22 +275,22 @@ contract BreadV3GraduationAdapter is IGraduationAdapter {
         ) revert InvalidDependency();
 
         if (seed.token < usdc) {
-            token0 = seed.token;
-            token1 = usdc;
-            amount0Desired = seed.poolTokenAmount;
-            amount1Desired = seed.usdcAmount;
+            plan.token0 = seed.token;
+            plan.token1 = usdc;
+            plan.amount0Desired = seed.poolTokenAmount;
+            plan.amount1Desired = seed.usdcAmount;
         } else {
-            token0 = usdc;
-            token1 = seed.token;
-            amount0Desired = seed.usdcAmount;
-            amount1Desired = seed.poolTokenAmount;
+            plan.token0 = usdc;
+            plan.token1 = seed.token;
+            plan.amount0Desired = seed.usdcAmount;
+            plan.amount1Desired = seed.poolTokenAmount;
         }
 
-        sqrtPriceX96 = _sqrtPriceX96(amount0Desired, amount1Desired);
-        address existingPool = IBreadV3FactoryLike(v3Factory).getPool(token0, token1, fee);
+        plan.sqrtPriceX96 = _sqrtPriceX96(plan.amount0Desired, plan.amount1Desired);
+        address existingPool = IBreadV3FactoryLike(v3Factory).getPool(plan.token0, plan.token1, fee);
         if (existingPool != address(0)) {
             if (existingPool.code.length == 0) revert PoolIdentityMismatch();
-            if (_poolSqrtPrice(existingPool) != sqrtPriceX96) revert PoolPriceMismatch();
+            if (_poolSqrtPrice(existingPool) != plan.sqrtPriceX96) revert PoolPriceMismatch();
         }
     }
 
