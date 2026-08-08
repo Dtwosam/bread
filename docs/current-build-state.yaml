@@ -1,37 +1,37 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T10:08:00+01:00
+updated_at: 2026-08-08T10:12:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
-active_checkpoint: "Day 1"
-active_lane: "Pons public baseline/license inventory + live-Pons config/source reconciliation reader — review-hardened, pending final exact-head CI/merge"
+  - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
+active_checkpoint: "Day 2"
+active_lane: "Financial Core Math & Token — source-verified LaunchToken + BondingCurveMath only"
 integration_baseline:
-  id: C0
+  id: C1
   branch: main
-  commit: 768b4706b51335795e33d8d9642fe1b1a4c70f1a
-  status: ACCEPTED
-working_branches:
-  - checkpoint/day1-pons-reconciliation
+  commit: d5d7091c13393418d45f1f70505c72c0a1f04d3d
+  status: ACCEPTED_DAY_1_CODE_BASELINE
+working_branches: []
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   pull_request_1: merged
-  pull_request_1_head: 0c364275aa1c8213b5d142a4f6e59f6639fb43f4
   c0_merge_commit: 768b4706b51335795e33d8d9642fe1b1a4c70f1a
-  pull_request_2: open-draft
-  pull_request_2_branch: checkpoint/day1-pons-reconciliation
-  status: C0-accepted-day1-successor-final-gate
+  pull_request_2: merged
+  pull_request_2_final_head: ef11e0f08ecfc2248d3cb73abaafb815083d1850
+  day1_merge_commit: d5d7091c13393418d45f1f70505c72c0a1f04d3d
+  status: DAY_1_INTEGRATED_PASS_READY_FOR_DAY_2
 verification:
   checkpoint_7b_final_run: 31249373096
-  checkpoint_7b_final_head: 0c364275aa1c8213b5d142a4f6e59f6639fb43f4
   day1_pons_initial_red_run: 31249608035
   day1_pons_initial_green_run: 31249698722
   day1_pons_review_red_run: 31249823428
   day1_pons_review_green_run: 31249849839
-  day1_pons_review_green_head: cd9a588c8b4fde20f59152bda9d4acfd737081be
+  day1_final_exact_head_run: 31249916544
+  day1_final_exact_head: ef11e0f08ecfc2248d3cb73abaafb815083d1850
   jobs:
     bootstrap_validation: PASS
     pons_reference_regression: PASS
@@ -40,6 +40,7 @@ verification:
     foundry_bootstrap: PASS
     postgres_redis_health: PASS
   c0_merge: PASS
+  day1_merge: PASS
 deployments: []
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -62,19 +63,19 @@ tooling:
   supabase: not-selected
   cloudflare: not-selected
 decisions_since_last_state:
-  - "Checkpoint 7B is closed and PR #1 established Integration Baseline C0 at merge commit 768b4706b51335795e33d8d9642fe1b1a4c70f1a."
-  - "The Day-1 Pons reference lane records frozen public source/blob hashes and a file-level SPDX inventory without inventing a repository-wide license where no root LICENSE file was observed."
-  - "The frozen public Pons V2 factory address and the current Pons V2 docs factory address remain different; exact current-live source parity is not claimed."
-  - "A read-only Pons reconciliation reader observes factory runtime bytecode, launch configuration, pair-token economics, dependency addresses and current fee policy; unreadable values remain explicit."
-  - "Integrated review found a wrong-network risk in the first reader version; the reader now calls getChainId and fails closed unless the RPC reports Robinhood Chain 4663."
-  - "The stale 7B-specific build-state validator was repaired so future handoff validation is checkpoint-agnostic while retaining structural and secret-safety checks."
-  - "No financial contract implementation was added; all 7A financial blockers remain active."
-next_action: "Run full CI on the exact PR #2 head containing this handoff/evidence state. If all jobs pass, complete the PR merge, update the post-merge durable handoff, and advance only to the next source-permitted build action while retaining all unresolved 7A blockers."
+  - "Day 1 is integrated at code baseline d5d7091c13393418d45f1f70505c72c0a1f04d3d after PR #2 passed final exact-head CI run 31249916544."
+  - "The Pons public reference is frozen at commit d5491e20be56051a68abf47136f6890c3ce3ff7d with file-level source/blob/SPDX inventory."
+  - "The frozen public Pons V2 factory address and the current Pons V2 docs factory address differ; exact current-live source parity remains blocked."
+  - "The read-only Pons reconciliation reader fails closed unless its RPC reports Robinhood Chain 4663, and it reports unreadable observations rather than guessing values."
+  - "The build-state validator is checkpoint-agnostic; active financial blockers remain enforced separately by config/protocol/build-gates.json."
+  - "No Bread financial contract implementation exists yet."
+  - "Day 2 may begin only with source-verified LaunchToken and BondingCurveMath work whose semantics are not affected by unresolved 7A gaps."
+next_action: "Create the Day-2 core-math-token branch from current main, re-read the frozen Pons LaunchToken and BondingCurveMath sources at the recorded reference commit, add failing unit/differential/fuzz tests first, then port only the source-verified token/math behavior. Keep snipe protection, Launch+Buy, FeeEscrow and current-live parity outside the lane."
 do_not_do:
   - "Do not claim exact current-live Pons parity."
   - "Do not implement snipe protection from guesses."
   - "Do not implement Launch+Buy from guesses."
   - "Do not implement FeeEscrow from guesses."
-  - "Do not treat the reconciliation reader's observations as Bread implementation values without explicit reconciliation."
+  - "Do not treat reconciliation observations as Bread implementation values without explicit reconciliation."
   - "Do not hardcode Arc mainnet values before official publication."
-  - "Do not claim the Day-1 end gate is complete until PR #2 is integrated, the final exact-head CI is green, and the post-merge handoff is updated."
+  - "Do not broaden Day 2 beyond source-verified LaunchToken/BondingCurveMath behavior until the relevant gates allow it."
