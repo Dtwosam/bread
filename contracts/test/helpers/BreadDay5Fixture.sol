@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {BreadBondingCurve} from "../../src/core/BreadBondingCurve.sol";
 import {BreadFeeEscrow} from "../../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../../src/fees/BreadFeePolicy.sol";
 import {BreadLaunchFactory} from "../../src/factory/BreadLaunchFactory.sol";
@@ -100,6 +101,28 @@ abstract contract BreadDay5Fixture {
         bootstrap.graduationConfigHash = DAY5_ADAPTER_CONFIG_HASH;
         bootstrap.enabled = true;
         f.factory.setLaunchConfig(bootstrap);
+    }
+
+    function _launchReady(Fixture memory f) internal returns (address token, BreadBondingCurve curve) {
+        (uint256 sellable, uint256 spent) = _finalFillNumbers();
+        uint256 quoteIn = spent + 1_000 * ONE_USDC;
+        f.usdc.mint(address(this), quoteIn);
+        assert(f.usdc.approve(address(f.factory), quoteIn));
+
+        address curveAddress;
+        uint256 tokensOut;
+        (token, curveAddress, tokensOut) = IBreadLaunchFactory(address(f.factory)).launchTokenAndBuy(
+            _day5Params(f.factory.previewLaunchEconomics()), quoteIn, sellable, address(this)
+        );
+        assert(tokensOut == sellable);
+        curve = BreadBondingCurve(curveAddress);
+        assert(curve.readyToGraduate());
+        assert(!curve.graduated());
+    }
+
+    function _launchSwept(Fixture memory f) internal returns (address token, BreadBondingCurve curve) {
+        (token, curve) = _launchReady(f);
+        f.coordinator.sweep(token);
     }
 
     function _day5Params(bytes32 expectedEconomics)
