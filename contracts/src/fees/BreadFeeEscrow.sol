@@ -12,6 +12,7 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     error UnauthorizedCreditor();
+    error RecipientZeroAddress();
     error UnexpectedReceivedAmount(uint256 expected, uint256 received);
     error NoFeesToClaim();
 
@@ -48,6 +49,7 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
 
     function credit(address recipient, uint256 amount) external {
         if (!authorizedCreditor[msg.sender]) revert UnauthorizedCreditor();
+        if (recipient == address(0)) revert RecipientZeroAddress();
 
         uint256 balanceBefore = usdc.balanceOf(address(this));
         usdc.safeTransferFrom(msg.sender, address(this), amount);
