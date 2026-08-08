@@ -227,7 +227,7 @@ contract BreadOpeningProtectionTest {
         vm.warp(9_000);
         MockUSDC6 usdc = new MockUSDC6();
         BreadFeePolicySnapshot memory snapshot = _policySnapshot();
-        BreadFeePolicy policy = new BreadFeePolicy(address(this), snapshot, address(0xB0B));
+        BreadFeePolicy policy = new BreadFeePolicy(address(this), snapshot, address(this));
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
         BreadBondingCurve curve = new BreadBondingCurve(
             address(usdc), CREATOR_RECIPIENT, address(this), address(policy), address(escrow),
@@ -241,7 +241,7 @@ contract BreadOpeningProtectionTest {
     function _deployFixture() private returns (Fixture memory f) {
         f.usdc = new MockUSDC6();
         BreadFeePolicySnapshot memory snapshot = _policySnapshot();
-        f.policy = new BreadFeePolicy(address(this), snapshot, address(0xB0B));
+        f.policy = new BreadFeePolicy(address(this), snapshot, address(this));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
         IBreadLaunchFactory.LaunchConfig memory config = IBreadLaunchFactory.LaunchConfig({
             supply: SUPPLY,
@@ -264,7 +264,7 @@ contract BreadOpeningProtectionTest {
         returns (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchBuyFactoryHarness factoryHarness)
     {
         usdc = new MockUSDC6();
-        BreadFeePolicy policy = new BreadFeePolicy(address(this), _policySnapshot(), address(0xB0B));
+        BreadFeePolicy policy = new BreadFeePolicy(address(this), _policySnapshot(), address(this));
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
         factoryHarness = new BreadLaunchBuyFactoryHarness();
         curve = new BreadBondingCurve(
