@@ -79,6 +79,24 @@ contract BreadFeeEscrowTest {
         assert(escrow.totalOutstanding() == amount - partialAmount);
     }
 
+    function testPartialClaimRejectsZeroAmount() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 2 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+        escrow.credit(address(this), amount);
+
+        (bool ok,) = address(escrow).call(abi.encodeWithSignature("claim(uint256)", 0));
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(escrow)) == amount);
+        assert(escrow.balanceOf(address(this)) == amount);
+        assert(escrow.totalOutstanding() == amount);
+    }
+
     function testCreditRejectsZeroRecipient() public {
         MockUSDC6 usdc = new MockUSDC6();
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
