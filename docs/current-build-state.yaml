@@ -1,7 +1,7 @@
 schema_version: 1.1
 project: Bread
 source_pack_expected: v1.3-post-research
-updated_at: 2026-08-08T16:20:00+01:00
+updated_at: 2026-08-08T16:24:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -9,6 +9,7 @@ completed_checkpoints:
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
 active_checkpoint: "Day 3 — Trading, Fees & Escrow"
+active_lane: "Project Source v1.3 ratification recovery — freeze unratified Day-3 candidate code; no production merge"
 active_gate: PROJECT_SOURCE_V1_3_RATIFICATION
 project_source_state:
   upload: PENDING_USER_UPLOAD
@@ -19,6 +20,17 @@ integration_baseline:
   branch: main
   commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
   status: ACCEPTED_DAY_2_DURABLE_BASELINE
+working_branches:
+  - checkpoint/source-v1-3-ratification-recovery
+  - checkpoint/day3-trading-fees-escrow
+  - checkpoint/day3-closeout
+repository:
+  remote: https://github.com/Dtwosam/bread
+  default_branch: main
+  accepted_main_commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  recovery_pr: 10
+  day3_candidate_pr: 8
+  day3_closeout_candidate_pr: 9
 research:
   external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
   post_research_handoff_commit: ee13d00a192040b227a01488fcd73f48699b9093
@@ -38,6 +50,11 @@ candidate_prs:
     head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
     title: "[STALE CLOSEOUT — DO NOT MERGE] Close Day 3 trading fees and escrow"
     rule: "Cannot close Day 3 before a ratified PR #8 is merged and closeout is rerun/rebased from actual main."
+verification:
+  day2_closeout_run: 31256962864
+  day2_foundry_tests: PASS_48
+  recovery_pr_10_initial_run: 31264500053
+  recovery_pr_10_initial_result: "EXPECTED_REPAIR_NEEDED — validator required legacy structural fields; production code unchanged"
 blockers:
   - PROJECT_SOURCE_V1_3_RATIFICATION
   - BREAD_SNIPE_DECAY_FORMULA
