@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadLaunchFactory} from "../src/factory/BreadLaunchFactory.sol";
@@ -11,6 +9,7 @@ import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
 import {ShortTransferUSDC6} from "./helpers/BreadFeeEscrowAdversaries.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
 
 contract BreadLaunchFeeTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -174,8 +173,9 @@ contract BreadLaunchFeeTest {
             launchFeeUsdc: launchFee,
             enabled: false
         });
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         factory = new BreadLaunchFactory(
-            address(this), usdc, address(policy), address(escrow), config, STACK_VERSION
+            address(this), usdc, address(policy), address(escrow), address(emergencyController), config, STACK_VERSION
         );
         BreadLaunchDeployer deployer = new BreadLaunchDeployer(address(factory));
         factory.setLaunchDeployer(deployer);
