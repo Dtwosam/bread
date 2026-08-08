@@ -64,16 +64,25 @@ contract BreadFeeEscrow is Ownable, ReentrancyGuard {
     function claim() external nonReentrant returns (uint256 amount) {
         amount = balanceOf[msg.sender];
         if (amount == 0) revert NoFeesToClaim();
+        return _claim(msg.sender, amount);
+    }
 
-        balanceOf[msg.sender] = 0;
-        totalOutstanding -= amount;
-
-        usdc.safeTransfer(msg.sender, amount);
-        emit FeeClaimed(msg.sender, amount, 0, totalOutstanding);
+    function claim(uint256 amount) external nonReentrant returns (uint256 claimed) {
+        return _claim(msg.sender, amount);
     }
 
     function surplus() external view returns (uint256 amount) {
         uint256 custody = usdc.balanceOf(address(this));
         return custody > totalOutstanding ? custody - totalOutstanding : 0;
+    }
+
+    function _claim(address recipient, uint256 amount) private returns (uint256 claimed) {
+        uint256 remainingBalance = balanceOf[recipient] - amount;
+        balanceOf[recipient] = remainingBalance;
+        totalOutstanding -= amount;
+
+        usdc.safeTransfer(recipient, amount);
+        emit FeeClaimed(recipient, amount, remainingBalance, totalOutstanding);
+        return amount;
     }
 }
