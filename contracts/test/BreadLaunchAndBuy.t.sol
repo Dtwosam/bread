@@ -12,6 +12,7 @@ import {BreadLaunchDeployer} from "../src/factory/BreadLaunchDeployer.sol";
 import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
 contract BreadLaunchAndBuyTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -161,6 +162,7 @@ contract BreadLaunchAndBuyTest {
         Fixture memory f = _deployFixture(0);
         (address token, address curveAddress) = f.factory.launchToken(_params(f.factory.previewLaunchEconomics()));
         BreadBondingCurve curve = BreadBondingCurve(curveAddress);
+        BreadTestTime.expireOpening(curve);
         uint256 quoteIn = 750 * ONE_USDC;
         uint256 fee = quoteIn * TRADE_FEE_BPS / 10_000;
         uint256 tax = quoteIn * CREATOR_TAX_BPS / 10_000;
