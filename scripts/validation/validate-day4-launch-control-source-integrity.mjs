@@ -75,11 +75,7 @@ requireEqual(
   9900,
   "opening starting bps",
 );
-requireEqual(
-  inventory.openingPolicy?.durationSeconds,
-  5,
-  "opening duration",
-);
+requireEqual(inventory.openingPolicy?.durationSeconds, 5, "opening duration");
 requireEqual(inventory.openingPolicy?.terminalBps, 0, "opening terminal bps");
 requireEqual(
   inventory.openingPolicy?.routing,
@@ -112,11 +108,7 @@ const emergencySource = await readFile(
 const buildState = await readFile("docs/current-build-state.yaml", "utf8");
 
 for (const [source, needle, label] of [
-  [
-    curveSource,
-    "STARTING_SNIPE_TAX_BPS = 9_900",
-    "curve starting snipe tax",
-  ],
+  [curveSource, "STARTING_SNIPE_TAX_BPS = 9_900", "curve starting snipe tax"],
   [curveSource, "SNIPE_DURATION_SECONDS = 5", "curve snipe duration"],
   [curveSource, "TERMINAL_SNIPE_TAX_BPS = 0", "curve terminal snipe tax"],
   [
@@ -135,11 +127,7 @@ for (const [source, needle, label] of [
     "OPENING_PROTECTION_POLICY_ID",
     "factory opening-policy digest binding",
   ],
-  [
-    factorySource,
-    "OPENING_TAX_ROUTING_ID",
-    "factory routing digest binding",
-  ],
+  [factorySource, "OPENING_TAX_ROUTING_ID", "factory routing digest binding"],
   [
     factorySource,
     "emergencyController.launchesAllowed()",
