@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {FeeEscrowExternalCaller, ToggleFailUSDC6} from "./helpers/BreadFeeEscrowAdversaries.sol";
 
 contract BreadFeeEscrowTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -138,5 +139,94 @@ contract BreadFeeEscrowTest {
             reverted = true;
         }
         assert(reverted);
+    }
+
+    function testUnauthorizedCreditRevertsBeforeCustodyMutation() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        FeeEscrowExternalCaller outsider = new FeeEscrowExternalCaller();
+
+        (bool ok,) = address(outsider).call(
+            abi.encodeWithSelector(FeeEscrowExternalCaller.credit.selector, escrow, RECIPIENT, ONE_USDC)
+        );
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(escrow)) == 0);
+        assert(escrow.balanceOf(RECIPIENT) == 0);
+        assert(escrow.totalOutstanding() == 0);
+    }
+
+    function testOnlyOwnerCanChangeCreditAuthority() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        FeeEscrowExternalCaller outsider = new FeeEscrowExternalCaller();
+
+        (bool ok,) = address(outsider).call(
+            abi.encodeWithSelector(
+                FeeEscrowExternalCaller.setAuthorizedCreditor.selector,
+                escrow,
+                address(outsider),
+                true
+            )
+        );
+
+        assert(!ok);
+        assert(!escrow.authorizedCreditor(address(outsider)));
+    }
+
+    function testOverClaimRevertsAndPreservesAccounting() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 9 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+        escrow.credit(address(this), amount);
+
+        (bool ok,) = address(escrow).call(abi.encodeWithSignature("claim(uint256)", amount + 1));
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(escrow)) == amount);
+        assert(escrow.balanceOf(address(this)) == amount);
+        assert(escrow.totalOutstanding() == amount);
+    }
+
+    function testFailedTransferPreservesClaimAndOutstanding() public {
+        ToggleFailUSDC6 usdc = new ToggleFailUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 17 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+        escrow.credit(address(this), amount);
+        usdc.setFailTransfers(true);
+
+        (bool ok,) = address(escrow).call(abi.encodeWithSignature("claim()"));
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(escrow)) == amount);
+        assert(escrow.balanceOf(address(this)) == amount);
+        assert(escrow.totalOutstanding() == amount);
+    }
+
+    function testFuzz_PartialClaimsPreserveSolvency(uint96 rawCredit, uint96 rawClaim) public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 creditAmount = (uint256(rawCredit) % 1_000_000_000_000) + 1;
+        uint256 claimAmount = (uint256(rawClaim) % creditAmount) + 1;
+        usdc.mint(address(this), creditAmount);
+        assert(usdc.approve(address(escrow), creditAmount));
+        escrow.credit(address(this), creditAmount);
+
+        escrow.claim(claimAmount);
+
+        uint256 outstanding = escrow.totalOutstanding();
+        assert(escrow.balanceOf(address(this)) == outstanding);
+        assert(usdc.balanceOf(address(escrow)) == outstanding);
+        assert(usdc.balanceOf(address(escrow)) >= escrow.totalOutstanding());
     }
 }
