@@ -17,6 +17,9 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 private constant BASIS_POINTS = 10_000;
+    uint16 public constant STARTING_SNIPE_TAX_BPS = 9_900;
+    uint8 public constant SNIPE_DURATION_SECONDS = 5;
+    uint16 public constant TERMINAL_SNIPE_TAX_BPS = 0;
 
     error UnauthorizedFactory();
     error UnauthorizedFeeSweep();
@@ -28,6 +31,8 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     error CreatorTaxAboveSnapshotMaximum(uint16 creatorTaxBps, uint16 maxCreatorTaxBps);
     error UnexpectedReceivedAmount(uint256 expected, uint256 received);
     error SlippageExceeded(uint256 minimum, uint256 actual);
+    error LaunchBuyExemptionAlreadyConsumed();
+    error LaunchBuyExemptionExpired();
 
     address public creatorFeeRecipient;
     address public immutable factory;
@@ -40,6 +45,9 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     uint16 public immutable maxCreatorTaxBps;
     uint16 public immutable creatorTaxBps;
 
+    uint64 public launchTimestamp;
+    bool public launchBuyExemptionConsumed;
+
     event CreatorFeeRecipientUpdated(address indexed previousRecipient, address indexed nextRecipient);
     event CurveBuy(
         address indexed buyer,
@@ -50,6 +58,13 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 tax
     );
     event CurveBuyRefunded(address indexed buyer, uint256 refund);
+    event OpeningProtectionApplied(
+        address indexed buyer,
+        address indexed recipient,
+        uint16 taxBps,
+        uint256 taxAmount,
+        bool launchBuyExempt
+    );
     event CurveSell(
         address indexed seller,
         address indexed recipient,
@@ -94,6 +109,15 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     function initialize(address token_) external {
         if (msg.sender != factory) revert UnauthorizedFactory();
         _initializeTrackedCurve(token_);
+        launchTimestamp = uint64(block.timestamp);
+    }
+
+    function currentSnipeTaxBps() public view returns (uint16) {
+        if (token == address(0) || launchTimestamp == 0) revert NotInitialized();
+        uint256 elapsed = block.timestamp - uint256(launchTimestamp);
+        if (elapsed >= SNIPE_DURATION_SECONDS) return TERMINAL_SNIPE_TAX_BPS;
+        uint256 remaining = SNIPE_DURATION_SECONDS - elapsed;
+        return uint16(uint256(STARTING_SNIPE_TAX_BPS) * remaining * remaining / 25);
     }
 
     function setCreatorFeeRecipient(address nextRecipient) external {
@@ -110,24 +134,30 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         nonReentrant
         returns (uint256 tokensOut)
     {
-        (tokensOut,,) = _buy(quoteIn, minTokensOut, recipient);
+        (tokensOut,,) = _buy(quoteIn, minTokensOut, recipient, currentSnipeTaxBps(), false);
     }
 
     /// @notice Factory-only initial-buy entry used by the atomic Launch+Buy lifecycle.
-    /// @dev Pricing/accounting is exactly the same shared path as public buy; Day-4 opening protection is added later.
     function buyForLaunch(uint256 quoteIn, uint256 minTokensOut, address recipient)
         external
         nonReentrant
         returns (uint256 tokensOut, uint256 spent, uint256 refund)
     {
         if (msg.sender != factory) revert UnauthorizedFactory();
-        return _buy(quoteIn, minTokensOut, recipient);
+        if (token == address(0) || launchTimestamp == 0) revert NotInitialized();
+        if (block.timestamp != uint256(launchTimestamp)) revert LaunchBuyExemptionExpired();
+        if (launchBuyExemptionConsumed) revert LaunchBuyExemptionAlreadyConsumed();
+        launchBuyExemptionConsumed = true;
+        return _buy(quoteIn, minTokensOut, recipient, 0, true);
     }
 
-    function _buy(uint256 quoteIn, uint256 minTokensOut, address recipient)
-        private
-        returns (uint256 tokensOut, uint256 spent, uint256 refund)
-    {
+    function _buy(
+        uint256 quoteIn,
+        uint256 minTokensOut,
+        address recipient,
+        uint16 snipeTaxBps,
+        bool launchBuyExempt
+    ) private returns (uint256 tokensOut, uint256 spent, uint256 refund) {
         if (token == address(0)) revert NotInitialized();
         if (graduated || readyToGraduate()) revert CurveClosed();
         if (recipient == address(0)) revert RecipientZeroAddress();
@@ -143,7 +173,10 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         spent = received;
         uint256 fee = spent * tradeFeeBps / BASIS_POINTS;
         uint256 tax = spent * creatorTaxBps / BASIS_POINTS;
-        tokensOut = BreadBondingCurveMath.getAmountOut(spent - fee - tax, quoteReserve_, tokenReserve_, 0);
+        uint256 afterStandard = spent - fee - tax;
+        uint256 snipeTax = afterStandard * snipeTaxBps / BASIS_POINTS;
+        uint256 netCurveInput = afterStandard - snipeTax;
+        tokensOut = BreadBondingCurveMath.getAmountOut(netCurveInput, quoteReserve_, tokenReserve_, 0);
 
         uint256 available = tokenReserve_ > reservedTokens ? tokenReserve_ - reservedTokens : 0;
         if (available == 0) revert CurveClosed();
@@ -162,11 +195,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             );
             fee = spent * tradeFeeBps / BASIS_POINTS;
             tax = spent * creatorTaxBps / BASIS_POINTS;
+            afterStandard = spent - fee - tax;
+            snipeTax = afterStandard * snipeTaxBps / BASIS_POINTS;
+            netCurveInput = afterStandard - snipeTax;
         }
 
         if (spent * minTokensOut > received * tokensOut) revert SlippageExceeded(minTokensOut, tokensOut);
 
-        quoteFeeBalance += fee;
+        quoteFeeBalance += fee + snipeTax;
         creatorTaxBalance += tax;
         trackedQuote += spent;
         trackedTokens -= tokensOut;
@@ -179,6 +215,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             quoteToken.safeTransfer(msg.sender, refund);
         }
 
+        emit OpeningProtectionApplied(msg.sender, recipient, snipeTaxBps, snipeTax, launchBuyExempt);
         emit CurveBuy(msg.sender, recipient, spent, tokensOut, fee, tax);
     }
 
