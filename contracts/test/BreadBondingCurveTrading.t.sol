@@ -109,19 +109,7 @@ contract BreadBondingCurveTradingTest {
 
     function testFinalCrossingBuyClampsRepricesAndRefundsExcessQuote() public {
         (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) = _deployFixture();
-        FinalBuyExpectations memory e;
-
-        e.sellable = curve.sellableTokens();
-        e.netRequired = _amountIn(e.sellable, PHANTOM_QUOTE, TOKEN_SUPPLY);
-        e.spent = _ceilMulDiv(
-            e.netRequired,
-            10_000,
-            10_000 - TRADE_FEE_BPS - CREATOR_TAX_BPS
-        );
-        e.quoteIn = e.spent + 1_000 * ONE_USDC;
-        e.refund = e.quoteIn - e.spent;
-        e.fee = e.spent * TRADE_FEE_BPS / 10_000;
-        e.tax = e.spent * CREATOR_TAX_BPS / 10_000;
+        FinalBuyExpectations memory e = _finalBuyExpectations(curve);
 
         usdc.mint(address(this), e.quoteIn);
         assert(usdc.approve(address(curve), e.quoteIn));
@@ -137,6 +125,45 @@ contract BreadBondingCurveTradingTest {
         assert(curve.trackedQuote() == e.spent);
         assert(curve.trackedTokens() == curve.reservedTokens());
         assert(curve.readyToGraduate());
+    }
+
+    function testClampedBuyTreatsMinTokensOutAsPriceBound() public {
+        (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) = _deployFixture();
+        FinalBuyExpectations memory e = _finalBuyExpectations(curve);
+        uint256 allowedMinTokensOut = e.quoteIn * e.sellable / e.spent;
+        assert(allowedMinTokensOut > e.sellable);
+
+        usdc.mint(address(this), e.quoteIn);
+        assert(usdc.approve(address(curve), e.quoteIn));
+
+        uint256 tokensOut = curve.buy(e.quoteIn, allowedMinTokensOut, address(this));
+
+        assert(tokensOut == e.sellable);
+        assert(token.balanceOf(address(this)) == e.sellable);
+        assert(usdc.balanceOf(address(this)) == e.refund);
+    }
+
+    function testClampedBuyRejectsPriceOneUnitWorseThanCallerBoundWithoutMutation() public {
+        (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) = _deployFixture();
+        FinalBuyExpectations memory e = _finalBuyExpectations(curve);
+        uint256 tooStrictMinTokensOut = e.quoteIn * e.sellable / e.spent + 1;
+
+        usdc.mint(address(this), e.quoteIn);
+        assert(usdc.approve(address(curve), e.quoteIn));
+
+        (bool ok,) = address(curve).call(
+            abi.encodeWithSelector(BreadBondingCurve.buy.selector, e.quoteIn, tooStrictMinTokensOut, address(this))
+        );
+
+        assert(!ok);
+        assert(usdc.balanceOf(address(this)) == e.quoteIn);
+        assert(usdc.balanceOf(address(curve)) == 0);
+        assert(token.balanceOf(address(curve)) == TOKEN_SUPPLY);
+        assert(token.balanceOf(address(this)) == 0);
+        assert(curve.trackedQuote() == 0);
+        assert(curve.trackedTokens() == TOKEN_SUPPLY);
+        assert(curve.quoteFeeBalance() == 0);
+        assert(curve.creatorTaxBalance() == 0);
     }
 
     function _deployFixture() private returns (MockUSDC6 usdc, BreadBondingCurve curve, BreadLaunchToken token) {
@@ -173,6 +200,20 @@ contract BreadBondingCurveTradingTest {
             TOKEN_SUPPLY
         );
         curve.initialize(address(token));
+    }
+
+    function _finalBuyExpectations(BreadBondingCurve curve)
+        private
+        view
+        returns (FinalBuyExpectations memory e)
+    {
+        e.sellable = curve.sellableTokens();
+        e.netRequired = _amountIn(e.sellable, PHANTOM_QUOTE, TOKEN_SUPPLY);
+        e.spent = _ceilMulDiv(e.netRequired, 10_000, 10_000 - TRADE_FEE_BPS - CREATOR_TAX_BPS);
+        e.quoteIn = e.spent + 1_000 * ONE_USDC;
+        e.refund = e.quoteIn - e.spent;
+        e.fee = e.spent * TRADE_FEE_BPS / 10_000;
+        e.tax = e.spent * CREATOR_TAX_BPS / 10_000;
     }
 
     function _amountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
