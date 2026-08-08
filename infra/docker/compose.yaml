@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17.10-alpine
     environment:
       POSTGRES_DB: bread
       POSTGRES_USER: bread
@@ -16,7 +16,7 @@ services:
       - bread-postgres:/var/lib/postgresql/data
 
   redis:
-    image: redis:8-alpine
+    image: redis:8.8.1-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     ports:
       - "6379:6379"
