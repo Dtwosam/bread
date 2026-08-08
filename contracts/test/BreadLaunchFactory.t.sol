@@ -11,6 +11,7 @@ import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
 import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
+import {BreadDay5TestWiring} from "./helpers/BreadDay5TestWiring.sol";
 
 contract BreadLaunchFactoryTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -185,6 +186,8 @@ contract BreadLaunchFactoryTest {
             phantomQuote: PHANTOM_QUOTE,
             graduationThreshold: GRADUATION_THRESHOLD,
             launchFeeUsdc: 0,
+            graduationAdapter: address(0),
+            graduationConfigHash: bytes32(0),
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
@@ -193,8 +196,7 @@ contract BreadLaunchFactoryTest {
         f.deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(f.deployer);
         if (enabled) {
-            config.enabled = true;
-            f.factory.setLaunchConfig(config);
+            BreadDay5TestWiring.wire(f.factory, f.usdc, f.escrow, address(emergencyController));
         }
     }
 
