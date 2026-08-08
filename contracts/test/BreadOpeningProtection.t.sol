@@ -12,6 +12,7 @@ import {BreadLaunchDeployer} from "../src/factory/BreadLaunchDeployer.sol";
 import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
 
 interface Vm {
     function warp(uint256 newTimestamp) external;
@@ -229,8 +230,9 @@ contract BreadOpeningProtectionTest {
         BreadFeePolicySnapshot memory snapshot = _policySnapshot();
         BreadFeePolicy policy = new BreadFeePolicy(address(this), snapshot, address(this));
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         BreadBondingCurve curve = new BreadBondingCurve(
-            address(usdc), CREATOR_RECIPIENT, address(this), address(policy), address(escrow),
+            address(usdc), CREATOR_RECIPIENT, address(this), address(policy), address(escrow), address(emergencyController),
             PHANTOM_QUOTE, CREATOR_TAX_BPS, GRADUATION_THRESHOLD
         );
 
@@ -243,6 +245,7 @@ contract BreadOpeningProtectionTest {
         BreadFeePolicySnapshot memory snapshot = _policySnapshot();
         f.policy = new BreadFeePolicy(address(this), snapshot, address(this));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         IBreadLaunchFactory.LaunchConfig memory config = IBreadLaunchFactory.LaunchConfig({
             supply: SUPPLY,
             phantomQuote: PHANTOM_QUOTE,
@@ -251,7 +254,7 @@ contract BreadOpeningProtectionTest {
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
-            address(this), address(f.usdc), address(f.policy), address(f.escrow), config, STACK_VERSION
+            address(this), address(f.usdc), address(f.policy), address(f.escrow), address(emergencyController), config, STACK_VERSION
         );
         BreadLaunchDeployer deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(deployer);
@@ -266,9 +269,10 @@ contract BreadOpeningProtectionTest {
         usdc = new MockUSDC6();
         BreadFeePolicy policy = new BreadFeePolicy(address(this), _policySnapshot(), address(this));
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         factoryHarness = new BreadLaunchBuyFactoryHarness();
         curve = new BreadBondingCurve(
-            address(usdc), CREATOR_RECIPIENT, address(factoryHarness), address(policy), address(escrow),
+            address(usdc), CREATOR_RECIPIENT, address(factoryHarness), address(policy), address(escrow), address(emergencyController),
             PHANTOM_QUOTE, CREATOR_TAX_BPS, GRADUATION_THRESHOLD
         );
         BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
