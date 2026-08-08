@@ -16,7 +16,15 @@
   },
   "dependencyPolicy": {
     "openzeppelinSource": "frozen-pons-tree",
-    "openzeppelinObservedVersion": "5.5.0",
+    "packageVersionClaim": null,
+    "observedFileMarkers": {
+      "ERC20.sol": "OpenZeppelin Contracts (last updated v5.5.0)",
+      "IERC20.sol": "OpenZeppelin Contracts (last updated v5.4.0)",
+      "IERC20Metadata.sol": "OpenZeppelin Contracts (last updated v5.4.0)",
+      "ERC20Burnable.sol": "OpenZeppelin Contracts (last updated v5.0.0)",
+      "Context.sol": "OpenZeppelin Contracts (last updated v5.0.1)",
+      "draft-IERC6093.sol": "OpenZeppelin Contracts (last updated v5.5.0)"
+    },
     "dynamicInstallAllowed": false,
     "vendoredFiles": {
       "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol": "4d9d6b6d1c1f33e7cc3013d70e6c5af900bcbe9a",
