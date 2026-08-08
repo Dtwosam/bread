@@ -17,7 +17,33 @@ contract MockV3LaunchToken is ERC20 {
     }
 }
 
-contract MockV3Pool {}
+contract MockV3Pool {
+    uint160 private _sqrtPriceX96;
+
+    function initialize(uint160 sqrtPriceX96_) external {
+        if (_sqrtPriceX96 == 0) {
+            _sqrtPriceX96 = sqrtPriceX96_;
+            return;
+        }
+        require(_sqrtPriceX96 == sqrtPriceX96_, "PRICE_MISMATCH");
+    }
+
+    function slot0()
+        external
+        view
+        returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext,
+            uint8 feeProtocol,
+            bool unlocked
+        )
+    {
+        return (_sqrtPriceX96, 0, 0, 0, 0, 0, true);
+    }
+}
 
 contract MockBreadV3Factory {
     mapping(uint24 fee => int24 spacing) public feeAmountTickSpacing;
@@ -92,6 +118,7 @@ contract MockBreadV3PositionManager {
         lastSqrtPriceX96 = sqrtPriceX96;
         pool = MockBreadV3Factory(factory).getPool(token0, token1, fee);
         if (pool == address(0)) pool = MockBreadV3Factory(factory).createPool(token0, token1, fee);
+        MockV3Pool(pool).initialize(sqrtPriceX96);
     }
 
     function mint(MintParams calldata params)
