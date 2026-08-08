@@ -17,7 +17,15 @@
   "dependencyPolicy": {
     "openzeppelinSource": "frozen-pons-tree",
     "openzeppelinObservedVersion": "5.5.0",
-    "dynamicInstallAllowed": false
+    "dynamicInstallAllowed": false,
+    "vendoredFiles": {
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol": "4d9d6b6d1c1f33e7cc3013d70e6c5af900bcbe9a",
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "b493743a10c4fba04d91014cbdb7f69b639480c1",
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol": "87bbafa84b834af1da027455bdc2e8a87beeb438",
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol": "4d482d8ec83617f74febf13917b283c14ebb7760",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/Context.sol": "4e535fe03c243f864568b8f4430c17c25dbadb47",
+      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol": "e9d6249ef521e073253a8681aa8f022af7640850"
+    }
   },
   "parityClaim": "FROZEN_SOURCE_BEHAVIOR_ONLY_NOT_CURRENT_LIVE_PARITY"
 }
