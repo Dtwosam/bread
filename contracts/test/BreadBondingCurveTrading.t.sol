@@ -52,6 +52,51 @@ contract BreadBondingCurveTradingTest {
         assert(tokenReserve == TOKEN_SUPPLY - expectedTokensOut);
     }
 
+    function testOrdinarySellChargesQuoteLegFeesAndReturnsNetQuote() public {
+        (
+            MockUSDC6 usdc,
+            BreadFeePolicy policy,
+            BreadFeeEscrow escrow,
+            BreadBondingCurve curve,
+            BreadLaunchToken token
+        ) = _deployFixture();
+        policy;
+        escrow;
+
+        uint256 quoteIn = 2_000 * ONE_USDC;
+        uint256 buyFee = quoteIn * TRADE_FEE_BPS / 10_000;
+        uint256 buyTax = quoteIn * CREATOR_TAX_BPS / 10_000;
+        uint256 buyNetQuote = quoteIn - buyFee - buyTax;
+        uint256 boughtTokens = _amountOut(buyNetQuote, PHANTOM_QUOTE, TOKEN_SUPPLY);
+
+        usdc.mint(address(this), quoteIn);
+        assert(usdc.approve(address(curve), quoteIn));
+        curve.buy(quoteIn, boughtTokens, address(this));
+
+        uint256 tokensIn = boughtTokens / 4;
+        uint256 quoteReserveBeforeSell = PHANTOM_QUOTE + buyNetQuote;
+        uint256 tokenReserveBeforeSell = TOKEN_SUPPLY - boughtTokens;
+        uint256 grossQuoteOut = _amountOut(tokensIn, tokenReserveBeforeSell, quoteReserveBeforeSell);
+        uint256 sellFee = grossQuoteOut * TRADE_FEE_BPS / 10_000;
+        uint256 sellTax = grossQuoteOut * CREATOR_TAX_BPS / 10_000;
+        uint256 expectedQuoteOut = grossQuoteOut - sellFee - sellTax;
+
+        assert(token.approve(address(curve), tokensIn));
+        uint256 quoteOut = curve.sell(tokensIn, expectedQuoteOut, address(this));
+
+        assert(quoteOut == expectedQuoteOut);
+        assert(usdc.balanceOf(address(this)) == expectedQuoteOut);
+        assert(usdc.balanceOf(address(curve)) == quoteIn - expectedQuoteOut);
+        assert(token.balanceOf(address(this)) == boughtTokens - tokensIn);
+        assert(curve.quoteFeeBalance() == buyFee + sellFee);
+        assert(curve.creatorTaxBalance() == buyTax + sellTax);
+        assert(curve.trackedQuote() == quoteIn - expectedQuoteOut);
+        assert(curve.trackedTokens() == TOKEN_SUPPLY - boughtTokens + tokensIn);
+        (uint256 quoteReserveAfter, uint256 tokenReserveAfter) = curve.getReserves();
+        assert(quoteReserveAfter == quoteReserveBeforeSell - grossQuoteOut);
+        assert(tokenReserveAfter == tokenReserveBeforeSell + tokensIn);
+    }
+
     function _deployFixture()
         private
         returns (
