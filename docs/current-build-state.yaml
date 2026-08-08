@@ -1,19 +1,19 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T12:17:00+01:00
+updated_at: 2026-08-08T12:35:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
 active_checkpoint: "Day 2"
-active_lane: "Financial Core Math & Token — math RED pending CI; source-verified LaunchToken + BondingCurveMath only"
+active_lane: "Financial Core Math & Token — implemented and review-hardened; pending final exact-head CI / merge"
 integration_baseline:
   id: C1
   branch: main
-  commit: d5d7091c13393418d45f1f70505c72c0a1f04d3d
-  status: ACCEPTED_DAY_1_CODE_BASELINE
+  commit: 86abb75ef96cfca340afec8a755e94ed366c379e
+  status: ACCEPTED_DAY_1_DURABLE_BASELINE
 working_branches:
   - checkpoint/day2-core-math-token
 repository:
@@ -22,28 +22,42 @@ repository:
   pull_request_1: merged
   c0_merge_commit: 768b4706b51335795e33d8d9642fe1b1a4c70f1a
   pull_request_2: merged
-  pull_request_2_final_head: ef11e0f08ecfc2248d3cb73abaafb815083d1850
-  day1_merge_commit: d5d7091c13393418d45f1f70505c72c0a1f04d3d
+  day1_code_merge_commit: d5d7091c13393418d45f1f70505c72c0a1f04d3d
   pull_request_3: merged
   day1_closeout_merge_commit: 86abb75ef96cfca340afec8a755e94ed366c379e
+  pull_request_4: open-draft
   day2_branch: checkpoint/day2-core-math-token
   day2_design_commit: 27b18865a0982cbc75a7b7cec70ebcc4028947ec
   day2_plan_commit: a2284e2842e446011fd74aa8653f7958e3bf5c9e
-  status: DAY_2_MATH_RED_PENDING_CI
+  day2_math_implementation_commit: f511a7d5d55fec64bf21580d17b4716403557e36
+  day2_token_implementation_commit: 69b85dbcf795af1f98e3e1d323c5a10ce4a98329
+  day2_review_hardening_head: 9c57a8e2239af5c165de22023268632a35d991cd
+  status: DAY_2_REVIEW_HARDENED_FINAL_GATE_PENDING
 verification:
   checkpoint_7b_final_run: 31249373096
   day1_final_exact_head_run: 31249916544
   day1_closeout_run: 31250062856
-  day2_math_red_run: null
-  day2_math_green_run: null
-  day2_token_red_run: null
-  day2_token_green_run: null
+  day2_math_red_run: 31254865534
+  day2_math_red_head: 8028213a6bccec4c0c054677e186a3108f92f74e
+  day2_math_green_run: 31254898416
+  day2_math_green_head: f511a7d5d55fec64bf21580d17b4716403557e36
+  day2_token_red_run: 31255073347
+  day2_token_red_head: 53e143d47ede2358c779176509f4b6e27f1a81d6
+  day2_token_green_run: 31255097370
+  day2_token_green_head: 69b85dbcf795af1f98e3e1d323c5a10ce4a98329
+  day2_integrity_red_run: 31255285593
+  day2_integrity_red_head: 7e217592e46c6fb2cc6559b63718e0b82d3e9fe3
+  day2_integrity_green_run: 31255322107
+  day2_integrity_green_head: 9c57a8e2239af5c165de22023268632a35d991cd
+  day2_final_exact_head_run: null
+  day2_final_exact_head: null
   jobs:
-    bootstrap_validation: PREVIOUS_PASS
-    dependency_build_frozen_lockfile: PREVIOUS_PASS
-    tracked_workspace_clean_after_build: PREVIOUS_PASS
-    foundry_bootstrap: RED_PENDING
-    postgres_redis_health: PREVIOUS_PASS
+    bootstrap_validation: PASS
+    day2_frozen_source_integrity: PASS
+    dependency_build_frozen_lockfile: PASS
+    tracked_workspace_clean_after_build: PASS
+    foundry_bootstrap: PASS
+    postgres_redis_health: PASS
 deployments: []
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -66,20 +80,21 @@ tooling:
   supabase: not-selected
   cloudflare: not-selected
 decisions_since_last_state:
-  - "Day 1 remains integrated; PR #3 durable closeout merged at 86abb75ef96cfca340afec8a755e94ed366c379e after CI run 31250062856 passed all four jobs."
-  - "Day 2 design is approved: minimal source-faithful Bread-named ports only."
-  - "BreadLaunchToken source basis is frozen Pons blob 3a362035edbcc8be7aeb54f1beb41fa1e01c230a."
-  - "BreadBondingCurveMath source basis is frozen Pons blob 73929a6f64fc4a3e684ffff895a6ef0a018c2019."
-  - "The frozen Pons token uses a vendored OpenZeppelin v5.5.0 ERC20 source surface; Bread will vendor only the exact required files from the same frozen Pons tree rather than use a floating dependency."
-  - "Math reference helper and failing production-facing math tests have been added before BreadBondingCurveMath production code."
-  - "No Bread financial production contract has been added yet in Day 2."
-next_action: "Open a draft PR for checkpoint/day2-core-math-token and capture the expected math RED CI failure caused by the intentionally absent contracts/src/libraries/BreadBondingCurveMath.sol. If RED is specific and all unrelated gates remain healthy, implement only the frozen-source-faithful BreadBondingCurveMath library and run the GREEN cycle."
+  - "Day 2 uses minimal source-faithful Bread-named ports only: BreadBondingCurveMath and BreadLaunchToken."
+  - "Math and token both completed specific RED then GREEN cycles before integration closeout."
+  - "BreadBondingCurveMath preserves the frozen Pons formulas, branch ordering, custom errors and exact-output +1 round-up behavior."
+  - "BreadLaunchToken preserves full declared-supply mint to curve, immutable attribution/factory/curve metadata, standard ERC20 allowance/transfer behavior and holder burn support with no owner or post-construction mint path."
+  - "The six required OpenZeppelin files were copied from the same frozen Pons commit and match their exact upstream Git blob SHAs. No package-level OpenZeppelin version is claimed."
+  - "CI now recomputes the six frozen dependency Git blob SHAs and fails on any byte drift."
+  - "Review added explicit zero-supply parity coverage and retained source-faithful public immutable names despite non-failing Foundry style notes."
+  - "No curve state/reserve custody, snipe protection, Launch+Buy, FeeEscrow, graduation, hook, pool/router, live-parity or Arc-mainnet behavior entered Day 2."
+next_action: "Run the full four-job CI on the exact PR #4 head containing this evidence and handoff state. Merge only that exact head if all jobs pass. Then write and verify a post-merge Day-2 closeout handoff from current main before choosing the next source-permitted lane."
 do_not_do:
   - "Do not claim exact current-live Pons parity."
   - "Do not implement snipe protection from guesses."
   - "Do not implement Launch+Buy from guesses."
   - "Do not implement FeeEscrow from guesses."
-  - "Do not implement bonding-curve state/reserve custody in this lane."
+  - "Do not implement bonding-curve state/reserve custody until its source dependencies and blocker interactions are explicitly reviewed."
   - "Do not treat reconciliation observations as Bread implementation values without explicit reconciliation."
   - "Do not hardcode Arc mainnet values before official publication."
-  - "Do not broaden Day 2 beyond source-verified LaunchToken/BondingCurveMath behavior until the relevant gates allow it."
+  - "Do not mark Day 2 complete until PR #4 is merged from a green exact head and the post-merge handoff is integrated."
