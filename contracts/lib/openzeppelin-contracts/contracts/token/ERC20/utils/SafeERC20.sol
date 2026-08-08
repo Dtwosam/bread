@@ -18,7 +18,7 @@ import {IERC20Metadata} from "../../../interfaces/IERC20Metadata.sol";
  */
 library SafeERC20 {
     /**
-     * @dev An operation with an {ERC20} token failed.
+     * @dev An operation with an ERC-20 token failed.
      */
     error SafeERC20FailedOperation(address token);
 
