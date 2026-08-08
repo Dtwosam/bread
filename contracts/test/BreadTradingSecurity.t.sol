@@ -8,6 +8,7 @@ import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
 import {BreadTradingExternalCaller} from "./helpers/BreadTradingActors.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
 contract BreadTradingSecurityTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -269,7 +270,10 @@ contract BreadTradingSecurityTest {
             supply: TOKEN_SUPPLY
         });
         f.token = new BreadLaunchToken(metadata, context);
-        if (initializeCurve) f.curve.initialize(address(f.token));
+        if (initializeCurve) {
+            f.curve.initialize(address(f.token));
+            BreadTestTime.expireOpening(f.curve);
+        }
     }
 
     function _amountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
