@@ -7,6 +7,7 @@ import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
 import {BreadFeeClaimRecipient} from "./helpers/BreadTradingActors.sol";
 import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
@@ -160,12 +161,14 @@ contract BreadTradingInvariantTest {
         });
         f.policy = new BreadFeePolicy(address(this), snapshot, address(0xB0B));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         f.curve = new BreadBondingCurve(
             address(f.usdc),
             address(this),
             address(this),
             address(f.policy),
             address(f.escrow),
+            address(emergencyController),
             PHANTOM_QUOTE,
             CREATOR_TAX_BPS,
             GRADUATION_THRESHOLD
