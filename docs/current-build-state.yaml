@@ -1,7 +1,7 @@
 schema_version: 1.1
 project: Bread
 source_pack_expected: v1.3-post-research
-updated_at: 2026-08-08T18:27:00+02:00
+updated_at: 2026-08-08T18:35:00+02:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -11,9 +11,10 @@ completed_checkpoints:
   - "Day 3 source gate: PROJECT_SOURCE_V1_3_RATIFICATION_RATIFIED"
   - "Day 3 candidate audit: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS"
   - "Day 3 implementation: PR_8_RATIFIED_EXACT_HEAD_GREEN_MERGED"
-active_checkpoint: "Day 3 — Trading, Fees & Escrow"
-active_lane: "Fresh v1.3 Day-3 closeout from actual merged main"
-active_gate: DAY_3_CLOSEOUT_EXACT_HEAD_CI
+  - "Day 3 closeout verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS_STAMPED_PENDING_EXACT_HEAD_CI_AND_MERGE"
+active_checkpoint: "Day 3 — Trading, Fees & Escrow closeout"
+active_lane: "Stamped v1.3 closeout — final exact-head CI and guarded merge"
+active_gate: DAY_3_STAMPED_CLOSEOUT_EXACT_HEAD_MERGE_GATE
 project_source_state:
   pack: v1.3-post-research
   upload: UPLOADED
@@ -23,7 +24,7 @@ integration_baseline:
   id: DAY3-IMPLEMENTATION-MERGED
   branch: main
   commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  status: ACCEPTED_RATIFIED_DAY3_IMPLEMENTATION_PENDING_DURABLE_CLOSEOUT
+  status: ACCEPTED_RATIFIED_DAY3_IMPLEMENTATION_AWAITING_STAMPED_CLOSEOUT_MERGE
 working_branches:
   - checkpoint/day3-v1-3-closeout
 repository:
@@ -33,6 +34,7 @@ repository:
   day3_candidate_pr: 8
   day3_candidate_merge_commit: 4f572bfd61cd57b33be994b895295be4522179b2
   stale_day3_closeout_pr: 9
+  fresh_day3_closeout_pr: 12
   fresh_day3_closeout_branch: checkpoint/day3-v1-3-closeout
 research:
   external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
@@ -52,8 +54,13 @@ closeout:
   evidence_path: docs/evidence/day3-v1.3-closeout.md
   presence_test: contracts/test/Day3CloseoutPresence.t.sol
   base_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  status: CLOSEOUT_CANDIDATE_PENDING_EXACT_HEAD_CI
-  rule: "Do not stamp DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS until this fresh closeout passes full CI; after stamping, rerun full CI on the exact stamped head before merge."
+  prerequisite_candidate_head: 62fdceb627d10ce6055c1d913046e0cc4de7b897
+  prerequisite_run: 31266693398
+  prerequisite_jobs: PASS_ALL_FOUR
+  prerequisite_foundry: PASS_99_TESTS
+  stamped_verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS
+  status: STAMPED_PENDING_FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE
+  rule: "The stamped verdict becomes durable only after the exact stamped PR #12 head passes all four CI jobs and merges unchanged with expected-head protection."
 candidate_prs:
   pr_8:
     state: MERGED_RATIFIED
@@ -62,7 +69,11 @@ candidate_prs:
   pr_9:
     state: STALE_DO_NOT_MERGE
     head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
-    rule: "Historical only; fresh closeout is checkpoint/day3-v1-3-closeout from merged main."
+    rule: "Historical only; never establishes Day-3 PASS."
+  pr_12:
+    state: DRAFT_OPEN_STAMPED_PENDING_FINAL_CI
+    base_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
+    rule: "Merge only exact stamped green head."
 verification:
   day2_closeout_run: 31256962864
   ratification_recovery_pr_10_run: 31264567398
@@ -72,8 +83,10 @@ verification:
   day3_implementation_final_run: 31266530130
   day3_implementation_foundry: PASS_98_TESTS
   day3_implementation_jobs: PASS_ALL_FOUR
-  fresh_closeout_initial_run: PENDING
-  fresh_closeout_stamped_run: PENDING
+  fresh_closeout_initial_run: 31266693398
+  fresh_closeout_initial_foundry: PASS_99_TESTS
+  fresh_closeout_initial_jobs: PASS_ALL_FOUR
+  fresh_closeout_stamped_run: REQUIRED_ON_EXACT_STAMPED_HEAD_BEFORE_MERGE
 blockers:
   - BREAD_SNIPE_DECAY_FORMULA
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -86,13 +99,11 @@ resolved_or_superseded_after_v1_3_ratification:
   LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
   EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
 next_action: >-
-  Open a fresh closeout PR from checkpoint/day3-v1-3-closeout to main and run all four CI jobs on the exact closeout candidate head. If green, stamp DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS into the closeout evidence and this build-state handoff, rerun all four CI jobs on that exact stamped head, and merge only the exact green stamped head with expected-head protection. Verify main after merge. Do not start Day 4 before that durable closeout is complete.
+  Run the full four-job repository CI gate on the exact stamped PR #12 head. If and only if all four jobs pass, mark PR #12 ready and merge that exact head with expected-head protection. Verify main contains docs/evidence/day3-v1.3-closeout.md with DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS and the merged Day-3 production surface. Then write the post-closeout handoff from the actual main state. Do not begin Day-4 production work before the durable closeout is verified.
 do_not_do:
   - "Do not merge stale PR #9."
-  - "Do not stamp Day-3 PASS before the fresh closeout candidate CI is green."
-  - "Do not merge a stamped closeout head without rerunning full CI on that exact head."
-  - "Do not start Day 4 while Day 3 is not durably closed."
-  - "Do not implement Launch+Buy or anti-snipe in Day 3."
+  - "Do not merge PR #12 without full CI on the exact stamped head."
+  - "Do not start Day 4 while the stamped closeout is not durably merged and verified."
   - "Do not implement anti-snipe before BREAD_SNIPE_DECAY_FORMULA is frozen and proved."
   - "Do not claim exact current-live Pons parity."
   - "Do not hardcode unresolved live fee values or Arc mainnet values."
