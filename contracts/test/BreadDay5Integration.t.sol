@@ -14,39 +14,60 @@ contract BreadDay5IntegrationTest is BreadDay5Fixture {
         MockPositionManagerNFT manager = new MockPositionManagerNFT();
         f.adapter.setPositionManager(manager);
 
+        (address token, IGraduationCoordinator.GraduationRecord memory swept) = _launchAndAssertSwept(f);
+        _assertFailedCreateKeepsSwept(f, manager, token, swept);
+        _createAndAssertPermanentlyLocked(f, manager, token);
+    }
+
+    function _launchAndAssertSwept(Fixture memory f)
+        private
+        returns (address token, IGraduationCoordinator.GraduationRecord memory swept)
+    {
         (uint256 sellable, uint256 spent) = _finalFillNumbers();
         uint256 extra = 1_000 * ONE_USDC;
         uint256 quoteIn = spent + extra;
         f.usdc.mint(address(this), quoteIn);
         assert(f.usdc.approve(address(f.factory), quoteIn));
 
-        (address token, address curveAddress, uint256 tokensOut) =
-            IBreadLaunchFactory(address(f.factory)).launchTokenAndBuy(
-                _day5Params(f.factory.previewLaunchEconomics()), quoteIn, sellable, address(this)
-            );
-        BreadBondingCurve curve = BreadBondingCurve(curveAddress);
-        IGraduationCoordinator.GraduationRecord memory swept = f.coordinator.getGraduation(token);
+        address curveAddress;
+        uint256 tokensOut;
+        (token, curveAddress, tokensOut) = IBreadLaunchFactory(address(f.factory)).launchTokenAndBuy(
+            _day5Params(f.factory.previewLaunchEconomics()), quoteIn, sellable, address(this)
+        );
+        swept = f.coordinator.getGraduation(token);
 
         assert(tokensOut == sellable);
         assert(BreadLaunchToken(token).balanceOf(address(this)) == sellable);
         assert(f.usdc.balanceOf(address(this)) == extra);
-        assert(curve.graduated());
+        assert(BreadBondingCurve(curveAddress).graduated());
         assert(swept.phase == IGraduationCoordinator.GraduationPhase.SWEPT);
         assert(swept.sweptUsdc != 0);
         assert(swept.sweptTokens != 0);
         assert(swept.poolTokenAmount != 0);
+    }
 
+    function _assertFailedCreateKeepsSwept(
+        Fixture memory f,
+        MockPositionManagerNFT manager,
+        address token,
+        IGraduationCoordinator.GraduationRecord memory swept
+    ) private {
         f.adapter.setFailAfterMint(true);
         (bool failedCreate,) = address(f.coordinator).call(
             abi.encodeWithSelector(f.coordinator.createPool.selector, token)
         );
         assert(!failedCreate);
+
         IGraduationCoordinator.GraduationRecord memory afterFailure = f.coordinator.getGraduation(token);
         assert(afterFailure.phase == IGraduationCoordinator.GraduationPhase.SWEPT);
         assert(afterFailure.sweptUsdc == swept.sweptUsdc);
         assert(afterFailure.sweptTokens == swept.sweptTokens);
         assert(manager.nextTokenId() == 1);
+    }
 
+    function _createAndAssertPermanentlyLocked(Fixture memory f, MockPositionManagerNFT manager, address token)
+        private
+    {
         f.adapter.setFailAfterMint(false);
         (bytes32 poolId, uint256 positionId) = f.coordinator.createPool(token);
         IGraduationCoordinator.GraduationRecord memory completed = f.coordinator.getGraduation(token);
