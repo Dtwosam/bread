@@ -52,4 +52,9 @@ contract BreadFeeEscrow is Ownable {
 
         emit FeeCredited(msg.sender, recipient, received, recipientBalance, totalOutstanding);
     }
+
+    function surplus() external view returns (uint256 amount) {
+        uint256 custody = usdc.balanceOf(address(this));
+        return custody > totalOutstanding ? custody - totalOutstanding : 0;
+    }
 }
