@@ -7,13 +7,15 @@ import {Context} from "../utils/Context.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to specific functions.
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
  *
  * The initial owner is set to the address provided by the deployer. This can
  * later be changed with {transferOwnership}.
  *
  * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to the owner.
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
  */
 abstract contract Ownable is Context {
     address private _owner;
