@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "referenceRepository": "https://github.com/ponsdotdev/ponsfamily",
+  "referenceCommit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+  "productionPorts": {
+    "BreadLaunchToken": {
+      "sourcePath": "contractsV2/src/v2/PonsV2LauncherToken.sol",
+      "blobSha": "3a362035edbcc8be7aeb54f1beb41fa1e01c230a",
+      "spdx": "MIT"
+    },
+    "BreadBondingCurveMath": {
+      "sourcePath": "contractsV2/src/v2/libraries/PonsV2BondingCurveMath.sol",
+      "blobSha": "73929a6f64fc4a3e684ffff895a6ef0a018c2019",
+      "spdx": "MIT"
+    }
+  },
+  "dependencyPolicy": {
+    "openzeppelinSource": "frozen-pons-tree",
+    "openzeppelinObservedVersion": "5.5.0",
+    "dynamicInstallAllowed": false
+  },
+  "parityClaim": "FROZEN_SOURCE_BEHAVIOR_ONLY_NOT_CURRENT_LIVE_PARITY"
+}
