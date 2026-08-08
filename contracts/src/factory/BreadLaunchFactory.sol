@@ -4,16 +4,18 @@ pragma solidity ^0.8.26;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {BreadBondingCurve} from "../core/BreadBondingCurve.sol";
 import {BreadLaunchDeployer} from "./BreadLaunchDeployer.sol";
+import {IBreadEmergencyController} from "../interfaces/IBreadEmergencyController.sol";
 import {IBreadFeeEscrow} from "../interfaces/IBreadFeeEscrow.sol";
 import {IBreadLaunchFactory} from "../interfaces/IBreadLaunchFactory.sol";
 import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
 
 /// @title BreadLaunchFactory
 /// @notice Bread-owned launch orchestration and economics pinning over the accepted Day-3 curve stack.
-contract BreadLaunchFactory is Ownable {
+contract BreadLaunchFactory is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint16 public constant STARTING_SNIPE_TAX_BPS = 9_900;
@@ -28,6 +30,7 @@ contract BreadLaunchFactory is Ownable {
     error LaunchDeployerAlreadySet();
     error InvalidLaunchDeployer();
     error LaunchDisabled();
+    error LaunchesRestricted();
     error LaunchDeployerNotSet();
     error CreatorRecipientZeroAddress();
     error EmptyTokenName();
@@ -68,6 +71,7 @@ contract BreadLaunchFactory is Ownable {
     address public immutable usdc;
     IBreadFeePolicy public immutable feePolicy;
     address public immutable feeEscrow;
+    IBreadEmergencyController public immutable emergencyController;
     bytes32 public immutable stackVersion;
 
     BreadLaunchDeployer public launchDeployer;
@@ -104,16 +108,21 @@ contract BreadLaunchFactory is Ownable {
         address usdc_,
         address feePolicy_,
         address feeEscrow_,
+        address emergencyController_,
         IBreadLaunchFactory.LaunchConfig memory initialConfig_,
         bytes32 stackVersion_
     ) Ownable(owner_) {
-        if (usdc_ == address(0) || feePolicy_ == address(0) || feeEscrow_ == address(0)) revert ZeroAddress();
+        if (
+            usdc_ == address(0) || feePolicy_ == address(0) || feeEscrow_ == address(0)
+                || emergencyController_ == address(0)
+        ) revert ZeroAddress();
         if (stackVersion_ == bytes32(0)) revert EmptyStackVersion();
         _validateConfig(initialConfig_);
 
         usdc = usdc_;
         feePolicy = IBreadFeePolicy(feePolicy_);
         feeEscrow = feeEscrow_;
+        emergencyController = IBreadEmergencyController(emergencyController_);
         stackVersion = stackVersion_;
         _launchConfig = initialConfig_;
         configVersion = 1;
@@ -175,6 +184,7 @@ contract BreadLaunchFactory is Ownable {
 
     function launchToken(IBreadLaunchFactory.LaunchParams calldata params)
         external
+        nonReentrant
         returns (address token, address curve)
     {
         LaunchPreparation memory prep = _prepareLaunch(params);
@@ -193,7 +203,7 @@ contract BreadLaunchFactory is Ownable {
         uint256 quoteIn,
         uint256 minTokensOut,
         address recipient
-    ) external returns (address token, address curve, uint256 tokensOut) {
+    ) external nonReentrant returns (address token, address curve, uint256 tokensOut) {
         if (quoteIn == 0) revert InitialBuyZeroAmount();
         if (recipient == address(0)) revert InitialBuyRecipientZeroAddress();
 
@@ -223,6 +233,7 @@ contract BreadLaunchFactory is Ownable {
         view
         returns (LaunchPreparation memory prep)
     {
+        if (!emergencyController.launchesAllowed()) revert LaunchesRestricted();
         if (!_launchConfig.enabled) revert LaunchDisabled();
         prep.deployer = launchDeployer;
         if (address(prep.deployer) == address(0)) revert LaunchDeployerNotSet();
@@ -286,6 +297,7 @@ contract BreadLaunchFactory is Ownable {
         deployment.core.factory = address(this);
         deployment.core.feePolicy = address(feePolicy);
         deployment.core.feeEscrow = feeEscrow;
+        deployment.core.emergencyController = address(emergencyController);
         deployment.core.phantomQuote = config.phantomQuote;
         deployment.core.creatorTaxBps = params.creatorTaxBps;
         deployment.core.graduationThreshold = config.graduationThreshold;
@@ -308,7 +320,7 @@ contract BreadLaunchFactory is Ownable {
         bytes32 digest,
         address originalDeployer
     ) private {
-        uint64 launchedAt = uint64(block.timestamp);
+        uint64 launchedAt = BreadBondingCurve(curve).launchTimestamp();
         uint64 version = configVersion;
         _launches[token] = IBreadLaunchFactory.LaunchRecord({
             token: token,
