@@ -1,7 +1,7 @@
-schema_version: 1.1
+schema_version: 1.4
 project: Bread
-source_pack_expected: v1.3-post-research
-updated_at: 2026-08-08T18:42:00+02:00
+source_pack_expected: v1.4-day4-design
+updated_at: 2026-08-08T18:31:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -11,67 +11,76 @@ completed_checkpoints:
   - "Day 3 source gate: PROJECT_SOURCE_V1_3_RATIFICATION_RATIFIED"
   - "Day 3 candidate audit: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
-active_checkpoint: "Day 4 — NOT STARTED"
-active_lane: "Day 3 durably closed; next session begins Day-4 preflight from the accepted Day-3 closeout baseline"
-active_gate: BREAD_SNIPE_DECAY_FORMULA_PRE_DAY4_PRODUCTION
+  - "Day 4.1 preflight: DESIGN_BUNDLE_APPROVED_SELF_REVIEWED"
+  - "Day 4 source gate: PROJECT_SOURCE_V1_4_DAY4_RATIFICATION_RATIFIED"
+  - "Day 4 implementation plan: COMMITTED_SELF_REVIEWED"
+active_checkpoint: "Day 4 — Preflight documentation integration"
+active_lane: "Ratified design + source reconciliation + self-reviewed TDD plan"
+active_gate: DAY4_PREFLIGHT_DOCS_EXACT_HEAD_CI_MERGE
 project_source_state:
-  pack: v1.3-post-research
+  pack: v1.4-day4-design
   upload: UPLOADED
   ratification: RATIFIED
-  ratification_rule: "Final v1.3 Project Source replacements were read back and reconciled before affected Day-3 production repair or merge."
+  existing_day1_day3_baseline_ratification: RATIFIED
+  day4_amendment: RATIFIED
+  day4_production_ratification: RATIFIED
+  ratification_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
+  rule: "Uploaded v1.4 replacements were read back and reconciled against main c6fcb53c854e45843b60720e3be859a49965bad2, approved Day-4 design 324b6055a0bed278766e1b48016774ac745b3781 and the living build-state before Day-4 production authorization advanced."
 integration_baseline:
   id: DAY3-CLOSEOUT
   branch: main
-  commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
+  current_main_commit: c6fcb53c854e45843b60720e3be859a49965bad2
+  accepted_day3_closeout_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
   production_code_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  status: ACCEPTED_DAY3_DURABLE_BASELINE
-working_branches: []
+  status: ACCEPTED_DAY3_DURABLE_BASELINE_AWAITING_DAY4_DOCS_INTEGRATION
+working_branches:
+  - checkpoint/day4-preflight-design
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   accepted_day3_production_commit: 4f572bfd61cd57b33be994b895295be4522179b2
   accepted_day3_closeout_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
-  day3_candidate_pr: 8
-  day3_candidate_tested_head: 53c11f450677a204e541ba8468994586f01621b7
-  day3_candidate_merge_commit: 4f572bfd61cd57b33be994b895295be4522179b2
+  current_main_commit: c6fcb53c854e45843b60720e3be859a49965bad2
   stale_day3_closeout_pr: 9
-  fresh_day3_closeout_pr: 12
-  fresh_day3_closeout_tested_head: fa92a4f244872a7f99b075cc2c639beb46a8831f
-  fresh_day3_closeout_merge_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
-research:
-  external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
-  post_research_handoff_commit: ee13d00a192040b227a01488fcd73f48699b9093
-  architecture_decisions:
-    fee_escrow: "ADAPT Clanker ClankerFeeLocker pattern into Bread-owned canonical-USDC escrow — integrated Day 3"
-    fee_policy: "BREAD_OWNED — integrated Day 3"
-    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE — Day 4, not started"
-    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY — Day 4, exact BREAD_SNIPE_DECAY_FORMULA still gated"
-conformance_audit:
-  path: docs/evidence/day3-v1.3-conformance-audit.md
-  result: DAY_3_V1_3_SOURCE_TO_CODE_CONFORMANCE_AUDIT_PASS
-  production_divergences_found: 1
-  production_divergences_repaired: 1
-  repaired_boundary: "FeeEscrow enabling a creditor requires deployed contract code, preventing arbitrary EOA claim-credit authority."
-closeout:
-  evidence_path: docs/evidence/day3-v1.3-closeout.md
-  presence_test: contracts/test/Day3CloseoutPresence.t.sol
-  verdict: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS
-  implementation_main_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  closeout_main_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
-  status: DURABLY_CLOSED
-candidate_prs:
-  pr_8:
-    state: MERGED_RATIFIED
-    tested_head: 53c11f450677a204e541ba8468994586f01621b7
-    merge_commit: 4f572bfd61cd57b33be994b895295be4522179b2
-  pr_9:
-    state: STALE_DO_NOT_MERGE
-    head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
-    rule: "Historical stale closeout only; it did not establish Day-3 PASS."
-  pr_12:
-    state: MERGED_DURABLE_CLOSEOUT
-    tested_head: fa92a4f244872a7f99b075cc2c639beb46a8831f
-    merge_commit: a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3
+  stale_day3_closeout_state: CLOSED_UNMERGED
+  day4_design_branch: checkpoint/day4-preflight-design
+  day4_design_commit: 324b6055a0bed278766e1b48016774ac745b3781
+  day4_source_ratification_record: docs/source-reconciliation/day4-project-source-v1.4-promotion.md
+  day4_plan_path: docs/superpowers/plans/2026-08-08-day4-factory-launch-buy-snipe-emergency.md
+  day4_plan_commit: d7b104853b5016305928fd9ea16b989ca1373296
+  day4_plan_self_review_path: docs/superpowers/plans/2026-08-08-day4-plan-self-review.md
+  day4_plan_self_review_commit: 3bf0480708c268f5629c99f220ed13bd79d498a7
+day4_design:
+  status: APPROVED_SELF_REVIEWED_SOURCE_RATIFIED_PLAN_SELF_REVIEWED
+  design_path: docs/superpowers/specs/2026-08-08-day4-factory-launch-buy-snipe-emergency-design.md
+  factory_deployer: "Bread-owned; composes existing Day-3 curve/token/FeePolicy/FeeEscrow; no duplicate accounting; no Day-4 CREATE2 promise"
+  economics_pin: "Bind canonical USDC, supply, phantomQuote, graduationThreshold, FeePolicy snapshot, launchFeeUsdc, stack/config version and opening-protection identifiers"
+  launch_fee: "canonical 6-decimal ERC20 USDC; zero allowed; non-zero is 100% protocol revenue credited through canonical FeeEscrow; no Factory retention"
+  launch_and_buy: "atomic canonical-USDC lifecycle using canonical curve buy; exact rollback/refund/custody/allowance semantics"
+  opening_protection: "buy-only quadratic remaining-time policy: 9900/6336/3564/1584/396/0 bps at elapsed 0/1/2/3/4/>=5 seconds"
+  exemption: "only the one same-transaction canonical Factory Launch+Buy buy; no persistent wallet exemption"
+  opening_tax_routing: "joins quoteFeeBalance; creator tax stays separate; existing sweep/FeeEscrow path remains canonical"
+  final_fill: "two-stage full-precision ceiling gross-up; recompute floor charges from exact spent; require netCurveInput >= netRequired; zero-snipe reduces to accepted Day-3 rule"
+  emergency: "NORMAL < NO_NEW_LAUNCHES < BUY_PAUSED < TRADING_PAUSED plus graduationPaused; Guardian only increases restrictions; Protocol Admin alone reduces/unpauses; Guardian has no custody/economic authority"
+  fee_escrow_credit_authority: "unchanged Day-3 owner-controlled authorization; Factory authorized once before non-zero launch-fee use; each curve authorized before first sweep; no automatic registrar in Day 4"
+plan_self_review:
+  status: PASS
+  corrections:
+    - "Final Factory/Deployer/curve constructors explicitly wire one EmergencyController after Task 7."
+    - "currentSnipeTaxBps reverts NotInitialized before the canonical launch clock exists."
+    - "Factory launch record reads the curve launchTimestamp after opening-protection integration."
+    - "Preflight local gate includes pnpm format:check."
+source_promotion:
+  replacement_count: 12
+  pack_label: v1.4-day4-design
+  status: UPLOADED_READBACK_RECONCILED_RATIFIED
+  ratification: RATIFIED
+resolved_day4_source_gates:
+  BREAD_SNIPE_DECAY_FORMULA: RESOLVED_BY_EXPLICIT_BREAD_QUADRATIC_POLICY
+  DAY4_SNIPE_EXEMPTIONS: RESOLVED_ONE_CALL_LAUNCH_AND_BUY_ONLY
+  DAY4_OPENING_TAX_ROUTING: RESOLVED_REUSE_CANONICAL_BASE_FEE_ESCROW_PATH
+  DAY4_FINAL_FILL_ROUNDING: RESOLVED_TWO_STAGE_FULL_PRECISION_CEILING_GROSS_UP
+  DAY4_EMERGENCY_STATE_MODEL: RESOLVED_RESTRICTION_ONLY
 verification:
   day2_closeout_run: 31256962864
   ratification_recovery_pr_10_run: 31264567398
@@ -88,24 +97,29 @@ verification:
   fresh_closeout_initial_jobs: PASS_ALL_FOUR
   fresh_closeout_stamped_run: 31266796631
   fresh_closeout_stamped_jobs: PASS_ALL_FOUR
+  day3_post_closeout_handoff_run: 31266935184
+  day3_post_closeout_handoff_jobs: PASS_ALL_FOUR
+  day4_preflight_docs_first_run: 31269550733
+  day4_preflight_docs_first_result: "BLOCKED — build-state validator required historical verification section; Foundry/infrastructure passed; no production code affected"
 blockers:
-  - BREAD_SNIPE_DECAY_FORMULA
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
-resolved_or_superseded_after_v1_3_ratification:
-  PROJECT_SOURCE_V1_3_RATIFICATION: RATIFIED
-  FEE_ESCROW_SOURCE: RESOLVED_BY_APPROVED_BREAD_ADAPTATION_ARCHITECTURE
-  LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
-  EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
+blocker_scope:
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "truthfulness/parity claims only; does not block ratified Bread-owned Day-4 architecture"
+  LIVE_RUNTIME_CONFIG: "real deployment values; no production launchFeeUsdc/FeePolicy/address values may be guessed"
+  PONS_AUDIT_FINDINGS: "release/security gate"
+  ARC_MAINNET_VALUES: "mainnet deployment gate"
 next_action: >-
-  Day 4 is not started. In the next Day-4 work session, reconstruct from Source Pack v1.3 and accepted Day-3 closeout baseline a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3. Begin with Day-4 preflight/design gates: Factory/Deployer and economics snapshot/hash, Bread-owned atomic Launch+Buy, and a deliberate freeze/proof of BREAD_SNIPE_DECAY_FORMULA plus exact launch-time exemptions before any anti-snipe production code. Preserve the canonical Day-3 FeePolicy/FeeEscrow/trading interfaces and do not create parallel fee/accounting state.
+  Require a fresh exact-head CI run on PR #14 after restoring the mandatory verification section. Merge only the exact green docs head with expected-head protection, verify the resulting main contains the ratified v1.4 source state and self-reviewed implementation plan, then create checkpoint/day4-launch-control from that actual merged main and begin Task 1 with Factory/Deployer behavior-specific RED tests. No Day-4 production Solidity before the docs-only exact-head merge.
 do_not_do:
-  - "Do not use stale PR #9 as accepted closeout evidence."
-  - "Do not start Day 4 from a baseline older than a67f42cae2b69c5c8ec4b07f0c2f2695ac4ea8a3."
-  - "Do not implement anti-snipe before BREAD_SNIPE_DECAY_FORMULA and exact exemptions are frozen and proved."
-  - "Do not invent live Pons fee/config values."
-  - "Do not claim exact current-live Pons parity."
-  - "Do not hardcode Arc mainnet values before official publication."
-  - "Do not create duplicate fee, claim or accounting authority outside the integrated Day-3 interfaces."
+  - "Do not write Day-4 production Solidity before the ratified design/plan documentation is exact-head-green and merged to main."
+  - "Do not weaken or bypass scripts/validation/validate-build-state.mjs to make the preflight pass; preserve the required verification section instead."
+  - "Do not silently change the ratified opening formula, exemption, routing, final-fill rounding or emergency authority; a change requires a new approved Project Source amendment."
+  - "Do not add an automatic FeeEscrow creditor registrar in Day 4; that would change the ratified credit-authority boundary."
+  - "Do not create parallel fee, claim, trading, launch-record or emergency-accounting authorities."
+  - "Do not claim exact current-live Pons factory parity."
+  - "Do not invent live fee/launch-fee values, audit conclusions or Arc mainnet values."
+  - "Do not start Day 5 before Day 4 is durably closed."
+  - "When chat context is roughly 90% full, warn the user and write/verify a durable handoff before continuing in a fresh chat."
