@@ -24,4 +24,18 @@ contract BreadFeeEscrowTest {
         assert(escrow.balanceOf(RECIPIENT) == amount);
         assert(escrow.totalOutstanding() == amount);
     }
+
+    function testDirectDonationIsSurplusOnly() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+
+        uint256 donation = 7 * ONE_USDC;
+        usdc.mint(address(this), donation);
+        assert(usdc.transfer(address(escrow), donation));
+
+        assert(usdc.balanceOf(address(escrow)) == donation);
+        assert(escrow.balanceOf(RECIPIENT) == 0);
+        assert(escrow.totalOutstanding() == 0);
+        assert(escrow.surplus() == donation);
+    }
 }
