@@ -123,6 +123,51 @@ Exact GREEN CI: `31271512833`
 
 Task-2 component result: **CANONICAL_USDC_LAUNCH_FEE_ESCROW_LOCAL_GREEN**.
 
-This is not Day-4 PASS. Atomic Launch+Buy, opening protection, emergency control and Day-4 integrated invariants remain unimplemented/unproved.
+## Task 3 — Atomic Launch+Buy RED
+
+RED test commit: `9452f3925342a5c6977f3de7054bfa88a918bcfb`
+
+Exact RED CI: `31271648604`
+
+- Solidity compile: PASS
+- prior Factory/Deployer, launch-fee and all Day-1–Day-3 suites: PASS
+- Foundry total: **117 passed / 2 failed / 0 skipped** across 17 suites
+- `BreadLaunchAndBuyTest`: **4 passed / exactly 2 intended failed**
+- passing controls included zero-quote/zero-recipient rejection expectations, failed-call rollback expectations, unauthorized curve launch-buy entry, and unchanged public Buy numerics
+- intended failures were the two success paths requiring the missing `launchTokenAndBuy` implementation: ordinary atomic launch+buy and final-crossing launch+buy refund
+
+The RED remained behavior-specific: no unrelated compile or prior-regression failure occurred.
+
+## Task 3 — Atomic Launch+Buy GREEN
+
+Minimal implementation:
+
+- public `BreadBondingCurve.buy(...)` keeps its accepted ABI and now delegates to one shared internal `_buy(...)` implementation
+- additive `BreadBondingCurve.buyForLaunch(...)` is `factory`-only and delegates to the exact same pricing/tracked-reserve/fee/refund path
+- `buyForLaunch` returns `tokensOut`, actual `spent`, and exact `refund`; it does not introduce separate pricing/accounting
+- Factory `launchTokenAndBuy(...)` validates nonzero quote and recipient, then receives exactly `launchFeeUsdc + quoteIn`
+- pair deployment/initialization, launch-fee FeeEscrow credit, initial curve Buy, allowance cleanup, user refund, launch record and final Factory custody check all execute in one transaction
+- Factory approves exactly `quoteIn` to the new curve and clears allowance after the call
+- curve final-fill refund returns to Factory, and Factory forwards exactly that amount to the original launch caller
+- any slippage, transfer, escrow or Buy failure reverts the entire launch, including launch-fee claim creation and deployment effects
+- no snipe/opening-tax logic and no emergency behavior entered this slice
+
+Exact GREEN head: `c9b731ae545c29e9405b95a0dc26ba08f25a96c6`
+
+Exact GREEN CI: `31271736825`
+
+- `bootstrap-validation`: PASS
+- `dependency-build`: PASS
+- `foundry-bootstrap`: PASS
+- `infrastructure-health`: PASS
+- `BreadLaunchAndBuyTest`: **6/6 PASS**
+- Foundry: **119 passed / 0 failed / 0 skipped** across 17 suites
+- public Day-3 Buy deterministic vectors remain PASS
+- final-fill invariant remains PASS
+- launch-fee, FeeEscrow, FeePolicy, token, tracked-state, trading-security and trading-invariant suites remain PASS
+
+Task-3 component result: **ATOMIC_LAUNCH_AND_BUY_LOCAL_GREEN**.
+
+This is not Day-4 PASS. Exact opening protection, two-stage snipe final-fill proof, EmergencyController integration and Day-4 integrated invariants remain unimplemented/unproved.
 
 No local/component result in this document is Day-4 PASS. The final verdict is permitted only after integrated exact-head implementation CI, guarded merge, fresh merged-main closeout and exact-head closeout CI.
