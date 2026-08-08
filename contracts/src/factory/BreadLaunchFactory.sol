@@ -2,15 +2,20 @@
 pragma solidity ^0.8.26;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {BreadBondingCurve} from "../core/BreadBondingCurve.sol";
 import {BreadLaunchDeployer} from "./BreadLaunchDeployer.sol";
+import {IBreadFeeEscrow} from "../interfaces/IBreadFeeEscrow.sol";
 import {IBreadLaunchFactory} from "../interfaces/IBreadLaunchFactory.sol";
 import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
 
 /// @title BreadLaunchFactory
 /// @notice Bread-owned launch orchestration and economics pinning over the accepted Day-3 curve stack.
 contract BreadLaunchFactory is Ownable {
+    using SafeERC20 for IERC20;
+
     uint16 public constant STARTING_SNIPE_TAX_BPS = 9_900;
     uint8 public constant SNIPE_DURATION_SECONDS = 5;
     uint16 public constant TERMINAL_SNIPE_TAX_BPS = 0;
@@ -29,6 +34,8 @@ contract BreadLaunchFactory is Ownable {
     error EmptyTokenSymbol();
     error CreatorTaxAboveCurrentMaximum(uint16 creatorTaxBps, uint16 maxCreatorTaxBps);
     error StaleEconomics(bytes32 expected, bytes32 actual);
+    error UnexpectedReceivedAmount(uint256 expected, uint256 actual);
+    error ResidualFactoryCustody(uint256 expectedBalance, uint256 actualBalance);
 
     struct EconomicsDigestInput {
         address usdc;
@@ -62,6 +69,7 @@ contract BreadLaunchFactory is Ownable {
 
     event LaunchDeployerSet(address indexed launchDeployer);
     event LaunchConfigUpdated(uint64 indexed previousVersion, uint64 indexed nextVersion);
+    event LaunchFeeCredited(address indexed token, address indexed protocolRecipient, uint256 amount);
     event LaunchCreated(
         address indexed deployer,
         address indexed token,
@@ -132,7 +140,7 @@ contract BreadLaunchFactory is Ownable {
         input.configVersion = configVersion;
         input.startingSnipeTaxBps = STARTING_SNIPE_TAX_BPS;
         input.snipeDurationSeconds = SNIPE_DURATION_SECONDS;
-        input.terminalSnipeTaxBps = TERMINAL_SNIPE_TAX_BPS;
+        input.terminalSniPETaxBps = TERMINAL_SNIPE_TAX_BPS;
         input.openingProtectionPolicyId = OPENING_PROTECTION_POLICY_ID;
         input.openingTaxRoutingId = OPENING_TAX_ROUTING_ID;
         return keccak256(abi.encode(input));
@@ -167,10 +175,37 @@ contract BreadLaunchFactory is Ownable {
             revert StaleEconomics(params.expectedEconomics, digest);
         }
 
+        uint256 launchFee = _launchConfig.launchFeeUsdc;
+        IERC20 quote = IERC20(usdc);
+        uint256 factoryBalanceBefore = quote.balanceOf(address(this));
+        _receiveExactLaunchFee(quote, msg.sender, launchFee);
+
         BreadLaunchDeployer.BreadLaunchDeployment memory deployment = _buildDeployment(params, msg.sender);
         (token, curve) = deployer_.deployLaunch(deployment);
         BreadBondingCurve(curve).initialize(token);
+        _creditLaunchFee(quote, token, policy.protocolFeeRecipient, launchFee);
         _recordLaunch(params, token, curve, digest, msg.sender);
+
+        uint256 factoryBalanceAfter = quote.balanceOf(address(this));
+        if (factoryBalanceAfter != factoryBalanceBefore) {
+            revert ResidualFactoryCustody(factoryBalanceBefore, factoryBalanceAfter);
+        }
+    }
+
+    function _receiveExactLaunchFee(IERC20 quote, address payer, uint256 amount) private {
+        if (amount == 0) return;
+        uint256 beforeBalance = quote.balanceOf(address(this));
+        quote.safeTransferFrom(payer, address(this), amount);
+        uint256 received = quote.balanceOf(address(this)) - beforeBalance;
+        if (received != amount) revert UnexpectedReceivedAmount(amount, received);
+    }
+
+    function _creditLaunchFee(IERC20 quote, address token, address protocolRecipient, uint256 amount) private {
+        if (amount == 0) return;
+        quote.forceApprove(feeEscrow, amount);
+        IBreadFeeEscrow(feeEscrow).credit(protocolRecipient, amount);
+        quote.forceApprove(feeEscrow, 0);
+        emit LaunchFeeCredited(token, protocolRecipient, amount);
     }
 
     function _buildDeployment(IBreadLaunchFactory.LaunchParams calldata params, address originalDeployer)
