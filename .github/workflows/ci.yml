@@ -34,10 +34,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate
       - run: pnpm test
-      - name: Show Day 4 validator formatting diff
-        run: |
-          pnpm exec prettier scripts/validation/validate-day4-launch-control-source-integrity.mjs > /tmp/day4-validator-formatted.mjs
-          diff -u scripts/validation/validate-day4-launch-control-source-integrity.mjs /tmp/day4-validator-formatted.mjs || true
       - name: Check Day 4 changed-file formatting
         run: >-
           pnpm exec prettier --check
