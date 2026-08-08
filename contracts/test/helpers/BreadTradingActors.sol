@@ -5,6 +5,10 @@ import {BreadBondingCurve} from "../../src/core/BreadBondingCurve.sol";
 import {BreadFeeEscrow} from "../../src/fees/BreadFeeEscrow.sol";
 
 contract BreadTradingExternalCaller {
+    function initialize(BreadBondingCurve curve, address token) external {
+        curve.initialize(token);
+    }
+
     function sweepFees(BreadBondingCurve curve) external {
         curve.sweepFees();
     }
