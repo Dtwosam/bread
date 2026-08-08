@@ -1,0 +1,1 @@
+{"name":"@bread/db","version":"0.0.0","private":true,"type":"module","scripts":{"build":"tsc -b"},"dependencies":{"drizzle-orm":"0.45.2","pg":"8.22.0"},"devDependencies":{"typescript":"7.0.2"}}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "network": "arc-mainnet",
+  "status": "AWAITING_OFFICIAL_VALUES",
+  "chainId": null,
+  "nativeGasAsset": "USDC",
+  "nativePrecision": null,
+  "rpc": [],
+  "websocket": [],
+  "explorer": null,
+  "usdc": {
+    "address": null,
+    "decimals": 6,
+    "role": "bread-financial-quote-asset"
+  },
+  "permit2": null,
+  "create2Factory": null,
+  "multicall3": null,
+  "dex": {
+    "type": "UNRESOLVED",
+    "poolManager": null,
+    "positionManager": null,
+    "factory": null
+  },
+  "deploymentStartBlock": null
+}

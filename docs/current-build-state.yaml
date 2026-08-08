@@ -1,0 +1,74 @@
+schema_version: 1.0
+project: Bread
+source_pack: v1.1
+updated_at: 2026-08-08T09:55:00+01:00
+completed_checkpoints:
+  - "1-6I: specification checkpoints complete per Project Sources"
+  - "7A: PARTIAL PASS WITH BLOCKERS"
+  - "7B.1: LOCAL BOOTSTRAP SKELETON PASS"
+  - "7B.2: REMOTE + LOCKFILE + TOOLCHAIN + INFRA PROOFS PASS"
+active_checkpoint: "7B"
+active_lane: "7B final handoff / merge to C0"
+integration_baseline:
+  id: C0
+  status: PENDING_MERGE
+  candidate_branch: checkpoint/7b-bootstrap
+  verified_candidate_before_handoff: 1fdae485e0982178587daa9aa19daa34802fcecc
+working_branches:
+  - checkpoint/7b-bootstrap
+repository:
+  remote: https://github.com/Dtwosam/bread
+  pull_request: 1
+  pull_request_status: draft
+  status: verified-7b-candidate-awaiting-handoff-head-ci-and-merge
+verification:
+  last_full_green_run: 31249262308
+  last_full_green_head: 1fdae485e0982178587daa9aa19daa34802fcecc
+  jobs:
+    bootstrap_validation: PASS
+    dependency_build_frozen_lockfile: PASS
+    tracked_workspace_clean_after_build: PASS
+    foundry_bootstrap: PASS
+    postgres_redis_health: PASS
+  handoff_commit_exact_head_verification: PENDING
+deployments: []
+blockers:
+  - CURRENT_PONS_FACTORY_SOURCE_PARITY
+  - EXACT_SNIPE_IMPLEMENTATION
+  - LAUNCH_AND_BUY_SOURCE
+  - FEE_ESCROW_SOURCE
+  - LIVE_RUNTIME_CONFIG
+  - PONS_AUDIT_FINDINGS
+  - ARC_MAINNET_VALUES
+tooling:
+  chatgpt: primary-integration-owner
+  github: connected-admin-Dtwosam
+  node: 24.18.0
+  pnpm: 11.15.1
+  foundry: v1.5.0
+  solidity: 0.8.26
+  vercel: not-configured
+  sentry: not-configured
+  figma: available-optional
+  supabase: not-selected
+  cloudflare: not-selected
+decisions_since_last_state:
+  - "GitHub canonical remote is private repository Dtwosam/bread."
+  - "pnpm-lock.yaml is committed and normal CI uses frozen installs with contents: read."
+  - "Only reviewed dependency build scripts esbuild and sharp are allowed by pnpm policy."
+  - "Next.js TypeScript 7 CLI backend is enabled; web tsconfig is explicit rather than build-generated."
+  - "TypeScript incremental *.tsbuildinfo artifacts are ignored as generated compiler cache; CI still requires a clean tracked worktree after build."
+  - "GitHub Actions are pinned to exact known SHAs; Foundry is pinned to v1.5.0."
+  - "PostgreSQL and Redis development images are pinned to patch versions."
+  - "7B contains no financial contract implementation; the Foundry probe is non-financial only."
+  - "10k hot-launch load harness remains present from bootstrap."
+  - "Day 1 remains in progress after C0; next lane must complete Pons baseline/license inventory and live-Pons config/source reconciliation reader before the Day-1 end gate."
+next_action: "Run the complete four-job CI on the exact handoff head. If all gates pass, mark PR #1 ready and merge it to main with expected head SHA; then write the exact merge SHA as Integration Baseline C0 before starting the remaining Day-1 source-reconciliation lane."
+do_not_do:
+  - "Do not claim exact current-live Pons parity."
+  - "Do not implement snipe protection from guesses."
+  - "Do not implement Launch+Buy from guesses."
+  - "Do not implement FeeEscrow from guesses."
+  - "Do not hardcode Arc mainnet values before official publication."
+  - "Do not claim the Day-1 end gate is complete at C0."
+  - "Do not start the next lane until 7B closeout and C0 handoff are complete."
