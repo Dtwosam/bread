@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {IGraduationAdapter} from "./IGraduationAdapter.sol";
+
 interface IBreadLaunchFactory {
     struct LaunchConfig {
         uint256 supply;
         uint256 phantomQuote;
         uint256 graduationThreshold;
         uint256 launchFeeUsdc;
+        address graduationAdapter;
+        bytes32 graduationConfigHash;
         bool enabled;
     }
 
@@ -34,6 +38,10 @@ interface IBreadLaunchFactory {
         bytes32 economicsDigest;
         uint64 launchTimestamp;
         uint64 configVersion;
+        address graduationCoordinator;
+        address graduationAdapter;
+        IGraduationAdapter.AdapterFamily graduationAdapterFamily;
+        bytes32 graduationConfigHash;
     }
 
     function previewLaunchEconomics() external view returns (bytes32 digest);
