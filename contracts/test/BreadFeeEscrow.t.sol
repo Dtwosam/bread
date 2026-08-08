@@ -97,4 +97,18 @@ contract BreadFeeEscrowTest {
         assert(usdc.balanceOf(address(escrow)) == 0);
         assert(escrow.totalOutstanding() == 0);
     }
+
+    function testCreditRejectsZeroAmount() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        (bool ok,) = address(escrow).call(
+            abi.encodeWithSelector(BreadFeeEscrow.credit.selector, RECIPIENT, 0)
+        );
+
+        assert(!ok);
+        assert(escrow.balanceOf(RECIPIENT) == 0);
+        assert(escrow.totalOutstanding() == 0);
+    }
 }
