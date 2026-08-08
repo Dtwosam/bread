@@ -9,6 +9,7 @@ Status: IMPLEMENTED — PENDING INTEGRATED MERGE
 - V2 source root: `contractsV2/src/v2`
 - Frozen public README V2 factory recorded by the 7A source reconciliation: `0x7E1EAbd52Ae29598e6483F72dCf1a70b14284dB8`
 - Current Pons V2 docs factory recorded by the 7A source reconciliation: `0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e`
+- Current Pons V2 docs chain ID: `4663`
 - Those factory addresses differ. Exact current-live source parity therefore remains unproven.
 
 ## Source and license inventory
@@ -29,6 +30,7 @@ This is a file-level inventory only. It does not assert that every vendored depe
 
 `packages/protocol-sdk/src/pons-live-reconcile.ts` now provides a read-only Pons V2 reconciliation surface. It can observe:
 
+- RPC chain ID and fail closed unless it is Robinhood Chain `4663`
 - current factory runtime bytecode length and keccak256
 - `launchFee`
 - `launchEnabled`
@@ -42,14 +44,25 @@ The reader uses only public-client read operations. It contains no transaction s
 
 ## TDD / CI evidence
 
-RED:
+Initial RED:
 - CI run `31249608035`
 - build-state validation passed after removing the stale hard-coded 7B checkpoint assumption
 - the new Pons reference test failed exactly because `currentDocsFactory` was absent
 
-GREEN:
+Initial GREEN:
 - implementation head: `fb526e15ad3e9432a4c5ec887a01dbb4d789b137`
 - CI run: `31249698722`
+- all four CI jobs: PASS
+
+Review hardening RED:
+- review found that the reader recorded the expected chain but did not verify the RPC's actual chain
+- regression head: `85845e9e8f5d3cbf478b753da730180332c94e1c`
+- CI run: `31249823428`
+- Pons reference test: expected failure because `getChainId` / `actualChainId` protection was not present
+
+Review hardening GREEN:
+- implementation head: `cd9a588c8b4fde20f59152bda9d4acfd737081be`
+- CI run: `31249849839`
 - bootstrap validation: PASS
 - Pons reference regression: PASS
 - frozen dependency install: PASS
