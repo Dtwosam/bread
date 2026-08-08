@@ -15,7 +15,8 @@ import {IERC165} from "./IERC165.sol";
  */
 interface IERC1363 is IERC20, IERC165 {
     /*
-     * Note: If ERC-165 is used, then `0xb0202a11` ===
+     * Note: the ERC-165 identifier for this interface is 0xb0202a11.
+     * 0xb0202a11 ===
      *   bytes4(keccak256('transferAndCall(address,uint256)')) ^
      *   bytes4(keccak256('transferAndCall(address,uint256,bytes)')) ^
      *   bytes4(keccak256('transferFromAndCall(address,address,uint256)')) ^
