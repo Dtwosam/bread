@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "breadSourcePack": {
+    "version": "v1.3",
+    "commit": "6505532e1c66bf666a19f6fa23c06ae890c3c1b6",
+    "path": "docs/source-reconciliation/bread-source-pack-v1.3.md"
+  },
+  "breadImplementationDesign": {
+    "commit": "f88892a8f594ba2463d40ad52227b5c23b6f45fd",
+    "path": "docs/superpowers/specs/2026-08-08-day3-trading-fees-escrow-design.md"
+  },
+  "breadImplementationPlan": {
+    "commit": "f17976c6aae91ac69ce50af62ca7032df1899911",
+    "path": "docs/superpowers/plans/2026-08-08-day3-trading-fees-escrow.md"
+  },
+  "ponsTradingReference": {
+    "repository": "https://github.com/ponsdotdev/ponsfamily",
+    "commit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+    "path": "contractsV2/src/v2/PonsV2BondingCurve.sol",
+    "blobSha": "a5d84b3c355a1661e1bf61a4dd4e29591fbf6074",
+    "spdx": "MIT",
+    "portMode": "ERC20_USDC_TRADING_BEHAVIOR_ONLY"
+  },
+  "ponsSharedInterfaceReference": {
+    "repository": "https://github.com/ponsdotdev/ponsfamily",
+    "commit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+    "path": "contractsV2/src/v2/interfaces/ILaunchpadV2.sol",
+    "blobSha": "5fac4a72f6be47e51971bc477f65f2447d1770f9",
+    "spdx": "MIT",
+    "use": "REFERENCE_ONLY"
+  },
+  "feeEscrowReference": {
+    "repository": "https://github.com/clanker-devco/v4-contracts",
+    "commit": "b004c2edda29fa282a16d5d1441a26484f70b37f",
+    "path": "src/ClankerFeeLocker.sol",
+    "blobSha": "fff50acd16fdb5585a0ebca14dd15f7ea35e6397",
+    "spdx": "MIT",
+    "classification": "ADAPT_PATTERN_ONLY"
+  },
+  "dependencyPolicy": {
+    "openzeppelinSource": "frozen-pons-tree",
+    "referenceCommit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+    "dynamicInstallAllowed": false,
+    "alreadyVendored": {
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "b493743a10c4fba04d91014cbdb7f69b639480c1",
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol": "87bbafa84b834af1da027455bdc2e8a87beeb438",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/Context.sol": "4e535fe03c243f864568b8f4430c17c25dbadb47",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/math/Math.sol": "e7288595b6539e986aef1a7a524884d86fc2d643",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/Panic.sol": "e168824d34b3f0ba0be33317fb34b9e74fc148b6",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol": "ccb979f61c9577e6338276cff49625d5a2191eb3"
+    },
+    "day3ToVendorBeforeGreen": {
+      "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": "4d5e45fde83dad355bc5d8d8664ff59c7cc7d8d9",
+      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol": "7bf3e1f7bbe9a20d1bef5468a55786556c6525aa",
+      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": "078e9ec9b403252bd480873adf10add00076eb0b",
+      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol": "d2c99a5bdfe9611dcfc67e8f0c40164d64ab5dd3",
+      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/IERC20Metadata.sol": "adffeb5f8c6e4e2d4e45d072dc9f82d310714023",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": "be1932f267f9c794f21d934a6bc21a322c6d2709",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol": "c156fa1cc9656ba278ca90270707848524bf0d25",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol": "aebb10524a2c82aa78ceb8394e5f3c1b0e5abeea",
+      "contractsV2/lib/openzeppelin-contracts/contracts/access/Ownable.sol": "bd96f6661dcbf7b2d4948823ac0e7bfb4ba31fb1"
+    }
+  },
+  "breadBoundaries": {
+    "quoteAsset": "canonical 6-decimal ERC20 USDC only",
+    "nativeQuote": false,
+    "buybackDay3": false,
+    "graduationTransferDay3": false,
+    "launchAndBuyDay3": false,
+    "antiSnipeDay3": false,
+    "liveRuntimePercentagesHardcoded": false
+  },
+  "parityClaim": "FROZEN_SOURCE_BEHAVIOR_AND_APPROVED_BREAD_ADAPTATION_ONLY_NOT_CURRENT_LIVE_PONS_PARITY"
+}
