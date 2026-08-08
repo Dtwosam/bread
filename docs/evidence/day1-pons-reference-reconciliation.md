@@ -1,6 +1,6 @@
 # Day 1 — Pons reference inventory and reconciliation reader
 
-Status: IMPLEMENTED — PENDING INTEGRATED MERGE
+Status: INTEGRATED PASS
 
 ## Frozen public reference
 
@@ -28,7 +28,7 @@ This is a file-level inventory only. It does not assert that every vendored depe
 
 ## Read-only reconciliation reader
 
-`packages/protocol-sdk/src/pons-live-reconcile.ts` now provides a read-only Pons V2 reconciliation surface. It can observe:
+`packages/protocol-sdk/src/pons-live-reconcile.ts` provides a read-only Pons V2 reconciliation surface. It can observe:
 
 - RPC chain ID and fail closed unless it is Robinhood Chain `4663`
 - current factory runtime bytecode length and keccak256
@@ -63,6 +63,11 @@ Review hardening RED:
 Review hardening GREEN:
 - implementation head: `cd9a588c8b4fde20f59152bda9d4acfd737081be`
 - CI run: `31249849839`
+- all four CI jobs: PASS
+
+Final exact-head gate:
+- PR #2 final head: `ef11e0f08ecfc2248d3cb73abaafb815083d1850`
+- CI run: `31249916544`
 - bootstrap validation: PASS
 - Pons reference regression: PASS
 - frozen dependency install: PASS
@@ -72,6 +77,10 @@ Review hardening GREEN:
 - clean tracked worktree after build: PASS
 - Foundry bootstrap: PASS
 - PostgreSQL/Redis health: PASS
+
+Integration:
+- PR #2 merged: PASS
+- merge commit: `d5d7091c13393418d45f1f70505c72c0a1f04d3d`
 
 ## Blockers deliberately retained
 
