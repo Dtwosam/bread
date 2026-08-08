@@ -1,15 +1,16 @@
 schema_version: 1.0
 project: Bread
-source_pack: v1.1
-updated_at: 2026-08-08T14:19:00+01:00
+source_pack: v1.3
+updated_at: 2026-08-08T14:35:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
+  - "Day 3 preflight: SOURCE_PACK_V1_3_POST_RESEARCH_ARCHITECTURE_FREEZE_APPROVED"
 active_checkpoint: "Day 3"
-active_lane: "Trading, Fees & Escrow — external component research complete; architecture/economic approval gate; no Day-3 production code yet"
+active_lane: "Trading, Fees & Escrow — Source Pack v1.3 architecture frozen; implementation-plan/integration-impact-map gate; no Day-3 production code yet"
 integration_baseline:
   id: D2-CLOSEOUT
   branch: main
@@ -30,7 +31,9 @@ repository:
   day3_component_sourcing_gate_commit: de50a7e635a58891efe42f7db40d231acde7846f
   day3_external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
   day3_external_component_matrix_path: docs/source-reconciliation/day3-external-component-research-matrix.md
-  status: DAY_3_EXTERNAL_COMPONENT_RESEARCH_COMPLETE_PENDING_ARCHITECTURE_APPROVAL
+  source_pack_v1_3_commit: 6505532e1c66bf666a19f6fa23c06ae890c3c1b6
+  source_pack_v1_3_path: docs/source-reconciliation/bread-source-pack-v1.3.md
+  status: DAY_3_SOURCE_PACK_V1_3_ARCHITECTURE_FROZEN_PENDING_IMPLEMENTATION_PLAN
 verification:
   day2_lane2_final_exact_head_run: 31256808903
   day2_closeout_run: 31256962864
@@ -45,12 +48,14 @@ verification:
 deployments: []
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
-  - EXACT_SNIPE_IMPLEMENTATION
-  - LAUNCH_AND_BUY_SOURCE
-  - FEE_ESCROW_SOURCE
+  - BREAD_SNIPE_DECAY_FORMULA
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
+resolved_or_superseded_blockers:
+  FEE_ESCROW_SOURCE: RESOLVED_BY_APPROVED_BREAD_ADAPTATION_ARCHITECTURE
+  LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
+  EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
 tooling:
   chatgpt: primary-integration-owner
   github: connected-admin-Dtwosam
@@ -65,34 +70,27 @@ tooling:
   cloudflare: not-selected
 decisions_since_last_state:
   - "Day-2 closeout PR #7 head 06385e4a561ece563cefe0580317b13309ff035a passed all four CI jobs in run 31256962864 and merged at 5d13689f1ebc54f609c0fcf61ea43287b207e61a. Day-2 verdict is DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS."
-  - "Day-3 controlling work is Buy/Sell with slippage and partial final buy/refund, FeePolicy snapshot and creator-tax separation, FeeEscrow pull claims, buyback/vesting only after reconciliation, and stateful USDC/fee/escrow invariants."
-  - "05C applicable Day-3 invariants include INV-001 through INV-006, INV-010 through INV-012 where affected, INV-020 through INV-026, and INV-030 through INV-035 when corresponding fee/buyback functionality exists."
-  - "03 explicitly permits FeeEscrow to be reimplemented if needed, but treats it as new security-sensitive financial code requiring explicit unit, fuzz, invariant, integration and independent review. Its minimum invariants include own-ledger-only claims, state update before external control, failed-transfer claim preservation, no admin withdrawal of recipient claims, USDC balance/outstanding-claims reconciliation and deterministic credit/claim events."
-  - "The public pons GitHub repository still has no commit newer than frozen d5491e20be56051a68abf47136f6890c3ce3ff7d and no concrete PonsV2FeeEscrow source was found in the public snapshot."
-  - "Current accessible pons docs describe a materially different Robinhood Chain / direct Uniswap V3 stack with no bonding curve or migration. Bread will not substitute those new semantics for the frozen old Pons V2 baseline. CURRENT_PONS_FACTORY_SOURCE_PARITY and LIVE_RUNTIME_CONFIG remain unresolved."
-  - "Frozen old Pons V2 Buy/Sell mechanics are source-visible, including tracked reserves, quote-leg fee/tax, partial final-buy clamp/refund and price-bound slippage; frozen fee/buyback sweep logic is coupled to FeePolicy, FeeEscrow and BuybackVault and must not be copied before those dependencies are explicitly reconciled."
-  - "Frozen PonsV2BuybackVault source is available and implements five-year weighted-average vesting, beneficiary/split snapshots, balance-delta locking and escrow-routed releases, but it remains a separate Day-3 reconciliation decision rather than automatically authorized production code."
-  - "External component sourcing is allowed only through docs/source-reconciliation/component-sourcing-reuse-gate.md at commit de50a7e635a58891efe42f7db40d231acde7846f. Candidates require exact provenance/license/assumption review and a REUSE, ADAPT, REFERENCE_ONLY or REJECT verdict before implementation."
-  - "Sourced components do not become standalone Bread entities. Every sourced-component lane starts from the current integrated baseline, defines upstream/downstream/invariant impact, wires every already-existing applicable consumer as soon as its interface is stable, runs affected regressions, and advances the single Bread integration baseline before PASS."
-  - "LOCAL_COMPONENT_PASS != BREAD_PASS. FeeEscrow specifically cannot PASS on contract tests alone; its trade-fee handoff and every currently existing applicable canonical consumer path must agree, while future SDK/indexer/API/dashboard lanes must consume the frozen escrow interface rather than redefine accounting."
-  - "Day-3 external-component matrix is durable at docs/source-reconciliation/day3-external-component-research-matrix.md from commit 61402df113304bbb2782bec9ba3bb6d086376fb1. Research verdict: DAY_3_EXTERNAL_COMPONENT_RESEARCH_MATRIX_COMPLETE_PENDING_ARCHITECTURE_APPROVAL."
-  - "FeeEscrow research recommends ADAPT of the minimal ClankerFeeLocker pattern into a Bread-owned canonical-USDC-only ledger with Bread credit authority, totalOutstanding solvency accounting, deterministic events, no recipient-claim rescue and exact trade/FeePolicy handoff. Flaunch FeeEscrow and OpenZeppelin PaymentSplitter are reference only; Doppler StreamableFeesLocker is rejected."
-  - "FeePolicy research recommends Bread-owned policy/snapshot state rather than importing an external splitter. Flaunch fee components and OpenZeppelin PaymentSplitter are reference only; 0xSplits PullSplit and Doppler Airlock are rejected as Bread subsystems because they introduce foreign accounting/economics and, respectively, GPL/BUSL integration constraints."
-  - "Launch+Buy research recommends a Bread-owned atomic lifecycle with FlaunchZap as primary lifecycle reference and ClankerUniv4EthDevBuy as secondary reference. No external source matches Bread's canonical-USDC bonding-curve partial-final-buy/refund/slippage semantics closely enough for source-level reuse."
-  - "Snipe research found ClankerMevDescendingFees as the strongest concrete adaptable source pattern, but selecting a descending launch fee/tax would be a new explicit Bread economic/security choice rather than Pons parity. ClankerSniperAuctionV2 and Flaunch's explicitly unaudited/untested fixed-price-window prototype are rejected for Bread production."
-  - "No active blocker was cleared by research alone. FEE_ESCROW_SOURCE now has a recommended resolution path; LAUNCH_AND_BUY_SOURCE has a recommended Bread-owned replacement path; EXACT_SNIPE_IMPLEMENTATION remains open pending explicit economic/security approval."
-next_action: "Present the completed Day-3 external-component research recommendations for approval. Obtain explicit architecture approval for the recommended FeeEscrow/FeePolicy/Launch+Buy direction and an explicit economic/security decision on snipe semantics. After approval, promote accepted decisions into Bread Source of Truth and prepare the consolidated post-research Source Pack v1.3 before any Day-3 production money-path implementation."
+  - "Day-3 external-component matrix is durable at docs/source-reconciliation/day3-external-component-research-matrix.md from commit 61402df113304bbb2782bec9ba3bb6d086376fb1."
+  - "Architecture approval granted for the recommended bundle: Bread-owned FeeEscrow adaptation, Bread-owned FeePolicy, Bread-owned atomic Launch+Buy, and Bread-owned descending buy-only anti-snipe protection."
+  - "Source Pack v1.3 freezes those decisions at docs/source-reconciliation/bread-source-pack-v1.3.md from commit 6505532e1c66bf666a19f6fa23c06ae890c3c1b6. Verdict: SOURCE_PACK_V1_3_POST_RESEARCH_ARCHITECTURE_FREEZE_APPROVED."
+  - "FeeEscrow is now authorized architecturally as a Bread-owned canonical-USDC-only ledger adapted from the minimal ClankerFeeLocker pattern: Bread credit authority, recipient ledger, totalOutstanding solvency accounting, state-before-transfer claims, deterministic events, donation-resistant entitlement, and no admin withdrawal of claim backing."
+  - "FeePolicy remains entirely Bread-owned. It must preserve per-launch snapshots, creator-tax separation, exact fee rounding/reconciliation and canonical FeeEscrow handoff. LIVE_RUNTIME_CONFIG is still unresolved, so missing live percentages are not guessed or hardcoded."
+  - "Launch+Buy architecture is Bread-owned and atomic. It must preserve canonical 6-decimal USDC, user slippage bounds, partial final-buy clamp/refund, no stranded temporary custody and full rollback. FlaunchZap and Clanker dev-buy remain references only. Production implementation remains Day 4 under 06C."
+  - "Anti-snipe architecture is Bread-owned, descending and buy-only. Existing 07A evidence remains the behavior envelope: approximately 99% opening tax, exponential decay to zero over 5 seconds, with explicit launcher/creator-fee-recipient/fixed launch-time exemptions where verified. ClankerMevDescendingFees is technical reference only; no Clanker economics or parabolic formula are inherited."
+  - "Exact Pons snipe formula parity is no longer an architecture prerequisite. A narrower BREAD_SNIPE_DECAY_FORMULA gate remains: freeze one deterministic Bread fixed-point formula satisfying the approved behavior envelope before Day-4 production implementation, then prove monotonicity, terminal zero, bounds, rounding and exemption correctness."
+  - "FEE_ESCROW_SOURCE is resolved by explicit approved reimplementation/adaptation; LAUNCH_AND_BUY_SOURCE is resolved by Bread-owned reconstruction; EXACT_SNIPE_IMPLEMENTATION is superseded by the approved Bread-owned architecture. CURRENT_PONS_FACTORY_SOURCE_PARITY, LIVE_RUNTIME_CONFIG, PONS_AUDIT_FINDINGS and ARC_MAINNET_VALUES remain active."
+  - "No Day-3 production money-path code was introduced during research or Source Pack v1.3 promotion. Buyback/vesting remains separately gated and is not implicitly authorized by FeeEscrow approval."
+next_action: "Prepare and freeze the Day-3 implementation plan and continuous-integration impact map for Buy/Sell, FeePolicy and FeeEscrow from the accepted Day-2 baseline. Define TDD red/green order, exact interfaces/events, upstream/downstream wiring, unit/fuzz/stateful invariant coverage and regression gates. Do not pull Launch+Buy or anti-snipe production code into Day 3."
 do_not_do:
-  - "Do not write Day-3 production money-path code before research decisions are approved and promoted into Source Pack v1.3."
+  - "Do not write Day-3 production money-path code until the implementation plan/integration-impact-map gate is frozen."
   - "Do not treat any sourced component as a standalone mini-product or defer applicable Bread wiring until a late integration phase."
   - "Do not claim a sourced component PASS from local/upstream tests alone."
   - "Do not inherit another protocol's fee percentages, recipients, curve economics, snipe schedule, admin powers, custody model or chain constants."
-  - "Do not reuse public code without establishing suitable license/permission."
   - "Do not claim exact current-live Pons V2 parity from third-party code."
   - "Do not import the current Robinhood/Uniswap-V3 pons stack as Bread semantics."
-  - "Do not hardcode old Pons source-default fee percentages as Bread live economics; LIVE_RUNTIME_CONFIG remains unresolved."
-  - "Do not implement FeeEscrow until its selected architecture is approved and promoted into Source of Truth."
-  - "Do not implement buyback/vesting until its Day-3 source and invariant boundary is explicitly approved."
-  - "Do not implement snipe protection or Launch+Buy before the corresponding Bread Source-of-Truth decisions are frozen."
+  - "Do not hardcode missing live fee percentages; LIVE_RUNTIME_CONFIG remains unresolved."
+  - "Do not implement buyback/vesting until its separate Day-3 source and invariant boundary is explicitly approved."
+  - "Do not implement Launch+Buy or anti-snipe production code in Day 3; those remain Day-4 scope under 06C."
+  - "Do not implement anti-snipe production code before BREAD_SNIPE_DECAY_FORMULA is frozen."
   - "Do not add native quote handling; Bread V1 finance remains canonical 6-decimal ERC20 USDC only."
   - "Do not hardcode Arc mainnet values before official publication."
