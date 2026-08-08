@@ -1,0 +1,26 @@
+{
+  "projectSourcePack": "v1.4-day4-design",
+  "acceptedMain": "ef03e60f9bbd5737a991dd3b1b747866d8ad8f3a",
+  "approvedDesign": "324b6055a0bed278766e1b48016774ac745b3781",
+  "ponsReference": {
+    "repo": "ponsdotdev/ponsfamily",
+    "commit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+    "factory": "contractsV2/src/v2/PonsV2LaunchFactory.sol",
+    "deployer": "contractsV2/src/v2/PonsV2LaunchDeployer.sol",
+    "role": "REFERENCE_ONLY"
+  },
+  "clankerOpeningReference": {
+    "repo": "clanker-devco/v4-contracts",
+    "commit": "b004c2edda29fa282a16d5d1441a26484f70b37f",
+    "path": "src/mev-modules/ClankerMevDescendingFees.sol",
+    "role": "REFERENCE_ONLY"
+  },
+  "openingPolicy": {
+    "startingBps": 9900,
+    "durationSeconds": 5,
+    "terminalBps": 0,
+    "routing": "QUOTE_FEE_BALANCE"
+  },
+  "liveRuntimeValues": "NOT_FROZEN_DO_NOT_INVENT",
+  "currentPonsFactoryParity": "NOT_CLAIMED"
+}

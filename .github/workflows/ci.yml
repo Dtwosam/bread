@@ -34,6 +34,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate
       - run: pnpm test
+      - name: Check Day 4 changed-file formatting
+        run: >-
+          pnpm exec prettier --check
+          .github/workflows/ci.yml
+          config/protocol/day4-launch-control-source-inventory.json
+          docs/current-build-state.yaml
+          docs/evidence/day4-factory-launch-buy-snipe-emergency.md
+          scripts/validation/validate-all.mjs
+          scripts/validation/validate-day4-launch-control-source-integrity.mjs
       - run: pnpm typecheck
       - run: pnpm build
       - name: Verify build leaves tracked workspace clean

@@ -7,6 +7,8 @@ import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
 contract BreadBondingCurveTradingTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -176,30 +178,35 @@ contract BreadBondingCurveTradingTest {
         });
         BreadFeePolicy policy = new BreadFeePolicy(address(this), snapshot, address(0xB0B));
         BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         curve = new BreadBondingCurve(
             address(usdc),
             address(this),
             address(this),
             address(policy),
             address(escrow),
+            address(emergencyController),
             PHANTOM_QUOTE,
             CREATOR_TAX_BPS,
             GRADUATION_THRESHOLD
         );
 
-        BreadLaunchToken.Socials memory socials;
-        token = new BreadLaunchToken(
-            "Bread Test",
-            "BREAD",
-            "",
-            "",
-            socials,
-            address(this),
-            address(curve),
-            address(this),
-            TOKEN_SUPPLY
-        );
+        BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
+            name: "Bread Test",
+            symbol: "BREAD",
+            logo: "",
+            description: "",
+            socials: BreadLaunchToken.Socials({twitter: "", telegram: "", discord: "", website: "", farcaster: ""})
+        });
+        BreadLaunchToken.LaunchContext memory context = BreadLaunchToken.LaunchContext({
+            deployer: address(this),
+            curve: address(curve),
+            launchFactory: address(this),
+            supply: TOKEN_SUPPLY
+        });
+        token = new BreadLaunchToken(metadata, context);
         curve.initialize(address(token));
+        BreadTestTime.expireOpening(curve);
     }
 
     function _finalBuyExpectations(BreadBondingCurve curve)

@@ -7,7 +7,9 @@ import {BreadFeeEscrow} from "../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../src/fees/BreadFeePolicy.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
 import {BreadFeeClaimRecipient} from "./helpers/BreadTradingActors.sol";
+import {BreadTestTime} from "./helpers/BreadTestTime.sol";
 
 contract BreadTradingInvariantTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -159,29 +161,34 @@ contract BreadTradingInvariantTest {
         });
         f.policy = new BreadFeePolicy(address(this), snapshot, address(0xB0B));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         f.curve = new BreadBondingCurve(
             address(f.usdc),
             address(this),
             address(this),
             address(f.policy),
             address(f.escrow),
+            address(emergencyController),
             PHANTOM_QUOTE,
             CREATOR_TAX_BPS,
             GRADUATION_THRESHOLD
         );
 
-        BreadLaunchToken.Socials memory socials;
-        f.token = new BreadLaunchToken(
-            "Bread Test",
-            "BREAD",
-            "",
-            "",
-            socials,
-            address(this),
-            address(f.curve),
-            address(this),
-            TOKEN_SUPPLY
-        );
+        BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
+            name: "Bread Test",
+            symbol: "BREAD",
+            logo: "",
+            description: "",
+            socials: BreadLaunchToken.Socials({twitter: "", telegram: "", discord: "", website: "", farcaster: ""})
+        });
+        BreadLaunchToken.LaunchContext memory context = BreadLaunchToken.LaunchContext({
+            deployer: address(this),
+            curve: address(f.curve),
+            launchFactory: address(this),
+            supply: TOKEN_SUPPLY
+        });
+        f.token = new BreadLaunchToken(metadata, context);
         f.curve.initialize(address(f.token));
+        BreadTestTime.expireOpening(f.curve);
     }
 }

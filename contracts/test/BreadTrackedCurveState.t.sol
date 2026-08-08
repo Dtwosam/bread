@@ -220,25 +220,20 @@ contract BreadTrackedCurveStateTest {
     }
 
     function _deployToken(address curve, uint256 supply) private returns (BreadLaunchToken) {
-        BreadLaunchToken.Socials memory socialValues = BreadLaunchToken.Socials({
-            twitter: "",
-            telegram: "",
-            discord: "",
-            website: "",
-            farcaster: ""
+        BreadLaunchToken.Metadata memory metadata = BreadLaunchToken.Metadata({
+            name: "Bread State Test",
+            symbol: "BST",
+            logo: "",
+            description: "",
+            socials: BreadLaunchToken.Socials({twitter: "", telegram: "", discord: "", website: "", farcaster: ""})
         });
-
-        return new BreadLaunchToken(
-            "Bread State Test",
-            "BST",
-            "",
-            "",
-            socialValues,
-            address(this),
-            curve,
-            FACTORY,
-            supply
-        );
+        BreadLaunchToken.LaunchContext memory context = BreadLaunchToken.LaunchContext({
+            deployer: address(this),
+            curve: curve,
+            launchFactory: FACTORY,
+            supply: supply
+        });
+        return new BreadLaunchToken(metadata, context);
     }
 
     function _assertSelector(bytes memory data, bytes4 expected) private pure {
