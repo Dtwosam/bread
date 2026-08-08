@@ -76,27 +76,27 @@ contract BreadLaunchDeployer {
         );
 
         BreadLaunchMetadata calldata metadata = p.metadata;
-        BreadLaunchToken.Socials memory socials = BreadLaunchToken.Socials({
-            twitter: metadata.twitter,
-            telegram: metadata.telegram,
-            discord: metadata.discord,
-            website: metadata.website,
-            farcaster: metadata.farcaster
+        BreadLaunchToken.Metadata memory tokenMetadata = BreadLaunchToken.Metadata({
+            name: metadata.name,
+            symbol: metadata.symbol,
+            logo: metadata.logo,
+            description: metadata.description,
+            socials: BreadLaunchToken.Socials({
+                twitter: metadata.twitter,
+                telegram: metadata.telegram,
+                discord: metadata.discord,
+                website: metadata.website,
+                farcaster: metadata.farcaster
+            })
+        });
+        BreadLaunchToken.LaunchContext memory launchContext = BreadLaunchToken.LaunchContext({
+            deployer: core.originalDeployer,
+            curve: curve,
+            launchFactory: core.factory,
+            supply: core.supply
         });
 
-        token = address(
-            new BreadLaunchToken(
-                metadata.name,
-                metadata.symbol,
-                metadata.logo,
-                metadata.description,
-                socials,
-                core.originalDeployer,
-                curve,
-                core.factory,
-                core.supply
-            )
-        );
+        token = address(new BreadLaunchToken(tokenMetadata, launchContext));
     }
 
     function _validateMetadata(BreadLaunchMetadata calldata metadata) private pure {
