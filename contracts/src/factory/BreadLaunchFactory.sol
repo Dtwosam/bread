@@ -12,6 +12,8 @@ import {IBreadEmergencyController} from "../interfaces/IBreadEmergencyController
 import {IBreadFeeEscrow} from "../interfaces/IBreadFeeEscrow.sol";
 import {IBreadLaunchFactory} from "../interfaces/IBreadLaunchFactory.sol";
 import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
+import {IGraduationAdapter} from "../interfaces/IGraduationAdapter.sol";
+import {IGraduationCoordinator} from "../interfaces/IGraduationCoordinator.sol";
 
 /// @title BreadLaunchFactory
 /// @notice Bread-owned launch orchestration and economics pinning over the accepted Day-3 curve stack.
@@ -29,9 +31,13 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
     error EmptyStackVersion();
     error LaunchDeployerAlreadySet();
     error InvalidLaunchDeployer();
+    error GraduationCoordinatorAlreadySet();
+    error InvalidGraduationCoordinator();
+    error InvalidGraduationAdapter();
     error LaunchDisabled();
     error LaunchesRestricted();
     error LaunchDeployerNotSet();
+    error GraduationCoordinatorNotSet();
     error CreatorRecipientZeroAddress();
     error EmptyTokenName();
     error EmptyTokenSymbol();
@@ -59,6 +65,10 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         uint16 terminalSnipeTaxBps;
         bytes32 openingProtectionPolicyId;
         bytes32 openingTaxRoutingId;
+        address graduationCoordinator;
+        address graduationAdapter;
+        uint8 graduationAdapterFamily;
+        bytes32 graduationConfigHash;
     }
 
     struct LaunchPreparation {
@@ -75,12 +85,14 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
     bytes32 public immutable stackVersion;
 
     BreadLaunchDeployer public launchDeployer;
+    IGraduationCoordinator public graduationCoordinator;
     uint64 public configVersion;
     IBreadLaunchFactory.LaunchConfig private _launchConfig;
     mapping(address token => IBreadLaunchFactory.LaunchRecord record) private _launches;
     mapping(address curve => address token) private _tokenForCurve;
 
     event LaunchDeployerSet(address indexed launchDeployer);
+    event GraduationCoordinatorSet(address indexed graduationCoordinator);
     event LaunchConfigUpdated(uint64 indexed previousVersion, uint64 indexed nextVersion);
     event LaunchFeeCredited(address indexed token, address indexed protocolRecipient, uint256 amount);
     event LaunchCreated(
@@ -117,7 +129,8 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
                 || emergencyController_ == address(0)
         ) revert ZeroAddress();
         if (stackVersion_ == bytes32(0)) revert EmptyStackVersion();
-        _validateConfig(initialConfig_);
+        _validateConfigShape(initialConfig_);
+        if (initialConfig_.enabled) revert InvalidLaunchConfig();
 
         usdc = usdc_;
         feePolicy = IBreadFeePolicy(feePolicy_);
@@ -135,8 +148,20 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         emit LaunchDeployerSet(address(next));
     }
 
+    function setGraduationCoordinator(IGraduationCoordinator next) external onlyOwner {
+        if (address(graduationCoordinator) != address(0)) revert GraduationCoordinatorAlreadySet();
+        if (
+            address(next).code.length == 0 || next.factory() != address(this) || next.usdc() != usdc
+                || next.feeEscrow() != feeEscrow || next.emergencyController() != address(emergencyController)
+                || next.locker() == address(0)
+        ) revert InvalidGraduationCoordinator();
+        graduationCoordinator = next;
+        emit GraduationCoordinatorSet(address(next));
+    }
+
     function setLaunchConfig(IBreadLaunchFactory.LaunchConfig calldata next) external onlyOwner {
-        _validateConfig(next);
+        _validateConfigShape(next);
+        if (next.enabled) _validateEnabledGraduationConfig(next);
         uint64 previousVersion = configVersion;
         configVersion = previousVersion + 1;
         _launchConfig = next;
@@ -171,6 +196,12 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         input.terminalSnipeTaxBps = TERMINAL_SNIPE_TAX_BPS;
         input.openingProtectionPolicyId = OPENING_PROTECTION_POLICY_ID;
         input.openingTaxRoutingId = OPENING_TAX_ROUTING_ID;
+        input.graduationCoordinator = address(graduationCoordinator);
+        input.graduationAdapter = config.graduationAdapter;
+        input.graduationConfigHash = config.graduationConfigHash;
+        input.graduationAdapterFamily = config.graduationAdapter == address(0)
+            ? uint8(IGraduationAdapter.AdapterFamily.NONE)
+            : uint8(IGraduationAdapter(config.graduationAdapter).family());
         return keccak256(abi.encode(input));
     }
 
@@ -235,6 +266,7 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
     {
         if (!emergencyController.launchesAllowed()) revert LaunchesRestricted();
         if (!_launchConfig.enabled) revert LaunchDisabled();
+        if (address(graduationCoordinator) == address(0)) revert GraduationCoordinatorNotSet();
         prep.deployer = launchDeployer;
         if (address(prep.deployer) == address(0)) revert LaunchDeployerNotSet();
         if (params.creatorFeeRecipient == address(0)) revert CreatorRecipientZeroAddress();
@@ -322,6 +354,8 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
     ) private {
         uint64 launchedAt = BreadBondingCurve(curve).launchTimestamp();
         uint64 version = configVersion;
+        IBreadLaunchFactory.LaunchConfig memory config = _launchConfig;
+        IGraduationAdapter adapter = IGraduationAdapter(config.graduationAdapter);
         _launches[token] = IBreadLaunchFactory.LaunchRecord({
             token: token,
             curve: curve,
@@ -330,7 +364,11 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
             creatorTaxBps: params.creatorTaxBps,
             economicsDigest: digest,
             launchTimestamp: launchedAt,
-            configVersion: version
+            configVersion: version,
+            graduationCoordinator: address(graduationCoordinator),
+            graduationAdapter: config.graduationAdapter,
+            graduationAdapterFamily: adapter.family(),
+            graduationConfigHash: config.graduationConfigHash
         });
         _tokenForCurve[curve] = token;
 
@@ -345,9 +383,26 @@ contract BreadLaunchFactory is Ownable, ReentrancyGuard {
         );
     }
 
-    function _validateConfig(IBreadLaunchFactory.LaunchConfig memory config) private pure {
+    function _validateConfigShape(IBreadLaunchFactory.LaunchConfig memory config) private pure {
         if (config.supply == 0 || config.phantomQuote == 0 || config.graduationThreshold == 0) {
             revert InvalidLaunchConfig();
         }
+        if (!config.enabled && (config.graduationAdapter != address(0) || config.graduationConfigHash != bytes32(0))) {
+            revert InvalidLaunchConfig();
+        }
+    }
+
+    function _validateEnabledGraduationConfig(IBreadLaunchFactory.LaunchConfig memory config) private view {
+        IGraduationCoordinator coordinator = graduationCoordinator;
+        if (address(coordinator) == address(0)) revert GraduationCoordinatorNotSet();
+        if (config.graduationAdapter.code.length == 0 || config.graduationConfigHash == bytes32(0)) {
+            revert InvalidGraduationAdapter();
+        }
+
+        IGraduationAdapter adapter = IGraduationAdapter(config.graduationAdapter);
+        if (
+            adapter.family() == IGraduationAdapter.AdapterFamily.NONE || adapter.usdc() != usdc
+                || adapter.locker() != coordinator.locker() || adapter.configHash() != config.graduationConfigHash
+        ) revert InvalidGraduationAdapter();
     }
 }
