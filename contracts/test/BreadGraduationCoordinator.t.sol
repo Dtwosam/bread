@@ -146,10 +146,11 @@ contract BreadGraduationCoordinatorTest is BreadDay5Fixture {
         r.fixture.usdc.mint(address(this), quoteIn);
         assert(r.fixture.usdc.approve(address(r.fixture.factory), quoteIn));
 
-        (r.token, address curveAddress, uint256 tokensOut) =
-            IBreadLaunchFactory(address(r.fixture.factory)).launchTokenAndBuy(
-                _day5Params(r.fixture.factory.previewLaunchEconomics()), quoteIn, r.sellable, address(this)
-            );
+        address curveAddress;
+        uint256 tokensOut;
+        (r.token, curveAddress, tokensOut) = IBreadLaunchFactory(address(r.fixture.factory)).launchTokenAndBuy(
+            _day5Params(r.fixture.factory.previewLaunchEconomics()), quoteIn, r.sellable, address(this)
+        );
         assert(tokensOut == r.sellable);
         r.curve = BreadBondingCurve(curveAddress);
         assert(r.curve.readyToGraduate());
