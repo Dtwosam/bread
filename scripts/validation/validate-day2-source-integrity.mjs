@@ -18,6 +18,17 @@ if (inventory.dependencyPolicy?.packageVersionClaim !== null) {
   throw new Error('Day 2 must not claim an unverified OpenZeppelin package version');
 }
 
+const trackedState = inventory.productionPorts?.BreadTrackedCurveState;
+if (trackedState?.sourcePath !== 'contractsV2/src/v2/PonsV2BondingCurve.sol') {
+  throw new Error(`unexpected tracked-state source path: ${trackedState?.sourcePath}`);
+}
+if (trackedState?.blobSha !== 'a5d84b3c355a1661e1bf61a4dd4e29591fbf6074') {
+  throw new Error(`unexpected tracked-state source blob: ${trackedState?.blobSha}`);
+}
+if (trackedState?.portMode !== 'BOUNDED_TRACKED_RESERVE_EXTRACTION') {
+  throw new Error(`unexpected tracked-state port mode: ${trackedState?.portMode}`);
+}
+
 function gitBlobSha(bytes) {
   const header = Buffer.from(`blob ${bytes.length}\0`, 'utf8');
   return createHash('sha1').update(header).update(bytes).digest('hex');
@@ -27,8 +38,8 @@ const upstreamPrefix = 'contractsV2/lib/openzeppelin-contracts/contracts/';
 const localPrefix = 'contracts/lib/openzeppelin-contracts/contracts/';
 const vendoredFiles = inventory.dependencyPolicy?.vendoredFiles ?? {};
 
-if (Object.keys(vendoredFiles).length !== 6) {
-  throw new Error(`expected exactly 6 frozen OpenZeppelin files, got ${Object.keys(vendoredFiles).length}`);
+if (Object.keys(vendoredFiles).length !== 9) {
+  throw new Error(`expected exactly 9 frozen OpenZeppelin files, got ${Object.keys(vendoredFiles).length}`);
 }
 
 for (const [upstreamPath, expectedSha] of Object.entries(vendoredFiles)) {
