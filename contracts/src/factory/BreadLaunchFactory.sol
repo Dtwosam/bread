@@ -162,25 +162,25 @@ contract BreadLaunchFactory is Ownable {
         returns (BreadLaunchDeployer.BreadLaunchDeployment memory deployment)
     {
         IBreadLaunchFactory.LaunchConfig memory config = _launchConfig;
-        deployment.usdc = usdc;
-        deployment.creatorFeeRecipient = params.creatorFeeRecipient;
-        deployment.originalDeployer = originalDeployer;
-        deployment.factory = address(this);
-        deployment.feePolicy = address(feePolicy);
-        deployment.feeEscrow = feeEscrow;
-        deployment.phantomQuote = config.phantomQuote;
-        deployment.creatorTaxBps = params.creatorTaxBps;
-        deployment.graduationThreshold = config.graduationThreshold;
-        deployment.supply = config.supply;
-        deployment.name = params.name;
-        deployment.symbol = params.symbol;
-        deployment.logo = params.logo;
-        deployment.description = params.description;
-        deployment.twitter = params.twitter;
-        deployment.telegram = params.telegram;
-        deployment.discord = params.discord;
-        deployment.website = params.website;
-        deployment.farcaster = params.farcaster;
+        deployment.core.usdc = usdc;
+        deployment.core.creatorFeeRecipient = params.creatorFeeRecipient;
+        deployment.core.originalDeployer = originalDeployer;
+        deployment.core.factory = address(this);
+        deployment.core.feePolicy = address(feePolicy);
+        deployment.core.feeEscrow = feeEscrow;
+        deployment.core.phantomQuote = config.phantomQuote;
+        deployment.core.creatorTaxBps = params.creatorTaxBps;
+        deployment.core.graduationThreshold = config.graduationThreshold;
+        deployment.core.supply = config.supply;
+        deployment.metadata.name = params.name;
+        deployment.metadata.symbol = params.symbol;
+        deployment.metadata.logo = params.logo;
+        deployment.metadata.description = params.description;
+        deployment.metadata.twitter = params.twitter;
+        deployment.metadata.telegram = params.telegram;
+        deployment.metadata.discord = params.discord;
+        deployment.metadata.website = params.website;
+        deployment.metadata.farcaster = params.farcaster;
     }
 
     function _recordLaunch(
