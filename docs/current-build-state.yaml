@@ -1,6 +1,6 @@
 schema_version: 1.9
 project: Bread
-source_pack_expected: v1.5-day5-preflight-blocker-burndown
+source_pack_expected: v1.4-day4-design
 updated_at: 2026-08-08T21:51:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
