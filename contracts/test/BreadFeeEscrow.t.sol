@@ -38,4 +38,24 @@ contract BreadFeeEscrowTest {
         assert(escrow.totalOutstanding() == 0);
         assert(escrow.surplus() == donation);
     }
+
+    function testFullClaimDebitsLedgerOutstandingAndCustody() public {
+        MockUSDC6 usdc = new MockUSDC6();
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
+        escrow.setAuthorizedCreditor(address(this), true);
+
+        uint256 amount = 11 * ONE_USDC;
+        usdc.mint(address(this), amount);
+        assert(usdc.approve(address(escrow), amount));
+        escrow.credit(address(this), amount);
+
+        assert(usdc.balanceOf(address(this)) == 0);
+        uint256 claimed = escrow.claim();
+
+        assert(claimed == amount);
+        assert(usdc.balanceOf(address(this)) == amount);
+        assert(usdc.balanceOf(address(escrow)) == 0);
+        assert(escrow.balanceOf(address(this)) == 0);
+        assert(escrow.totalOutstanding() == 0);
+    }
 }
