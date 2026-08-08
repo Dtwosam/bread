@@ -34,10 +34,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate
       - run: pnpm test
-      - name: Show Day 4 evidence formatting diff
-        run: |
-          pnpm exec prettier docs/evidence/day4-factory-launch-buy-snipe-emergency.md > /tmp/day4-evidence-formatted.md
-          diff -u docs/evidence/day4-factory-launch-buy-snipe-emergency.md /tmp/day4-evidence-formatted.md || true
       - name: Check Day 4 changed-file formatting
         run: >-
           pnpm exec prettier --check
