@@ -15,10 +15,14 @@ active_checkpoint: "Day 5 — blocker burn-down/source reconciliation preflight"
 active_lane: "Research evidence complete; replacement Project Source generation/upload/readback ratification"
 active_gate: DAY5_PROJECT_SOURCE_AMENDMENT_RATIFICATION_REQUIRED
 project_source_state:
+  pack: v1.4-day4-design
+  upload: UPLOADED
+  ratification: RATIFIED
+  existing_day1_day3_baseline_ratification: RATIFIED
+  day4_amendment: RATIFIED
+  day4_production_ratification: RATIFIED
   current_ratified_pack: v1.4-day4-design
   proposed_next_pack: v1.5-day5-preflight-blocker-burndown
-  current_pack_upload: UPLOADED
-  current_pack_ratification: RATIFIED
   day5_preflight_amendment_required: true
   day5_preflight_amendment_upload: PENDING_USER_UPLOAD
   day5_preflight_amendment_ratification: PENDING
