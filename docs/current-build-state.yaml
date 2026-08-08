@@ -1,93 +1,60 @@
-schema_version: 1.0
+schema_version: 1.1
 project: Bread
-source_pack: v1.1
-updated_at: 2026-08-08T14:20:00+02:00
+source_pack_expected: v1.3-post-research
+updated_at: 2026-08-08T16:20:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
   - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
-  - "Day 2 Lane 1: DAY_2_CORE_MATH_TOKEN_INTEGRATED_PASS"
-  - "Day 2 Lane 2: DAY_2_TRACKED_CURVE_STATE_INTEGRATED_PASS"
-active_checkpoint: "Day 2 closeout"
-active_lane: "End-of-day 06C acceptance gate — requirements satisfied; durable closeout CI pending"
+  - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
+active_checkpoint: "Day 3 — Trading, Fees & Escrow"
+active_gate: PROJECT_SOURCE_V1_3_RATIFICATION
+project_source_state:
+  upload: PENDING_USER_UPLOAD
+  ratification: UNRATIFIED
+  rule: "Repository research/amendment docs are evidence, not proof that Project Sources were uploaded. No affected production code may merge until v1.3 is uploaded, read back and reconciled."
 integration_baseline:
-  id: D2-CODE
+  id: D2-CLOSEOUT
   branch: main
-  commit: 57b48940b71491ff9780764653c278b237eddd8d
-  status: ACCEPTED_DAY_2_IMPLEMENTATION_BASELINE_PENDING_METADATA_CLOSEOUT
-working_branches:
-  - checkpoint/day2-closeout
-repository:
-  remote: https://github.com/Dtwosam/bread
-  default_branch: main
-  day1_closeout_merge_commit: 86abb75ef96cfca340afec8a755e94ed366c379e
-  day2_lane1_code_merge_commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
-  day2_lane1_closeout_merge_commit: aca14483ef5d8bee707a39e7ea628569d22d1828
-  day2_lane2_final_head: 4d2cd11f9aedf912997857486b88e850ca3a6ecb
-  day2_lane2_code_merge_commit: 57b48940b71491ff9780764653c278b237eddd8d
-  day2_closeout_branch: checkpoint/day2-closeout
-  status: DAY_2_REQUIREMENTS_SATISFIED_CLOSEOUT_GATE_PENDING
-verification:
-  day2_math_red_run: 31254865534
-  day2_math_green_run: 31254898416
-  day2_token_red_run: 31255073347
-  day2_token_green_run: 31255097370
-  day2_lane1_integrity_red_run: 31255285593
-  day2_lane1_integrity_green_run: 31255322107
-  day2_lane1_final_exact_head_run: 31255399674
-  day2_lane1_closeout_run: 31255527782
-  day2_lane2_state_red_run: 31256434625
-  day2_lane2_state_green_run: 31256521989
-  day2_lane2_tiny_trade_run: 31256566172
-  day2_lane2_integrity_red_run: 31256620643
-  day2_lane2_integrity_green_run: 31256663164
-  day2_lane2_review_run: 31256713514
-  day2_lane2_final_exact_head_run: 31256808903
-  day2_lane2_final_exact_head: 4d2cd11f9aedf912997857486b88e850ca3a6ecb
-  day2_closeout_run: null
-  jobs:
-    bootstrap_validation: PASS
-    day2_frozen_source_integrity: PASS_NINE_FILES
-    dependency_build_frozen_lockfile: PASS
-    tracked_workspace_clean_after_build: PASS
-    foundry_bootstrap: PASS_48_TESTS
-    postgres_redis_health: PASS
-deployments: []
+  commit: 5d13689f1ebc54f609c0fcf61ea43287b207e61a
+  status: ACCEPTED_DAY_2_DURABLE_BASELINE
+research:
+  external_component_matrix_commit: 61402df113304bbb2782bec9ba3bb6d086376fb1
+  post_research_handoff_commit: ee13d00a192040b227a01488fcd73f48699b9093
+  architecture_decisions:
+    fee_escrow: "ADAPT Clanker ClankerFeeLocker pattern into Bread-owned canonical-USDC escrow"
+    fee_policy: "BREAD_OWNED"
+    launch_and_buy: "BREAD_OWNED_ATOMIC_LIFECYCLE"
+    anti_snipe: "BREAD_OWNED_DESCENDING_BUY_ONLY; Clanker technical reference only"
+candidate_prs:
+  pr_8:
+    state: DRAFT_OPEN_UNMERGED_UNRATIFIED
+    head_observed: e8e844bec3946f0f0a1748858e06897572261840
+    title: "[BLOCKED ON PROJECT SOURCE v1.3 RATIFICATION] Day 3: trading fees and escrow"
+    rule: "Freeze; after ratification audit source-to-code, TDD-repair divergence, exact-head CI, then guarded merge only if conforming."
+  pr_9:
+    state: DRAFT_OPEN_UNMERGED_STALE_CLOSEOUT
+    head_observed: 78796a0789ea70b076290494f3cb6c4c3bd2b9f4
+    title: "[STALE CLOSEOUT — DO NOT MERGE] Close Day 3 trading fees and escrow"
+    rule: "Cannot close Day 3 before a ratified PR #8 is merged and closeout is rerun/rebased from actual main."
 blockers:
+  - PROJECT_SOURCE_V1_3_RATIFICATION
+  - BREAD_SNIPE_DECAY_FORMULA
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
-  - EXACT_SNIPE_IMPLEMENTATION
-  - LAUNCH_AND_BUY_SOURCE
-  - FEE_ESCROW_SOURCE
   - LIVE_RUNTIME_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
-tooling:
-  chatgpt: primary-integration-owner
-  github: connected-admin-Dtwosam
-  node: 24.18.0
-  pnpm: 11.15.1
-  foundry: v1.5.0
-  solidity: 0.8.26
-  vercel: not-configured
-  sentry: not-configured
-  figma: available-optional
-  supabase: not-selected
-  cloudflare: not-selected
-decisions_since_last_state:
-  - "PR #6 exact tested head 4d2cd11f9aedf912997857486b88e850ca3a6ecb passed all four CI jobs in run 31256808903 and merged with an expected-head guard at 57b48940b71491ff9780764653c278b237eddd8d."
-  - "Controlling 06C v1.1 Day-2 checklist was re-read after Lane-2 integration. Required work is minimal LaunchToken/BondingCurveMath, fixed-supply/6-decimal/allocation-graduation/rounding unit-fuzz coverage, differential unchanged math, tracked-reserve skeleton and donation/tiny-trade invariants."
-  - "Lane 1 + Lane 2 evidence covers every listed Day-2 work item and all Day-2 end-of-day gates: core math fuzz PASS, supply invariants PASS, and no unexplained reference divergence."
-  - "Daily continuity is satisfied for the Day-2 layer boundary: lanes integrated serially from the prior baseline; existing regressions remain green; no already-existing downstream SDK/indexer/API/web consumer is left on placeholder semantics; BreadTrackedCurveState is abstract rather than a fake concrete trading interface."
-  - "Day-2 tiny-trade proof is rounding-only; stateful fee/tax conservation and escrow invariants remain Day-3 work and are not claimed by the Day-2 verdict."
-  - "All 7A blockers remain active and especially constrain Day-3 FeeEscrow/buyback work and Day-4 Launch+Buy/snipe work."
-next_action: "Run the four-job CI on the Day-2 closeout branch containing the final Lane-2 evidence, 06C requirement-by-requirement closeout, and this handoff. If green, merge the closeout to main and begin Day-3 source preflight/reconciliation for Buy/Sell, FeePolicy, FeeEscrow and buyback semantics before writing Day-3 production code."
+resolved_or_superseded_after_v1_3_ratification:
+  FEE_ESCROW_SOURCE: RESOLVED_BY_APPROVED_BREAD_ADAPTATION_ARCHITECTURE
+  LAUNCH_AND_BUY_SOURCE: RESOLVED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
+  EXACT_SNIPE_IMPLEMENTATION: SUPERSEDED_BY_APPROVED_BREAD_OWNED_ARCHITECTURE
+next_action: >-
+  User replaces the affected Project Sources with the final consolidated v1.3 files. In the next chat, read every uploaded replacement, verify GitHub main plus PR #8/#9, and set PROJECT_SOURCE_RATIFICATION=RATIFIED only if they agree. Then audit PR #8 requirement-by-requirement against v1.3; preserve conforming work, TDD-repair any divergence, run full exact-head CI/security/invariants, and merge only if ratified and green. After PR #8 merges, refresh/rebase/recreate the Day-3 closeout from actual main. Do not start Day 4 until Day 3 is durably closed.
 do_not_do:
-  - "Do not start Day-3 production code before the Day-2 closeout branch is green and merged."
+  - "Do not merge PR #8 or PR #9 before Project Source v1.3 ratification and conformance review."
+  - "Do not treat a GitHub source-pack markdown file as proof of Project Source upload."
+  - "Do not start Day 4 while Day 3 remains unratified/candidate."
   - "Do not claim exact current-live Pons parity."
-  - "Do not implement FeeEscrow from guesses; FEE_ESCROW_SOURCE remains active."
-  - "Do not implement buyback/vesting semantics until their Day-3 dependencies are reconciled."
-  - "Do not implement snipe protection or Launch+Buy in Day 3; those remain Day-4 gated and blocked."
-  - "Do not treat raw token/USDC balances as tracked pricing reserves."
-  - "Do not dynamically install or silently modify frozen financial dependencies."
-  - "Do not hardcode Arc mainnet values before official publication."
+  - "Do not hardcode unresolved live fee values or Arc mainnet values."
+  - "Do not import external economics, admin powers, custody semantics or duplicate accounting state."
