@@ -47,7 +47,7 @@ contract BreadGraduationCurveHandoffTest is BreadDay4Fixture {
         uint256 creatorFee;
     }
 
-    function testFailedAutomaticGraduationLeavesCrossingBuySuccessfulAndReady() public {
+    function testAutomaticGraduationFailureLeavesCrossingBuySuccessfulAndReady() public {
         Day4Fixture memory f = _deployDay4Fixture(0);
         f.graduationCoordinator.setFailSweep(true);
 
