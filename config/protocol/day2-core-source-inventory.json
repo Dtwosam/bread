@@ -12,6 +12,12 @@
       "sourcePath": "contractsV2/src/v2/libraries/PonsV2BondingCurveMath.sol",
       "blobSha": "73929a6f64fc4a3e684ffff895a6ef0a018c2019",
       "spdx": "MIT"
+    },
+    "BreadTrackedCurveState": {
+      "sourcePath": "contractsV2/src/v2/PonsV2BondingCurve.sol",
+      "blobSha": "a5d84b3c355a1661e1bf61a4dd4e29591fbf6074",
+      "spdx": "MIT",
+      "portMode": "BOUNDED_TRACKED_RESERVE_EXTRACTION"
     }
   },
   "dependencyPolicy": {
@@ -23,7 +29,10 @@
       "IERC20Metadata.sol": "OpenZeppelin Contracts (last updated v5.4.0)",
       "ERC20Burnable.sol": "OpenZeppelin Contracts (last updated v5.0.0)",
       "Context.sol": "OpenZeppelin Contracts (last updated v5.0.1)",
-      "draft-IERC6093.sol": "OpenZeppelin Contracts (last updated v5.5.0)"
+      "draft-IERC6093.sol": "OpenZeppelin Contracts (last updated v5.5.0)",
+      "Math.sol": "OpenZeppelin Contracts (last updated v5.6.0)",
+      "Panic.sol": "OpenZeppelin Contracts (last updated v5.1.0)",
+      "SafeCast.sol": "OpenZeppelin Contracts (last updated v5.6.0)"
     },
     "dynamicInstallAllowed": false,
     "vendoredFiles": {
@@ -32,7 +41,10 @@
       "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol": "87bbafa84b834af1da027455bdc2e8a87beeb438",
       "contractsV2/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol": "4d482d8ec83617f74febf13917b283c14ebb7760",
       "contractsV2/lib/openzeppelin-contracts/contracts/utils/Context.sol": "4e535fe03c243f864568b8f4430c17c25dbadb47",
-      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol": "e9d6249ef521e073253a8681aa8f022af7640850"
+      "contractsV2/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol": "e9d6249ef521e073253a8681aa8f022af7640850",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/math/Math.sol": "e7288595b6539e986aef1a7a524884d86fc2d643",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/Panic.sol": "e168824d34b3f0ba0be33317fb34b9e74fc148b6",
+      "contractsV2/lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol": "ccb979f61c9577e6338276cff49625d5a2191eb3"
     }
   },
   "parityClaim": "FROZEN_SOURCE_BEHAVIOR_ONLY_NOT_CURRENT_LIVE_PARITY"
