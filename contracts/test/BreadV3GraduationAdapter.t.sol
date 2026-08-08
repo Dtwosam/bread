@@ -230,16 +230,14 @@ contract BreadV3GraduationAdapterTest {
             ? (usdcDust, tokenDust)
             : (tokenDust, usdcDust);
 
-        uint256 usdcBefore = f.usdc.balanceOf(address(this));
-        uint256 tokenBefore = f.token.balanceOf(address(this));
         IGraduationAdapter.Result memory result = _execute(f, unused0, unused1);
 
         assert(result.usdcUsed == USDC_AMOUNT - usdcDust);
         assert(result.tokenUsed == POOL_TOKENS - tokenDust);
         assert(result.usdcDust == usdcDust);
         assert(result.tokenDust == tokenDust);
-        assert(f.usdc.balanceOf(address(this)) == usdcBefore - result.usdcUsed);
-        assert(f.token.balanceOf(address(this)) == tokenBefore - result.tokenUsed);
+        assert(f.usdc.balanceOf(address(this)) == usdcDust);
+        assert(f.token.balanceOf(address(this)) == tokenDust);
         assert(f.usdc.balanceOf(address(f.adapter)) == 0);
         assert(f.token.balanceOf(address(f.adapter)) == 0);
     }
