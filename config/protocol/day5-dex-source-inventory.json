@@ -1,6 +1,6 @@
 {
   "projectSourcePack": "v1.5-day5-preflight-consolidated",
-  "checkedAt": "2026-08-08",
+  "checkedAt": "2026-08-09",
   "arc": {
     "testnet": {
       "status": "OFFICIAL_TESTNET_VALUES_VERIFIED",
@@ -19,10 +19,10 @@
   },
   "uniswapV4": {
     "implementationStatus": "INACTIVE_OFFICIAL_INTERFACE_COMPATIBILITY_ONLY",
-    "officialDeploymentRegistry": "https://docs.uniswap.org/contracts/v4/deployments",
+    "officialDeploymentRegistry": "https://developers.uniswap.org/docs/protocols/v4/deployments",
     "arcDeployment": {
       "status": "NOT_LISTED_IN_OFFICIAL_V4_DEPLOYMENTS",
-      "checkedAt": "2026-08-08",
+      "checkedAt": "2026-08-09",
       "activationAllowed": false
     },
     "officialSource": {
@@ -102,6 +102,57 @@
             "path": "src/interfaces/IAllowanceTransfer.sol",
             "spdx": "MIT",
             "usage": "REFERENCE_FOR_APPROVE_ABI"
+          }
+        ]
+      }
+    }
+  },
+  "uniswapV3": {
+    "implementationStatus": "INACTIVE_FALLBACK_OFFICIAL_INTERFACE_COMPATIBILITY_ONLY",
+    "activationAllowed": false,
+    "arcDeployment": {
+      "status": "NO_VERIFIED_ARC_V3_ACTIVATION_EVIDENCE",
+      "checkedAt": "2026-08-09"
+    },
+    "officialSource": {
+      "periphery": {
+        "repository": "https://github.com/Uniswap/v3-periphery",
+        "commit": "0682387198a24c7cd63566a2c58398533860a5d1",
+        "rootLicense": "GPL-2.0-or-later",
+        "usage": "REFERENCE_FOR_MINIMAL_V3_ABI; NO_NETWORK_ACTIVATION",
+        "files": [
+          {
+            "path": "contracts/interfaces/INonfungiblePositionManager.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_MINIMAL_MINT_ABI"
+          },
+          {
+            "path": "contracts/interfaces/IPoolInitializer.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_POOL_INITIALIZATION_ABI"
+          },
+          {
+            "path": "contracts/interfaces/IPeripheryImmutableState.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_FACTORY_IDENTITY_ABI"
+          }
+        ]
+      },
+      "core": {
+        "repository": "https://github.com/Uniswap/v3-core",
+        "commit": "d0831dc6b8a318df3872b6d68f6de135c9f3ec29",
+        "rootLicense": "BUSL-1.1_WITH_GPL_INTERFACE_LIBRARY_FILES",
+        "usage": "REFERENCE_FOR_MINIMAL_FACTORY_ABI_AND_PRICE_BOUNDS; NO_IMPLEMENTATION_COPY",
+        "files": [
+          {
+            "path": "contracts/interfaces/IUniswapV3Factory.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_FEE_TIER_AND_POOL_IDENTITY_ABI"
+          },
+          {
+            "path": "contracts/libraries/TickMath.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_V3_SQRT_PRICE_AND_TICK_BOUNDS_ONLY"
           }
         ]
       }
