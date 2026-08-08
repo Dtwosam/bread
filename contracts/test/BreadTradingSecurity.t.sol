@@ -26,6 +26,20 @@ contract BreadTradingSecurityTest {
         BreadLaunchToken token;
     }
 
+    struct SellRollbackExpectations {
+        uint256 quoteIn;
+        uint256 buyNet;
+        uint256 boughtTokens;
+        uint256 tokensIn;
+        uint256 expectedQuote;
+        uint256 trackedQuoteBefore;
+        uint256 trackedTokensBefore;
+        uint256 feeBefore;
+        uint256 taxBefore;
+        uint256 userTokenBefore;
+        uint256 curveTokenBefore;
+    }
+
     function testCurveSnapshotsFeeEconomicsAgainstLaterPolicyChanges() public {
         Fixture memory f = _deployFixture(true, CREATOR_TAX_BPS);
         BreadFeePolicySnapshot memory nextPolicy = BreadFeePolicySnapshot({
@@ -120,40 +134,41 @@ contract BreadTradingSecurityTest {
 
     function testSellSlippageFailureRollsBackTokenReceiptAndAccounting() public {
         Fixture memory f = _deployFixture(true, CREATOR_TAX_BPS);
-        uint256 quoteIn = 2_000 * ONE_USDC;
-        uint256 buyFee = quoteIn * TRADE_FEE_BPS / 10_000;
-        uint256 buyTax = quoteIn * CREATOR_TAX_BPS / 10_000;
-        uint256 buyNet = quoteIn - buyFee - buyTax;
-        uint256 boughtTokens = _amountOut(buyNet, PHANTOM_QUOTE, TOKEN_SUPPLY);
+        SellRollbackExpectations memory e;
+        e.quoteIn = 2_000 * ONE_USDC;
+        uint256 buyFee = e.quoteIn * TRADE_FEE_BPS / 10_000;
+        uint256 buyTax = e.quoteIn * CREATOR_TAX_BPS / 10_000;
+        e.buyNet = e.quoteIn - buyFee - buyTax;
+        e.boughtTokens = _amountOut(e.buyNet, PHANTOM_QUOTE, TOKEN_SUPPLY);
 
-        f.usdc.mint(address(this), quoteIn);
-        assert(f.usdc.approve(address(f.curve), quoteIn));
-        f.curve.buy(quoteIn, boughtTokens, address(this));
+        f.usdc.mint(address(this), e.quoteIn);
+        assert(f.usdc.approve(address(f.curve), e.quoteIn));
+        f.curve.buy(e.quoteIn, e.boughtTokens, address(this));
 
-        uint256 tokensIn = boughtTokens / 4;
-        uint256 grossQuote = _amountOut(tokensIn, TOKEN_SUPPLY - boughtTokens, PHANTOM_QUOTE + buyNet);
+        e.tokensIn = e.boughtTokens / 4;
+        uint256 grossQuote = _amountOut(e.tokensIn, TOKEN_SUPPLY - e.boughtTokens, PHANTOM_QUOTE + e.buyNet);
         uint256 sellFee = grossQuote * TRADE_FEE_BPS / 10_000;
         uint256 sellTax = grossQuote * CREATOR_TAX_BPS / 10_000;
-        uint256 expectedQuote = grossQuote - sellFee - sellTax;
-        uint256 trackedQuoteBefore = f.curve.trackedQuote();
-        uint256 trackedTokensBefore = f.curve.trackedTokens();
-        uint256 feeBefore = f.curve.quoteFeeBalance();
-        uint256 taxBefore = f.curve.creatorTaxBalance();
-        uint256 userTokenBefore = f.token.balanceOf(address(this));
-        uint256 curveTokenBefore = f.token.balanceOf(address(f.curve));
+        e.expectedQuote = grossQuote - sellFee - sellTax;
+        e.trackedQuoteBefore = f.curve.trackedQuote();
+        e.trackedTokensBefore = f.curve.trackedTokens();
+        e.feeBefore = f.curve.quoteFeeBalance();
+        e.taxBefore = f.curve.creatorTaxBalance();
+        e.userTokenBefore = f.token.balanceOf(address(this));
+        e.curveTokenBefore = f.token.balanceOf(address(f.curve));
 
-        assert(f.token.approve(address(f.curve), tokensIn));
+        assert(f.token.approve(address(f.curve), e.tokensIn));
         (bool ok,) = address(f.curve).call(
-            abi.encodeWithSelector(BreadBondingCurve.sell.selector, tokensIn, expectedQuote + 1, address(this))
+            abi.encodeWithSelector(BreadBondingCurve.sell.selector, e.tokensIn, e.expectedQuote + 1, address(this))
         );
 
         assert(!ok);
-        assert(f.token.balanceOf(address(this)) == userTokenBefore);
-        assert(f.token.balanceOf(address(f.curve)) == curveTokenBefore);
-        assert(f.curve.trackedQuote() == trackedQuoteBefore);
-        assert(f.curve.trackedTokens() == trackedTokensBefore);
-        assert(f.curve.quoteFeeBalance() == feeBefore);
-        assert(f.curve.creatorTaxBalance() == taxBefore);
+        assert(f.token.balanceOf(address(this)) == e.userTokenBefore);
+        assert(f.token.balanceOf(address(f.curve)) == e.curveTokenBefore);
+        assert(f.curve.trackedQuote() == e.trackedQuoteBefore);
+        assert(f.curve.trackedTokens() == e.trackedTokensBefore);
+        assert(f.curve.quoteFeeBalance() == e.feeBefore);
+        assert(f.curve.creatorTaxBalance() == e.taxBefore);
     }
 
     function testConcreteTradingReservesIgnoreDirectQuoteAndTokenDonations() public {
