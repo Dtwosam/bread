@@ -10,6 +10,7 @@ import {BreadLaunchDeployer} from "../src/factory/BreadLaunchDeployer.sol";
 import {IBreadLaunchFactory} from "../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
+import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
 
 contract BreadLaunchFactoryTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -49,6 +50,7 @@ contract BreadLaunchFactoryTest {
         assert(record.creatorTaxBps == CREATOR_TAX_BPS);
         assert(record.economicsDigest == expected);
         assert(record.configVersion == version);
+        assert(record.launchTimestamp == BreadBondingCurve(curve).launchTimestamp());
         assert(f.factory.tokenForCurve(curve) == token);
         assert(BreadBondingCurve(curve).pairToken() == address(f.usdc));
         assert(BreadBondingCurve(curve).token() == token);
@@ -99,6 +101,7 @@ contract BreadLaunchFactoryTest {
         assert(afterRecord.economicsDigest == beforeRecord.economicsDigest);
         assert(afterRecord.curve == beforeRecord.curve);
         assert(afterRecord.creatorTaxBps == beforeRecord.creatorTaxBps);
+        assert(afterRecord.launchTimestamp == beforeRecord.launchTimestamp);
     }
 
     function testMetadataAboveFrozenNameLimitRejects() public {
@@ -136,6 +139,7 @@ contract BreadLaunchFactoryTest {
         p.core.factory = address(f.factory);
         p.core.feePolicy = address(f.policy);
         p.core.feeEscrow = address(f.escrow);
+        p.core.emergencyController = address(f.factory.emergencyController());
         p.core.phantomQuote = PHANTOM_QUOTE;
         p.core.creatorTaxBps = CREATOR_TAX_BPS;
         p.core.graduationThreshold = GRADUATION_THRESHOLD;
@@ -175,6 +179,7 @@ contract BreadLaunchFactoryTest {
         });
         f.policy = new BreadFeePolicy(address(this), snapshot, address(0xB0B));
         f.escrow = new BreadFeeEscrow(address(f.usdc), address(this));
+        BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
         IBreadLaunchFactory.LaunchConfig memory config = IBreadLaunchFactory.LaunchConfig({
             supply: SUPPLY,
             phantomQuote: PHANTOM_QUOTE,
@@ -183,7 +188,7 @@ contract BreadLaunchFactoryTest {
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
-            address(this), address(f.usdc), address(f.policy), address(f.escrow), config, STACK_VERSION
+            address(this), address(f.usdc), address(f.policy), address(f.escrow), address(emergencyController), config, STACK_VERSION
         );
         f.deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(f.deployer);
