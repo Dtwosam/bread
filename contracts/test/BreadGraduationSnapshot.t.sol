@@ -23,19 +23,77 @@ contract BreadGraduationSnapshotTest {
     bytes32 private constant ADAPTER_CONFIG_A = keccak256("ADAPTER_A");
     bytes32 private constant ADAPTER_CONFIG_B = keccak256("ADAPTER_B");
 
-    function testLaunchSnapshotsGraduationDestinationAndFutureConfigCannotRewriteIt() public {
-        MockUSDC6 usdc = new MockUSDC6();
-        BreadFeePolicySnapshot memory policySnapshot = BreadFeePolicySnapshot({
-            protocolFeeRecipient: address(0xA11CE),
-            tradeFeeBps: 100,
-            protocolFeeShareBps: 2_500,
-            maxCreatorTaxBps: 500
-        });
-        BreadFeePolicy policy = new BreadFeePolicy(address(this), policySnapshot, address(this));
-        BreadFeeEscrow escrow = new BreadFeeEscrow(address(usdc), address(this));
-        BreadEmergencyController emergencyController = new BreadEmergencyController(address(this), address(0xBEEF));
+    struct Fixture {
+        MockUSDC6 usdc;
+        BreadLaunchFactory factory;
+        BreadPermanentLiquidityLocker locker;
+        MockGraduationCoordinator coordinator;
+    }
 
-        IBreadLaunchFactory.LaunchConfig memory bootstrap = IBreadLaunchFactory.LaunchConfig({
+    function testLaunchSnapshotsGraduationDestinationAndFutureConfigCannotRewriteIt() public {
+        Fixture memory f = _deployFixture();
+        MockGraduationAdapter adapterA = _setAdapter(
+            f, IGraduationAdapter.AdapterFamily.UNISWAP_V4, ADAPTER_CONFIG_A
+        );
+
+        (address token,) = f.factory.launchToken(_params(f.factory.previewLaunchEconomics()));
+        _assertSnapshot(
+            f.factory.getLaunch(token), address(f.coordinator), address(adapterA),
+            IGraduationAdapter.AdapterFamily.UNISWAP_V4, ADAPTER_CONFIG_A
+        );
+
+        _setAdapter(f, IGraduationAdapter.AdapterFamily.UNISWAP_V3, ADAPTER_CONFIG_B);
+
+        _assertSnapshot(
+            f.factory.getLaunch(token), address(f.coordinator), address(adapterA),
+            IGraduationAdapter.AdapterFamily.UNISWAP_V4, ADAPTER_CONFIG_A
+        );
+    }
+
+    function _deployFixture() private returns (Fixture memory f) {
+        f.usdc = new MockUSDC6();
+        BreadFeePolicy policy = new BreadFeePolicy(
+            address(this),
+            BreadFeePolicySnapshot({
+                protocolFeeRecipient: address(0xA11CE),
+                tradeFeeBps: 100,
+                protocolFeeShareBps: 2_500,
+                maxCreatorTaxBps: 500
+            }),
+            address(this)
+        );
+        BreadFeeEscrow escrow = new BreadFeeEscrow(address(f.usdc), address(this));
+        BreadEmergencyController emergencyController = new BreadEmergencyController(address(this), address(0xBEEF));
+        IBreadLaunchFactory.LaunchConfig memory bootstrap = _bootstrapConfig();
+
+        f.factory = new BreadLaunchFactory(
+            address(this), address(f.usdc), address(policy), address(escrow),
+            address(emergencyController), bootstrap, STACK_VERSION
+        );
+        f.factory.setLaunchDeployer(new BreadLaunchDeployer(address(f.factory)));
+
+        f.locker = new BreadPermanentLiquidityLocker(address(this));
+        f.coordinator = new MockGraduationCoordinator(
+            address(f.factory), address(f.usdc), address(escrow), address(emergencyController), address(f.locker)
+        );
+        f.locker.setCoordinator(address(f.coordinator));
+        f.factory.setGraduationCoordinator(f.coordinator);
+    }
+
+    function _setAdapter(Fixture memory f, IGraduationAdapter.AdapterFamily family, bytes32 configHash)
+        private
+        returns (MockGraduationAdapter adapter)
+    {
+        adapter = new MockGraduationAdapter(family, address(f.usdc), address(f.locker), configHash);
+        IBreadLaunchFactory.LaunchConfig memory config = _bootstrapConfig();
+        config.graduationAdapter = address(adapter);
+        config.graduationConfigHash = configHash;
+        config.enabled = true;
+        f.factory.setLaunchConfig(config);
+    }
+
+    function _bootstrapConfig() private pure returns (IBreadLaunchFactory.LaunchConfig memory config) {
+        config = IBreadLaunchFactory.LaunchConfig({
             supply: SUPPLY,
             phantomQuote: PHANTOM_QUOTE,
             graduationThreshold: GRADUATION_THRESHOLD,
@@ -44,57 +102,19 @@ contract BreadGraduationSnapshotTest {
             graduationConfigHash: bytes32(0),
             enabled: false
         });
+    }
 
-        BreadLaunchFactory factory = new BreadLaunchFactory(
-            address(this),
-            address(usdc),
-            address(policy),
-            address(escrow),
-            address(emergencyController),
-            bootstrap,
-            STACK_VERSION
-        );
-        BreadLaunchDeployer deployer = new BreadLaunchDeployer(address(factory));
-        factory.setLaunchDeployer(deployer);
-
-        BreadPermanentLiquidityLocker locker = new BreadPermanentLiquidityLocker(address(this));
-        MockGraduationCoordinator coordinator = new MockGraduationCoordinator(
-            address(factory), address(usdc), address(escrow), address(emergencyController), address(locker)
-        );
-        locker.setCoordinator(address(coordinator));
-        factory.setGraduationCoordinator(coordinator);
-
-        MockGraduationAdapter adapterA = new MockGraduationAdapter(
-            IGraduationAdapter.AdapterFamily.UNISWAP_V4, address(usdc), address(locker), ADAPTER_CONFIG_A
-        );
-        IBreadLaunchFactory.LaunchConfig memory enabledA = bootstrap;
-        enabledA.graduationAdapter = address(adapterA);
-        enabledA.graduationConfigHash = ADAPTER_CONFIG_A;
-        enabledA.enabled = true;
-        factory.setLaunchConfig(enabledA);
-
-        IBreadLaunchFactory.LaunchParams memory params = _params(factory.previewLaunchEconomics());
-        (address token,) = factory.launchToken(params);
-        IBreadLaunchFactory.LaunchRecord memory first = factory.getLaunch(token);
-
-        assert(first.graduationCoordinator == address(coordinator));
-        assert(first.graduationAdapter == address(adapterA));
-        assert(first.graduationAdapterFamily == IGraduationAdapter.AdapterFamily.UNISWAP_V4);
-        assert(first.graduationConfigHash == ADAPTER_CONFIG_A);
-
-        MockGraduationAdapter adapterB = new MockGraduationAdapter(
-            IGraduationAdapter.AdapterFamily.UNISWAP_V3, address(usdc), address(locker), ADAPTER_CONFIG_B
-        );
-        IBreadLaunchFactory.LaunchConfig memory enabledB = enabledA;
-        enabledB.graduationAdapter = address(adapterB);
-        enabledB.graduationConfigHash = ADAPTER_CONFIG_B;
-        factory.setLaunchConfig(enabledB);
-
-        IBreadLaunchFactory.LaunchRecord memory unchanged = factory.getLaunch(token);
-        assert(unchanged.graduationCoordinator == address(coordinator));
-        assert(unchanged.graduationAdapter == address(adapterA));
-        assert(unchanged.graduationAdapterFamily == IGraduationAdapter.AdapterFamily.UNISWAP_V4);
-        assert(unchanged.graduationConfigHash == ADAPTER_CONFIG_A);
+    function _assertSnapshot(
+        IBreadLaunchFactory.LaunchRecord memory record,
+        address coordinator,
+        address adapter,
+        IGraduationAdapter.AdapterFamily family,
+        bytes32 configHash
+    ) private pure {
+        assert(record.graduationCoordinator == coordinator);
+        assert(record.graduationAdapter == adapter);
+        assert(record.graduationAdapterFamily == family);
+        assert(record.graduationConfigHash == configHash);
     }
 
     function _params(bytes32 expectedEconomics) private view returns (IBreadLaunchFactory.LaunchParams memory p) {
