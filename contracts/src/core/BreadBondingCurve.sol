@@ -11,6 +11,7 @@ import {BreadBondingCurveMath} from "../libraries/BreadBondingCurveMath.sol";
 import {IBreadEmergencyController} from "../interfaces/IBreadEmergencyController.sol";
 import {IBreadFeeEscrow} from "../interfaces/IBreadFeeEscrow.sol";
 import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
+import {IGraduationCoordinator} from "../interfaces/IGraduationCoordinator.sol";
 
 /// @title BreadBondingCurve
 /// @notice Canonical-USDC Bread trading layer over the tracked-reserve Day-2 core.
@@ -24,8 +25,10 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
 
     error UnauthorizedFactory();
     error UnauthorizedFeeSweep();
+    error UnauthorizedGraduationCoordinator();
     error NotInitialized();
     error CurveClosed();
+    error NotReadyToGraduate();
     error RecipientZeroAddress();
     error ZeroAmount();
     error NoFeesToSweep();
@@ -56,6 +59,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     IBreadFeePolicy public immutable feePolicy;
     IBreadFeeEscrow public immutable feeEscrow;
     IBreadEmergencyController public immutable emergencyController;
+    IGraduationCoordinator public immutable graduationCoordinator;
 
     address public immutable protocolFeeRecipient;
     uint16 public immutable tradeFeeBps;
@@ -92,6 +96,15 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 tax
     );
     event FeesSwept(uint256 protocolAmount, uint256 creatorAmount, uint256 creatorTaxAmount);
+    event GraduationReady(address indexed token, address indexed curve, address indexed coordinator);
+    event GraduationAutoAttemptFailed(address indexed token, bytes32 reasonHash);
+    event CurveGraduationReleased(
+        address indexed coordinator,
+        uint256 seedUsdc,
+        uint256 tokenOut,
+        uint256 protocolFeeAmount,
+        uint256 creatorFeeAmount
+    );
 
     constructor(
         address pairToken_,
@@ -100,13 +113,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         address feePolicy_,
         address feeEscrow_,
         address emergencyController_,
+        address graduationCoordinator_,
         uint256 phantomQuote_,
         uint16 creatorTaxBps_,
         uint256 graduationThreshold_
     ) BreadTrackedCurveState(pairToken_, phantomQuote_, graduationThreshold_) {
         if (
             creatorFeeRecipient_ == address(0) || factory_ == address(0) || feePolicy_ == address(0)
-                || feeEscrow_ == address(0) || emergencyController_ == address(0)
+                || feeEscrow_ == address(0) || emergencyController_ == address(0) || graduationCoordinator_ == address(0)
         ) revert ZeroAddress();
 
         BreadFeePolicySnapshot memory snapshot = IBreadFeePolicy(feePolicy_).currentFeePolicy();
@@ -119,6 +133,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         feePolicy = IBreadFeePolicy(feePolicy_);
         feeEscrow = IBreadFeeEscrow(feeEscrow_);
         emergencyController = IBreadEmergencyController(emergencyController_);
+        graduationCoordinator = IGraduationCoordinator(graduationCoordinator_);
         protocolFeeRecipient = snapshot.protocolFeeRecipient;
         tradeFeeBps = snapshot.tradeFeeBps;
         protocolFeeShareBps = snapshot.protocolFeeShareBps;
@@ -225,6 +240,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             quoted.charges.creatorTax
         );
 
+        _tryAutoGraduation();
         return (quoted.tokensOut, quoted.spent, refund);
     }
 
@@ -312,13 +328,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             revert UnauthorizedFeeSweep();
         }
 
-        uint256 pendingBaseFee = quoteFeeBalance;
-        uint256 pendingTax = creatorTaxBalance;
-        uint256 totalPending = pendingBaseFee + pendingTax;
+        (
+            uint256 pendingBaseFee,
+            uint256 pendingTax,
+            uint256 totalPending,
+            uint256 protocolAmount,
+            uint256 creatorAmount
+        ) = _pendingFeeAmounts();
         if (totalPending == 0) revert NoFeesToSweep();
-
-        uint256 protocolAmount = pendingBaseFee * protocolFeeShareBps / BASIS_POINTS;
-        uint256 creatorAmount = pendingBaseFee - protocolAmount + pendingTax;
 
         quoteFeeBalance = 0;
         creatorTaxBalance = 0;
@@ -334,6 +351,75 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             feeEscrow.credit(creatorFeeRecipient, creatorAmount);
         }
 
+        pendingBaseFee;
         emit FeesSwept(protocolAmount, creatorAmount, pendingTax);
+    }
+
+    /// @notice Closes a ready curve and releases only tracked graduation value to its canonical coordinator.
+    /// @dev Deliberately not nonReentrant: the coordinator may call this from the best-effort callback inside buy().
+    function releaseForGraduation()
+        external
+        returns (uint256 seedUsdc, uint256 tokenOut, uint256 protocolFeeAmount, uint256 creatorFeeAmount)
+    {
+        if (msg.sender != address(graduationCoordinator)) revert UnauthorizedGraduationCoordinator();
+        if (!readyToGraduate()) revert NotReadyToGraduate();
+
+        graduated = true;
+
+        (
+            uint256 pendingBaseFee,
+            uint256 pendingTax,
+            uint256 totalPending,
+            uint256 protocolAmount,
+            uint256 creatorAmount
+        ) = _pendingFeeAmounts();
+        protocolFeeAmount = protocolAmount;
+        creatorFeeAmount = creatorAmount;
+
+        quoteFeeBalance = 0;
+        creatorTaxBalance = 0;
+        trackedQuote -= totalPending;
+
+        seedUsdc = trackedQuote;
+        tokenOut = trackedTokens;
+        trackedQuote = 0;
+        trackedTokens = 0;
+
+        uint256 totalUsdcOut = seedUsdc + protocolFeeAmount + creatorFeeAmount;
+        if (totalUsdcOut != 0) IERC20(pairToken).safeTransfer(msg.sender, totalUsdcOut);
+        if (tokenOut != 0) IERC20(token).safeTransfer(msg.sender, tokenOut);
+
+        if (pendingBaseFee != 0 || pendingTax != 0) {
+            emit FeesSwept(protocolFeeAmount, creatorFeeAmount, pendingTax);
+        }
+        emit CurveGraduationReleased(msg.sender, seedUsdc, tokenOut, protocolFeeAmount, creatorFeeAmount);
+    }
+
+    function _tryAutoGraduation() private {
+        if (!readyToGraduate()) return;
+        emit GraduationReady(token, address(this), address(graduationCoordinator));
+        try graduationCoordinator.sweep(token) {
+            // Committed Stage-1 state is emitted by the coordinator.
+        } catch (bytes memory reason) {
+            emit GraduationAutoAttemptFailed(token, keccak256(reason));
+        }
+    }
+
+    function _pendingFeeAmounts()
+        private
+        view
+        returns (
+            uint256 pendingBaseFee,
+            uint256 pendingTax,
+            uint256 totalPending,
+            uint256 protocolAmount,
+            uint256 creatorAmount
+        )
+    {
+        pendingBaseFee = quoteFeeBalance;
+        pendingTax = creatorTaxBalance;
+        totalPending = pendingBaseFee + pendingTax;
+        protocolAmount = pendingBaseFee * protocolFeeShareBps / BASIS_POINTS;
+        creatorAmount = pendingBaseFee - protocolAmount + pendingTax;
     }
 }
