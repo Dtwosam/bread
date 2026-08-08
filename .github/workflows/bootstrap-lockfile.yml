@@ -1,0 +1,49 @@
+name: bootstrap-lockfile
+
+on:
+  push:
+    branches:
+      - checkpoint/7b-bootstrap
+
+permissions:
+  contents: write
+
+jobs:
+  generate-and-commit:
+    if: github.repository == 'Dtwosam/bread' && github.ref == 'refs/heads/checkpoint/7b-bootstrap'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: checkpoint/7b-bootstrap
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
+          run_install: false
+      - name: Install dependencies
+        run: |
+          if git ls-files --error-unmatch pnpm-lock.yaml >/dev/null 2>&1; then
+            pnpm install --frozen-lockfile
+          else
+            pnpm install --no-frozen-lockfile
+          fi
+      - run: pnpm validate
+      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm build
+      - name: Commit generated lockfile once
+        run: |
+          if git ls-files --error-unmatch pnpm-lock.yaml >/dev/null 2>&1; then
+            echo "pnpm-lock.yaml already tracked; nothing to bootstrap"
+            exit 0
+          fi
+          test -f pnpm-lock.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "Commit pinned pnpm lockfile"
+          git push origin HEAD:checkpoint/7b-bootstrap
