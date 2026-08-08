@@ -17,7 +17,7 @@ contract BreadLaunchDeployer {
     error NotFactory();
     error MetadataTooLong();
 
-    struct BreadLaunchDeployment {
+    struct BreadLaunchCore {
         address usdc;
         address creatorFeeRecipient;
         address originalDeployer;
@@ -28,6 +28,9 @@ contract BreadLaunchDeployer {
         uint16 creatorTaxBps;
         uint256 graduationThreshold;
         uint256 supply;
+    }
+
+    struct BreadLaunchMetadata {
         string name;
         string symbol;
         string logo;
@@ -37,6 +40,11 @@ contract BreadLaunchDeployer {
         string discord;
         string website;
         string farcaster;
+    }
+
+    struct BreadLaunchDeployment {
+        BreadLaunchCore core;
+        BreadLaunchMetadata metadata;
     }
 
     address public immutable factory;
@@ -51,51 +59,56 @@ contract BreadLaunchDeployer {
         returns (address token, address curve)
     {
         if (msg.sender != factory) revert NotFactory();
-        _validateMetadata(p);
+        _validateMetadata(p.metadata);
 
+        BreadLaunchCore calldata core = p.core;
         curve = address(
             new BreadBondingCurve(
-                p.usdc,
-                p.creatorFeeRecipient,
-                p.factory,
-                p.feePolicy,
-                p.feeEscrow,
-                p.phantomQuote,
-                p.creatorTaxBps,
-                p.graduationThreshold
+                core.usdc,
+                core.creatorFeeRecipient,
+                core.factory,
+                core.feePolicy,
+                core.feeEscrow,
+                core.phantomQuote,
+                core.creatorTaxBps,
+                core.graduationThreshold
             )
         );
 
+        BreadLaunchMetadata calldata metadata = p.metadata;
         BreadLaunchToken.Socials memory socials = BreadLaunchToken.Socials({
-            twitter: p.twitter,
-            telegram: p.telegram,
-            discord: p.discord,
-            website: p.website,
-            farcaster: p.farcaster
+            twitter: metadata.twitter,
+            telegram: metadata.telegram,
+            discord: metadata.discord,
+            website: metadata.website,
+            farcaster: metadata.farcaster
         });
 
         token = address(
             new BreadLaunchToken(
-                p.name,
-                p.symbol,
-                p.logo,
-                p.description,
+                metadata.name,
+                metadata.symbol,
+                metadata.logo,
+                metadata.description,
                 socials,
-                p.originalDeployer,
+                core.originalDeployer,
                 curve,
-                p.factory,
-                p.supply
+                core.factory,
+                core.supply
             )
         );
     }
 
-    function _validateMetadata(BreadLaunchDeployment calldata p) private pure {
+    function _validateMetadata(BreadLaunchMetadata calldata metadata) private pure {
         if (
-            bytes(p.name).length > MAX_NAME_BYTES || bytes(p.symbol).length > MAX_SYMBOL_BYTES
-                || bytes(p.logo).length > MAX_LOGO_BYTES || bytes(p.description).length > MAX_DESCRIPTION_BYTES
-                || bytes(p.twitter).length > MAX_SOCIAL_BYTES || bytes(p.telegram).length > MAX_SOCIAL_BYTES
-                || bytes(p.discord).length > MAX_SOCIAL_BYTES || bytes(p.website).length > MAX_SOCIAL_BYTES
-                || bytes(p.farcaster).length > MAX_SOCIAL_BYTES
+            bytes(metadata.name).length > MAX_NAME_BYTES || bytes(metadata.symbol).length > MAX_SYMBOL_BYTES
+                || bytes(metadata.logo).length > MAX_LOGO_BYTES
+                || bytes(metadata.description).length > MAX_DESCRIPTION_BYTES
+                || bytes(metadata.twitter).length > MAX_SOCIAL_BYTES
+                || bytes(metadata.telegram).length > MAX_SOCIAL_BYTES
+                || bytes(metadata.discord).length > MAX_SOCIAL_BYTES
+                || bytes(metadata.website).length > MAX_SOCIAL_BYTES
+                || bytes(metadata.farcaster).length > MAX_SOCIAL_BYTES
         ) revert MetadataTooLong();
     }
 }
