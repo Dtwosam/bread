@@ -15,6 +15,23 @@ contract BreadLaunchToken is ERC20, ERC20Burnable {
         string farcaster;
     }
 
+    /// @dev Constructor transport only. Runtime metadata semantics are unchanged.
+    struct Metadata {
+        string name;
+        string symbol;
+        string logo;
+        string description;
+        Socials socials;
+    }
+
+    /// @dev Constructor transport only. Runtime attribution and fixed-supply semantics are unchanged.
+    struct LaunchContext {
+        address deployer;
+        address curve;
+        address launchFactory;
+        uint256 supply;
+    }
+
     error ZeroAddress();
 
     address public immutable deployer;
@@ -26,29 +43,24 @@ contract BreadLaunchToken is ERC20, ERC20Burnable {
 
     Socials private _socials;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        string memory logo_,
-        string memory description_,
-        Socials memory socials_,
-        address deployer_,
-        address curve_,
-        address launchFactory_,
-        uint256 supply_
-    ) ERC20(name_, symbol_) {
-        if (deployer_ == address(0) || curve_ == address(0) || launchFactory_ == address(0)) {
+    constructor(Metadata memory metadata_, LaunchContext memory context_)
+        ERC20(metadata_.name, metadata_.symbol)
+    {
+        if (
+            context_.deployer == address(0) || context_.curve == address(0)
+                || context_.launchFactory == address(0)
+        ) {
             revert ZeroAddress();
         }
 
-        deployer = deployer_;
-        launchFactory = launchFactory_;
-        curve = curve_;
-        logo = logo_;
-        description = description_;
-        _socials = socials_;
+        deployer = context_.deployer;
+        launchFactory = context_.launchFactory;
+        curve = context_.curve;
+        logo = metadata_.logo;
+        description = metadata_.description;
+        _socials = metadata_.socials;
 
-        _mint(curve_, supply_);
+        _mint(context_.curve, context_.supply);
     }
 
     function socials()
