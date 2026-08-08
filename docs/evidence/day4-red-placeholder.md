@@ -1,1 +1,0 @@
-RED evidence is captured by GitHub Actions on the exact implementation branch head before production Factory/Deployer files exist. This file will be replaced by the full Day-4 evidence document later in the lane.
