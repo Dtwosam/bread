@@ -1,7 +1,7 @@
 schema_version: 1.0
 project: Bread
 source_pack: v1.1
-updated_at: 2026-08-08T12:42:00+01:00
+updated_at: 2026-08-08T12:58:00+01:00
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -9,14 +9,14 @@ completed_checkpoints:
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2 Lane 1: DAY_2_CORE_MATH_TOKEN_INTEGRATED_PASS"
 active_checkpoint: "Day 2"
-active_lane: "Tracked-reserve curve skeleton + donation-resistance/tiny-trade invariants — source reconciliation/design required"
+active_lane: "Tracked-reserve curve state — approved abstract-core design; TDD RED next"
 integration_baseline:
-  id: D2-L1
+  id: D2-L1-CLOSEOUT
   branch: main
-  commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
-  status: ACCEPTED_DAY_2_LANE_1_INTEGRATED_BASELINE
+  commit: aca14483ef5d8bee707a39e7ea628569d22d1828
+  status: ACCEPTED_DAY_2_LANE_1_DURABLE_CLOSEOUT_BASELINE
 working_branches:
-  - checkpoint/day2-core-math-token-closeout
+  - checkpoint/day2-tracked-curve-state
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -29,33 +29,36 @@ repository:
   pull_request_4: merged
   day2_core_math_token_final_head: d65a45c9da6c23f40a0a1861c75acf96bc8f8b33
   day2_core_math_token_merge_commit: 0051d86f635ee4dfa9e2422f6f2fac7231e4f915
-  day2_closeout_branch: checkpoint/day2-core-math-token-closeout
-  status: DAY_2_LANE_1_INTEGRATED_DAY_2_CONTINUES
+  pull_request_5: merged
+  day2_lane1_closeout_merge_commit: aca14483ef5d8bee707a39e7ea628569d22d1828
+  day2_lane2_branch: checkpoint/day2-tracked-curve-state
+  day2_lane2_design_commit: 39b276f2497959176737cdfc3759ce685851de79
+  day2_lane2_plan_commit: f4bfa476750e7fe639e7728ec1510150fbf6fbe3
+  status: DAY_2_LANE_2_DESIGN_PLAN_APPROVED_RED_NEXT
 verification:
   checkpoint_7b_final_run: 31249373096
   day1_final_exact_head_run: 31249916544
   day1_closeout_run: 31250062856
   day2_math_red_run: 31254865534
-  day2_math_red_head: 8028213a6bccec4c0c054677e186a3108f92f74e
   day2_math_green_run: 31254898416
-  day2_math_green_head: f511a7d5d55fec64bf21580d17b4716403557e36
   day2_token_red_run: 31255073347
-  day2_token_red_head: 53e143d47ede2358c779176509f4b6e27f1a81d6
   day2_token_green_run: 31255097370
-  day2_token_green_head: 69b85dbcf795af1f98e3e1d323c5a10ce4a98329
   day2_integrity_red_run: 31255285593
-  day2_integrity_red_head: 7e217592e46c6fb2cc6559b63718e0b82d3e9fe3
   day2_integrity_green_run: 31255322107
-  day2_integrity_green_head: 9c57a8e2239af5c165de22023268632a35d991cd
   day2_final_exact_head_run: 31255399674
-  day2_final_exact_head: d65a45c9da6c23f40a0a1861c75acf96bc8f8b33
+  day2_lane1_closeout_run: 31255527782
+  day2_lane2_state_red_run: null
+  day2_lane2_state_green_run: null
+  day2_lane2_integrity_red_run: null
+  day2_lane2_integrity_green_run: null
+  day2_lane2_final_exact_head_run: null
   jobs:
-    bootstrap_validation: PASS
-    day2_frozen_source_integrity: PASS
-    dependency_build_frozen_lockfile: PASS
-    tracked_workspace_clean_after_build: PASS
-    foundry_bootstrap: PASS
-    postgres_redis_health: PASS
+    bootstrap_validation: PREVIOUS_PASS
+    day2_frozen_source_integrity: PREVIOUS_PASS
+    dependency_build_frozen_lockfile: PREVIOUS_PASS
+    tracked_workspace_clean_after_build: PREVIOUS_PASS
+    foundry_bootstrap: RED_NOT_STARTED
+    postgres_redis_health: PREVIOUS_PASS
 deployments: []
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -78,20 +81,23 @@ tooling:
   supabase: not-selected
   cloudflare: not-selected
 decisions_since_last_state:
-  - "PR #4 merged only from exact green head d65a45c9da6c23f40a0a1861c75acf96bc8f8b33 after CI run 31255399674 passed all four jobs."
-  - "BreadBondingCurveMath and BreadLaunchToken are integrated on main at merge commit 0051d86f635ee4dfa9e2422f6f2fac7231e4f915."
-  - "Exact frozen OpenZeppelin file blobs are enforced by CI; no package-level version is inferred."
-  - "Core-math/token review findings were fixed before merge: dependency provenance precision, zero-supply parity coverage, and executable vendored-blob integrity validation."
-  - "Day 2 is deliberately NOT closed: controlling 06C also requires a tracked-reserve curve skeleton, donation-resistance/tiny-trade invariants, and applicable 6-decimal/allocation/graduation formula coverage."
-  - "All 7A blockers remain active and unchanged."
-next_action: "From the integrated main baseline 0051d86f635ee4dfa9e2422f6f2fac7231e4f915, re-read the frozen PonsV2BondingCurve source plus relevant interfaces/tests and the Bread invariant specification. Define the smallest source-verifiable Day-2 Lane 2 design for tracked reserves, Arc 6-decimal USDC accounting boundaries, allocation/graduation math, donation resistance and tiny-trade behavior without reconstructing blocked FeeEscrow/snipe/Launch+Buy semantics. Obtain design approval before implementation."
+  - "Day-2 Lane-1 metadata closeout PR #5 passed CI run 31255527782 and merged to main at aca14483ef5d8bee707a39e7ea628569d22d1828."
+  - "Day-2 Lane 2 uses an abstract BreadTrackedCurveState core, not a concrete half-built trading curve."
+  - "Frozen source basis is PonsV2BondingCurve.sol blob a5d84b3c355a1661e1bf61a4dd4e29591fbf6074, bounded to tracked reserves, reserved allocation, reserve readers and readiness state only."
+  - "Bread V1 Lane-2 quote state is ERC20-only; no native-asset zero-address sentinel is implemented. Six-decimal USDC-like amounts remain in quote base units with no 6-to-18 scaling."
+  - "Frozen OpenZeppelin Math.sol, Panic.sol and SafeCast.sol will be added only after state RED and verified by exact blob SHA."
+  - "Donation resistance will be proven against raw quote/token transfers that do not alter tracked state. Tiny-trade Day-2 proof is rounding-only; fee/tax stateful proof waits for authorized trading semantics."
+  - "No Buy/Sell, FeeEscrow, snipe, Launch+Buy, fee sweep, graduation transfer, DEX or Arc-mainnet behavior is authorized by this lane."
+next_action: "Create the Lane-2 test-only MockUSDC6 fixture, BreadTrackedCurveStateHarness and BreadTrackedCurveState production-facing tests while contracts/src/core/BreadTrackedCurveState.sol is absent. Open a draft PR and accept RED only if Foundry fails specifically because that production file is missing while unrelated CI gates remain healthy."
 do_not_do:
   - "Do not claim Day 2 end-of-day PASS yet."
   - "Do not claim exact current-live Pons parity."
   - "Do not implement snipe protection from guesses."
   - "Do not implement Launch+Buy from guesses."
   - "Do not implement FeeEscrow from guesses."
+  - "Do not implement Buy/Sell in Lane 2."
+  - "Do not implement native quote handling in Bread V1 Lane 2."
   - "Do not let token/USDC donations silently change tracked pricing reserves."
-  - "Do not implement bonding-curve state/reserve custody beyond source-verified Lane-2 scope before design approval."
+  - "Do not dynamically install or hand-rewrite the frozen OpenZeppelin Math dependency."
   - "Do not treat reconciliation observations as Bread implementation values without explicit reconciliation."
   - "Do not hardcode Arc mainnet values before official publication."
