@@ -99,10 +99,29 @@ textarea:focus-visible {
     transform var(--bread-motion-fast) var(--bread-easing);
 }
 
+.bread-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 .bread-button:disabled {
   color: var(--bread-text-disabled);
   cursor: not-allowed;
   opacity: 0.72;
+}
+
+.bread-button__content {
+  display: grid;
+  place-items: center;
+}
+
+.bread-button__label,
+.bread-button__loading {
+  grid-area: 1 / 1;
+}
+
+.bread-button__label[aria-hidden="true"],
+.bread-button__loading[aria-hidden="true"] {
+  visibility: hidden;
 }
 
 .bread-button--primary {
