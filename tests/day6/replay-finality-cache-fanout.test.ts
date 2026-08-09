@@ -51,6 +51,42 @@ async function cacheModule() {
   return import('../../apps/api/src/cache.ts');
 }
 
+type FakeRedisSetOptions = Readonly<{ NX?: boolean; PX?: number }>;
+
+type FakeRedis = Readonly<{
+  get: ReturnType<typeof vi.fn>;
+  set: ReturnType<typeof vi.fn>;
+  incr: ReturnType<typeof vi.fn>;
+  eval: ReturnType<typeof vi.fn>;
+}>;
+
+function createFakeRedis(): Readonly<{ redis: FakeRedis; state: Map<string, string> }> {
+  const state = new Map<string, string>();
+  const redis: FakeRedis = {
+    get: vi.fn(async (key: string) => state.get(key) ?? null),
+    set: vi.fn(async (key: string, value: string, options?: FakeRedisSetOptions) => {
+      if (options?.NX && state.has(key)) return null;
+      state.set(key, value);
+      return 'OK';
+    }),
+    incr: vi.fn(async (key: string) => {
+      const next = Number(state.get(key) ?? '0') + 1;
+      state.set(key, String(next));
+      return next;
+    }),
+    eval: vi.fn(async (_script: string, input: Readonly<{ keys: readonly string[]; arguments: readonly string[] }>) => {
+      const key = input.keys[0];
+      const token = input.arguments[0];
+      if (key && token && state.get(key) === token) {
+        state.delete(key);
+        return 1;
+      }
+      return 0;
+    }),
+  };
+  return { redis, state };
+}
+
 describe('Day 6 Task 8 replay/finality/cache/fanout contracts', () => {
   it('exports checkpoint anchor verification and rejects a contradictory committed hash', async () => {
     const module = await replayModule();
@@ -66,59 +102,80 @@ describe('Day 6 Task 8 replay/finality/cache/fanout contracts', () => {
     expect(getBlockHash).toHaveBeenCalledWith(120n);
   });
 
-  it('coalesces post-commit invalidation/fanout by logical channel and publishes bounded hints', async () => {
+  it('coalesces post-commit invalidation/fanout by logical channel and publishes bounded causal hints', async () => {
     const module = await postCommitModule();
     expect(module.PostCommitPublisher).toBeTypeOf('function');
 
     const invalidate = vi.fn(async (_channel: string) => undefined);
     const fanout = vi.fn(async (_message: unknown) => undefined);
     const publisher = new module.PostCommitPublisher({ invalidate, fanout });
+    const feedChannel = `stack:${context.chainId}:${context.stackVersion}:feed`;
+    const tokenChannel = `token:${context.chainId}:${address(10)}`;
+    const lastEventId = `${context.chainId}:${hash(2)}:1`;
 
     await publisher.publish({
       insertedEventIds: [
         `${context.chainId}:${hash(1)}:0`,
-        `${context.chainId}:${hash(2)}:1`,
+        lastEventId,
       ],
-      channels: [
-        `stack:${context.chainId}:${context.stackVersion}:feed`,
-        `token:${context.chainId}:${address(10)}`,
-        `token:${context.chainId}:${address(10)}`,
-      ],
+      channels: [feedChannel, tokenChannel, tokenChannel],
       checkpoint: { blockNumber: 120n, blockHash: hash(120) },
     });
 
     expect(invalidate.mock.calls.map(([channel]) => channel).sort()).toEqual([
-      `stack:${context.chainId}:${context.stackVersion}:feed`,
-      `token:${context.chainId}:${address(10)}`,
+      feedChannel,
+      tokenChannel,
     ].sort());
     expect(fanout).toHaveBeenCalledTimes(2);
+    expect(fanout).toHaveBeenCalledWith(expect.objectContaining({
+      channel: feedChannel,
+      changeKind: 'INVALIDATE',
+      changeDomain: 'feed',
+      affectedIdentity: `${context.chainId}:${context.stackVersion}`,
+      eventId: lastEventId,
+      checkpointBlock: '120',
+      checkpointHash: hash(120),
+    }));
+    expect(fanout).toHaveBeenCalledWith(expect.objectContaining({
+      channel: tokenChannel,
+      changeKind: 'INVALIDATE',
+      changeDomain: 'token',
+      affectedIdentity: address(10),
+      eventId: lastEventId,
+      checkpointBlock: '120',
+      checkpointHash: hash(120),
+    }));
     for (const [message] of fanout.mock.calls) {
-      expect(message).toMatchObject({
-        changeKind: 'INVALIDATE',
-        checkpointBlock: '120',
-        checkpointHash: hash(120),
-      });
       expect(JSON.stringify(message).length).toBeLessThan(2048);
     }
   });
 
-  it('uses cache generations and single-flight without making Redis authoritative', async () => {
+  it('surfaces post-commit invalidation/fanout failure as degraded instead of reporting publication success', async () => {
+    const module = await postCommitModule();
+    const fanout = vi.fn(async (_message: unknown) => undefined);
+    const publisher = new module.PostCommitPublisher({
+      invalidate: vi.fn(async () => {
+        throw new Error('redis unavailable');
+      }),
+      fanout,
+    });
+
+    await expect(publisher.publish({
+      insertedEventIds: [`${context.chainId}:${hash(1)}:0`],
+      channels: [`token:${context.chainId}:${address(10)}`],
+      checkpoint: { blockNumber: 120n, blockHash: hash(120) },
+    })).rejects.toMatchObject({
+      code: 'POST_COMMIT_DEGRADED',
+      failures: [expect.objectContaining({ operation: 'INVALIDATE' })],
+    });
+    expect(fanout).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses cache generations and process-local single-flight without making Redis authoritative', async () => {
     const module = await cacheModule();
     expect(module.BreadCache).toBeTypeOf('function');
 
-    const state = new Map<string, string>();
-    const redis = {
-      get: vi.fn(async (key: string) => state.get(key) ?? null),
-      set: vi.fn(async (key: string, value: string) => {
-        state.set(key, value);
-        return 'OK';
-      }),
-      incr: vi.fn(async (key: string) => {
-        const next = Number(state.get(key) ?? '0') + 1;
-        state.set(key, String(next));
-        return next;
-      }),
-    };
+    const { redis } = createFakeRedis();
     const cache = new module.BreadCache({ redis, schemaVersion: 'day6-v1' });
     const load = vi.fn(async () => ({ rows: ['db'], freshnessBlock: '120' }));
 
@@ -132,6 +189,49 @@ describe('Day 6 Task 8 replay/finality/cache/fanout contracts', () => {
     await cache.invalidate('feed');
     await cache.getOrLoad({ channel: 'feed', key: 'view=new', load });
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses Redis cross-instance single-flight and a bounded payload TTL for hot misses', async () => {
+    const module = await cacheModule();
+    const { redis } = createFakeRedis();
+    const cacheA = new module.BreadCache({ redis, schemaVersion: 'day6-v1' });
+    const cacheB = new module.BreadCache({ redis, schemaVersion: 'day6-v1' });
+
+    let releaseLoad: (() => void) | undefined;
+    const loadGate = new Promise<void>((resolve) => {
+      releaseLoad = resolve;
+    });
+    const load = vi.fn(async () => {
+      await loadGate;
+      return { rows: ['db'], freshnessBlock: '120' };
+    });
+
+    const first = cacheA.getOrLoad({ channel: 'feed', key: 'view=trending', load });
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+    const second = cacheB.getOrLoad({ channel: 'feed', key: 'view=trending', load });
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(load).toHaveBeenCalledTimes(1);
+    releaseLoad?.();
+
+    const [left, right] = await Promise.all([first, second]);
+    expect(left.value).toEqual(right.value);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    const lockWrite = redis.set.mock.calls.find(([key, _value, options]) =>
+      String(key).startsWith('bread:lock:') && (options as FakeRedisSetOptions | undefined)?.NX === true,
+    );
+    expect(lockWrite).toBeDefined();
+    expect((lockWrite?.[2] as FakeRedisSetOptions | undefined)?.PX).toBeGreaterThan(0);
+
+    const payloadWrite = redis.set.mock.calls.find(([key, _value, options]) =>
+      String(key).startsWith('bread:cache:') && typeof (options as FakeRedisSetOptions | undefined)?.PX === 'number',
+    );
+    expect(payloadWrite).toBeDefined();
+    const payloadTtlMs = (payloadWrite?.[2] as FakeRedisSetOptions).PX;
+    expect(payloadTtlMs).toBeGreaterThan(0);
+    expect(payloadTtlMs).toBeLessThanOrEqual(60_000);
+    expect(redis.eval).toHaveBeenCalled();
   });
 });
 
@@ -171,7 +271,7 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
     await pool.query('TRUNCATE event_journal, admin_events, indexer_checkpoints, protocol_stacks CASCADE');
   });
 
-  it('replays an overlap without duplicate projection effects and never regresses checkpoint', async () => {
+  it('replaying an overlap does not duplicate projections and never regresses checkpoint', async () => {
     const dbModule = await import('../../packages/db/src/index.ts');
     const replay = await replayModule();
     expect(replay.replayOverlap).toBeTypeOf('function');
@@ -205,7 +305,8 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
     const publish = vi.fn(async (_result: unknown) => undefined);
     const result = await replay.replayOverlap({
       context,
-      checkpointBlock: 100n,
+      checkpoint: { blockNumber: 100n, blockHash: hash(100) },
+      getBlockHash: vi.fn(async () => hash(100)),
       targetBlock: 100n,
       overlapBlocks: 20n,
       loadRange: async (fromBlock: bigint, toBlock: bigint) => ({
@@ -236,15 +337,40 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
     expect(publish).not.toHaveBeenCalled();
   });
 
-  it('does not publish cache/fanout if the DB apply rejects, and publishes only after a successful apply', async () => {
+  it('verifies the checkpoint anchor before any replay projection rewrite', async () => {
+    const replay = await replayModule();
+    const loadRange = vi.fn(async (fromBlock: bigint, toBlock: bigint) => ({ fromBlock, toBlock, events: [] }));
+    const applyRange = vi.fn(async () => ({ insertedEventIds: ['must-not-apply'] }));
+    const publish = vi.fn(async () => undefined);
+
+    await expect(replay.replayOverlap({
+      context,
+      checkpoint: { blockNumber: 100n, blockHash: hash(100) },
+      getBlockHash: vi.fn(async () => hash(999)),
+      targetBlock: 101n,
+      overlapBlocks: 5n,
+      loadRange,
+      applyRange,
+      publish,
+    })).rejects.toMatchObject({ code: 'CHECKPOINT_BLOCK_HASH_MISMATCH' });
+
+    expect(loadRange).not.toHaveBeenCalled();
+    expect(applyRange).not.toHaveBeenCalled();
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('does not publish cache/fanout if DB apply rejects, publishes after commit, and reports post-commit degradation', async () => {
     const replay = await replayModule();
     const publish = vi.fn(async (_result: unknown) => undefined);
     const order: string[] = [];
+    const checkpoint = { blockNumber: 100n, blockHash: hash(100) };
+    const getBlockHash = vi.fn(async () => hash(100));
 
     await expect(
       replay.replayOverlap({
         context,
-        checkpointBlock: 100n,
+        checkpoint,
+        getBlockHash,
         targetBlock: 101n,
         overlapBlocks: 5n,
         loadRange: async (fromBlock: bigint, toBlock: bigint) => ({ fromBlock, toBlock, events: [] }),
@@ -261,9 +387,10 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
     expect(publish).not.toHaveBeenCalled();
 
     order.length = 0;
-    await replay.replayOverlap({
+    const success = await replay.replayOverlap({
       context,
-      checkpointBlock: 100n,
+      checkpoint,
+      getBlockHash,
       targetBlock: 101n,
       overlapBlocks: 5n,
       loadRange: async (fromBlock: bigint, toBlock: bigint) => ({ fromBlock, toBlock, events: [] }),
@@ -277,6 +404,22 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
       },
     });
     expect(order).toEqual(['apply', 'publish']);
+    expect(success.postCommit).toBe('PUBLISHED');
     expect(publish).toHaveBeenCalledTimes(1);
+
+    const degraded = await replay.replayOverlap({
+      context,
+      checkpoint,
+      getBlockHash,
+      targetBlock: 101n,
+      overlapBlocks: 5n,
+      loadRange: async (fromBlock: bigint, toBlock: bigint) => ({ fromBlock, toBlock, events: [] }),
+      applyRange: async () => ({ insertedEventIds: ['event-2'], checkpointBlock: 101n, channels: ['feed'] }),
+      publish: async () => {
+        throw new Error('fanout unavailable');
+      },
+    });
+    expect(degraded.postCommit).toBe('DEGRADED');
+    expect(degraded.postCommitError).toContain('fanout unavailable');
   });
 });
