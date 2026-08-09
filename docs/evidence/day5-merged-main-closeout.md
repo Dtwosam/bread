@@ -1,6 +1,6 @@
 # Day 5 — Merged-Main Closeout
 
-Status: **CLOSEOUT PREREQUISITE CI PENDING — POST-SECURITY-HARDENING MAIN**
+Status: **PREREQUISITE PASS — STAMPED CLOSEOUT CI PENDING**
 
 This closeout is intentionally rebuilt from the newest actual `main` after post-merge adversarial security PR #28 landed. The older PR #29 closeout proof is superseded because its base moved while CI was running.
 
@@ -28,6 +28,17 @@ PR #28 adds tests/helpers only; it does not change production contracts.
   - coordinator-to-adapter allowances clear after failed and successful Stage 2;
   - failed post-pull attempts remain retryable without asset displacement or duplicate mint.
 
+## Fresh hardened-main closeout prerequisite proof
+
+- Exact prerequisite head: `1fcc50063e4d37bfb96df3f2b58f858f9c718d0b`.
+- Exact prerequisite CI: `31285985419`.
+- `bootstrap-validation`: PASS.
+- `dependency-build`: PASS.
+- `infrastructure-health`: PASS.
+- `foundry-bootstrap`: PASS.
+
+The stamped evidence/state head created after this proof must itself pass the same four jobs before PR #30 is eligible to merge.
+
 ## Day-5 verdicts under closeout verification
 
 - `FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS`
@@ -53,11 +64,10 @@ PR #28 adds tests/helpers only; it does not change production contracts.
 - canonical Arc graduation DEX deployment remains pending;
 - Bread independent external review remains required before unrestricted public/mainnet funds.
 
-## Closeout sequence
+## Remaining closeout sequence
 
-1. Run all four repository jobs on the prerequisite closeout head derived from hardened main `6608222f0716f52392922291288ac94f4b55f84a`.
-2. Stamp exact prerequisite head/run into this evidence and build state.
-3. Run all four jobs again on the stamped closeout head.
-4. Merge only the exact stamped green head with expected-head protection.
-5. Verify actual merged `main`.
-6. Create and merge durable post-closeout handoff before Day-6 production work.
+1. Run all four repository jobs on the stamped PR #30 head created by this evidence/state update.
+2. If all four pass, reverify exact PR #30 head, current `main`, mergeability and reviews.
+3. Mark ready and merge only that exact stamped head with expected-head protection.
+4. Verify actual merged `main`.
+5. Create and merge durable post-closeout handoff before Day-6 production work.
