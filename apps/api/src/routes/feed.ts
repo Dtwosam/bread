@@ -70,43 +70,75 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
       }
     }
 
-    const fetched = await deps.repository.listNewLaunches(
-      deps.context.chainId,
-      deps.context.stackVersion,
-      deps.context.factoryAddress,
-      parsedLimit + 1,
-      cursor,
-    );
-    const hasMore = fetched.length > parsedLimit;
-    const launches = fetched.slice(0, parsedLimit);
-    const last = launches.at(-1);
-    let nextCursor: string | undefined;
-    if (hasMore && last) {
-      if (last.launchTimestamp === null) throw new Error('New-feed row is missing launch timestamp');
-      nextCursor = encodeNewFeedCursor({
-        version: NEW_FEED_CURSOR_VERSION,
-        launchBlockNumber: last.launchBlockNumber.toString(10),
-        launchTimestamp: last.launchTimestamp.toString(10),
-        launchLogIndex: last.launchLogIndex,
-        tokenAddress: last.tokenAddress,
-      });
+    if (deps.feedRateLimit) {
+      const rate = await deps.feedRateLimit(request.ip);
+      if (rate === 'LIMITED') {
+        return reply.code(429).send({
+          error: { code: 'FEED_RATE_LIMITED', message: 'Feed request rate limit exceeded.', requestId: request.id },
+        });
+      }
+      // Cached feed is intentionally broadly serviceable. If Redis-backed
+      // limiting is unavailable, the bounded DB gate + cache BYPASS path still
+      // protects origin work instead of turning cache loss into a 500 storm.
     }
 
-    const metricRows = await deps.repository.listTokenMetrics(
-      deps.context.chainId,
-      launches.map((launch) => launch.tokenAddress),
-    );
-    const metricsByToken = new Map(metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]));
-    const meta = await deps.freshness();
+    const load = async () => {
+      const fetched = await deps.repository.listNewLaunches(
+        deps.context.chainId,
+        deps.context.stackVersion,
+        deps.context.factoryAddress,
+        parsedLimit + 1,
+        cursor,
+      );
+      const hasMore = fetched.length > parsedLimit;
+      const launches = fetched.slice(0, parsedLimit);
+      const last = launches.at(-1);
+      let nextCursor: string | undefined;
+      if (hasMore && last) {
+        if (last.launchTimestamp === null) throw new Error('New-feed row is missing launch timestamp');
+        nextCursor = encodeNewFeedCursor({
+          version: NEW_FEED_CURSOR_VERSION,
+          launchBlockNumber: last.launchBlockNumber.toString(10),
+          launchTimestamp: last.launchTimestamp.toString(10),
+          launchLogIndex: last.launchLogIndex,
+          tokenAddress: last.tokenAddress,
+        });
+      }
+
+      const metricRows = await deps.repository.listTokenMetrics(
+        deps.context.chainId,
+        launches.map((launch) => launch.tokenAddress),
+      );
+      const metricsByToken = new Map(metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]));
+      const meta = await deps.freshness();
+      return {
+        data: launches.map((launch) => ({
+          ...serializeLaunch(launch),
+          metrics: serializeTradeMetrics(metricsByToken.get(launch.tokenAddress.toLowerCase())),
+        })),
+        meta,
+        page: {
+          hasMore,
+          ...(nextCursor === undefined ? {} : { nextCursor }),
+        },
+      };
+    };
+
+    const cacheKey = `view=${view}&limit=${parsedLimit}&cursor=${query.cursor ?? ''}`;
+    const cacheResult = deps.cache
+      ? await deps.cache.getOrLoad({
+          channel: `stack:${deps.context.chainId}:${deps.context.stackVersion}:feed`,
+          key: cacheKey,
+          load,
+        })
+      : { value: await load(), cache: 'BYPASS' as const };
+    const now = (deps.now ?? (() => new Date()))();
     return {
-      data: launches.map((launch) => ({
-        ...serializeLaunch(launch),
-        metrics: serializeTradeMetrics(metricsByToken.get(launch.tokenAddress.toLowerCase())),
-      })),
-      meta,
-      page: {
-        hasMore,
-        ...(nextCursor === undefined ? {} : { nextCursor }),
+      ...cacheResult.value,
+      meta: {
+        ...cacheResult.value.meta,
+        servedAt: now.toISOString(),
+        cache: cacheResult.cache,
       },
     };
   });
