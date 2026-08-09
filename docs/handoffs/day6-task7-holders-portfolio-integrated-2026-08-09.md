@@ -5,6 +5,7 @@ Date: 2026-08-09
 ## Durable baseline
 
 - Implementation PR: #49
+- Durable handoff PR: #50
 - Task-6 durable baseline: `17aa7f6ceb7b742305ae5ff06791444a2e1d6d45`
 - Final Task-7 branch head: `1bd392035392738bb41657bbc87d7273db7bec5e`
 - Guarded implementation merge: `311cb84cf33f54e03c7c91fe01dd80408aa9ff91`
@@ -52,11 +53,11 @@ All merge-authorizing workflows on `1bd392035392738bb41657bbc87d7273db7bec5e` co
 
 `DAY6_TASK7_HOLDERS_PORTFOLIO_INTEGRATED_PASS`
 
-Implementation is integrated. This handoff branch must itself pass inherited exact-head CI plus retained Task-5, Task-6 and Task-7 dedicated regressions and guarded-merge before Task 8 begins.
+Implementation is integrated. Handoff PR #50 must itself pass inherited exact-head CI plus retained Task-5, Task-6 and Task-7 dedicated regressions and guarded-merge before Task 8 begins.
 
 ## Next safe action
 
-After this handoff is exact-head green and merged, start Day-6 Task 8 from the new `main` baseline, RED-first, limited to replay/finality/cache/fanout:
+After PR #50 is exact-head green and merged, start Day-6 Task 8 from the new `main` baseline, RED-first, limited to replay/finality/cache/fanout:
 
 - overlap replay idempotency across the integrated projection set;
 - checkpoint block-hash contradiction fail-closed handling;
