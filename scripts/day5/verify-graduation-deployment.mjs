@@ -51,6 +51,12 @@ function expectAddress(label, actual, expected) {
   }
 }
 
+async function requireCode(label, address) {
+  if (!normalizeAddress(address)) fail(`manifest address missing: ${label}`);
+  const code = await rpc("eth_getCode", [address, "latest"]);
+  if (!code || code === "0x") fail(`eth_getCode returned no code for ${label} ${address}`);
+}
+
 if (!network || !["arc-testnet", "arc-mainnet"].includes(network)) {
   fail("usage: ARC_RPC_URL=... node scripts/day5/verify-graduation-deployment.mjs <arc-testnet|arc-mainnet>");
 }
@@ -73,11 +79,18 @@ const addresses = {
   adapter: deployment.adapter.adapter,
   positionManager: deployment.adapter.positionManager,
 };
-for (const [label, address] of Object.entries(addresses)) {
-  if (!normalizeAddress(address)) fail(`manifest address missing: ${label}`);
-  const code = await rpc("eth_getCode", [address, "latest"]);
-  if (!code || code === "0x") fail(`eth_getCode returned no code for ${label} ${address}`);
+for (const [label, address] of Object.entries(addresses)) await requireCode(label, address);
+
+if (deployment.adapter.family === "UNISWAP_V3") {
+  await requireCode("v3Factory", deployment.adapter.v3Factory);
+} else if (deployment.adapter.family === "UNISWAP_V4") {
+  await requireCode("poolManager", deployment.adapter.poolManager);
+} else {
+  fail(`unsupported adapter family ${deployment.adapter.family}`);
 }
+
+const protocolAdmin = deployment.authorities.protocolAdmin;
+await requireCode("Protocol Admin Safe", protocolAdmin);
 
 expectAddress("factory.graduationCoordinator", castCall(core.factory, "graduationCoordinator()(address)"), core.coordinator);
 expectAddress("factory.launchDeployer", castCall(core.factory, "launchDeployer()(address)"), core.deployer);
@@ -100,14 +113,11 @@ expectAddress("adapter.locker", castCall(deployment.adapter.adapter, "locker()(a
 const configHash = normalizeHash(castCall(deployment.adapter.adapter, "configHash()(bytes32)"));
 if (configHash !== deployment.adapter.configHash.toLowerCase()) fail("adapter configHash does not match manifest");
 
-expectAddress("factory.owner", castCall(core.factory, "owner()(address)"), deployment.authorities.protocolAdmin);
-expectAddress("coordinator.owner", castCall(core.coordinator, "owner()(address)"), deployment.authorities.protocolAdmin);
-expectAddress("feeEscrow.owner", castCall(core.feeEscrow, "owner()(address)"), deployment.authorities.protocolAdmin);
-expectAddress(
-  "emergencyController.owner",
-  castCall(core.emergencyController, "owner()(address)"),
-  deployment.authorities.protocolAdmin,
-);
+expectAddress("feePolicy.owner", castCall(core.feePolicy, "owner()(address)"), protocolAdmin);
+expectAddress("factory.owner", castCall(core.factory, "owner()(address)"), protocolAdmin);
+expectAddress("coordinator.owner", castCall(core.coordinator, "owner()(address)"), protocolAdmin);
+expectAddress("feeEscrow.owner", castCall(core.feeEscrow, "owner()(address)"), protocolAdmin);
+expectAddress("emergencyController.owner", castCall(core.emergencyController, "owner()(address)"), protocolAdmin);
 expectAddress(
   "emergencyController.guardian",
   castCall(core.emergencyController, "guardian()(address)"),
