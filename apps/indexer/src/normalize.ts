@@ -296,7 +296,7 @@ async function buildLaunchSnapshot(
   ]);
 
   if (asAddress(curveToken, 'curve.token') !== token) throw new Error('curve token mismatch');
-  if (asAddress(pairToken, 'curve.pairToken') !== input.context.quoteAsset.toLowerCase()) throw new Error('curve quote asset mismatch');
+  if (asAddress(pairToken, 'curve.pairToken') !== context.quoteAsset.toLowerCase()) throw new Error('curve quote asset mismatch');
   if (asAddress(curveCoordinator, 'curve.graduationCoordinator') !== asAddress(factoryRecord.graduationCoordinator, 'Factory.getLaunch.graduationCoordinator')) {
     throw new Error('curve graduation coordinator mismatch');
   }
