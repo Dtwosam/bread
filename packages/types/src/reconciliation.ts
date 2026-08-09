@@ -19,6 +19,7 @@ export type ReconciliationReport = Readonly<{
   deploymentStartBlock: string;
   checkedBlock: string;
   checkedBlockHash: string;
+  canonicalEventCount: number;
   startedAt: string;
   completedAt: string;
   checks: readonly ReconciliationCheck[];
