@@ -35,6 +35,7 @@ contract GraduationCoordinator is Ownable, ReentrancyGuard, IGraduationCoordinat
     error GraduationTransferMismatch();
     error InvalidAdapterResult();
     error InsufficientGraduationCustody();
+    error OwnershipRenounceDisabled();
 
     struct SweepPlan {
         address adapter;
@@ -174,6 +175,11 @@ contract GraduationCoordinator is Ownable, ReentrancyGuard, IGraduationCoordinat
 
     function getGraduation(address token) external view override returns (GraduationRecord memory record) {
         return _graduations[token];
+    }
+
+    /// @notice Coordinator recovery authority must remain transferable to a live admin; it cannot be burned.
+    function renounceOwnership() public pure override {
+        revert OwnershipRenounceDisabled();
     }
 
     function _prepareSweep(address token) private view returns (SweepPlan memory plan) {
