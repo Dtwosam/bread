@@ -111,7 +111,10 @@ export class RebuildRepository {
           AND (
             j.contract_address IN (${registeredAddressList})
             OR EXISTS (SELECT 1 FROM launches l WHERE l.chain_id=j.chain_id AND l.stack_version=${context.stackVersion}
-              AND l.factory_address=${factory} AND (l.token_address=j.token_address OR l.curve_address=j.curve_address))
+              AND l.factory_address=${factory} AND (
+                l.token_address=j.contract_address OR l.curve_address=j.contract_address
+                OR l.token_address=j.token_address OR l.curve_address=j.curve_address
+              ))
           )`);
       await tx.execute(sql`DELETE FROM indexer_checkpoints
         WHERE chain_id=${context.chainId} AND stack_version=${context.stackVersion} AND factory_address=${factory}`);
