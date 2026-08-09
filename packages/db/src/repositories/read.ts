@@ -17,6 +17,15 @@ export type TradeCursorKey = Readonly<{
   transactionHash: string;
 }>;
 
+export type HolderCursorKey = Readonly<{
+  balance: string;
+  holderAddress: string;
+}>;
+
+export type PortfolioCursorKey = Readonly<{
+  tokenAddress: string;
+}>;
+
 export type TradeReadRow = Readonly<{
   chainId: number;
   transactionHash: string;
@@ -44,6 +53,39 @@ export type TradeReadRow = Readonly<{
   grossCurveQuoteOut: string;
   executionPriceNumerator: string;
   executionPriceDenominator: string;
+}>;
+
+export type HolderReadRow = Readonly<{
+  tokenAddress: string;
+  holderAddress: string;
+  balance: string;
+  isProtocolAddress: boolean;
+  asOfBlockNumber: string;
+  lastTransactionHash: string | null;
+  lastLogIndex: number | null;
+}>;
+
+export type HolderConcentrationRead = Readonly<{
+  supply: string | null;
+  holderCount: string;
+  userHolderCount: string;
+  top10NonProtocolBalance: string;
+}>;
+
+export type PortfolioReadRow = Readonly<{
+  tokenAddress: string;
+  balance: string;
+  isProtocolAddress: boolean;
+  asOfBlockNumber: string;
+  lastTransactionHash: string | null;
+  lastLogIndex: number | null;
+  name: string | null;
+  symbol: string | null;
+  graduationPhase: string | null;
+  graduationState: string | null;
+  lastPriceNumerator: string | null;
+  lastPriceDenominator: string | null;
+  lastPriceSource: string | null;
 }>;
 
 export function decimalIntegerToBigInt(value: string | number | bigint): bigint {
@@ -304,5 +346,111 @@ export class ReadRepository {
       LIMIT ${boundedLimit}
     `);
     return resultRows<TradeReadRow>(result);
+  }
+
+  async listHolders(
+    chainId: number,
+    tokenAddress: string,
+    limit: number,
+    cursor?: HolderCursorKey,
+  ): Promise<HolderReadRow[]> {
+    const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
+    const canonicalToken = tokenAddress.toLowerCase();
+    const cursorClause = cursor
+      ? sql`AND (
+          h.balance < CAST(${cursor.balance} AS numeric)
+          OR (h.balance = CAST(${cursor.balance} AS numeric) AND h.holder_address > ${cursor.holderAddress.toLowerCase()})
+        )`
+      : sql``;
+    const result = await this.db.execute(sql`
+      SELECT
+        h.token_address AS "tokenAddress",
+        h.holder_address AS "holderAddress",
+        h.balance::text AS balance,
+        h.is_protocol_address AS "isProtocolAddress",
+        h.as_of_block_number::text AS "asOfBlockNumber",
+        h.last_transaction_hash AS "lastTransactionHash",
+        h.last_log_index AS "lastLogIndex"
+      FROM holder_snapshots h
+      WHERE h.chain_id = ${chainId}
+        AND h.token_address = ${canonicalToken}
+        AND h.balance > 0
+        ${cursorClause}
+      ORDER BY h.balance DESC, h.holder_address ASC
+      LIMIT ${boundedLimit}
+    `);
+    return resultRows<HolderReadRow>(result);
+  }
+
+  async getHolderConcentration(chainId: number, tokenAddress: string): Promise<HolderConcentrationRead> {
+    const canonicalToken = tokenAddress.toLowerCase();
+    const result = await this.db.execute(sql`
+      SELECT
+        (SELECT initial_supply::text FROM launches WHERE chain_id = ${chainId} AND token_address = ${canonicalToken} LIMIT 1) AS supply,
+        (SELECT count(*)::text FROM holder_snapshots WHERE chain_id = ${chainId} AND token_address = ${canonicalToken} AND balance > 0) AS "holderCount",
+        (SELECT count(*)::text FROM holder_snapshots WHERE chain_id = ${chainId} AND token_address = ${canonicalToken} AND balance > 0 AND is_protocol_address = false) AS "userHolderCount",
+        COALESCE((
+          SELECT sum(balance)::text FROM (
+            SELECT balance
+            FROM holder_snapshots
+            WHERE chain_id = ${chainId}
+              AND token_address = ${canonicalToken}
+              AND balance > 0
+              AND is_protocol_address = false
+            ORDER BY balance DESC, holder_address ASC
+            LIMIT 10
+          ) AS top10
+        ), '0') AS "top10NonProtocolBalance"
+    `);
+    return resultRows<HolderConcentrationRead>(result)[0] ?? {
+      supply: null,
+      holderCount: '0',
+      userHolderCount: '0',
+      top10NonProtocolBalance: '0',
+    };
+  }
+
+  async listPortfolio(
+    chainId: number,
+    holderAddress: string,
+    limit: number,
+    cursor?: PortfolioCursorKey,
+  ): Promise<PortfolioReadRow[]> {
+    const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
+    const canonicalHolder = holderAddress.toLowerCase();
+    const cursorClause = cursor ? sql`AND h.token_address > ${cursor.tokenAddress.toLowerCase()}` : sql``;
+    const result = await this.db.execute(sql`
+      SELECT
+        h.token_address AS "tokenAddress",
+        h.balance::text AS balance,
+        h.is_protocol_address AS "isProtocolAddress",
+        h.as_of_block_number::text AS "asOfBlockNumber",
+        h.last_transaction_hash AS "lastTransactionHash",
+        h.last_log_index AS "lastLogIndex",
+        l.name,
+        l.symbol,
+        s.graduation_phase AS "graduationPhase",
+        m.graduation_state AS "graduationState",
+        m.last_price_numerator::text AS "lastPriceNumerator",
+        m.last_price_denominator::text AS "lastPriceDenominator",
+        m.last_price_source AS "lastPriceSource"
+      FROM holder_snapshots h
+      JOIN launches l
+        ON l.chain_id = h.chain_id
+       AND l.token_address = h.token_address
+      LEFT JOIN launch_state s
+        ON s.chain_id = h.chain_id
+       AND s.token_address = h.token_address
+      LEFT JOIN token_metrics m
+        ON m.chain_id = h.chain_id
+       AND m.token_address = h.token_address
+      WHERE h.chain_id = ${chainId}
+        AND h.holder_address = ${canonicalHolder}
+        AND h.balance > 0
+        ${cursorClause}
+      ORDER BY h.token_address ASC
+      LIMIT ${boundedLimit}
+    `);
+    return resultRows<PortfolioReadRow>(result);
   }
 }

@@ -2,10 +2,16 @@ import { canonicalizeProtocolAddress } from '../../../packages/protocol-sdk/src/
 
 export const NEW_FEED_CURSOR_VERSION = 1 as const;
 export const TRADE_CURSOR_VERSION = 1 as const;
+export const HOLDER_CURSOR_VERSION = 1 as const;
+export const PORTFOLIO_CURSOR_VERSION = 1 as const;
 export const DEFAULT_FEED_LIMIT = 25 as const;
 export const MAX_FEED_LIMIT = 100 as const;
 export const DEFAULT_TRADE_LIMIT = DEFAULT_FEED_LIMIT;
 export const MAX_TRADE_LIMIT = MAX_FEED_LIMIT;
+export const DEFAULT_HOLDER_LIMIT = DEFAULT_FEED_LIMIT;
+export const MAX_HOLDER_LIMIT = MAX_FEED_LIMIT;
+export const DEFAULT_PORTFOLIO_LIMIT = DEFAULT_FEED_LIMIT;
+export const MAX_PORTFOLIO_LIMIT = MAX_FEED_LIMIT;
 export const MAX_CURSOR_LENGTH = 512 as const;
 const MAX_CURSOR_JSON_LENGTH = 384;
 const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -24,6 +30,17 @@ export type TradeCursor = Readonly<{
   transactionIndex: number;
   logIndex: number;
   transactionHash: string;
+}>;
+
+export type HolderCursor = Readonly<{
+  version: number;
+  balance: string;
+  holderAddress: string;
+}>;
+
+export type PortfolioCursor = Readonly<{
+  version: number;
+  tokenAddress: string;
 }>;
 
 function encodeAsciiBase64Url(input: string): string {
@@ -162,5 +179,50 @@ export function encodeTradeCursor(input: Readonly<Record<string, unknown>>): str
 export function decodeTradeCursor(input: string): TradeCursor {
   const cursor = normalizeTradeCursor(parseCursorJson(input));
   if (cursor.version !== TRADE_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeHolderCursor(input: Readonly<Record<string, unknown>>): HolderCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    balance: exactDecimal(input.balance, 'balance'),
+    holderAddress: canonicalizeProtocolAddress(String(input.holderAddress ?? '')),
+  };
+}
+
+export function encodeHolderCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeHolderCursor(input);
+  return encodeCursorJson({ version: cursor.version, balance: cursor.balance, holderAddress: cursor.holderAddress });
+}
+
+export function decodeHolderCursor(input: string): HolderCursor {
+  const cursor = normalizeHolderCursor(parseCursorJson(input));
+  if (cursor.version !== HOLDER_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizePortfolioCursor(input: Readonly<Record<string, unknown>>): PortfolioCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodePortfolioCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizePortfolioCursor(input);
+  return encodeCursorJson({ version: cursor.version, tokenAddress: cursor.tokenAddress });
+}
+
+export function decodePortfolioCursor(input: string): PortfolioCursor {
+  const cursor = normalizePortfolioCursor(parseCursorJson(input));
+  if (cursor.version !== PORTFOLIO_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
   return cursor;
 }

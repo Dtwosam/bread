@@ -6,6 +6,7 @@ import type { RpcLog } from './discovery.js';
 import { normalizeTransactionLogs, type ChainReadClient } from './normalize.js';
 import {
   createFeeAdminGraduationReducer,
+  createHolderReducer,
   createLaunchReducer,
   createTradeReducer,
 } from './reducers.js';
@@ -38,10 +39,23 @@ export async function applyRange(input: ApplyRangeInput) {
     toBlockTimestamp: input.toBlockTimestamp,
   });
 
+  const launchProtocolAddresses = new Map<string, readonly string[]>();
+  for (const launch of knownLaunches) {
+    launchProtocolAddresses.set(launch.tokenAddress.toLowerCase(), [launch.curveAddress]);
+  }
+  for (const snapshot of normalized.launchSnapshots.values()) {
+    launchProtocolAddresses.set(snapshot.tokenAddress.toLowerCase(), [
+      snapshot.curveAddress,
+      snapshot.graduationCoordinator,
+      snapshot.graduationAdapter,
+    ]);
+  }
+
   const repository = new IndexerRepository(input.db, [
     createLaunchReducer(normalized.launchSnapshots),
     createTradeReducer(normalized.trades),
     createFeeAdminGraduationReducer({ context: input.context }),
+    createHolderReducer({ context: input.context, launchProtocolAddresses }),
   ]);
   return repository.applyCanonicalRange({
     context: input.context,

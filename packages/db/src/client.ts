@@ -53,6 +53,7 @@ async function readMigrationSql(): Promise<readonly string[]> {
     readFile(new URL('../drizzle/0001_day6_read_stack.sql', import.meta.url), 'utf8'),
     readFile(new URL('../drizzle/0002_day6_trade_vertical.sql', import.meta.url), 'utf8'),
     readFile(new URL('../drizzle/0003_day6_fees_admin_graduation.sql', import.meta.url), 'utf8'),
+    readFile(new URL('../drizzle/0004_day6_holders_portfolio.sql', import.meta.url), 'utf8'),
   ]);
   return migrationSqlPromise;
 }
