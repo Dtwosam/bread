@@ -42,7 +42,7 @@ history_preservation:
   prior_state_schema_version: 1.34
   prior_state_blob_sha: ccab4646fab540fea99661f3a0dec819ea00be36
   note: >-
-    v1.35 advances the durable workflow pointer through the verified Task-10 implementation and handoff merges into Task 11. Granular RED/GREEN workflow identities remain preserved in Git history and task-specific evidence/handoffs. No accepted verdict, source boundary, blocker, invariant or authority rule is revoked by this state update.
+    v1.35 advances the durable workflow pointer through the verified Task-10 implementation and handoff merges into Task 11 while preserving prior accepted workflow identities in this state file. Granular RED/GREEN detail also remains in Git history and task-specific evidence/handoffs. No accepted verdict, source boundary, blocker, invariant or authority rule is revoked by this state update.
 
 integration_baseline:
   id: DAY6-TASK10-DURABLE-MAIN
@@ -92,10 +92,19 @@ project_process_note:
 verification:
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
   day6_task8_final_ci: 31329811060
+  day6_task8_final_task5_ci: 31329811046
+  day6_task8_final_task6_ci: 31329811089
+  day6_task8_final_task7_ci: 31329811049
+  day6_task8_final_dedicated_ci: 31329811051
+  day6_task8_merge: cbedc075ec5c041602290c5f79acff92bc70bbca
   day6_task8_handoff_merge: 5549f236460e923159eda3b1e12864b8a4d0ed0a
 
   day6_task9_final_head: c2d8a91544ae179bd9e5f0c2f15a27aa9ba227dc
   day6_task9_final_ci: 31331597034
+  day6_task9_final_task5_ci: 31331597042
+  day6_task9_final_task6_ci: 31331597040
+  day6_task9_final_task7_ci: 31331597048
+  day6_task9_final_task8_ci: 31331597038
   day6_task9_final_dedicated_ci: 31331597046
   day6_task9_final_dedicated_result: POSTGRES_REDIS_10_OF_10
   day6_task9_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
@@ -184,9 +193,25 @@ day6_task9:
   implementation_status: INTEGRATED_PASS_DURABLE
 
 day6_task10:
+  branch: agent/day6-task10-rebuild-reconcile
+  baseline: d6b6b26631f3e70f127595c55074d8cc20edce7a
   implementation_pr: 55
   implementation_merge: 08e38978ebf48d533556b7f57e0a1c1cab10bf17
   evidence: docs/evidence/day6-rebuild-reconcile.md
+  final_acceptance:
+    exact_head: 04647d9c359959422803b95358c0ef693cfb0708
+    inherited_ci: 31338461162
+    retained_task5_ci: 31338461161
+    retained_task6_ci: 31338461160
+    retained_task7_ci: 31338461169
+    retained_task8_ci: 31338461165
+    retained_task9_ci: 31338461174
+    dedicated_ci: 31338461147
+    source_design_conformance: PASS
+    delete_db_rebuild: PASS
+    reconcile: PASS
+    guarded_merge: 08e38978ebf48d533556b7f57e0a1c1cab10bf17
+    main_identity_after_merge: VERIFIED_IDENTICAL
   handoff: docs/handoffs/day6-task10-rebuild-reconcile-handoff.md
   durable_handoff:
     pr: 56
@@ -226,7 +251,7 @@ blockers:
 
 blocker_scope:
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not block Day-6 local/test implementation"
-  PONS_V2_RUNTIME_REFERENCE: "numeric reference state remains pending; do not guess"
+  PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
