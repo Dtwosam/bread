@@ -2,6 +2,7 @@ import {
   applyCanonicalTradeProjection,
   applyFeeAdminGraduationProjection,
   launches,
+  projectCurveGraduationProgress,
   type BreadDb,
   type IndexerProtocolContext,
   type ProjectionReducer,
@@ -95,6 +96,8 @@ export function createFeeAdminGraduationReducer(input: Readonly<{ context: Proto
     addresses: input.context.addresses,
   };
   return async (transaction, event) => {
-    await applyFeeAdminGraduationProjection(transaction as BreadDb, event, projectionContext);
+    const db = transaction as BreadDb;
+    await applyFeeAdminGraduationProjection(db, event, projectionContext);
+    await projectCurveGraduationProgress(db, event);
   };
 }
