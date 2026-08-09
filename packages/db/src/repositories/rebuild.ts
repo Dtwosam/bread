@@ -48,9 +48,10 @@ export class RebuildRepository {
 
   async deleteSelectedStackReadModel(context: IndexerProtocolContext): Promise<Readonly<{ tokenAddresses: readonly string[] }>> {
     const factory = context.factoryAddress.toLowerCase();
-    const registeredAddresses = [factory, ...Object.values(context.addresses)]
+    const registeredAddresses = [...new Set([factory, ...Object.values(context.addresses)]
       .filter((value): value is string => typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value))
-      .map((value) => value.toLowerCase());
+      .map((value) => value.toLowerCase()))];
+    const registeredAddressList = sql.join(registeredAddresses.map((value) => sql`${value}`), sql`, `);
 
     return this.db.transaction(async (tx) => {
       const lockKey = `bread-rebuild:${context.chainId}:${context.stackVersion}:${factory}`;
@@ -66,7 +67,6 @@ export class RebuildRepository {
       `);
       const tokenAddresses = rows<{ token_address: string }>(tokenResult).map((row) => row.token_address.toLowerCase());
 
-      // Token-owned projections are scoped through the selected stack's launch set.
       await tx.execute(sql`DELETE FROM holder_snapshots h WHERE h.chain_id=${context.chainId} AND EXISTS (
         SELECT 1 FROM launches l WHERE l.chain_id=h.chain_id AND l.token_address=h.token_address
           AND l.stack_version=${context.stackVersion} AND l.factory_address=${factory})`);
@@ -89,28 +89,27 @@ export class RebuildRepository {
         SELECT 1 FROM launches l WHERE l.chain_id=t.chain_id AND l.token_address=t.token_address
           AND l.stack_version=${context.stackVersion} AND l.factory_address=${factory})`);
 
-      // Entitlement/admin rows are deleted only when their canonical journal identity belongs to this stack's registered contracts.
       await tx.execute(sql`DELETE FROM fee_credits f WHERE f.chain_id=${context.chainId} AND EXISTS (
         SELECT 1 FROM event_journal j
         WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transaction_hash AND j.log_index=f.log_index
           AND j.stack_version=${context.stackVersion}
-          AND j.contract_address = ANY(${registeredAddresses}::text[]))`);
+          AND j.contract_address IN (${registeredAddressList}))`);
       await tx.execute(sql`DELETE FROM fee_claims f WHERE f.chain_id=${context.chainId} AND EXISTS (
         SELECT 1 FROM event_journal j
         WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transaction_hash AND j.log_index=f.log_index
           AND j.stack_version=${context.stackVersion}
-          AND j.contract_address = ANY(${registeredAddresses}::text[]))`);
+          AND j.contract_address IN (${registeredAddressList}))`);
       await tx.execute(sql`DELETE FROM admin_events a WHERE a.chain_id=${context.chainId} AND EXISTS (
         SELECT 1 FROM event_journal j
         WHERE j.chain_id=a.chain_id AND j.transaction_hash=a.transaction_hash AND j.log_index=a.log_index
           AND j.stack_version=${context.stackVersion}
-          AND j.contract_address = ANY(${registeredAddresses}::text[]))`);
+          AND j.contract_address IN (${registeredAddressList}))`);
 
       await tx.execute(sql`DELETE FROM event_journal j
         WHERE j.chain_id=${context.chainId}
           AND j.stack_version=${context.stackVersion}
           AND (
-            j.contract_address = ANY(${registeredAddresses}::text[])
+            j.contract_address IN (${registeredAddressList})
             OR EXISTS (SELECT 1 FROM launches l WHERE l.chain_id=j.chain_id AND l.stack_version=${context.stackVersion}
               AND l.factory_address=${factory} AND (l.token_address=j.token_address OR l.curve_address=j.curve_address))
           )`);
