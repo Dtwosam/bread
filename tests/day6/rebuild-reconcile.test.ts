@@ -375,7 +375,28 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
           { transactionHash: txHash, logIndex: 0 },
           { transactionHash: txHash, logIndex: 4 },
         ],
+        readCurveState: async () => ({
+          trackedQuote: 0n,
+          trackedTokens: initialSupply,
+          quoteFeeBalance: 0n,
+          creatorTaxBalance: 0n,
+          realQuoteReserve: 0n,
+          virtualQuoteReserve: 250n,
+          reservedTokens: 200n,
+          remainingSellableTokens: initialSupply - 200n,
+          readyToGraduate: false,
+          graduated: false,
+        }),
         readFeeEscrowState: async () => ({ totalOutstanding: 0n, custody: 0n }),
+        readGraduationState: async () => ({
+          phase: 'NOT_GRADUATED',
+          sweptTokenAmount: 0n,
+          sweptUsdcAmount: 0n,
+          poolId: null,
+          positionId: null,
+          positionLocked: false,
+          tokenSupplyLocked: 0n,
+        }),
       }),
     });
     const after = await digestStack(pool);
