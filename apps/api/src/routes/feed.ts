@@ -7,7 +7,7 @@ import {
   MAX_FEED_LIMIT,
   NEW_FEED_CURSOR_VERSION,
 } from '../pagination.js';
-import { serializeLaunch } from './token.js';
+import { serializeLaunch, serializeTradeMetrics } from './token.js';
 import type { BreadReadRouteDeps } from './types.js';
 
 const SOURCE_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
@@ -92,9 +92,17 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
       });
     }
 
+    const metricRows = await deps.repository.listTokenMetrics(
+      deps.context.chainId,
+      launches.map((launch) => launch.tokenAddress),
+    );
+    const metricsByToken = new Map(metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]));
     const meta = await deps.freshness();
     return {
-      data: launches.map(serializeLaunch),
+      data: launches.map((launch) => ({
+        ...serializeLaunch(launch),
+        metrics: serializeTradeMetrics(metricsByToken.get(launch.tokenAddress.toLowerCase())),
+      })),
       meta,
       page: {
         hasMore,
