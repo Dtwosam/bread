@@ -30,21 +30,19 @@ const context: ProtocolContext = {
 
 type ReadClient = { readContract: ReturnType<typeof vi.fn> };
 
-function functionNames(abi: readonly { type: string; name?: string }[]): Set<string> {
-  return new Set(abi.filter((item) => item.type === 'function').map((item) => item.name).filter((name): name is string => Boolean(name)));
+function functionNames(abi: readonly { type: string; name?: string }[]): string[] {
+  return abi.filter((item) => item.type === 'function').map((item) => item.name).filter((name): name is string => Boolean(name));
 }
 
 describe('Day 6 Task 2 canonical RetryGraduation reads', () => {
   it('keeps every Task 2 read/write function in the artifact-derived ABI registry', () => {
     expect(functionNames(breadAbiRegistry.factory)).toEqual(
-      expect.objectContaining(new Set(['launchToken', 'launchTokenAndBuy', 'getLaunch'])),
+      expect.arrayContaining(['launchToken', 'launchTokenAndBuy', 'getLaunch']),
     );
-    expect(functionNames(breadAbiRegistry.curve)).toEqual(
-      expect.objectContaining(new Set(['buy', 'sell', 'readyToGraduate'])),
-    );
-    expect(functionNames(breadAbiRegistry.feeEscrow)).toEqual(expect.objectContaining(new Set(['claim'])));
+    expect(functionNames(breadAbiRegistry.curve)).toEqual(expect.arrayContaining(['buy', 'sell', 'readyToGraduate']));
+    expect(functionNames(breadAbiRegistry.feeEscrow)).toEqual(expect.arrayContaining(['claim']));
     expect(functionNames(breadAbiRegistry.coordinator)).toEqual(
-      expect.objectContaining(new Set(['getGraduation', 'sweep', 'createPool'])),
+      expect.arrayContaining(['getGraduation', 'sweep', 'createPool']),
     );
   });
 
