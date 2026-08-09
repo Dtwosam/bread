@@ -1,0 +1,31 @@
+{
+  "schema": "bread://schemas/day5-graduation-deployment-v1",
+  "network": "arc-testnet",
+  "status": "BLOCKED_UNTIL_VERIFIED_DEX_AND_PRODUCTION_CONFIG",
+  "chainId": 5042002,
+  "core": {
+    "factory": null,
+    "deployer": null,
+    "feePolicy": null,
+    "feeEscrow": null,
+    "emergencyController": null,
+    "locker": null,
+    "coordinator": null
+  },
+  "adapter": {
+    "active": false,
+    "family": null,
+    "adapter": null,
+    "positionManager": null,
+    "poolManager": null,
+    "v3Factory": null,
+    "configHash": null
+  },
+  "authorities": {
+    "protocolAdmin": null,
+    "guardian": null
+  },
+  "economicsConfigHash": null,
+  "dexEvidenceHash": null,
+  "deploymentStartBlock": null
+}
