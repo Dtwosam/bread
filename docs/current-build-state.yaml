@@ -1,4 +1,4 @@
-schema_version: 1.18
+schema_version: 1.19
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -16,9 +16,11 @@ completed_checkpoints:
   - "Day 5 hardened-main closeout PR #30: GUARDED_MERGE_PASS"
   - "Day 5 durable handoff PR #32: PASS and MERGED"
   - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS"
-active_checkpoint: "Day 6 — SDK, indexer and API preflight/design"
-active_lane: "Context rollover before Day-6 design-spec write; no Day-6 production code started"
-active_gate: DAY6_DESIGN_SPEC_AND_PLAN_REQUIRED_BEFORE_PRODUCTION_CODE
+  - "Day 6 written design/spec PR #35: APPROVED, EXACT_HEAD_CI_PASS, MERGED"
+  - "Day 6 detailed RED->GREEN implementation plan PR #36: SELF_REVIEWED, EXACT_HEAD_CI_PASS, MERGED"
+active_checkpoint: "Day 6 — Task 1 canonical shared protocol contract"
+active_lane: "Task 1 GREEN candidate written after proven RED; exact verification/merge blocked by zero-step GitHub Actions jobs"
+active_gate: DAY6_TASK1_EXACT_HEAD_GREEN_AND_GUARDED_MERGE_REQUIRED
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -29,17 +31,16 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY5-DURABLE-CLOSED-MAIN
+  id: DAY6-DESIGN-AND-PLAN-INTEGRATED-MAIN
   branch: main
   day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
-  day5_durable_handoff_head: 31c3978580eaecc8f81282abdf86576f444692cc
-  day5_durable_handoff_ci: 31286212890
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
-  day6_verified_start_before_rollover_docs: 4cc1ea7041abaa86402114321bf31e53aff8ea90
-  rollover_docs_direct_commit: 8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d
-  status: DAY5_DURABLY_CLOSED_DAY6_PREFLIGHT_ACTIVE
+  day6_rollover_merge: 8ff119dd31db32bc8f1d24048f31a07f7acf4c62
+  day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
+  day6_plan_merge: 81db147ef7be8191981fb10afd425fa4f2f0e280
+  status: DAY6_TASK1_ACTIVE_FROM_APPROVED_DESIGN_PLAN_BASELINE
 working_branches:
-  - checkpoint/day6-preflight-rollover
+  - agent/day6-task1-shared-protocol-contract
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -47,11 +48,15 @@ repository:
   day5_postmerge_security_pr: 28
   day5_closeout_pr: 30
   day5_durable_handoff_pr: 32
+  day6_rollover_pr: 34
+  day6_design_pr: 35
+  day6_plan_pr: 36
+  day6_task1_pr: 37
   day5_production_code_status: INTEGRATED_PASS_DURABLE
-  day6_production_code_started: false
+  day6_production_code_started: true
 project_process_note:
   rollover_docs_direct_commit: >-
-    During the context-limit rollover, docs/handoffs/day6-preflight-rollover-2026-08-09.md was accidentally written directly to main at 8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d because the GitHub contents branch field was omitted. This was documentation-only: no contracts, runtime config, economics, addresses, dependencies or Day-6 production code changed. The deviation is explicitly recorded and this checkpoint branch must pass full repository CI before the rollover state is treated as accepted.
+    During the context-limit rollover, docs/handoffs/day6-preflight-rollover-2026-08-09.md was accidentally written directly to main at 8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d because the GitHub contents branch field was omitted. This was documentation-only and was subsequently bounded by PR #34/full CI. Do not reopen it without new evidence.
 day5_scope:
   production_status: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
   v4_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
@@ -69,16 +74,20 @@ verification:
   day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
   day5_postmerge_security_ci: 31285860020
   day5_hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
-  day5_closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
-  day5_closeout_prerequisite_ci: 31285985419
-  day5_closeout_stamped_head: e583204239032e92fe3172137423b58f459aa1c0
-  day5_closeout_stamped_ci: 31286043130
   day5_closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_head: 31c3978580eaecc8f81282abdf86576f444692cc
   day5_durable_handoff_ci: 31286212890
   day5_durable_handoff_jobs: PASS_ALL_FOUR
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
-  main_identity_after_day5_handoff: VERIFIED_IDENTICAL_AT_TIME_OF_HANDOFF
+  day6_rollover_ci: 31286942830
+  day6_rollover_merge: 8ff119dd31db32bc8f1d24048f31a07f7acf4c62
+  day6_design_approved_head: a7fb1b2dfc66d8029f2871bef40592ad7e54a341
+  day6_design_ci: 31287828150
+  day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
+  day6_plan_head: 67d842a4cf7d25ad698076aea56d08d36f7cc0c8
+  day6_plan_ci: 31287991273
+  day6_plan_merge: 81db147ef7be8191981fb10afd425fa4f2f0e280
+  main_identity_after_day6_plan: VERIFIED_IDENTICAL_AT_TIME_OF_PLAN_MERGE
 day6_handoff_contract:
   scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
   authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
@@ -117,6 +126,26 @@ day6_handoff_contract:
     - indexer_checkpoints
     - admin_events
     - metadata
+day6_task1:
+  branch: agent/day6-task1-shared-protocol-contract
+  pr: 37
+  baseline: 81db147ef7be8191981fb10afd425fa4f2f0e280
+  red_status: PROVEN
+  initial_red_head: aaf1ab20c5502d8f56d2738f1df906c73bbc9a92
+  initial_red_ci: 31288048867
+  expanded_red_head: df8f1a6b315d06622855cbf6b2a1b2da7125ae56
+  expanded_red_ci: 31288144341
+  red_evidence: docs/evidence/day6-task1-shared-contract-red.md
+  candidate_before_continuity_docs: 735c29e5ead12ac5ad557c8fc7109967f2a4735d
+  implementation_status: GREEN_CANDIDATE_NOT_VERIFIED
+  exact_abi_status: GENERATED_TARGET_PRESENT_BUT_FOUNDRY_DRIFT_CHECK_NOT_YET_EXECUTED_SUCCESSFULLY
+  auxiliary_local_typescript_check: PASS_WITH_STUBBED_EXTERNAL_MODULES_NON_AUTHORITATIVE
+  github_actions_blocker:
+    first_zero_step_run: 31288355378
+    second_zero_step_run: 31288420878
+    symptom: "all four jobs completed failure with zero steps and no job logs; repository commands did not execute"
+    disposition: EXTERNAL_EXECUTION_BLOCKER_DO_NOT_TREAT_AS_CODE_FAILURE_OR_PASS
+  pass_status: NOT_CLAIMED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -129,10 +158,15 @@ blocker_scope:
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
+execution_blockers:
+  GITHUB_ACTIONS_ZERO_STEP_FAILURES: >-
+    Exact Task-1 verification cannot currently execute because consecutive PR #37 workflow attempts created failed jobs with zero steps. Do not bypass the exact-head CI/Foundry gate and do not begin Task 2.
 next_action: >-
-  In a fresh chat, first read the uploaded Project Sources and this repository state, then verify GitHub main and reconcile any commits after 4cc1ea7041abaa86402114321bf31e53aff8ea90. Continue Day-6 brainstorming from the already-approved TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS direction. Freeze exact event normalization/finality-reorg/schema/freshness/cache-fanout/reconciliation/error semantics, write and self-review docs/superpowers/specs/2026-08-09-day6-sdk-indexer-api-design.md, complete the required written-spec review gate, then invoke writing-plans and create the detailed RED->GREEN implementation plan. Do not start production Day-6 code before those gates.
+  Resume from PR #37. First verify current main remains 81db147ef7be8191981fb10afd425fa4f2f0e280 or reconcile any movement. Trigger a fresh exact-head PR #37 CI only when GitHub Actions can execute job steps. Use the Foundry ABI drift check output to replace packages/protocol-sdk/src/abi/generated.ts with the exact generated registry if needed. Then require focused Day-6 tests, pnpm validate, pnpm typecheck, pnpm build, Foundry build/tests and ABI drift check all green on the exact head. Only after guarded Task-1 merge and durable handoff may Task 2 begin.
 do_not_do:
-  - "Do not start Day-6 production code from chat memory or before the written design/plan gates."
+  - "Do not claim Day-6 Task 1 PASS from the current GREEN candidate."
+  - "Do not bypass exact Foundry ABI generation/drift verification."
+  - "Do not start Day-6 Task 2 before Task 1 is exact-head green and guarded-merged."
   - "Do not make DB/indexer/API authoritative for financial state."
   - "Do not create private duplicate protocol ABI/address/domain/state interpretations."
   - "Do not route user trades through a centralized Bread trade server."
