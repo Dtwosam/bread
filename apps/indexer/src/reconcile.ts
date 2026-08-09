@@ -49,7 +49,7 @@ export type ReconciliationChainReader = Readonly<{
     positionLocked: boolean;
     tokenSupplyLocked: bigint;
   }>>;
-  getRuntimeCodeHash: (address: string) => Promise<string>;
+  getRuntimeCodeHash: (address: string) => Promise<string | null>;
   getBlockHash: (blockNumber: bigint) => Promise<string>;
 }>;
 
@@ -131,6 +131,10 @@ function stateByToken(states: readonly ReconciliationLaunchStateRow[]): Map<stri
 
 function launchIdentityKey(value: LaunchCreatedIdentity): string {
   return `${value.transactionHash.toLowerCase()}:${value.logIndex}:${value.tokenAddress.toLowerCase()}`;
+}
+
+function isAddress(value: unknown): value is string {
+  return typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value);
 }
 
 export async function reconcileStack(input: ReconcileStackInput): Promise<ReconciliationReport> {
@@ -281,29 +285,40 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
   ));
 
   const expectedHashes = snapshot.stack?.runtimeCodeHashes ?? null;
+  const registeredEntries = new Map<string, string>();
+  registeredEntries.set('factory', input.context.factoryAddress.toLowerCase());
+  for (const [role, target] of Object.entries(snapshot.stack?.addresses ?? {})) {
+    if (isAddress(target)) registeredEntries.set(role, target.toLowerCase());
+  }
+  const expectedHashView: Record<string, string> = {};
   const observedHashes: Record<string, string> = {};
-  let codeHashPass = Boolean(expectedHashes && Object.keys(expectedHashes).length > 0);
-  if (expectedHashes) {
-    for (const [role, expectedHash] of Object.entries(expectedHashes).sort(([a], [b]) => a.localeCompare(b))) {
-      const target = role === 'factory'
-        ? input.context.factoryAddress
-        : snapshot.stack?.addresses[role] ?? (input.context.addresses as Readonly<Record<string, string | undefined>>)[role];
-      if (!target) {
-        observedHashes[role] = 'MISSING_ADDRESS';
-        codeHashPass = false;
-        continue;
-      }
-      const observed = (await input.chain.getRuntimeCodeHash(target)).toLowerCase();
-      observedHashes[role] = observed;
-      if (observed !== expectedHash.toLowerCase()) codeHashPass = false;
+  let codeHashPass = Boolean(snapshot.stack && expectedHashes && registeredEntries.size > 0);
+  for (const [role, target] of [...registeredEntries.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const expectedHash = expectedHashes?.[role];
+    if (!expectedHash) {
+      expectedHashView[role] = 'MISSING_EXPECTED_HASH';
+      observedHashes[role] = 'NOT_CHECKED';
+      codeHashPass = false;
+      continue;
+    }
+    expectedHashView[role] = expectedHash.toLowerCase();
+    const observed = await input.chain.getRuntimeCodeHash(target);
+    observedHashes[role] = observed?.toLowerCase() ?? 'NO_RUNTIME_CODE';
+    if (!observed || observed.toLowerCase() !== expectedHash.toLowerCase()) codeHashPass = false;
+  }
+  for (const [role, expectedHash] of Object.entries(expectedHashes ?? {})) {
+    if (!registeredEntries.has(role)) {
+      expectedHashView[role] = expectedHash.toLowerCase();
+      observedHashes[role] = 'MISSING_REGISTERED_ADDRESS';
+      codeHashPass = false;
     }
   }
   checks.push(check(
     'REC-05',
     codeHashPass,
-    expectedHashes ?? 'EXPECTED_RUNTIME_CODE_HASHES_REQUIRED',
+    expectedHashView,
     observedHashes,
-    'Every expected registered deployment runtime code hash must be present and match authoritative chain code.',
+    'Every registered active-stack deployment must have a frozen expected runtime code hash and matching authoritative runtime code.',
   ));
 
   const checkpoint = snapshot.checkpoint;
