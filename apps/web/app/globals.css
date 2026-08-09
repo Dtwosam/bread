@@ -61,6 +61,34 @@
   line-height: 21px;
 }
 
+.bread-freshness {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-surface-1);
+  color: var(--bread-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.bread-freshness strong {
+  color: var(--bread-text-primary);
+  font-weight: 600;
+}
+
+.bread-freshness--warning {
+  border-color: color-mix(in srgb, var(--bread-warning) 45%, var(--bread-border-subtle));
+  background: var(--bread-warning-soft);
+}
+
+.bread-freshness--negative {
+  border-color: color-mix(in srgb, var(--bread-negative) 45%, var(--bread-border-subtle));
+  background: var(--bread-negative-soft);
+}
+
 .bread-mobile-top,
 .bread-mobile-bottom {
   display: none;
