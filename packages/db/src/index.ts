@@ -31,6 +31,7 @@ export {
 } from './repositories/indexer.js';
 
 export { ReadRepository, decimalIntegerToBigInt } from './repositories/read.js';
+export { SearchRepository, type SearchLaunchInput, type SearchLaunchRow } from './repositories/search.js';
 export {
   applyCanonicalTradeProjection,
   type CanonicalTradeProjection,
