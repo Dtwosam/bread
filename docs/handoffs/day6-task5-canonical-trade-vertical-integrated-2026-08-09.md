@@ -61,9 +61,9 @@ No Task-6 fee/admin/graduation reducer was introduced. No server-side financial 
 
 This handoff branch is documentation/state only and is based on merged main `2779dce925c983ade93d1251aa80db57e4138c92`.
 
-Handoff PR: pending creation.
+Handoff PR: #46.
 
-Task 6 remains blocked until this handoff PR:
+Task 6 remains blocked until PR #46:
 
 1. is frozen on an exact head;
 2. passes inherited CI all four jobs;
