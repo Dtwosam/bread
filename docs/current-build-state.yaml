@@ -1,4 +1,4 @@
-schema_version: 1.32
+schema_version: 1.33
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -11,22 +11,21 @@ completed_checkpoints:
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
-  - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS"
-  - "Day 5 durable handoff PR #32: PASS and MERGED"
-  - "Day 6 design/spec PR #35: APPROVED, EXACT_HEAD_CI_PASS, MERGED"
-  - "Day 6 implementation plan PR #36: SELF_REVIEWED, EXACT_HEAD_CI_PASS, MERGED"
-  - "Day 6 Task 1 PR #37 + durable handoff PR #38: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 2 PR #39 + durable handoff PR #40: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 3 PR #41 + durable handoff PR #42: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 4 PR #43 + durable handoff PR #44: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 5 PR #45 + durable handoff PR #46: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 6 PR #47 + durable handoff PR #48: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 7 PR #49 + durable handoff PR #50: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 8 PR #51: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_FIVE_WORKFLOW_PASS, DEDICATED_REDIS_POSTGRES_10_OF_10, GUARDED_MERGE_PASS"
+  - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS_DURABLE"
+  - "Day 6 design/spec PR #35 + implementation plan PR #36: APPROVED_AND_MERGED"
+  - "Day 6 Task 1 PR #37 + handoff #38: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 2 PR #39 + handoff #40: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 3 PR #41 + handoff #42: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 4 PR #43 + handoff #44: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 5 PR #45 + handoff #46: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 6 PR #47 + handoff #48: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 7 PR #49 + handoff #50: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 8 PR #51 + handoff #52: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 9 PR #53: SOURCE_DESIGN_CONFORMANCE_PASS, FIRST_MEANINGFUL_CONCURRENCY_PASS, GUARDED_MERGE_PASS"
 
-active_checkpoint: "Day 6 — Task 8 durable integration handoff"
-active_lane: "Task 8 is integrated on main at cbedc075ec5c041602290c5f79acff92bc70bbca; durable handoff PR #52 must exact-head pass inherited CI, retained Task-5/6/7 regressions and dedicated Task-8 PostgreSQL/Redis proof before Task 9 starts"
-active_gate: DAY6_TASK8_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK9
+active_checkpoint: "Day 6 — Task 9 durable integration handoff"
+active_lane: "Task 9 is integrated on main at faa4e6a5c76433b2724ed54b957f90a397d7716c; durable handoff PR #54 must exact-head pass inherited CI, retained Task-5/6/7/8 regressions and dedicated Task-9 API/search/concurrency proof before Task 10 starts"
+active_gate: DAY6_TASK9_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK10
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -39,218 +38,98 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.31
-  prior_state_blob_sha: 32de191e0b4175f0f7c3b5125765e8bc406ff9b2
+  prior_state_schema_version: 1.32
+  prior_state_blob_sha: dc73b931c322b5548f26d639c04f29f75503479c
+  prior_state_pre_compaction_blob_sha: 32de191e0b4175f0f7c3b5125765e8bc406ff9b2
   note: >-
-    v1.32 is a continuity compaction of the same canonical build-state record. Granular RED/GREEN substeps remain durably preserved in Git history and the task-specific evidence/handoff documents referenced below; no accepted verdict or integration identity is revoked by this compaction.
+    v1.33 is a continuity compaction. Full granular Day-1 through Task-9 RED/GREEN workflow identities remain durably preserved in Git history and the task-specific evidence/handoff documents. No accepted verdict, source boundary, merge identity, blocker, or authority rule is revoked by this compaction.
 
 integration_baseline:
-  id: DAY6-TASK8-INTEGRATED-MAIN
+  id: DAY6-TASK9-INTEGRATED-MAIN
   branch: main
-  day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
-  day6_rollover_merge: 8ff119dd31db32bc8f1d24048f31a07f7acf4c62
   day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
   day6_plan_merge: 81db147ef7be8191981fb10afd425fa4f2f0e280
-  day6_task1_merge: bac95f6cb844673d8568add100b1e42a3a363e38
   day6_task1_handoff_merge: 5583ad078515aa24b1f994f710297e47512002b4
-  day6_task2_merge: 15ab27b73b9a3355f95dd7cfc290e6e538d16aff
   day6_task2_handoff_merge: b6edc45a7a680b15b40b6616473b8569a8ed0ae2
-  day6_task3_merge: 457138c0b79bc20177437b871a8b258a54f83b49
   day6_task3_handoff_merge: cf1078109297f56f060113576d364e920e368d17
-  day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
   day6_task4_handoff_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
-  day6_task5_merge: 2779dce925c983ade93d1251aa80db57e4138c92
   day6_task5_handoff_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
-  day6_task6_merge: e8469fd25503fc5befb7668537cb02128d6ad223
   day6_task6_handoff_merge: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
-  day6_task7_merge: 311cb84cf33f54e03c7c91fe01dd80408aa9ff91
   day6_task7_handoff_merge: 74f6629937eccc0cae3f4a4549be27715f6926e4
-  day6_task8_merge: cbedc075ec5c041602290c5f79acff92bc70bbca
-  status: DAY6_TASK8_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
+  day6_task8_handoff_merge: 5549f236460e923159eda3b1e12864b8a4d0ed0a
+  day6_task9_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
+  status: DAY6_TASK9_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
 
 working_branches:
-  - docs/day6-task8-handoff
+  - docs/day6-task9-handoff
 
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  day5_implementation_pr: 27
-  day5_postmerge_security_pr: 28
-  day5_closeout_pr: 30
-  day5_durable_handoff_pr: 32
-  day6_rollover_pr: 34
-  day6_design_pr: 35
-  day6_plan_pr: 36
-  day6_task1_pr: 37
-  day6_task1_handoff_pr: 38
-  day6_task2_pr: 39
-  day6_task2_handoff_pr: 40
-  day6_task3_pr: 41
-  day6_task3_handoff_pr: 42
-  day6_task4_pr: 43
-  day6_task4_handoff_pr: 44
-  day6_task5_pr: 45
-  day6_task5_handoff_pr: 46
-  day6_task6_pr: 47
-  day6_task6_handoff_pr: 48
-  day6_task7_pr: 49
-  day6_task7_handoff_pr: 50
   day6_task8_pr: 51
   day6_task8_handoff_pr: 52
-  day5_production_code_status: INTEGRATED_PASS_DURABLE
+  day6_task9_pr: 53
+  day6_task9_handoff_pr: 54
   day6_production_code_started: true
 
 project_process_note:
-  rollover_docs_direct_commit: >-
-    During the context-limit rollover, docs/handoffs/day6-preflight-rollover-2026-08-09.md was accidentally written directly to main at 8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d because the GitHub contents branch field was omitted. This was documentation-only and was subsequently bounded by PR #34/full CI. Do not reopen it without new evidence.
   task8_actions_budget_blocker: >-
-    During Task 8, GitHub Actions repeatedly created zero-step jobs while account Actions spend capacity was unavailable. No zero-step execution was counted as a repository failure or PASS and no workflow gate was weakened. After the account Actions budget was increased, the same exact-head gates resumed real runner execution and passed.
-
-day5_scope:
-  production_status: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
-  v4_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
-  v3_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
-  accepted_verdicts:
-    - FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS
-    - INV_050_056_PASS
-    - RETRY_CANNOT_DUPLICATE_LIQUIDITY
-    - RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS
-    - DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
+    During Task 8, GitHub Actions repeatedly created zero-step jobs while account Actions spend capacity was unavailable. No zero-step execution was counted as repository failure or PASS and no workflow gate was weakened. After the account Actions budget was increased, exact-head runner execution resumed and required gates passed.
+  task9_scope_rule: >-
+    Task 9 closes the source-defined first meaningful Day-6 read/replay/cache/fanout concurrency proof. It does not claim the Day-8 10,000-client production-like stress target and does not include Task-10 delete-DB rebuild/reconciliation.
 
 verification:
-  day5_implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
-  day5_implementation_ci: 31285733919
-  day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
-  day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
-  day5_postmerge_security_ci: 31285860020
-  day5_closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
-  day5_durable_handoff_head: 31c3978580eaecc8f81282abdf86576f444692cc
-  day5_durable_handoff_ci: 31286212890
-  day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
-
-  day6_rollover_ci: 31286942830
-  day6_rollover_merge: 8ff119dd31db32bc8f1d24048f31a07f7acf4c62
-  day6_design_approved_head: a7fb1b2dfc66d8029f2871bef40592ad7e54a341
-  day6_design_ci: 31287828150
-  day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
-  day6_plan_head: 67d842a4cf7d25ad698076aea56d08d36f7cc0c8
-  day6_plan_ci: 31287991273
-  day6_plan_merge: 81db147ef7be8191981fb10afd425fa4f2f0e280
-
-  day6_task1_final_head: caec91f99eaf65131c5bff8cc782557493d9b22d
-  day6_task1_final_ci: 31308934879
-  day6_task1_merge: bac95f6cb844673d8568add100b1e42a3a363e38
-  day6_task1_handoff_head: d4c9f150269be58c08a08cd6c74bca591aceb161
-  day6_task1_handoff_ci: 31309068608
-  day6_task1_handoff_merge: 5583ad078515aa24b1f994f710297e47512002b4
-
-  day6_task2_final_head: 6ceeecf0bb47d5f4db859e5625b563d76135ce0c
-  day6_task2_final_ci: 31310005756
-  day6_task2_merge: 15ab27b73b9a3355f95dd7cfc290e6e538d16aff
-  day6_task2_handoff_head: 3eade8974d9a99278c416c1a8b05d99dfe9e445d
-  day6_task2_handoff_ci: 31310134719
-  day6_task2_handoff_merge: b6edc45a7a680b15b40b6616473b8569a8ed0ae2
-
-  day6_task3_original_red_head: 267e1666c847e2100e27109ad1a09b60e5b3b9ec
-  day6_task3_original_red_ci: 31310360021
-  day6_task3_conformance_red_head: cc8aadef74770be8186bdf318a6d7e7bd4532447
-  day6_task3_conformance_red_ci: 31311512834
-  day6_task3_final_head: 174f2cf6e141c961f1e63f85ad9be8030bc1c937
-  day6_task3_final_ci: 31311780637
-  day6_task3_merge: 457138c0b79bc20177437b871a8b258a54f83b49
-  day6_task3_handoff_head: ee490136c751a625e02ca097034a0ac6ae208bbe
-  day6_task3_handoff_ci: 31312013237
-  day6_task3_handoff_merge: cf1078109297f56f060113576d364e920e368d17
-
-  day6_task4_original_red_head: 8f8524022117ebbd4ac56b2a1a20b648150e90eb
-  day6_task4_original_red_ci: 31312344848
-  day6_task4_final_head: 2d0a5c121cbafab61bfbff6c513c24f896eaf44c
-  day6_task4_final_ci: 31314165450
-  day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
-  day6_task4_handoff_head: 53f2878b1098f632167b3caacc61c59d15b6cb1c
-  day6_task4_handoff_ci: 31314348691
-  day6_task4_handoff_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
-
-  day6_task5_original_red_head: e4f5fb928934becf1328386156fb87737ecc99b5
-  day6_task5_original_red_ci: 31314769880
-  day6_task5_original_red_dedicated_ci: 31314769925
-  day6_task5_final_head: d264921c52ce0a2b2369b7179f4957cdd0877b06
-  day6_task5_final_ci: 31319868579
-  day6_task5_final_dedicated_ci: 31319868586
-  day6_task5_merge: 2779dce925c983ade93d1251aa80db57e4138c92
-  day6_task5_handoff_head: b15693dc393be3a9a4b5a270947dd7074ea750dc
-  day6_task5_handoff_ci: 31320232802
-  day6_task5_handoff_dedicated_ci: 31320232783
-  day6_task5_handoff_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
-
-  day6_task6_original_red_head: ef857f5bea40061c8a12670189281602c15d1667
-  day6_task6_original_red_ci: 31320645853
-  day6_task6_original_red_dedicated_ci: 31320645878
-  day6_task6_final_head: 4f1f45e4cf5ad309b62ad491384200c3239a74eb
-  day6_task6_final_ci: 31322449626
-  day6_task6_final_task5_ci: 31322449623
-  day6_task6_final_dedicated_ci: 31322449622
-  day6_task6_merge: e8469fd25503fc5befb7668537cb02128d6ad223
-  day6_task6_handoff_head: caa8910c46737c4c27c7826d5deffc9798ca8c47
-  day6_task6_handoff_ci: 31323276386
-  day6_task6_handoff_task5_ci: 31323276422
-  day6_task6_handoff_dedicated_ci: 31323276387
-  day6_task6_handoff_merge: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
-
-  day6_task7_original_red_head: b92d01997b75aaec886aa0d5cb8c5473a78a28d8
-  day6_task7_original_red_ci: 31323847555
-  day6_task7_original_red_task5_ci: 31323847553
-  day6_task7_original_red_task6_ci: 31323847564
-  day6_task7_original_red_dedicated_ci: 31323847602
-  day6_task7_final_head: 1bd392035392738bb41657bbc87d7273db7bec5e
-  day6_task7_final_ci: 31325546267
-  day6_task7_final_task5_ci: 31325546283
-  day6_task7_final_task6_ci: 31325546269
-  day6_task7_final_dedicated_ci: 31325546309
-  day6_task7_merge: 311cb84cf33f54e03c7c91fe01dd80408aa9ff91
-  day6_task7_handoff_head: 5209b3dae7d909a8ce826d8e3636d9217c63c702
-  day6_task7_handoff_ci: 31326169104
-  day6_task7_handoff_task5_ci: 31326169095
-  day6_task7_handoff_task6_ci: 31326169108
-  day6_task7_handoff_dedicated_ci: 31326169091
-  day6_task7_handoff_merge: 74f6629937eccc0cae3f4a4549be27715f6926e4
-
-  day6_task8_initial_red_head: bd2b13955890d0eb6cfb4775356cedabf75a5650
-  day6_task8_first_green_head: 45bd2640d8b39caa7113ff824bd6896c59d4a034
-  day6_task8_strengthened_red_head: aa3af1363631e26941447969a13ec92cc3a04f28
-  day6_task8_strengthened_red_ci: 31327795954
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
   day6_task8_final_ci: 31329811060
   day6_task8_final_task5_ci: 31329811046
   day6_task8_final_task6_ci: 31329811089
   day6_task8_final_task7_ci: 31329811049
   day6_task8_final_dedicated_ci: 31329811051
-  day6_task8_final_dedicated_result: POSTGRES_REDIS_10_OF_10_WITH_REAL_NODE_REDIS_2_OF_2
   day6_task8_merge: cbedc075ec5c041602290c5f79acff92bc70bbca
+  day6_task8_handoff_head: 154e5951250b273432b4c25de0ec29641366e263
+  day6_task8_handoff_ci: 31330228320
+  day6_task8_handoff_task5_ci: 31330228304
+  day6_task8_handoff_task6_ci: 31330228341
+  day6_task8_handoff_task7_ci: 31330228308
+  day6_task8_handoff_dedicated_ci: 31330228357
+  day6_task8_handoff_merge: 5549f236460e923159eda3b1e12864b8a4d0ed0a
 
-  github_actions_task8_zero_step_incident:
-    zero_step_root_ci: 31327984802
-    zero_step_task8: 31327984840
-    disposition: RESOLVED_AFTER_ACCOUNT_ACTIONS_BUDGET_CAPACITY_INCREASE
-    rule: ZERO_STEP_RUNS_NEVER_COUNTED_AS_CODE_FAILURE_OR_PASS
+  day6_task9_initial_red_head: a7e50f31b77d78380dde3a857e48181265c1aeb5
+  day6_task9_initial_red_dedicated_ci: 31330747066
+  day6_task9_primitive_green_head: d2803bfb61a9f3c7e4c87b93acade7ff1b5a2d12
+  day6_task9_primitive_green_dedicated_ci: 31331025910
+  day6_task9_conformance_red_head: 9fbd5b208b122d0da878a0a6f669ab06f5cd2323
+  day6_task9_conformance_red_dedicated_ci: 31331158501
+  day6_task9_combined_green_head: 8eb43a8107260781e6d5e038f2bf0bbc63bb78bf
+  day6_task9_combined_green_dedicated_ci: 31331341467
+  day6_task9_pre_evidence_head: 98be3af69a76fd22f3748dce4dfe1579b5a0f11f
+  day6_task9_pre_evidence_ci: 31331499693
+  day6_task9_pre_evidence_task5_ci: 31331499655
+  day6_task9_pre_evidence_task6_ci: 31331499676
+  day6_task9_pre_evidence_task7_ci: 31331499680
+  day6_task9_pre_evidence_task8_ci: 31331499678
+  day6_task9_pre_evidence_dedicated_ci: 31331499687
+  day6_task9_pre_evidence_dedicated_result: POSTGRES_REDIS_10_OF_10
+  day6_task9_final_head: c2d8a91544ae179bd9e5f0c2f15a27aa9ba227dc
+  day6_task9_final_ci: 31331597034
+  day6_task9_final_task5_ci: 31331597042
+  day6_task9_final_task6_ci: 31331597040
+  day6_task9_final_task7_ci: 31331597048
+  day6_task9_final_task8_ci: 31331597038
+  day6_task9_final_dedicated_ci: 31331597046
+  day6_task9_final_dedicated_result: POSTGRES_REDIS_10_OF_10
+  day6_task9_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
 
 day6_handoff_contract:
-  scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
-  authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
-  approved_architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
-  journal_identity: "canonical event identity derives from chain/log identity; trade identity is chainId + transactionHash + logIndex per 06B"
-  transaction_rule: "journal insert + affected projection updates + finalized checkpoint advancement occur in one PostgreSQL transaction"
-  post_commit_rule: "cache invalidation and realtime fanout happen only after durable DB apply"
-  replay_rule: "overlap replay is idempotent and cannot duplicate canonical event/projection outcomes"
-  realtime_rule: "realtime is convenience only; logical-channel fanout; clients deduplicate and refetch after disconnect"
-  acceptance:
-    - DELETE_DB_REBUILD_PASS
-    - OVERLAP_REPLAY_IDEMPOTENT
-    - API_FRESHNESS_METADATA_PRESENT
-    - RECONCILE_PASS
-    - FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS
-  source_defined_api:
+  architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
+  authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections and accelerators with no financial write authority"
+  journal_identity: "chainId + transactionHash + logIndex"
+  transaction_rule: "journal insert + affected projections + checkpoint advancement in one PostgreSQL transaction"
+  post_commit_rule: "cache invalidation and realtime fanout only after durable DB apply"
+  replay_rule: "overlap replay is idempotent; checkpoint hash contradiction fails closed"
+  api_rule: "all public reads are bounded, cursor/index oriented, checkpoint-freshness bearing and DB/indexer backed; raw RPC is not the primary route read source"
+  required_endpoints:
     - GET /v1/feed
     - GET /v1/search
     - GET /v1/tokens/:address
@@ -259,195 +138,45 @@ day6_handoff_contract:
     - GET /v1/portfolio/:address
     - GET /v1/creators/:address
     - GET /v1/status
-  source_defined_tables:
-    - protocol_stacks
-    - launches
-    - launch_state
-    - trades
-    - fee_credits
-    - fee_claims
-    - creator_rollups
-    - holder_snapshots
-    - market_candles
-    - token_metrics
-    - indexer_checkpoints
-    - admin_events
-    - metadata
-
-day6_task1:
-  branch: agent/day6-task1-shared-protocol-contract
-  pr: 37
-  baseline: 81db147ef7be8191981fb10afd425fa4f2f0e280
-  evidence:
-    - docs/evidence/day6-task1-shared-contract-red.md
-    - docs/evidence/day6-task1-source-conformance-repair.md
-  final_acceptance:
-    exact_head: caec91f99eaf65131c5bff8cc782557493d9b22d
-    ci: 31308934879
-    guarded_merge: bac95f6cb844673d8568add100b1e42a3a363e38
-  durable_handoff:
-    pr: 38
-    exact_head: d4c9f150269be58c08a08cd6c74bca591aceb161
-    ci: 31309068608
-    guarded_merge: 5583ad078515aa24b1f994f710297e47512002b4
-    evidence: docs/handoffs/day6-task1-shared-contract-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
-
-day6_task2:
-  branch: agent/day6-task2-sdk-builders
-  pr: 39
-  baseline: 5583ad078515aa24b1f994f710297e47512002b4
-  evidence: docs/evidence/day6-task2-sdk-builders.md
-  final_acceptance:
-    exact_head: 6ceeecf0bb47d5f4db859e5625b563d76135ce0c
-    ci: 31310005756
-    guarded_merge: 15ab27b73b9a3355f95dd7cfc290e6e538d16aff
-  durable_handoff:
-    pr: 40
-    exact_head: 3eade8974d9a99278c416c1a8b05d99dfe9e445d
-    ci: 31310134719
-    guarded_merge: b6edc45a7a680b15b40b6616473b8569a8ed0ae2
-    evidence: docs/handoffs/day6-task2-sdk-builders-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
-
-day6_task3:
-  branch: agent/day6-task3-db-transaction-boundary
-  pr: 41
-  baseline: b6edc45a7a680b15b40b6616473b8569a8ed0ae2
-  evidence: docs/evidence/day6-task3-db-transaction-boundary.md
-  final_acceptance:
-    exact_head: 174f2cf6e141c961f1e63f85ad9be8030bc1c937
-    ci: 31311780637
-    result: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_8_OF_8
-    guarded_merge: 457138c0b79bc20177437b871a8b258a54f83b49
-  durable_handoff:
-    pr: 42
-    exact_head: ee490136c751a625e02ca097034a0ac6ae208bbe
-    ci: 31312013237
-    guarded_merge: cf1078109297f56f060113576d364e920e368d17
-    evidence: docs/handoffs/day6-task3-db-transaction-boundary-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
-
-day6_task4:
-  branch: agent/day6-task4-launch-vertical
-  pr: 43
-  baseline: cf1078109297f56f060113576d364e920e368d17
-  evidence: docs/evidence/day6-task4-launch-vertical.md
-  final_acceptance:
-    exact_head: 2d0a5c121cbafab61bfbff6c513c24f896eaf44c
-    ci: 31314165450
-    result: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
-    guarded_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
-  durable_handoff:
-    pr: 44
-    exact_head: 53f2878b1098f632167b3caacc61c59d15b6cb1c
-    ci: 31314348691
-    guarded_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
-    evidence: docs/handoffs/day6-task4-canonical-launch-vertical-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
-
-day6_task5:
-  branch: agent/day6-task5-trade-vertical
-  pr: 45
-  baseline: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
-  evidence: docs/evidence/day6-task5-canonical-trade-vertical.md
-  final_acceptance:
-    exact_head: d264921c52ce0a2b2369b7179f4957cdd0877b06
-    inherited_ci: 31319868579
-    dedicated_ci: 31319868586
-    result: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_DEDICATED_POSTGRES_8_OF_8
-    guarded_merge: 2779dce925c983ade93d1251aa80db57e4138c92
-  durable_handoff:
-    pr: 46
-    exact_head: b15693dc393be3a9a4b5a270947dd7074ea750dc
-    inherited_ci: 31320232802
-    dedicated_ci: 31320232783
-    guarded_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
-    evidence: docs/handoffs/day6-task5-canonical-trade-vertical-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
-
-day6_task6:
-  branch: agent/day6-task6-fees-admin-graduation
-  pr: 47
-  baseline: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
-  evidence: docs/evidence/day6-task6-fees-admin-graduation.md
-  final_acceptance:
-    exact_head: 4f1f45e4cf5ad309b62ad491384200c3239a74eb
-    inherited_ci: 31322449626
-    retained_task5_ci: 31322449623
-    dedicated_ci: 31322449622
-    result: PASS_ALL_FOUR_WITH_RETAINED_TASK5_PASS_AND_DEDICATED_TASK6_8_OF_8
-    guarded_merge: e8469fd25503fc5befb7668537cb02128d6ad223
-  durable_handoff:
-    pr: 48
-    exact_head: caa8910c46737c4c27c7826d5deffc9798ca8c47
-    inherited_ci: 31323276386
-    retained_task5_ci: 31323276422
-    dedicated_ci: 31323276387
-    guarded_merge: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
-    evidence: docs/handoffs/day6-task6-fees-admin-graduation-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
-
-day6_task7:
-  branch: agent/day6-task7-holders-portfolio
-  pr: 49
-  baseline: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
-  evidence: docs/evidence/day6-task7-holders-portfolio.md
-  final_acceptance:
-    exact_head: 1bd392035392738bb41657bbc87d7273db7bec5e
-    inherited_ci: 31325546267
-    retained_task5_ci: 31325546283
-    retained_task6_ci: 31325546269
-    dedicated_ci: 31325546309
-    result: PASS_ALL_FOUR_WITH_RETAINED_TASK5_TASK6_PASS_AND_DEDICATED_TASK7_8_OF_8
-    guarded_merge: 311cb84cf33f54e03c7c91fe01dd80408aa9ff91
-  durable_handoff:
-    pr: 50
-    exact_head: 5209b3dae7d909a8ce826d8e3636d9217c63c702
-    inherited_ci: 31326169104
-    retained_task5_ci: 31326169095
-    retained_task6_ci: 31326169108
-    dedicated_ci: 31326169091
-    result: PASS_ALL_FOUR_WITH_RETAINED_TASK5_TASK6_PASS_AND_DEDICATED_TASK7_8_OF_8
-    guarded_merge: 74f6629937eccc0cae3f4a4549be27715f6926e4
-    evidence: docs/handoffs/day6-task7-holders-portfolio-integrated-2026-08-09.md
-  status: INTEGRATED_PASS_DURABLE
+  day6_acceptance:
+    - DELETE_DB_REBUILD_PASS
+    - OVERLAP_REPLAY_IDEMPOTENT
+    - API_FRESHNESS_METADATA_PRESENT
+    - RECONCILE_PASS
+    - FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS
 
 day6_task8:
-  branch: agent/day6-task8-replay-cache-fanout
-  pr: 51
-  baseline: 74f6629937eccc0cae3f4a4549be27715f6926e4
+  status: INTEGRATED_PASS_DURABLE
+  implementation_pr: 51
+  handoff_pr: 52
+  handoff_merge: 5549f236460e923159eda3b1e12864b8a4d0ed0a
   evidence: docs/evidence/day6-task8-replay-finality-cache-fanout.md
-  tdd:
-    initial_red_head: bd2b13955890d0eb6cfb4775356cedabf75a5650
-    first_green_head: 45bd2640d8b39caa7113ff824bd6896c59d4a034
-    strengthened_red_head: aa3af1363631e26941447969a13ec92cc3a04f28
-    strengthened_red_ci: 31327795954
-    strengthened_red_result: 2_PASS_6_EXPECTED_SOURCE_CONFORMANCE_FAIL
-  runner_incident:
-    root_zero_step_run: 31327984802
-    task8_zero_step_run: 31327984840
-    disposition: RESOLVED_AFTER_ACCOUNT_ACTIONS_BUDGET_CAPACITY_INCREASE
-    acceptance_rule: ZERO_STEP_RUNS_NOT_CODE_EVIDENCE
+  handoff: docs/handoffs/day6-task8-replay-cache-fanout-handoff.md
+
+day6_task9:
+  branch: agent/day6-task9-api-search-concurrency
+  implementation_pr: 53
+  baseline: 5549f236460e923159eda3b1e12864b8a4d0ed0a
+  evidence: docs/evidence/day6-first-concurrent-read-replay-cache-fanout.md
   final_acceptance:
-    exact_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
-    inherited_ci: 31329811060
-    retained_task5_ci: 31329811046
-    retained_task6_ci: 31329811089
-    retained_task7_ci: 31329811049
-    dedicated_ci: 31329811051
-    dedicated_result: 10_OF_10_PASS_WITH_REAL_NODE_REDIS_2_OF_2
-    frozen_install_supply_chain_entries: 328
+    exact_head: c2d8a91544ae179bd9e5f0c2f15a27aa9ba227dc
+    inherited_ci: 31331597034
+    retained_task5_ci: 31331597042
+    retained_task6_ci: 31331597040
+    retained_task7_ci: 31331597048
+    retained_task8_ci: 31331597038
+    dedicated_ci: 31331597046
+    dedicated_result: 10_OF_10_PASS
     source_design_conformance: PASS
-    guarded_merge: cbedc075ec5c041602290c5f79acff92bc70bbca
+    first_meaningful_concurrency_gate: PASS
+    guarded_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
     main_identity_after_merge: VERIFIED_IDENTICAL
   durable_handoff:
-    branch: docs/day6-task8-handoff
-    pr: 52
-    evidence: docs/handoffs/day6-task8-replay-cache-fanout-handoff.md
-    status: FINAL_EXACT_HEAD_FIVE_WORKFLOW_CI_AND_GUARDED_MERGE_PENDING
+    branch: docs/day6-task9-handoff
+    pr: 54
+    evidence: docs/handoffs/day6-task9-api-search-concurrency-handoff.md
+    status: FINAL_EXACT_HEAD_SIX_WORKFLOW_CI_AND_GUARDED_MERGE_PENDING
   implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
-  pass_status: DAY6_TASK8_REPLAY_FINALITY_CACHE_FANOUT_INTEGRATED_PASS
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -464,20 +193,15 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Run all five exact-head workflow gates on Task-8 durable handoff PR #52: inherited CI, retained Task-5, retained Task-6, retained Task-7 and dedicated Task-8 PostgreSQL/Redis proof. Require real runner steps and full PASS. Then guarded-merge PR #52 with expected-head protection, verify merged main, and only then start Day-6 Task 9 from the new durable main baseline, RED-first and limited to search/rate-limit/API-concurrency plus the source-defined first meaningful concurrent read/replay/cache/fanout proof.
+  Run the exact-head six-workflow gate on Task-9 durable handoff PR #54: inherited CI, retained Task-5, retained Task-6, retained Task-7, retained Task-8 and dedicated Task-9 API/search/concurrency proof. Require real runner steps and full PASS. Then guarded-merge PR #54 with expected-head protection, verify merged main, and only then start Day-6 Task 10 from the new durable main baseline, RED-first, limited to delete-DB rebuild, authoritative reconciliation and final Day-6 correctness/closeout gates.
 
 do_not_do:
-  - "Do not start Day-6 Task 9 before Task-8 durable handoff PR #52 is exact-head green and guarded-merged."
-  - "Do not start Task 10 delete-DB rebuild/reconciliation before Task 9 is accepted and durably handed off."
+  - "Do not start Day-6 Task 10 before Task-9 durable handoff PR #54 is exact-head green and guarded-merged."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
-  - "Do not trust caller-supplied RetryGraduation phase/readiness instead of canonical contract reads."
-  - "Do not bypass exact Foundry ABI generation/drift verification."
-  - "Do not make DB/indexer/API authoritative for financial state."
-  - "Do not create FeeEscrow entitlement from upstream fee/dust context events."
-  - "Do not attribute creator revenue or claims to a token when exact attribution is unavailable or ambiguous."
-  - "Do not fabricate wallet PnL, average entry, graduated DEX price/value or holder concentration semantics without source authority."
-  - "Do not treat Redis/cache/fanout as authoritative or roll back an already committed DB transaction because acceleration failed."
-  - "Do not silently rewrite a committed checkpoint when the provider block hash contradicts it."
-  - "Do not reopen accepted Day-1-Day-5 financial semantics without newly ratified source authority."
+  - "Do not make DB/indexer/API/Redis authoritative for financial state."
+  - "Do not fabricate PnL, average entry, graduated DEX price/value, holder concentration or search ranking semantics without source authority."
+  - "Do not use metadata to resolve financial state or protocol authority."
+  - "Do not allow unbounded DB queues, fanout queues, cache stampedes or search concurrency."
+  - "Do not silently rewrite a committed checkpoint when provider block hash contradicts it."
   - "Do not infer or guess production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
