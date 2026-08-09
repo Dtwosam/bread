@@ -1,10 +1,13 @@
 import type { ProjectionReducer } from '../../../packages/db/src/index.js';
 import { launches } from '../../../packages/db/src/index.js';
-import type { DecodedBreadEvent } from '../../../packages/types/src/index.js';
 
 import type { LaunchSnapshot } from './normalize.js';
 
-function eventKey(event: DecodedBreadEvent): string {
+type ReducerEventIdentity = Readonly<{
+  identity: Readonly<{ chainId: number; transactionHash: string; logIndex: number }>;
+}>;
+
+function eventKey(event: ReducerEventIdentity): string {
   return `${event.identity.chainId}:${event.identity.transactionHash.toLowerCase()}:${event.identity.logIndex}`;
 }
 
