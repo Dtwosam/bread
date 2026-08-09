@@ -58,7 +58,7 @@ export type RebuildStackInput = Readonly<{
   batchSize: bigint;
   loadRange: (fromBlock: bigint, toBlock: bigint) => Promise<RebuildRange>;
   chain?: ReconciliationChainReader;
-  /** Internal fixture escape hatch only. Production CLI never exposes this. */
+  /** Deprecated test-only input. Rebuild success always requires authoritative reconciliation. */
   skipReconciliation?: boolean;
 }>;
 
@@ -66,7 +66,7 @@ export type RebuildStackResult = Readonly<{
   fromBlock: string;
   toBlock: string;
   rangesApplied: number;
-  reconciliation: ReconciliationReport | null;
+  reconciliation: ReconciliationReport;
 }>;
 
 function protocolContext(context: ProtocolContext): IndexerProtocolContext {
@@ -255,6 +255,9 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
 export async function rebuildStack(input: RebuildStackInput): Promise<RebuildStackResult> {
   if (input.targetBlock < input.context.deploymentStartBlock) throw new Error('rebuild target precedes deployment start');
   if (input.batchSize <= 0n) throw new Error('rebuild batchSize must be positive');
+  if (input.skipReconciliation || !input.chain) {
+    throw new Error('authoritative chain reader is required after rebuild; reconciliation cannot be skipped');
+  }
 
   const repository = new RebuildRepository(input.db);
   await repository.deleteSelectedStackReadModel(protocolContext(input.context));
@@ -275,7 +278,7 @@ export async function rebuildStack(input: RebuildStackInput): Promise<RebuildSta
       context: input.context,
       fromBlock,
       toBlock,
-      toBlockHash: loaded.toBlockHash as `0x${string}` ,
+      toBlockHash: loaded.toBlockHash as `0x${string}`,
       ...(loaded.toBlockTimestamp === undefined ? {} : { toBlockTimestamp: loaded.toBlockTimestamp }),
       logs: loaded.logs,
     });
@@ -283,16 +286,12 @@ export async function rebuildStack(input: RebuildStackInput): Promise<RebuildSta
     fromBlock = toBlock + 1n;
   }
 
-  let reconciliation: ReconciliationReport | null = null;
-  if (!input.skipReconciliation) {
-    if (!input.chain) throw new Error('authoritative chain reader is required after rebuild');
-    reconciliation = await reconcileStack({
-      db: input.db,
-      context: input.context,
-      checkedBlock: input.targetBlock,
-      chain: input.chain,
-    });
-  }
+  const reconciliation = await reconcileStack({
+    db: input.db,
+    context: input.context,
+    checkedBlock: input.targetBlock,
+    chain: input.chain,
+  });
 
   return {
     fromBlock: input.context.deploymentStartBlock.toString(10),
