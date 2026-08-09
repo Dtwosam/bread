@@ -1,0 +1,36 @@
+name: day6-task10-conformance-fixture-fix
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-conformance-fixture:
+    if: github.head_ref == 'agent/day6-task10-rebuild-reconcile'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: agent/day6-task10-rebuild-reconcile
+      - name: Align fixture to accepted graduation field types
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/day6/rebuild-reconcile-conformance.test.ts')
+          text = path.read_text()
+          text = text.replace('sweptPairAmount', 'sweptUsdcAmount')
+          text = text.replace('swept_pair_amount', 'swept_usdc_amount')
+          text = text.replace('positionId: hash(333)', 'positionId: 333n')
+          path.write_text(text)
+          PY
+          git diff --check
+          git diff -- tests/day6/rebuild-reconcile-conformance.test.ts
+      - name: Commit fixture-only correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add tests/day6/rebuild-reconcile-conformance.test.ts
+          git commit -m 'test(day6): align reconciliation conformance fixture fields'
+          git push origin HEAD:agent/day6-task10-rebuild-reconcile
