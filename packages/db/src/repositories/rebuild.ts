@@ -23,6 +23,8 @@ export type ReconciliationLaunchRow = Readonly<{
   curveAddress: string;
   launchTransactionHash: string;
   launchLogIndex: number;
+  initialSupply: bigint | null;
+  phantomQuote: bigint | null;
   reservedTokensBaseline: bigint | null;
 }>;
 
@@ -77,6 +79,31 @@ function registeredAddresses(context: IndexerProtocolContext): readonly string[]
 
 function addressList(values: readonly string[]) {
   return sql.join(values.map((value) => sql`${value}`), sql`, `);
+}
+
+function initialReconciliationState(launch: ReconciliationLaunchRow): ReconciliationLaunchStateRow | null {
+  const { initialSupply, phantomQuote, reservedTokensBaseline } = launch;
+  if (initialSupply === null || phantomQuote === null || reservedTokensBaseline === null) return null;
+  if (initialSupply < 0n || phantomQuote < 0n || reservedTokensBaseline < 0n || reservedTokensBaseline > initialSupply) return null;
+  const remainingSellableTokens = initialSupply - reservedTokensBaseline;
+  return {
+    tokenAddress: launch.tokenAddress,
+    trackedQuote: 0n,
+    trackedTokens: initialSupply,
+    quoteFeeBalance: 0n,
+    creatorTaxBalance: 0n,
+    realQuoteReserve: 0n,
+    virtualQuoteReserve: phantomQuote,
+    remainingSellableTokens,
+    readyToGraduate: remainingSellableTokens === 0n,
+    graduationPhase: 'NOT_GRADUATED',
+    sweptTokenAmount: 0n,
+    sweptUsdcAmount: 0n,
+    poolId: null,
+    positionId: null,
+    positionLocked: false,
+    tokenSupplyLocked: 0n,
+  };
 }
 
 export class RebuildRepository {
@@ -180,15 +207,22 @@ export class RebuildRepository {
     const launchResult = await this.db.execute(sql`
       SELECT token_address AS "tokenAddress", curve_address AS "curveAddress",
              launch_transaction_hash AS "launchTransactionHash", launch_log_index AS "launchLogIndex",
+             initial_supply::text AS "initialSupply", phantom_quote::text AS "phantomQuote",
              reserved_tokens_baseline::text AS "reservedTokensBaseline"
       FROM launches
       WHERE chain_id=${context.chainId} AND stack_version=${context.stackVersion} AND factory_address=${factory}
       ORDER BY launch_transaction_hash, launch_log_index, token_address
     `);
     const launches = rows<{
-      tokenAddress: string; curveAddress: string; launchTransactionHash: string; launchLogIndex: number; reservedTokensBaseline: string | null;
+      tokenAddress: string; curveAddress: string; launchTransactionHash: string; launchLogIndex: number;
+      initialSupply: string | null; phantomQuote: string | null; reservedTokensBaseline: string | null;
     }>(launchResult).map((row) => ({
-      ...row,
+      tokenAddress: row.tokenAddress,
+      curveAddress: row.curveAddress,
+      launchTransactionHash: row.launchTransactionHash,
+      launchLogIndex: row.launchLogIndex,
+      initialSupply: row.initialSupply === null ? null : BigInt(row.initialSupply),
+      phantomQuote: row.phantomQuote === null ? null : BigInt(row.phantomQuote),
       reservedTokensBaseline: row.reservedTokensBaseline === null ? null : BigInt(row.reservedTokensBaseline),
     }));
 
@@ -207,7 +241,7 @@ export class RebuildRepository {
       WHERE l.chain_id=${context.chainId} AND l.stack_version=${context.stackVersion} AND l.factory_address=${factory}
       ORDER BY s.token_address
     `);
-    const states = rows<{
+    const persistedStates = rows<{
       tokenAddress: string; trackedQuote: string | null; trackedTokens: string | null; quoteFeeBalance: string | null;
       creatorTaxBalance: string | null; realQuoteReserve: string | null; virtualQuoteReserve: string | null;
       remainingSellableTokens: string | null; readyToGraduate: boolean | null; graduationPhase: string;
@@ -231,6 +265,13 @@ export class RebuildRepository {
       positionLocked: row.positionLocked,
       tokenSupplyLocked: row.tokenSupplyLocked === null ? null : BigInt(row.tokenSupplyLocked),
     }));
+    const persistedStateByToken = new Map(persistedStates.map((state) => [state.tokenAddress.toLowerCase(), state]));
+    const states = launches.flatMap((launch) => {
+      const persisted = persistedStateByToken.get(launch.tokenAddress.toLowerCase());
+      if (persisted) return [persisted];
+      const initial = initialReconciliationState(launch);
+      return initial ? [initial] : [];
+    });
 
     const accountingResult = await this.db.execute(sql`
       SELECT
@@ -238,7 +279,7 @@ export class RebuildRepository {
           SELECT 1 FROM event_journal j WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transaction_hash AND j.log_index=f.log_index
             AND j.stack_version=${context.stackVersion} AND j.contract_address IN (${registeredAddressList}))), 0)::text AS credited,
         COALESCE((SELECT sum(f.amount) FROM fee_claims f WHERE f.chain_id=${context.chainId} AND EXISTS (
-          SELECT 1 FROM event_journal j WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transaction_hash AND j.log_index=f.log_index
+          SELECT 1 FROM event_journal j WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transactionHash AND j.log_index=f.log_index
             AND j.stack_version=${context.stackVersion} AND j.contract_address IN (${registeredAddressList}))), 0)::text AS claimed
     `);
     const accounting = rows<{ credited: string; claimed: string }>(accountingResult)[0] ?? { credited: '0', claimed: '0' };
