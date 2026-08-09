@@ -225,9 +225,15 @@ export const holderSnapshots = pgTable(
     balance: amount('balance').notNull(),
     isProtocolAddress: boolean('is_protocol_address').notNull().default(false),
     asOfBlockNumber: amount('as_of_block_number').notNull(),
+    lastTransactionHash: text('last_transaction_hash'),
+    lastLogIndex: integer('last_log_index'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.chainId, table.tokenAddress, table.holderAddress] })],
+  (table) => [
+    primaryKey({ columns: [table.chainId, table.tokenAddress, table.holderAddress] }),
+    index('holder_snapshots_token_balance_idx').on(table.chainId, table.tokenAddress, table.balance, table.holderAddress),
+    index('holder_snapshots_wallet_idx').on(table.chainId, table.holderAddress, table.tokenAddress),
+  ],
 );
 
 export const marketCandles = pgTable(
