@@ -40,12 +40,6 @@ jobs:
       - name: Run full Day 6 test suite
         run: pnpm test:day6
       - run: pnpm exec tsc --ignoreConfig --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck tests/day6/shared-contract.types.ts
-      - name: Diagnose exact Day 6 validator formatting
-        run: |
-          cp scripts/validation/validate-day6-read-stack.mjs /tmp/validate-day6-read-stack.mjs
-          pnpm exec prettier --write scripts/validation/validate-day6-read-stack.mjs
-          git diff -- scripts/validation/validate-day6-read-stack.mjs
-          cp /tmp/validate-day6-read-stack.mjs scripts/validation/validate-day6-read-stack.mjs
       - name: Check source-integrity and Day 6 closeout formatting
         run: >-
           pnpm exec prettier --check
