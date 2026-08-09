@@ -1,4 +1,4 @@
-schema_version: 1.25
+schema_version: 1.26
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -24,9 +24,10 @@ completed_checkpoints:
   - "Day 6 Task 2 durable handoff PR #40: EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 3 PR #41: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 3 durable handoff PR #42: EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
-active_checkpoint: "Day 6 — Task 4 canonical launch vertical acceptance"
-active_lane: "Task 4 RED->GREEN and source/design conformance are proven; final docs-bearing exact-head CI + guarded merge required before Task 5"
-active_gate: DAY6_TASK4_FINAL_EXACT_HEAD_INTEGRATION_REQUIRED_BEFORE_TASK5
+  - "Day 6 Task 4 PR #43: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
+active_checkpoint: "Day 6 — Task 4 durable integration handoff"
+active_lane: "Task 4 is integrated on main; durable handoff PR #44 must exact-head pass and guarded-merge before Task 5 starts"
+active_gate: DAY6_TASK4_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK5
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -37,7 +38,7 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY6-TASK3-DURABLE-HANDOFF-MAIN
+  id: DAY6-TASK4-INTEGRATED-MAIN
   branch: main
   day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
@@ -50,9 +51,10 @@ integration_baseline:
   day6_task2_handoff_merge: b6edc45a7a680b15b40b6616473b8569a8ed0ae2
   day6_task3_merge: 457138c0b79bc20177437b871a8b258a54f83b49
   day6_task3_handoff_merge: cf1078109297f56f060113576d364e920e368d17
-  status: DAY6_TASK3_INTEGRATED_PASS_DURABLE_TASK4_ACCEPTANCE_PENDING
+  day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
+  status: DAY6_TASK4_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
 working_branches:
-  - agent/day6-task4-launch-vertical
+  - docs/day6-task4-handoff
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -70,6 +72,7 @@ repository:
   day6_task3_pr: 41
   day6_task3_handoff_pr: 42
   day6_task4_pr: 43
+  day6_task4_handoff_pr: 44
   day5_production_code_status: INTEGRATED_PASS_DURABLE
   day6_production_code_started: true
 project_process_note:
@@ -164,6 +167,11 @@ verification:
   day6_task4_final_implementation_head: e1d83d223bb262b857ff6bac541698d61c1d131a
   day6_task4_final_implementation_ci: 31313920503
   day6_task4_final_implementation_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
+  day6_task4_final_head: 2d0a5c121cbafab61bfbff6c513c24f896eaf44c
+  day6_task4_final_ci: 31314165450
+  day6_task4_final_ci_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
+  day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
+  main_identity_after_day6_task4: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
 day6_handoff_contract:
   scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
   authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
@@ -418,8 +426,20 @@ day6_task4:
     jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
     postgres_total: 12_PASS
     source_design_conformance: PASS
-  implementation_status: ACCEPTANCE_CANDIDATE_DOCS_BEARING_EXACT_HEAD_CI_PENDING
-  pass_status: DAY6_TASK4_CANONICAL_LAUNCH_VERTICAL_PASS_INTEGRATION_PENDING
+  final_acceptance:
+    exact_head: 2d0a5c121cbafab61bfbff6c513c24f896eaf44c
+    ci: 31314165450
+    jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
+    source_design_conformance: PASS
+    guarded_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
+    main_identity_after_merge: VERIFIED_IDENTICAL
+  durable_handoff:
+    branch: docs/day6-task4-handoff
+    pr: 44
+    evidence: docs/handoffs/day6-task4-canonical-launch-vertical-integrated-2026-08-09.md
+    status: FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_PENDING
+  implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
+  pass_status: DAY6_TASK4_CANONICAL_LAUNCH_VERTICAL_INTEGRATED_PASS
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -433,9 +453,9 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 next_action: >-
-  Run final exact-head CI on the Task-4 documentation-bearing PR #43 head. Require all four jobs, including the inherited Task-3 plus Task-4 launch/cursor real-PostgreSQL suite (12/12), to pass. Then reverify main remains exactly cf1078109297f56f060113576d364e920e368d17, guarded-merge PR #43 using expected-head protection, verify merged main, and create a docs-only Task-4 durable handoff. Task 5 remains blocked until that handoff itself exact-head passes and guarded-merges.
+  Run final exact-head CI on Task-4 durable handoff PR #44. Require all four jobs, including the inherited real-PostgreSQL Task-3/Task-4 suite (12/12), to pass. Then guarded-merge with expected-head protection and verify merged main. Only after that durable integration may Day-6 Task 5 start from the new main baseline, RED-first, limited to transaction-local BUY/SELL correlation, deterministic trade/candle/token-metric projections, and the source-defined trades/token/feed read enrichment.
 do_not_do:
-  - "Do not start Day-6 Task 5 before Task-4 implementation and durable handoff are exact-head green and guarded-merged."
+  - "Do not start Day-6 Task 5 before the Task-4 durable handoff is exact-head green and guarded-merged."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not trust caller-supplied RetryGraduation phase/readiness instead of canonical contract reads."
