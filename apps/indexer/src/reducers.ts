@@ -3,6 +3,7 @@ import {
   applyFeeAdminGraduationProjection,
   applyHolderTransferProjection,
   launches,
+  launchState,
   projectCreatorTradeCount,
   projectCurveGraduationProgress,
   type BreadDb,
@@ -28,6 +29,9 @@ export function createLaunchReducer(snapshots: ReadonlyMap<string, LaunchSnapsho
     if (event.eventName !== 'LaunchCreated') return;
     const snapshot = snapshots.get(eventKey(event));
     if (!snapshot) throw new Error(`missing normalized launch snapshot for ${eventKey(event)}`);
+    if (snapshot.reservedTokensBaseline > snapshot.initialSupply) {
+      throw new Error('launch reserved token baseline exceeds initial supply');
+    }
 
     const tx = transaction as {
       insert: (table: unknown) => {
@@ -66,6 +70,33 @@ export function createLaunchReducer(snapshots: ReadonlyMap<string, LaunchSnapsho
       launchBlockNumber: snapshot.launchBlockNumber.toString(10),
       launchTransactionHash: snapshot.launchTransactionHash,
       launchLogIndex: snapshot.launchLogIndex,
+    });
+
+    const remainingSellableTokens = snapshot.initialSupply - snapshot.reservedTokensBaseline;
+    await tx.insert(launchState).values({
+      chainId: snapshot.chainId,
+      tokenAddress: snapshot.tokenAddress,
+      mode: 'ACTIVE',
+      quoteReserve: snapshot.phantomQuote.toString(10),
+      tokenReserve: snapshot.initialSupply.toString(10),
+      remainingSellableTokens: remainingSellableTokens.toString(10),
+      trackedSoldInventory: '0',
+      readyToGraduate: remainingSellableTokens === 0n,
+      graduationPhase: 'NOT_GRADUATED',
+      trackedQuote: '0',
+      trackedTokens: snapshot.initialSupply.toString(10),
+      quoteFeeBalance: '0',
+      creatorTaxBalance: '0',
+      realQuoteReserve: '0',
+      virtualQuoteReserve: snapshot.phantomQuote.toString(10),
+      graduationAdapter: snapshot.graduationAdapter,
+      sweptUsdcAmount: '0',
+      sweptTokenAmount: '0',
+      positionLocked: false,
+      tokenSupplyLocked: '0',
+      latestBlockNumber: snapshot.launchBlockNumber.toString(10),
+      latestTransactionHash: snapshot.launchTransactionHash,
+      latestLogIndex: snapshot.launchLogIndex,
     });
   };
 }
