@@ -104,8 +104,8 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     ]);
     await pool.query(`INSERT INTO launches
       (chain_id, token_address, curve_address, stack_version, factory_address, graduation_coordinator,
-       launch_block_number, launch_transaction_hash, launch_log_index)
-      VALUES ($1,$2,$3,$4,$5,$6,'100',$7,1)`, [context.chainId, token, curve, context.stackVersion, context.factoryAddress, context.addresses.coordinator, hash(100)]);
+       reserved_tokens_baseline, launch_block_number, launch_transaction_hash, launch_log_index)
+      VALUES ($1,$2,$3,$4,$5,$6,'100','100',$7,1)`, [context.chainId, token, curve, context.stackVersion, context.factoryAddress, context.addresses.coordinator, hash(100)]);
     await pool.query(`INSERT INTO launch_state
       (chain_id, token_address, tracked_quote, tracked_tokens, quote_fee_balance, creator_tax_balance,
        real_quote_reserve, virtual_quote_reserve, remaining_sellable_tokens, ready_to_graduate,
