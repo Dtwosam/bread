@@ -279,7 +279,7 @@ export class RebuildRepository {
           SELECT 1 FROM event_journal j WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transaction_hash AND j.log_index=f.log_index
             AND j.stack_version=${context.stackVersion} AND j.contract_address IN (${registeredAddressList}))), 0)::text AS credited,
         COALESCE((SELECT sum(f.amount) FROM fee_claims f WHERE f.chain_id=${context.chainId} AND EXISTS (
-          SELECT 1 FROM event_journal j WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transactionHash AND j.log_index=f.log_index
+          SELECT 1 FROM event_journal j WHERE j.chain_id=f.chain_id AND j.transaction_hash=f.transaction_hash AND j.log_index=f.log_index
             AND j.stack_version=${context.stackVersion} AND j.contract_address IN (${registeredAddressList}))), 0)::text AS claimed
     `);
     const accounting = rows<{ credited: string; claimed: string }>(accountingResult)[0] ?? { credited: '0', claimed: '0' };
