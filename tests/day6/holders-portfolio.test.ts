@@ -235,6 +235,19 @@ describe.skipIf(!RUN_DB)('Day 6 Task 7 holders and portfolio against PostgreSQL'
     expect(holderBody.page.hasMore).toBe(true);
     expect(typeof holderBody.page.nextCursor).toBe('string');
 
+    const pagination = await import('../../apps/api/src/pagination.ts');
+    const decodedCursor = pagination.decodeHolderCursor(holderBody.page.nextCursor);
+    expect(decodedCursor).toMatchObject({ balance: '300', holderAddress: walletA });
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const directRepository = new dbModule.ReadRepository(dbModule.createBreadDb(pool));
+    const directSecond = await directRepository.listHolders(context.chainId, tokenA, 3, {
+      balance: decodedCursor.balance,
+      holderAddress: decodedCursor.holderAddress,
+    });
+    expect(directSecond.map((row) => ({ holderAddress: row.holderAddress, balance: row.balance }))).toEqual([
+      { holderAddress: walletB, balance: '75' },
+    ]);
+
     const second = await app.inject({
       method: 'GET',
       url: `/v1/tokens/${tokenA}/holders?limit=2&cursor=${encodeURIComponent(holderBody.page.nextCursor)}`,
