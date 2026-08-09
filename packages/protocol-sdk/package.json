@@ -10,8 +10,6 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@bread/config": "workspace:*",
-    "@bread/types": "workspace:*",
     "viem": "2.55.8"
   },
   "devDependencies": {
