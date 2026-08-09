@@ -35,7 +35,7 @@ jobs:
       - run: pnpm validate
       - run: pnpm test
       - run: pnpm exec vitest run tests/day6/shared-contract.test.ts
-      - run: pnpm exec tsc --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck tests/day6/shared-contract.types.ts
+      - run: pnpm exec tsc --ignoreConfig --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck tests/day6/shared-contract.types.ts
       - name: Check Day 4 changed-file formatting
         run: >-
           pnpm exec prettier --check
