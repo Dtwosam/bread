@@ -17,8 +17,8 @@ interface BreadDeployVm {
     function envAddress(string calldata name) external returns (address value);
     function envBytes32(string calldata name) external returns (bytes32 value);
     function envUint(string calldata name) external returns (uint256 value);
-    function addr(uint256 privateKey) external returns (address keyAddr);
-    function startBroadcast(uint256 privateKey) external;
+    function addr(uint256 key) external returns (address keyAddr);
+    function startBroadcast(uint256 key) external;
     function stopBroadcast() external;
 }
 
@@ -30,8 +30,10 @@ contract DeployDay5Graduation {
     string internal constant BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED =
         "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED";
     string internal constant ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED = "ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED";
+    string internal constant BREAD_DEPLOYMENT_AUTHORITY = "BREAD_DEPLOYMENT_AUTHORITY";
 
-    error InvalidPrivateKeyOwner();
+    error InvalidDeploymentAuthority();
+    error ProtocolAdminMustBeContract();
     error MissingRequiredHash(string name);
     error InvalidEconomicsHash(bytes32 expected, bytes32 actual);
     error ValueTooLarge(string name, uint256 value);
@@ -48,6 +50,7 @@ contract DeployDay5Graduation {
     }
 
     struct Inputs {
+        address deploymentAuthority;
         address protocolAdmin;
         address guardian;
         address usdc;
@@ -68,17 +71,20 @@ contract DeployDay5Graduation {
     }
 
     function run() external returns (Deployment memory deployment) {
-        uint256 privateKey = VM.envUint("BREAD_DEPLOYER_PRIVATE_KEY");
+        uint256 deploymentKey = VM.envUint("BREAD_DEPLOYER_KEY");
         Inputs memory input = _readInputs();
-        if (VM.addr(privateKey) != input.protocolAdmin) revert InvalidPrivateKeyOwner();
+        if (VM.addr(deploymentKey) != input.deploymentAuthority) revert InvalidDeploymentAuthority();
+        if (input.protocolAdmin.code.length == 0) revert ProtocolAdminMustBeContract();
         _validateHashes(input);
 
-        VM.startBroadcast(privateKey);
-        deployment = _deploy(input);
+        VM.startBroadcast(deploymentKey);
+        deployment = _deployAndWire(input);
+        _handoffOwnership(deployment, input.protocolAdmin);
         VM.stopBroadcast();
     }
 
     function _readInputs() private returns (Inputs memory input) {
+        input.deploymentAuthority = VM.envAddress(BREAD_DEPLOYMENT_AUTHORITY);
         input.protocolAdmin = VM.envAddress("BREAD_PROTOCOL_ADMIN");
         input.guardian = VM.envAddress("BREAD_GUARDIAN");
         input.usdc = VM.envAddress("BREAD_USDC");
@@ -125,16 +131,19 @@ contract DeployDay5Graduation {
         }
     }
 
-    function _deploy(Inputs memory input) private returns (Deployment memory d) {
+    function _deployAndWire(Inputs memory input) private returns (Deployment memory d) {
         BreadFeePolicySnapshot memory policy = BreadFeePolicySnapshot({
             protocolFeeRecipient: input.protocolFeeRecipient,
             tradeFeeBps: input.tradeFeeBps,
             protocolFeeShareBps: input.protocolFeeShareBps,
             maxCreatorTaxBps: input.maxCreatorTaxBps
         });
-        d.feePolicy = new BreadFeePolicy(input.protocolAdmin, policy, input.protocolAdmin);
-        d.feeEscrow = new BreadFeeEscrow(input.usdc, input.protocolAdmin);
-        d.emergencyController = new BreadEmergencyController(input.protocolAdmin, input.guardian);
+
+        // The deployment authority owns mutable wiring surfaces only for this atomic deployment script.
+        // Long-lived ownership is handed to the Protocol Admin contract after all wiring succeeds.
+        d.feePolicy = new BreadFeePolicy(input.deploymentAuthority, policy, input.protocolAdmin);
+        d.feeEscrow = new BreadFeeEscrow(input.usdc, input.deploymentAuthority);
+        d.emergencyController = new BreadEmergencyController(input.deploymentAuthority, input.guardian);
 
         IBreadLaunchFactory.LaunchConfig memory config = IBreadLaunchFactory.LaunchConfig({
             supply: input.supply,
@@ -146,7 +155,7 @@ contract DeployDay5Graduation {
             enabled: false
         });
         d.factory = new BreadLaunchFactory(
-            input.protocolAdmin,
+            input.deploymentAuthority,
             input.usdc,
             address(d.feePolicy),
             address(d.feeEscrow),
@@ -155,9 +164,9 @@ contract DeployDay5Graduation {
             input.stackVersion
         );
         d.deployer = new BreadLaunchDeployer(address(d.factory));
-        d.locker = new BreadPermanentLiquidityLocker(input.protocolAdmin);
+        d.locker = new BreadPermanentLiquidityLocker(input.deploymentAuthority);
         d.coordinator = new GraduationCoordinator(
-            input.protocolAdmin,
+            input.deploymentAuthority,
             address(d.factory),
             input.usdc,
             address(d.feeEscrow),
@@ -182,6 +191,14 @@ contract DeployDay5Graduation {
         config.graduationConfigHash = d.adapter.configHash();
         config.enabled = true;
         d.factory.setLaunchConfig(config);
+    }
+
+    function _handoffOwnership(Deployment memory d, address protocolAdmin) private {
+        d.feePolicy.transferOwnership(protocolAdmin);
+        d.feeEscrow.transferOwnership(protocolAdmin);
+        d.emergencyController.transferOwnership(protocolAdmin);
+        d.factory.transferOwnership(protocolAdmin);
+        d.coordinator.transferOwnership(protocolAdmin);
     }
 
     function _u16(string memory name, uint256 value) private pure returns (uint16 result) {
