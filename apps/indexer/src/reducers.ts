@@ -1,10 +1,13 @@
 import {
   applyCanonicalTradeProjection,
+  applyFeeAdminGraduationProjection,
   launches,
   type BreadDb,
+  type IndexerProtocolContext,
   type ProjectionReducer,
 } from '../../../packages/db/src/index.js';
 
+import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
 import type { LaunchSnapshot } from './normalize.js';
 import type { NormalizedTrade } from './trades.js';
 
@@ -78,5 +81,20 @@ export function createTradeReducer(normalizedTrades: readonly NormalizedTrade[])
       ...trade,
       stackVersion: event.stackVersion,
     });
+  };
+}
+
+export function createFeeAdminGraduationReducer(input: Readonly<{ context: ProtocolContext }>): ProjectionReducer {
+  const projectionContext: IndexerProtocolContext = {
+    chainId: input.context.chainId,
+    stackVersion: input.context.stackVersion,
+    factoryAddress: input.context.factoryAddress,
+    quoteAsset: input.context.quoteAsset,
+    quoteDecimals: input.context.quoteDecimals,
+    deploymentStartBlock: input.context.deploymentStartBlock,
+    addresses: input.context.addresses,
+  };
+  return async (transaction, event) => {
+    await applyFeeAdminGraduationProjection(transaction as BreadDb, event, projectionContext);
   };
 }
