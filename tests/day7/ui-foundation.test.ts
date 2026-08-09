@@ -11,6 +11,8 @@ describe('Day 7 public web design foundation', () => {
     const theme = exports.breadTheme as
       | {
           colors: Record<string, string>;
+          fonts: Record<string, string>;
+          controls: Record<string, number>;
           spacing: readonly number[];
           layout: Record<string, number>;
           breakpoints: Record<string, number>;
@@ -39,6 +41,16 @@ describe('Day 7 public web design foundation', () => {
       negativeSoft: '#351817',
       warning: '#FDB022',
       warningSoft: '#35290D',
+    });
+    expect(theme?.fonts).toEqual({
+      primary: 'Inter',
+      technical: 'Geist Mono',
+    });
+    expect(theme?.controls).toEqual({
+      standardButtonHeight: 40,
+      largeButtonHeight: 48,
+      smallButtonHeight: 32,
+      minimumTouchTarget: 44,
     });
     expect(theme?.spacing).toEqual([0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64]);
     expect(theme?.layout).toMatchObject({
