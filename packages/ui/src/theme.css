@@ -23,6 +23,7 @@
   --bread-radius-control: 8px;
   --bread-radius-card: 12px;
   --bread-radius-modal: 16px;
+  --bread-touch-target: 44px;
   --bread-motion-fast: 120ms;
   --bread-motion-standard: 180ms;
   --bread-easing: cubic-bezier(0.2, 0, 0, 1);
@@ -77,8 +78,8 @@ textarea:focus-visible {
 }
 
 .bread-button {
-  min-width: 44px;
-  min-height: 40px;
+  min-width: var(--bread-touch-target);
+  min-height: var(--bread-touch-target);
   padding: 0 16px;
   border: 1px solid transparent;
   border-radius: var(--bread-radius-control);
@@ -139,7 +140,7 @@ textarea:focus-visible {
 }
 
 .bread-navigation__link {
-  min-height: 44px;
+  min-height: var(--bread-touch-target);
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
@@ -200,6 +201,12 @@ textarea:focus-visible {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (pointer: coarse) {
+  .bread-button--small {
+    min-height: var(--bread-touch-target);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
