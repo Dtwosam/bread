@@ -5,6 +5,7 @@ Date: 2026-08-09
 ## Durable baseline
 
 - Implementation PR: #47
+- Durable handoff PR: #48
 - Task-5 durable baseline: `966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4`
 - Final Task-6 branch head: `4f1f45e4cf5ad309b62ad491384200c3239a74eb`
 - Guarded implementation merge: `e8469fd25503fc5befb7668537cb02128d6ad223`
@@ -44,11 +45,11 @@ Retained Task-5 regression remained green after the Task-6 compatibility repair:
 
 `DAY6_TASK6_FEES_ADMIN_GRADUATION_CREATOR_INTEGRATED_PASS`
 
-Implementation is integrated. This handoff branch must itself pass inherited exact-head CI/regressions and guarded-merge before Task 7 begins.
+Implementation is integrated. Handoff PR #48 must itself pass inherited exact-head CI/regressions and guarded-merge before Task 7 begins.
 
 ## Next safe action
 
-After this handoff is exact-head green and merged, start Day-6 Task 7 from the new `main` baseline, RED-first, limited to holder reconstruction and portfolio reads:
+After PR #48 is exact-head green and merged, start Day-6 Task 7 from the new `main` baseline, RED-first, limited to holder reconstruction and portfolio reads:
 
 - derive holder balances from canonical launch-token `Transfer` events;
 - flag protocol-owned addresses rather than silently treating them as ordinary holders;
