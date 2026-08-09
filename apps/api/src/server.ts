@@ -1,9 +1,10 @@
 import Fastify from 'fastify';
 
-import { ReadRepository, type BreadDb } from '../../../packages/db/src/index.js';
+import { CreatorRepository, ReadRepository, type BreadDb } from '../../../packages/db/src/index.js';
 import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
 
 import { buildFreshness } from './freshness.js';
+import { registerCreatorRoute } from './routes/creators.js';
 import { registerFeedRoute } from './routes/feed.js';
 import { registerStatusRoute } from './routes/status.js';
 import { registerTokenRoute } from './routes/token.js';
@@ -19,6 +20,7 @@ export type CreateBreadApiInput = Readonly<{
 export function createBreadApi(input: CreateBreadApiInput) {
   const app = Fastify({ logger: false });
   const repository = new ReadRepository(input.db);
+  const creatorRepository = new CreatorRepository(input.db);
   const now = input.now ?? (() => new Date());
 
   const freshness = async () => {
@@ -37,6 +39,11 @@ export function createBreadApi(input: CreateBreadApiInput) {
   registerFeedRoute(app, deps);
   registerTokenRoute(app, deps);
   registerTradesRoute(app, deps);
+  registerCreatorRoute(app, {
+    repository: creatorRepository,
+    chainId: input.context.chainId,
+    freshness,
+  });
 
   app.setErrorHandler((error, request, reply) => {
     request.log.error({ err: error, requestId: request.id }, 'Bread read API request failed');
