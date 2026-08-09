@@ -19,6 +19,16 @@ contract BreadGraduationRecoveryTest is BreadDay5Fixture {
     BreadRecoveryVm private constant VM =
         BreadRecoveryVm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
+    function testCoordinatorOwnershipCannotBeRenouncedIntoNoRecoveryAuthority() public {
+        Fixture memory f = _deployDay5Fixture();
+        address ownerBefore = f.coordinator.owner();
+
+        (bool renounceOk,) = address(f.coordinator).call(abi.encodeWithSignature("renounceOwnership()"));
+
+        assert(!renounceOk);
+        assert(f.coordinator.owner() == ownerBefore);
+    }
+
     function testRescueRequiresSweptPausedAndSevenDayDelay() public {
         Fixture memory f = _deployDay5Fixture();
         (address token,) = _launchSwept(f);
