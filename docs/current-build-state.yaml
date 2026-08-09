@@ -1,4 +1,4 @@
-schema_version: 1.16
+schema_version: 1.17
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -13,10 +13,11 @@ completed_checkpoints:
   - "Day 5 preflight/source/design/plan: PASS and RATIFIED"
   - "Day 5 implementation PR #27: GUARDED_MERGE_PASS"
   - "Day 5 post-merge adversarial security PR #28: PASS and MERGED"
-  - "Day 5 hardened-main closeout prerequisite: PASS"
-active_checkpoint: "Day 5 — stamped merged-main closeout after adversarial hardening"
-active_lane: "Stamped PR #30 head must pass fresh exact-head CI before guarded merge"
-active_gate: DAY5_HARDENED_MAIN_STAMPED_CLOSEOUT_CI
+  - "Day 5 hardened-main closeout PR #30: GUARDED_MERGE_PASS"
+  - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS"
+active_checkpoint: "Day 5 — durable post-closeout handoff"
+active_lane: "Docs-only handoff must pass exact-head CI and guarded merge before Day 6 begins"
+active_gate: DAY5_DURABLE_HANDOFF_EXACT_HEAD_CI_AND_MERGE
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -27,9 +28,9 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY5-HARDENED-MERGED-MAIN
+  id: DAY5-ACCEPTED-CLOSEOUT-MAIN
   branch: main
-  head: 6608222f0716f52392922291288ac94f4b55f84a
+  head: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day4_closeout_milestone: 7533b9f243e1c53106188aa662919f6166448f2e
   day5_start_baseline: ee315b4feb255b6c84c0b1ef51623a1155d77844
   day5_implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
@@ -37,9 +38,15 @@ integration_baseline:
   day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
   day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
   day5_postmerge_security_ci: 31285860020
-  status: DAY5_STAMPED_CLOSEOUT_CI_PENDING
+  day5_hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
+  day5_closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
+  day5_closeout_prerequisite_ci: 31285985419
+  day5_closeout_stamped_head: e583204239032e92fe3172137423b58f459aa1c0
+  day5_closeout_stamped_ci: 31286043130
+  day5_closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
+  status: DAY5_INTEGRATED_PASS_DURABLE_HANDOFF_PENDING
 working_branches:
-  - checkpoint/day5-merged-main-closeout-v2
+  - checkpoint/day5-durable-handoff
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -48,17 +55,19 @@ repository:
   day5_superseded_closeout_pr: 29
   day5_closeout_pr: 30
   day5_closeout_evidence: docs/evidence/day5-merged-main-closeout.md
-  day5_production_code_status: MERGED_HARDENED_PENDING_STAMPED_CLOSEOUT_AND_HANDOFF
+  day5_handoff_snapshot: docs/handoffs/day5-post-closeout-984f80cee88769a9.md
+  day5_production_code_status: INTEGRATED_PASS
   day6_production_code_started: false
 day5_scope:
-  production_status: HARDENED_MERGED_MAIN_PENDING_STAMPED_CLOSEOUT_AND_DURABLE_HANDOFF
+  production_status: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
   v4_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
   v3_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
-  candidate_verdicts:
+  accepted_verdicts:
     - FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS
     - INV_050_056_PASS
     - RETRY_CANNOT_DUPLICATE_LIQUIDITY
     - RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS
+    - DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
 verification:
   implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
   implementation_ci: 31285733919
@@ -68,11 +77,16 @@ verification:
   postmerge_security_ci: 31285860020
   postmerge_security_jobs: PASS_ALL_FOUR
   hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
-  hardened_main_closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
-  hardened_main_closeout_prerequisite_ci: 31285985419
-  hardened_main_closeout_prerequisite_jobs: PASS_ALL_FOUR
-  stamped_closeout_ci: PENDING_THIS_STATE_COMMIT
-  durable_handoff: NOT_STARTED
+  closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
+  closeout_prerequisite_ci: 31285985419
+  closeout_prerequisite_jobs: PASS_ALL_FOUR
+  closeout_stamped_head: e583204239032e92fe3172137423b58f459aa1c0
+  closeout_stamped_ci: 31286043130
+  closeout_stamped_jobs: PASS_ALL_FOUR
+  closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
+  main_identity_after_closeout: VERIFIED_IDENTICAL
+  durable_handoff_ci: PENDING_THIS_HANDOFF_HEAD
+  durable_handoff_merge: NOT_STARTED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -80,23 +94,35 @@ blockers:
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; not a Day-5 engineering blocker"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not block Day-6 local/test implementation"
   PONS_V2_RUNTIME_REFERENCE: "numeric reference state remains pending; do not guess"
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
-  PONS_AUDIT_FINDINGS: "no public completed Pons audit report verified; continuing watch; Bread independent review remains required before unrestricted public funds"
+  PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 security_review:
   coordinator_renounce_hardening: RED_GREEN_VERIFIED
   deployment_authority_handoff: EXACT_HEAD_CI_VERIFIED_BEFORE_MERGE
   postmerge_adversarial_suite: MERGED_AND_EXACT_HEAD_CI_VERIFIED
   external_independent_review: OPEN_PUBLIC_MAINNET_RELEASE_GATE
+day6_handoff_contract:
+  scope: "Protocol SDK + ABI/address/transaction builders/error decoding + transactional indexer/checkpoints/replay + projections/candles/metrics + feed/search/token/trades/status API + DB rebuild/reconciliation"
+  authority: "Chain is authoritative; DB/indexer/cache/API are deterministic read projections and have no financial write authority"
+  continuity: "Consume actual Day-1-Day-5 events/interfaces/manifests through one shared contract; no private duplicate ABI/address/domain/state interpretations"
+  acceptance:
+    - DELETE_DB_REBUILD_PASS
+    - OVERLAP_REPLAY_IDEMPOTENT
+    - API_FRESHNESS_METADATA_PRESENT
+    - RECONCILE_PASS
+    - FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS
 next_action: >-
-  Run all four repository CI jobs on this stamped PR #30 head. If and only if that exact head is green, verify current main remains 6608222f0716f52392922291288ac94f4b55f84a, reverify PR #30 exact head/mergeability/reviews, mark ready, and merge with expected-head protection. Then verify actual merged main and create/merge the durable post-closeout handoff. Day 6 production remains blocked until that handoff is durable on main.
+  After this docs-only durable handoff passes exact-head CI and is guarded-merged, verify latest main and record that exact SHA as DAY6_START_BASELINE. Then perform Day-6 preflight: read controlling 06B/06C/06D/06E/06F/06I requirements, inspect the actual Day-1-Day-5 contract events/interfaces/manifests on main, freeze the shared event/domain/API contract, and write/self-review the detailed Day-6 implementation plan before production Day-6 code.
 do_not_do:
-  - "Do not merge superseded closeout PR #29."
-  - "Do not call Day 5 durably complete before PR #30 stamped closeout merge and durable handoff."
-  - "Do not start Day-6 production code before durable Day-5 handoff main."
+  - "Do not start Day-6 production code before this durable handoff is green and merged."
+  - "Do not reopen accepted Day-1-Day-5 financial semantics without newly ratified source authority."
+  - "Do not make DB/indexer/API authoritative for financial state."
+  - "Do not create private duplicate protocol ABI/address/domain/state interpretations."
+  - "Do not route user trades through a centralized Bread trade server."
   - "Do not claim exact current-live Pons V2 source/runtime parity or audit-clean status."
   - "Do not infer or guess production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
   - "Do not activate V4/V3 on Arc without official deployment evidence and compatibility tests."
-  - "When chat context is roughly 90% full, stop before a new critical slice and write a durable handoff/rollover prompt."
+  - "When chat context is roughly 90% full, stop before a new critical slice and write/verify a durable rollover handoff."
