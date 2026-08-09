@@ -1,4 +1,4 @@
-schema_version: 1.33
+schema_version: 1.34
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -21,11 +21,12 @@ completed_checkpoints:
   - "Day 6 Task 6 PR #47 + handoff #48: INTEGRATED_PASS_DURABLE"
   - "Day 6 Task 7 PR #49 + handoff #50: INTEGRATED_PASS_DURABLE"
   - "Day 6 Task 8 PR #51 + handoff #52: INTEGRATED_PASS_DURABLE"
-  - "Day 6 Task 9 PR #53: SOURCE_DESIGN_CONFORMANCE_PASS, FIRST_MEANINGFUL_CONCURRENCY_PASS, GUARDED_MERGE_PASS"
+  - "Day 6 Task 9 PR #53 + handoff #54: INTEGRATED_PASS_DURABLE"
+  - "Day 6 Task 10 PR #55: SOURCE_DESIGN_CONFORMANCE_PASS, DELETE_DB_REBUILD_PASS, RECONCILE_PASS, GUARDED_MERGE_PASS"
 
-active_checkpoint: "Day 6 — Task 9 durable integration handoff"
-active_lane: "Task 9 is integrated on main at faa4e6a5c76433b2724ed54b957f90a397d7716c; durable handoff PR #54 must exact-head pass inherited CI, retained Task-5/6/7/8 regressions and dedicated Task-9 API/search/concurrency proof before Task 10 starts"
-active_gate: DAY6_TASK9_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK10
+active_checkpoint: "Day 6 — Task 10 durable integration handoff"
+active_lane: "Task 10 implementation is integrated on main at 08e38978ebf48d533556b7f57e0a1c1cab10bf17; durable handoff PR #56 must exact-head pass root CI, retained Task-5/6/7/8/9 regressions and dedicated Task-10 rebuild/reconciliation proof before Task 11 or Day-6 closeout advances"
+active_gate: DAY6_TASK10_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK11
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -38,14 +39,13 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.32
-  prior_state_blob_sha: dc73b931c322b5548f26d639c04f29f75503479c
-  prior_state_pre_compaction_blob_sha: 32de191e0b4175f0f7c3b5125765e8bc406ff9b2
+  prior_state_schema_version: 1.33
+  prior_state_blob_sha: f4245bdb03a907cd402c561c899d8dcd4f599c27
   note: >-
-    v1.33 is a continuity compaction. Full granular Day-1 through Task-9 RED/GREEN workflow identities remain durably preserved in Git history and the task-specific evidence/handoff documents. No accepted verdict, source boundary, merge identity, blocker, or authority rule is revoked by this compaction.
+    v1.34 advances the durable workflow pointer through the verified Task-9 handoff and Task-10 implementation merge. Full granular Day-1 through Task-10 RED/GREEN workflow identities remain preserved in Git history and task-specific evidence/handoff documents. No accepted verdict, source boundary, blocker, invariant or authority rule is revoked by this state update.
 
 integration_baseline:
-  id: DAY6-TASK9-INTEGRATED-MAIN
+  id: DAY6-TASK10-INTEGRATED-MAIN
   branch: main
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
   day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
@@ -59,10 +59,12 @@ integration_baseline:
   day6_task7_handoff_merge: 74f6629937eccc0cae3f4a4549be27715f6926e4
   day6_task8_handoff_merge: 5549f236460e923159eda3b1e12864b8a4d0ed0a
   day6_task9_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
-  status: DAY6_TASK9_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
+  day6_task9_handoff_merge: d6b6b26631f3e70f127595c55074d8cc20edce7a
+  day6_task10_merge: 08e38978ebf48d533556b7f57e0a1c1cab10bf17
+  status: DAY6_TASK10_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
 
 working_branches:
-  - docs/day6-task9-handoff
+  - docs/day6-task10-handoff
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -71,13 +73,17 @@ repository:
   day6_task8_handoff_pr: 52
   day6_task9_pr: 53
   day6_task9_handoff_pr: 54
+  day6_task10_pr: 55
+  day6_task10_handoff_pr: 56
   day6_production_code_started: true
 
 project_process_note:
   task8_actions_budget_blocker: >-
     During Task 8, GitHub Actions repeatedly created zero-step jobs while account Actions spend capacity was unavailable. No zero-step execution was counted as repository failure or PASS and no workflow gate was weakened. After the account Actions budget was increased, exact-head runner execution resumed and required gates passed.
   task9_scope_rule: >-
-    Task 9 closes the source-defined first meaningful Day-6 read/replay/cache/fanout concurrency proof. It does not claim the Day-8 10,000-client production-like stress target and does not include Task-10 delete-DB rebuild/reconciliation.
+    Task 9 closes the source-defined first meaningful Day-6 read/replay/cache/fanout concurrency proof. It does not claim the later Day-8 10,000-client production-like stress target.
+  task10_scope_rule: >-
+    Task 10 closes deterministic selected-stack delete/rebuild and authoritative REC-01 through REC-06 reconciliation. Rebuild uses the same production applyRange path, requires isolated/local target verification before destructive work, requires PASS authoritative reconciliation before success, and does not create a second financial authority.
 
 verification:
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
@@ -87,30 +93,8 @@ verification:
   day6_task8_final_task7_ci: 31329811049
   day6_task8_final_dedicated_ci: 31329811051
   day6_task8_merge: cbedc075ec5c041602290c5f79acff92bc70bbca
-  day6_task8_handoff_head: 154e5951250b273432b4c25de0ec29641366e263
-  day6_task8_handoff_ci: 31330228320
-  day6_task8_handoff_task5_ci: 31330228304
-  day6_task8_handoff_task6_ci: 31330228341
-  day6_task8_handoff_task7_ci: 31330228308
-  day6_task8_handoff_dedicated_ci: 31330228357
   day6_task8_handoff_merge: 5549f236460e923159eda3b1e12864b8a4d0ed0a
 
-  day6_task9_initial_red_head: a7e50f31b77d78380dde3a857e48181265c1aeb5
-  day6_task9_initial_red_dedicated_ci: 31330747066
-  day6_task9_primitive_green_head: d2803bfb61a9f3c7e4c87b93acade7ff1b5a2d12
-  day6_task9_primitive_green_dedicated_ci: 31331025910
-  day6_task9_conformance_red_head: 9fbd5b208b122d0da878a0a6f669ab06f5cd2323
-  day6_task9_conformance_red_dedicated_ci: 31331158501
-  day6_task9_combined_green_head: 8eb43a8107260781e6d5e038f2bf0bbc63bb78bf
-  day6_task9_combined_green_dedicated_ci: 31331341467
-  day6_task9_pre_evidence_head: 98be3af69a76fd22f3748dce4dfe1579b5a0f11f
-  day6_task9_pre_evidence_ci: 31331499693
-  day6_task9_pre_evidence_task5_ci: 31331499655
-  day6_task9_pre_evidence_task6_ci: 31331499676
-  day6_task9_pre_evidence_task7_ci: 31331499680
-  day6_task9_pre_evidence_task8_ci: 31331499678
-  day6_task9_pre_evidence_dedicated_ci: 31331499687
-  day6_task9_pre_evidence_dedicated_result: POSTGRES_REDIS_10_OF_10
   day6_task9_final_head: c2d8a91544ae179bd9e5f0c2f15a27aa9ba227dc
   day6_task9_final_ci: 31331597034
   day6_task9_final_task5_ci: 31331597042
@@ -120,6 +104,24 @@ verification:
   day6_task9_final_dedicated_ci: 31331597046
   day6_task9_final_dedicated_result: POSTGRES_REDIS_10_OF_10
   day6_task9_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
+  day6_task9_handoff_merge: d6b6b26631f3e70f127595c55074d8cc20edce7a
+
+  day6_task10_initial_red_head: a9b3c9d3c129beb77aa4973c8381e7439f7991ef
+  day6_task10_meaningful_red_head: 75cbc0f04c8cc54319e84dd3d5debd3e2d53b871
+  day6_task10_meaningful_red_dedicated_ci: 31334380509
+  day6_task10_final_head: 04647d9c359959422803b95358c0ef693cfb0708
+  day6_task10_final_ci: 31338461162
+  day6_task10_final_task5_ci: 31338461161
+  day6_task10_final_task6_ci: 31338461160
+  day6_task10_final_task7_ci: 31338461169
+  day6_task10_final_task8_ci: 31338461165
+  day6_task10_final_task9_ci: 31338461174
+  day6_task10_final_dedicated_ci: 31338461147
+  day6_task10_final_dedicated_result: POSTGRES_REDIS_FULL_TASK10_PASS
+  day6_task10_source_design_conformance: PASS
+  delete_db_rebuild_pass: PASS
+  reconcile_pass: PASS
+  day6_task10_merge: 08e38978ebf48d533556b7f57e0a1c1cab10bf17
 
 day6_handoff_contract:
   architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
@@ -128,6 +130,7 @@ day6_handoff_contract:
   transaction_rule: "journal insert + affected projections + checkpoint advancement in one PostgreSQL transaction"
   post_commit_rule: "cache invalidation and realtime fanout only after durable DB apply"
   replay_rule: "overlap replay is idempotent; checkpoint hash contradiction fails closed"
+  rebuild_rule: "selected-stack rebuild starts at deploymentStartBlock, uses production applyRange, requires isolated/local target verification and cannot succeed without PASS authoritative reconciliation"
   api_rule: "all public reads are bounded, cursor/index oriented, checkpoint-freshness bearing and DB/indexer backed; raw RPC is not the primary route read source"
   required_endpoints:
     - GET /v1/feed
@@ -154,28 +157,40 @@ day6_task8:
   handoff: docs/handoffs/day6-task8-replay-cache-fanout-handoff.md
 
 day6_task9:
-  branch: agent/day6-task9-api-search-concurrency
   implementation_pr: 53
-  baseline: 5549f236460e923159eda3b1e12864b8a4d0ed0a
+  implementation_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
   evidence: docs/evidence/day6-first-concurrent-read-replay-cache-fanout.md
+  handoff: docs/handoffs/day6-task9-api-search-concurrency-handoff.md
+  durable_handoff:
+    pr: 54
+    merge: d6b6b26631f3e70f127595c55074d8cc20edce7a
+    status: INTEGRATED_PASS_DURABLE
+  implementation_status: INTEGRATED_PASS_DURABLE
+
+day6_task10:
+  branch: agent/day6-task10-rebuild-reconcile
+  baseline: d6b6b26631f3e70f127595c55074d8cc20edce7a
+  implementation_pr: 55
+  evidence: docs/evidence/day6-rebuild-reconcile.md
   final_acceptance:
-    exact_head: c2d8a91544ae179bd9e5f0c2f15a27aa9ba227dc
-    inherited_ci: 31331597034
-    retained_task5_ci: 31331597042
-    retained_task6_ci: 31331597040
-    retained_task7_ci: 31331597048
-    retained_task8_ci: 31331597038
-    dedicated_ci: 31331597046
-    dedicated_result: 10_OF_10_PASS
+    exact_head: 04647d9c359959422803b95358c0ef693cfb0708
+    inherited_ci: 31338461162
+    retained_task5_ci: 31338461161
+    retained_task6_ci: 31338461160
+    retained_task7_ci: 31338461169
+    retained_task8_ci: 31338461165
+    retained_task9_ci: 31338461174
+    dedicated_ci: 31338461147
     source_design_conformance: PASS
-    first_meaningful_concurrency_gate: PASS
-    guarded_merge: faa4e6a5c76433b2724ed54b957f90a397d7716c
+    delete_db_rebuild: PASS
+    reconcile: PASS
+    guarded_merge: 08e38978ebf48d533556b7f57e0a1c1cab10bf17
     main_identity_after_merge: VERIFIED_IDENTICAL
   durable_handoff:
-    branch: docs/day6-task9-handoff
-    pr: 54
-    evidence: docs/handoffs/day6-task9-api-search-concurrency-handoff.md
-    status: FINAL_EXACT_HEAD_SIX_WORKFLOW_CI_AND_GUARDED_MERGE_PENDING
+    branch: docs/day6-task10-handoff
+    pr: 56
+    evidence: docs/handoffs/day6-task10-rebuild-reconcile-handoff.md
+    status: FINAL_EXACT_HEAD_SEVEN_WORKFLOW_CI_AND_GUARDED_MERGE_PENDING
   implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
 
 blockers:
@@ -193,14 +208,14 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Run the exact-head six-workflow gate on Task-9 durable handoff PR #54: inherited CI, retained Task-5, retained Task-6, retained Task-7, retained Task-8 and dedicated Task-9 API/search/concurrency proof. Require real runner steps and full PASS. Then guarded-merge PR #54 with expected-head protection, verify merged main, and only then start Day-6 Task 10 from the new durable main baseline, RED-first, limited to delete-DB rebuild, authoritative reconciliation and final Day-6 correctness/closeout gates.
+  Run the exact-head seven-workflow gate on Task-10 durable handoff PR #56: root CI, retained Task-5, retained Task-6, retained Task-7, retained Task-8, retained Task-9 and dedicated Task-10 rebuild/reconciliation proof. Require real runner steps and full PASS. Then guarded-merge PR #56 with expected-head protection, verify merged main, and only then determine the next approved Day-6 action / Task 11 from the controlling Day-6 implementation plan.
 
 do_not_do:
-  - "Do not start Day-6 Task 10 before Task-9 durable handoff PR #54 is exact-head green and guarded-merged."
+  - "Do not start Task 11 or claim Day-6 closeout before Task-10 durable handoff PR #56 is exact-head green, guarded-merged and main is verified."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not make DB/indexer/API/Redis authoritative for financial state."
-  - "Do not fabricate PnL, average entry, graduated DEX price/value, holder concentration or search ranking semantics without source authority."
+  - "Do not weaken REC-01 through REC-06 or allow rebuild success without PASS authoritative reconciliation."
   - "Do not use metadata to resolve financial state or protocol authority."
   - "Do not allow unbounded DB queues, fanout queues, cache stampedes or search concurrency."
   - "Do not silently rewrite a committed checkpoint when provider block hash contradicts it."
