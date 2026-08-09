@@ -49,6 +49,7 @@ export type ReconciliationJournalIdentity = Readonly<{
   transactionHash: string;
   logIndex: number;
   blockNumber: bigint;
+  decoderSchemaVersion: string;
 }>;
 
 export type ReconciliationSnapshot = Readonly<{
@@ -243,7 +244,8 @@ export class RebuildRepository {
     const accounting = rows<{ credited: string; claimed: string }>(accountingResult)[0] ?? { credited: '0', claimed: '0' };
 
     const journalResult = await this.db.execute(sql`
-      SELECT j.transaction_hash AS "transactionHash", j.log_index AS "logIndex", j.block_number::text AS "blockNumber"
+      SELECT j.transaction_hash AS "transactionHash", j.log_index AS "logIndex", j.block_number::text AS "blockNumber",
+             j.decoder_schema_version AS "decoderSchemaVersion"
       FROM event_journal j
       WHERE j.chain_id=${context.chainId} AND j.stack_version=${context.stackVersion}
         AND (
@@ -256,10 +258,11 @@ export class RebuildRepository {
         )
       ORDER BY j.block_number, j.transaction_index, j.log_index, j.transaction_hash
     `);
-    const journal = rows<{ transactionHash: string; logIndex: number; blockNumber: string }>(journalResult).map((row) => ({
+    const journal = rows<{ transactionHash: string; logIndex: number; blockNumber: string; decoderSchemaVersion: string }>(journalResult).map((row) => ({
       transactionHash: row.transactionHash,
       logIndex: row.logIndex,
       blockNumber: BigInt(row.blockNumber),
+      decoderSchemaVersion: row.decoderSchemaVersion,
     }));
 
     const checkpointResult = await this.db.execute(sql`
