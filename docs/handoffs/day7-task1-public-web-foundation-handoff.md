@@ -1,6 +1,8 @@
 # Bread Day 7 Task 1 — Public Web Foundation Durable Handoff
 
-Status: `DAY7_TASK1_PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE_PENDING_HANDOFF_MERGE`
+Status: `DAY7_TASK1_PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE`
+
+This document becomes the controlling durable Task-1 handoff when PR #60 is exact-head green and merged to `main`.
 
 ## Verified predecessor
 
@@ -12,6 +14,7 @@ Status: `DAY7_TASK1_PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE_PENDING_HANDOF
 - Implementation PR: #59
 - Final exact implementation head: `feb5ce08c03d2e51b1813f30e94c5fbb5add3dba`
 - Guarded squash merge: `1e5d3537f22dbdb969e50da009c641b94f35a656`
+- Durable handoff PR: #60
 - Branch: `agent/day7-public-web-foundation`
 
 Implemented from frozen 04A–04D:
@@ -75,7 +78,7 @@ No later lane may create private copies of these theme/navigation semantics.
 
 ## Next safe action
 
-After this durable handoff itself passes exact-head root CI + Day-7 Task-1 + retained Day-6 Tasks 5–10 and merges from actual Task-1 merged main, begin **Day 7 Task 2 — indexed read client/query/freshness/degraded-state boundary** from the resulting handoff merge.
+Once PR #60 is present on `main`, begin **Day 7 Task 2 — indexed read client/query/freshness/degraded-state boundary** from the freshly verified latest `main` descendant.
 
 Task 2 must consume the accepted Day-6 read API/types and Task-1 UI foundation. Its first RED must prove the missing canonical `/v1` browser read boundary: typed `IndexedResponse<T>`/`FreshnessMeta` propagation, typed API errors, bounded query serialization, deduplicated query keys, explicit FRESH/LAGGING/REBUILDING/DEGRADED states, and no raw-RPC primary rendering path.
 
