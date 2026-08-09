@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Inter } from 'next/font/google';
+import { Geist_Mono, Inter } from 'next/font/google';
 
 import { MobileNavigation, Navigation } from '@bread/ui';
 import '@bread/ui/theme.css';
@@ -11,9 +11,16 @@ const inter = Inter({
   variable: '--bread-font-sans',
 });
 
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false,
+  variable: '--bread-font-mono',
+});
+
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${geistMono.variable}`}>
       <body>
         <div className="bread-shell">
           <header className="bread-header">
