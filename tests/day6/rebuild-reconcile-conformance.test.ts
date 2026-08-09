@@ -255,4 +255,27 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
       skipReconciliation: true,
     })).rejects.toThrow(/authoritative chain reader.*required/i);
   });
+
+  it('rebuild fails closed when authoritative reconciliation verdict is FAIL', async () => {
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const module = await import('../../apps/indexer/src/reconcile.ts');
+    const db = dbModule.createBreadDb(pool);
+
+    await expect((module.rebuildStack as (input: Record<string, unknown>) => Promise<unknown>)({
+      db,
+      client: { readContract: async () => { throw new Error('unused'); } },
+      context,
+      targetBlock: 100n,
+      batchSize: 10n,
+      loadRange: async (fromBlock: bigint, toBlock: bigint) => ({
+        fromBlock,
+        toBlock,
+        toBlockHash: hash(100),
+        logs: [],
+      }),
+      chain: baseChain({
+        getBlockHash: async (block: bigint) => hash(Number(block)),
+      }),
+    })).rejects.toThrow(/authoritative reconciliation failed/i);
+  });
 });
