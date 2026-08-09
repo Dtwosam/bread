@@ -1,8 +1,14 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import * as ui from '../../packages/ui/src/index';
 
 const exports = ui as Record<string, unknown>;
+
+type ElementLike = Readonly<{
+  props?: Record<string, unknown>;
+}>;
 
 describe('Day 7 public web design foundation', () => {
   it('freezes the controlling 04B semantic tokens and shell geometry', () => {
@@ -92,10 +98,29 @@ describe('Day 7 public web design foundation', () => {
     const Button = exports.Button as ((props: Record<string, unknown>) => unknown) | undefined;
     expect(typeof Button).toBe('function');
 
-    const element = Button?.({ loading: true, children: 'Confirm' }) as
-      | { props?: Record<string, unknown> }
-      | undefined;
+    const element = Button?.({ loading: true, children: 'Confirm' }) as ElementLike | undefined;
     expect(element?.props?.['aria-busy']).toBe(true);
-    expect(element?.props?.children).toBe('Confirming...');
+  });
+
+  it('preserves button width while loading by retaining both labels in one layout slot', () => {
+    const Button = exports.Button as ((props: Record<string, unknown>) => unknown) | undefined;
+    const element = Button?.({ loading: true, children: 'Confirm' }) as ElementLike | undefined;
+    const content = element?.props?.children as ElementLike | undefined;
+    const labels = content?.props?.children as readonly ElementLike[] | undefined;
+
+    expect(content?.props?.className).toBe('bread-button__content');
+    expect(labels).toHaveLength(2);
+    expect(labels?.[0]?.props?.children).toBe('Confirm');
+    expect(labels?.[0]?.props?.['aria-hidden']).toBe(true);
+    expect(labels?.[1]?.props?.children).toBe('Confirming...');
+    expect(labels?.[1]?.props?.['aria-hidden']).toBe(false);
+  });
+
+  it('defines a visible pressed state and overlapping stable-width button labels', () => {
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+
+    expect(css).toContain('.bread-button:active:not(:disabled)');
+    expect(css).toContain('.bread-button__content');
+    expect(css).toContain('grid-area: 1 / 1');
   });
 });
