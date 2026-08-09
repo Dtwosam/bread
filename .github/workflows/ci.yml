@@ -67,6 +67,9 @@ jobs:
       - name: Compile Solidity bootstrap
         working-directory: contracts
         run: forge build
+      - name: Check generated Bread SDK ABIs
+        working-directory: contracts
+        run: node ../scripts/abi/check-bread-abi.mjs
       - name: Run Solidity bootstrap tests
         working-directory: contracts
         run: forge test
