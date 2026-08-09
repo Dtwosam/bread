@@ -22,6 +22,8 @@ project_source_state:
   upload: UPLOADED_AND_READ_BACK
   ratification: RATIFIED
   day4_production_ratification: RATIFIED
+  day4_ratified_source:
+    pack: v1.4-day4-design
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
