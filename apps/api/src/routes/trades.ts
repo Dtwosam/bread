@@ -96,6 +96,8 @@ export function registerTradesRoute(app: FastifyInstance, deps: BreadReadRouteDe
           transactionHash: row.transactionHash,
           logIndex: row.logIndex,
         },
+        transactionHash: row.transactionHash,
+        logIndex: row.logIndex,
         side: row.side,
         tokenAddress: row.tokenAddress,
         curveAddress: row.curveAddress,
