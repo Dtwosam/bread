@@ -487,6 +487,13 @@ export async function rebuildStack(input: RebuildStackInput): Promise<RebuildSta
     checkedBlock: input.targetBlock,
     chain: input.chain,
   });
+  if (reconciliation.status !== 'PASS') {
+    const failedChecks = reconciliation.checks
+      .filter((item) => item.status === 'FAIL')
+      .map((item) => item.id)
+      .join(',');
+    throw new Error(`authoritative reconciliation failed: ${failedChecks || 'UNKNOWN'}`);
+  }
 
   return {
     fromBlock: input.context.deploymentStartBlock.toString(10),
