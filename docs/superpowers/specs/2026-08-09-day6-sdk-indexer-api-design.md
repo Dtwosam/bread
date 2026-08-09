@@ -1,21 +1,21 @@
 # Bread Day 6 — Protocol SDK, Transactional Indexer, Read API & Reconciliation Design
 
 Date: 2026-08-09  
-Status: **WRITTEN DESIGN — AWAITING REQUIRED USER SPEC REVIEW**  
+Status: **WRITTEN DESIGN — SELF-REVIEWED — AWAITING REQUIRED USER SPEC REVIEW**  
 Repository: `Dtwosam/bread`  
 Verified design baseline: `8ff119dd31db32bc8f1d24048f31a07f7acf4c62`  
 Day-5 durable handoff baseline: `4cc1ea7041abaa86402114321bf31e53aff8ea90`  
-Frozen architecture decision: `DAY6_INDEXER_ARCHITECTURE = TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS`
+Frozen architecture: `DAY6_INDEXER_ARCHITECTURE = TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS`
 
-This document is the Day-6 design required before the writing-plans gate and before any Day-6 production TypeScript/database/API implementation. It extends the accepted Day-1 through Day-5 Bread stack. It does not reopen contract economics, trading math, FeeEscrow accounting, Factory/Launch+Buy behavior, opening protection, emergency authority, graduation semantics, adapter semantics, or permanent-lock behavior.
+This design is the mandatory Day-6 predecessor to `superpowers:writing-plans` and to any Day-6 production TypeScript/database/API work. It extends the accepted Day-1 through Day-5 Bread system. It does not reopen accepted contract economics, curve math, FeeEscrow accounting, Factory/Launch+Buy behavior, opening protection, emergency authority, graduation semantics, adapter semantics, or permanent-lock behavior.
 
 ---
 
-## 1. Source and baseline reconciliation
+## 1. Reconciled authority and baseline
 
-### 1.1 Controlling Project Sources read for this design
+### Project Sources
 
-The design is constrained by the uploaded Project Sources, especially:
+This design was derived from the uploaded Bread Project Sources, especially:
 
 - `00-bread-master-source-of-truth-v1.5`
 - `02-arc-usdc-compatibility-mainnet-portability`
@@ -36,30 +36,26 @@ The design is constrained by the uploaded Project Sources, especially:
 - `06I-high-traffic-bot-burst-launch-stampede-scalability`
 - `bread-10-day-implementation-plan-v1.5`
 
-The uploaded `CURRENT-BUILD-STATE-v1.6` still records the earlier Day-5 preflight boundary. That workflow-position snapshot is older than the accepted Git/evidence state. It does not introduce a conflicting protocol rule. The newer repository `docs/current-build-state.yaml`, the Day-6 rollover handoff/evidence, and the user's current explicit continuation instruction consistently record Day 5 as durably closed and Day 6 as preflight/design with no Day-6 production code started.
+The uploaded `CURRENT-BUILD-STATE-v1.6` is an older workflow-position snapshot that still records the Day-5 preflight boundary. It does not contradict a protocol rule. The newer accepted repository `docs/current-build-state.yaml`, the Day-6 rollover handoff/evidence, and the user's current continuation instruction consistently record Day 5 as durably closed and Day 6 as design/preflight with no Day-6 production code started.
 
-### 1.2 GitHub baseline verification
+### GitHub
 
-Actual `main` was verified to be exactly:
+Current `main` was verified to equal exactly:
 
 `8ff119dd31db32bc8f1d24048f31a07f7acf4c62`
 
-Comparison of expected `8ff119d...` to current `main` is identical.
+Every intervening commit from the Day-5 durable handoff merge `4cc1ea7041abaa86402114321bf31e53aff8ea90` was inspected:
 
-Every commit between the Day-5 durable handoff merge `4cc1ea7041abaa86402114321bf31e53aff8ea90` and current `main` was inspected:
+1. `8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d` — docs-only rollover handoff, the already-recorded bounded direct-to-main deviation.
+2. `b60336d7c5e751440f1cf843667f53b7fb7a7dc7` — docs-only current-state/YAML rollover update.
+3. `cdf8fadfc1940ac5d148c14badfccfc3b10bca1f` — docs-only rollover evidence.
+4. `8ff119dd31db32bc8f1d24048f31a07f7acf4c62` — accepted merge.
 
-1. `8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d` — documentation-only Day-6 rollover handoff; this is the already-recorded bounded direct-to-main process deviation.
-2. `b60336d7c5e751440f1cf843667f53b7fb7a7dc7` — documentation-only machine-readable rollover/current-state update.
-3. `cdf8fadfc1940ac5d148c14badfccfc3b10bca1f` — documentation-only Day-6 rollover evidence.
-4. `8ff119dd31db32bc8f1d24048f31a07f7acf4c62` — merge of the accepted Day-6 preflight rollover state.
+No Day-6 production code, database schema, runtime configuration, dependency, contract, or financial semantic was introduced. PR #34 merged the rollover state and CI `31286942830` passed all four repository jobs.
 
-No Day-6 database schema, SDK, indexer, API, runtime config, dependency, contract, or production code was introduced by those commits.
+### Accepted Day-5 boundary
 
-PR #34 merged the rollover branch. CI run `31286942830` passed all four repository jobs: bootstrap validation, infrastructure health, dependency build, and Foundry bootstrap.
-
-### 1.3 Accepted Day-5 boundary
-
-Day 5 remains closed with:
+The following remain closed and authoritative:
 
 - `DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS`
 - `FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS`
@@ -67,152 +63,90 @@ Day 5 remains closed with:
 - `RETRY_CANNOT_DUPLICATE_LIQUIDITY`
 - `RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS`
 
-Nothing in Day 6 may reinterpret those outcomes as database-owned or API-owned financial state.
+Day 6 may project those states; it may not redefine them.
 
 ---
 
 ## 2. Non-negotiable authority model
 
-1. **Arc is financial authority.** Onchain contracts remain authoritative for balances, tracked reserves, fees, claims, ownership, emergency state, launch snapshots, graduation state, and permanent liquidity custody.
-2. **The event journal is not a financial ledger.** It is a durable reconstruction/audit primitive containing canonical onchain logs and deterministic decode metadata.
-3. **PostgreSQL projections are rebuildable views.** A database row may describe chain state but never supersedes chain state.
-4. **Redis is disposable coordination/cache state.** Losing Redis may reduce freshness/performance; it may never change protocol meaning.
-5. **The API is read-only for protocol financial actions.** No Bread server signs, relays, queues, custodizes, or submits user trades/claims/launches.
-6. **The SDK prepares direct wallet-to-contract transactions.** No private-key custody and no server-side user transaction execution.
-7. **All monetary integer fields remain exact.** USDC remains 6-decimal ERC-20 accounting; API transport uses decimal strings for token/USDC/base-unit amounts rather than JavaScript floating-point numbers.
-8. **No Arc mainnet value, production economics/admin value, or canonical DEX address is introduced by Day 6.** Existing release gates stay open until authoritative values are published/frozen.
+1. **Arc and the accepted Bread contracts remain financial authority.**
+2. **The event journal is a reconstruction/audit primitive, not a financial ledger.**
+3. **PostgreSQL is a deterministic rebuildable read projection.**
+4. **Redis is disposable cache/rate/fanout coordination state.** Losing it may hurt freshness or performance but cannot change protocol meaning.
+5. **The public API is read-only for protocol financial actions.** It never signs, queues, relays, custodizes, or submits user launches/trades/claims.
+6. **The SDK prepares direct wallet-to-contract transactions.** It has no key custody.
+7. **All protocol monetary values stay exact.** Internally they are integers/`bigint`; JSON transports base-unit/token quantities as decimal strings, never JavaScript floating-point numbers.
+8. **No Day-6 implementation may guess Arc mainnet values, canonical Arc DEX addresses, Bread production economics/admin addresses, or exact-current Pons parity.**
 
 ---
 
-## 3. Architecture approaches and decision
+## 3. Frozen architecture decision
 
-### 3.1 Approved: transactional event journal with synchronous projections
+### Approved
 
-For a contiguous batch of committed Arc blocks:
+For each contiguous committed Arc block range:
 
-1. discover/fetch all relevant canonical logs;
-2. decode and validate them against the canonical ABI registry;
-3. enrich only where the accepted contract event does not itself contain a required immutable projection field;
+1. discover/fetch relevant logs;
+2. decode them through the canonical version-aware ABI registry;
+3. perform only deterministic chain enrichment needed for immutable launch identity/snapshot data;
 4. begin one PostgreSQL transaction;
 5. lock the stack checkpoint row;
-6. insert new journal rows using the canonical chain/log identity;
-7. apply every projection caused by newly inserted rows, in deterministic block/transaction/log order;
-8. advance the committed checkpoint only after the whole contiguous range is valid;
+6. insert previously unseen canonical event-journal rows;
+7. synchronously apply all affected projections in deterministic chain order;
+8. advance the checkpoint only after the entire contiguous range is valid;
 9. commit once;
-10. only after commit, invalidate cache generations and publish shared realtime messages.
+10. only after commit, invalidate cache generations and publish shared realtime invalidations.
 
-This provides one durable atomic boundary between raw event evidence, derived state, and the finalized ingestion cursor.
+Journal insertion, synchronous projection application, and checkpoint advancement are one durable boundary.
 
-### 3.2 Rejected: direct-to-projection ingestion without a journal
+### Rejected
 
-Rejected because replay/debug/rebuild evidence is weaker, decoder drift is harder to inspect, and projection reconstruction has no durable canonical-log audit trail.
-
-### 3.3 Rejected for Day 6: asynchronous journal then projection worker
-
-Rejected because it creates a second ordering/checkpoint problem, introduces queue lag between journal and user-visible state, and adds failure/retry semantics not needed for the public-beta path. Asynchronous **post-commit cache/realtime effects** are allowed because they do not own canonical projection state; asynchronous financial/projection application is not.
+- **Direct-to-projection indexing without a durable journal:** weaker replay/rebuild/debug evidence.
+- **Asynchronous journal → projection workers for Day 6:** adds a second ordering/checkpoint/retry problem and user-visible projection lag. Asynchronous **post-commit cache/fanout effects** are allowed because they do not own canonical projection state.
 
 ---
 
-## 4. Package and schema ownership
-
-Canonical ownership is frozen as follows.
+## 4. Canonical package ownership
 
 ### `@bread/config`
 
-Owns:
-
-- strict NetworkManifest and ProtocolManifest validation;
-- network/stack address/config resolution;
-- `deploymentStartBlock`;
-- runtime indexer/API environment schemas that are not financial semantics;
-- production rejection of unknown manifest keys;
-- historical manifest immutability.
-
-No other package keeps a private address map or chain-specific constant set.
+Owns strict network/protocol/runtime manifest validation, `deploymentStartBlock`, address/config resolution, historical-manifest immutability, and rejection of unknown production keys. No consumer keeps a private chain/address map.
 
 ### `@bread/types`
 
-Owns:
-
-- canonical domain identities;
-- normalized event/domain types;
-- API request/response types and freshness envelope;
-- cursor/feed/search/token/trade/holder/portfolio/creator/status transport types;
-- typed reconciliation report shape.
-
-Amounts crossing package/API boundaries use `bigint` internally and decimal strings in JSON.
+Owns canonical identities, normalized event/domain types, API request/response types, cursor types, freshness metadata, and reconciliation-report types.
 
 ### `@bread/protocol-sdk`
 
-Owns:
-
-- generated canonical Bread ABIs;
-- ABI registry by still-supported stack/interface version;
-- manifest-to-`ProtocolContext` resolution;
-- typed prepared transaction builders/simulations;
-- custom-error decoding;
-- event decoding helpers.
-
-No React dependency. No key custody.
+Owns generated Bread ABIs, version-aware ABI registry, validated manifest → `ProtocolContext` resolution, typed transaction preparation/simulation, custom-error decoding, and canonical event decoding helpers. No React dependency and no signing surface.
 
 ### `@bread/db`
 
-Owns:
-
-- Drizzle/PostgreSQL schema;
-- migrations;
-- transactional indexer write repositories;
-- API read repositories;
-- deterministic cursor query primitives.
-
-Indexer and API must not define private SQL interpretations of the same domain fields.
+Owns Drizzle/PostgreSQL schema, migrations, indexer write repositories, API read repositories, and deterministic cursor primitives. Indexer/API may not embed competing SQL/domain interpretations.
 
 ### `@bread/indexer`
 
-Owns:
-
-- Arc log discovery/fetching;
-- dynamic launch-address registry construction;
-- deterministic transaction event assembly/correlation;
-- chain enrichment reads;
-- transactional journal/projection application;
-- checkpoints/overlap replay/rebuild;
-- reconciliation CLI orchestration;
-- post-commit cache invalidation/fanout production.
+Owns Arc log discovery, dynamic launch-address discovery, deterministic transaction assembly, journal/projection application, checkpoint/replay/rebuild, reconciliation orchestration, and post-commit cache/fanout production.
 
 ### `@bread/api`
 
-Owns:
-
-- Fastify read routes;
-- validation, pagination, response envelopes and errors;
-- cache read-through/single-flight behavior;
-- rate limiting and overload behavior;
-- read-only status/freshness exposure.
-
-Production API DB credentials are read-only. Migration/indexer credentials are separate.
+Owns Fastify read routes, request validation, pagination, response envelopes, cache read-through/single-flight, rate limiting/backpressure, and health/freshness exposure. Production API DB credentials are read-only; migration/indexer credentials are separate.
 
 ### `@bread/observability`
 
-Owns shared structured logs/metrics/error correlation where already applicable. Day-6 services expose queue/backlog/checkpoint/cache/RPC/DB/reconciliation metrics through this existing boundary rather than inventing a second logging format.
+Owns shared structured logs/metrics/error correlation. Day-6 services extend this boundary rather than inventing private telemetry formats.
 
 ---
 
-## 5. Canonical ABI and address pipeline
+## 5. Canonical ABI/address pipeline
 
-### 5.1 ABI generation
+Bread ABIs are generated from exact Foundry build artifacts and checked into/consumed by the SDK only through a deterministic generation/check step. CI fails if generated ABI output drifts from the current contract artifacts.
 
-Bread contract ABIs are generated from exact Foundry build artifacts. Checked-in generated SDK ABI files are allowed for package consumption, but a deterministic generation/check script must prove they match the current contract artifacts. CI fails on ABI drift.
+Manual frontend/indexer ABI fragments are prohibited.
 
-Manual frontend/indexer copies of ABI fragments are prohibited.
+The generated registry includes inherited events/errors required by Day 6, including ERC-20 `Transfer` and relevant `OwnershipTransferred` events.
 
-The generated artifacts must include inherited events/errors needed by Day 6, including standard `Transfer` and `OwnershipTransferred` where the concrete Bread contract exposes them through inheritance.
-
-### 5.2 Address resolution
-
-`@bread/protocol-sdk` resolves addresses only from a validated `@bread/config` manifest/stack context. Consumers receive a `ProtocolContext`; they do not import testnet addresses directly.
-
-The protocol context contains at least:
+`@bread/protocol-sdk` resolves all addresses from a validated `@bread/config` network/protocol manifest. Consumers receive a `ProtocolContext` instead of importing testnet constants.
 
 ```ts
 type ProtocolContext = {
@@ -224,39 +158,35 @@ type ProtocolContext = {
 };
 ```
 
-The exact `ProtocolAddresses` includes the manifest-declared current stack surfaces needed by builders/decoders: Factory, FeeEscrow, FeePolicy where present, EmergencyController, GraduationCoordinator, permanent locker, deployer, and active/snapshotted adapter context. Missing release-only values remain validation gates; they are not replaced by defaults.
-
-### 5.3 Stack-version compatibility
-
-The SDK ABI registry and event decoder are version-aware. A later stack may add/change an interface without rewriting history. An unsupported stack/interface produces an explicit unsupported-version error; it must not be decoded using the newest ABI by assumption.
+ABI/event decoding is stack-version aware. Unsupported stack/interface versions fail explicitly; the newest ABI is never assumed to decode historical or unknown stacks.
 
 ---
 
-## 6. Canonical domain identities
+## 6. Canonical identities
 
-The 06B identities remain exact:
+06B remains exact:
 
 - network: `chainId`;
 - protocol stack: `chainId + stackVersion + factoryAddress`;
 - launch: `chainId + tokenAddress`;
-- curve: `curveAddress`, linked one-to-one to launch;
+- curve: `curveAddress`, one-to-one with launch;
 - canonical chain log / trade: `chainId + transactionHash + logIndex`;
 - creator/wallet: wallet address;
 - graduated pool: `chainId + adapter-defined pool identifier/address`.
 
-All EVM addresses are validated/canonicalized with viem before persistence/query boundaries. Names/tickers are metadata only and never keys.
+Addresses are parsed/canonicalized with viem before persistence/query boundaries. Names/tickers are metadata, never keys.
 
-Canonical event identity string representation for fanout/cursors/debugging is:
+Stable external event ID:
 
-`<chainId>:<transactionHash-lowercase>:<logIndex-decimal>`
+`<chainId>:<lowercaseTransactionHash>:<decimalLogIndex>`
 
-The database primary key remains structured columns rather than relying on the string encoding.
+The database keeps structured identity columns; the string is for cursors/fanout/debugging.
 
 ---
 
-## 7. Actual Day-1 through Day-5 event contract
+## 7. Actual accepted event surface
 
-Day 6 consumes the events already emitted by the accepted contracts. It does not create an alternate semantic event model in the contracts.
+Day 6 consumes the existing Day-1 through Day-5 contract events rather than inventing parallel semantics.
 
 ### Factory
 
@@ -310,13 +240,27 @@ Day 6 consumes the events already emitted by the accepted contracts. It does not
 - `PositionLocked`
 - `TokenSupplyLocked`
 
-### Launch token / inherited events
+### Launch token / inherited
 
-- ERC-20 `Transfer` is the canonical holder-balance event.
-- `Approval` is not required for a Day-6 user projection and is not indexed merely because it exists.
-- inherited `OwnershipTransferred` is indexed for every relevant Ownable Bread contract.
+- ERC-20 `Transfer` is the holder-balance source.
+- `OwnershipTransferred` is indexed for relevant Ownable Bread contracts.
+- ERC-20 `Approval` is a **known ignored** event for Day-6 projections; it is not treated as unknown ABI drift and creates no projection row.
 
-Adapter/DEX implementation logs are not required to infer Bread graduation state. `GraduationCompleted` plus locker state is Bread's accepted public outcome. External DEX logs may be reconciliation evidence but may not replace the coordinator/locker contract state.
+### Buyback source gap
+
+06B lists Buyback as a minimum event family when that capability exists, but the accepted Day-1 through Day-5 contract surfaces inspected for this baseline do not expose an accepted canonical Buyback event/authority that Day 6 can safely interpret. Day 6 therefore **does not invent a Buyback event, table authority, or synthetic vesting state**. A future supported stack that adds Buyback requires a versioned canonical ABI/event interpretation and its own source/conformance gate before the indexer claims to support it. Current API/UI fields that depend on unavailable Buyback data must be explicit `unavailable`/omitted according to the typed API contract rather than fabricated.
+
+### Event disposition rule
+
+Every log from a known Bread contract is classified by the versioned registry as one of:
+
+1. `INDEXED_CANONICAL` — journaled and, where applicable, projected;
+2. `KNOWN_IGNORED` — understood but intentionally irrelevant to Day-6 state, e.g. ERC-20 `Approval`; no projection effect and no ABI-drift alarm;
+3. `UNKNOWN` — not present in the registered stack ABI/event policy; the affected range must not commit and the stack enters a decoder/version-degraded state.
+
+This prevents ordinary irrelevant logs from halting ingestion while still refusing silent interface drift.
+
+Adapter/DEX implementation logs do not replace Bread graduation authority. `GraduationCompleted` plus the accepted locker state is Bread's public graduation outcome; external DEX logs may only support reconciliation/evidence.
 
 ---
 
@@ -324,92 +268,89 @@ Adapter/DEX implementation logs are not required to infer Bread graduation state
 
 Additional table: `event_journal`.
 
-It is permitted by the approved Day-6 architecture as a reconstruction/audit primitive. It is not a second financial ledger.
+It stores canonical indexed onchain event evidence, not a second financial ledger.
 
-Each row contains at least:
+Minimum fields:
 
-- `chain_id`;
-- `transaction_hash`;
-- `log_index`;
-- `block_number`;
-- `block_hash`;
-- `block_timestamp`;
-- `transaction_index`;
-- `contract_address`;
-- `contract_role`;
-- `stack_version`;
-- `topic0`;
-- exact raw `topics`;
-- exact raw `data`;
-- decoded event name;
-- decoded payload;
-- nullable launch token/curve context when deterministically known;
-- decoder/schema version.
+- `chain_id`
+- `transaction_hash`
+- `log_index`
+- `block_number`
+- `block_hash`
+- `block_timestamp`
+- `transaction_index`
+- `contract_address`
+- `contract_role`
+- `stack_version`
+- `topic0`
+- exact raw `topics`
+- exact raw `data`
+- decoded event name
+- decoded payload with all integer values serialized losslessly as decimal strings
+- nullable launch token/curve context when deterministically known
+- decoder/schema version
 
 Primary key:
 
 `(chain_id, transaction_hash, log_index)`
 
-Important indexes:
-
-- `(chain_id, block_number, transaction_index, log_index)`;
-- `(chain_id, contract_address, block_number)`;
-- `(chain_id, token_address, block_number)` when token context exists;
-- event-name/source indexes needed by reconciliation.
+Important indexes include canonical block/log order, contract/block, token/block, and event-family indexes needed by reconciliation.
 
 Processing order is always:
 
 `blockNumber ASC, transactionIndex ASC, logIndex ASC`.
 
-A journal uniqueness conflict means the log has already been durably applied. The reducer must not reapply its projection effect.
+A journal PK conflict means that canonical event already committed. Its projection effect is not applied again.
 
-Unknown event topics emitted by a known Bread protocol contract are not silently ignored in production. They indicate ABI/version drift or an unsupported stack. The affected block is not committed; the stack becomes degraded/error until the interface is reconciled.
-
----
-
-## 9. Dynamic log discovery
-
-A newly deployed launch token emits its constructor mint `Transfer` before Factory `LaunchCreated` is emitted in the same transaction. A Launch+Buy can then emit curve/token events later in that same transaction. Therefore a single precomputed address filter is insufficient.
-
-For each contiguous block range the indexer performs a deterministic two-pass discovery:
-
-1. query Factory `LaunchCreated` logs for the range using the manifest Factory;
-2. combine previously known launch token/curve addresses with token/curve addresses discovered in pass 1;
-3. fetch the complete relevant Bread log set for core addresses plus the expanded dynamic token/curve address set, using bounded address/range chunks;
-4. merge/deduplicate logs by canonical identity and sort by block/transaction/log order;
-5. fetch required block headers/timestamps and immutable launch enrichment reads;
-6. only then enter the PostgreSQL transaction.
-
-This captures the constructor mint and same-transaction Launch+Buy events without scanning every ERC-20 `Transfer` on Arc.
-
-Address/range RPC concurrency is bounded. A growing token list may increase the number of chunked requests but never creates one subscription or unbounded request per browser/user.
+`KNOWN_IGNORED` logs such as ERC-20 `Approval` need not be stored in the canonical Day-6 journal. `UNKNOWN` known-contract logs halt that range before checkpoint advancement.
 
 ---
 
-## 10. Event normalization and transaction assembly
+## 9. Dynamic launch-log discovery
 
-Raw journal rows preserve each actual onchain event. Normalized projections may correlate multiple logs from the same transaction where the accepted contracts intentionally split one user action across several events.
+A launch token emits its constructor mint `Transfer(0x0 → curve)` before Factory `LaunchCreated` in the same transaction, and Launch+Buy may emit curve/token events later in that transaction. A precomputed address filter alone therefore misses canonical launch events.
 
-All correlation is deterministic, local to one ordered transaction, and tested against the exact current event sequence.
+For every bounded contiguous block range:
 
-### 10.1 Launch normalization
+1. fetch Factory `LaunchCreated` logs using the manifest Factory;
+2. combine already-known launch token/curve addresses with addresses discovered from those Factory logs;
+3. fetch complete relevant Bread logs for core addresses plus the expanded dynamic token/curve address set using bounded address/range chunks;
+4. merge/deduplicate by canonical event identity and sort by chain order;
+5. fetch required block headers and deterministic immutable launch reads;
+6. only then begin the DB transaction.
+
+This captures constructor mint + same-transaction Launch+Buy activity without scanning every ERC-20 `Transfer` on Arc.
+
+RPC address/range concurrency is bounded. Growth in launch count cannot create one subscription/request stream per browser.
+
+---
+
+## 10. Event normalization
+
+Raw journal rows preserve canonical events. Normalized projections may correlate multiple logs from the same ordered transaction only where the accepted contracts intentionally split one user action across events.
+
+### Launch
 
 `LaunchCreated` is the primary launch identity event.
 
-The current event does not contain every 06B immutable launch snapshot field. The indexer therefore performs block-scoped read enrichment against the actual deployed contracts rather than inventing values or changing the accepted Day-4/Day-5 event surface.
+The **immutable initial supply** is derived from the launch token's constructor mint `Transfer(address(0), curve, amount)` in the same launch transaction. This avoids using a later `totalSupply()` read after burns as if it were launch supply.
 
-For each new launch it reads:
+Other immutable launch snapshot/enrichment fields are reconstructed from accepted immutable/snapshotted contract state and the launch transaction:
 
-- Factory `getLaunch(token)`;
+- Factory `getLaunch(token)` launch record;
 - Factory `stackVersion()`;
-- curve immutable/current snapshot getters needed to reconstruct supply/economics at creation (`pairToken`, `phantomQuote`, `graduationThreshold`, fee snapshot getters, creator tax, launch timestamp, reserved token state);
-- token `totalSupply`, name, symbol, `getTokenInfo`/social metadata.
+- curve immutable/snapshotted economics getters such as quote asset, phantom quote, graduation threshold, fee-policy snapshot fields, creator tax, launch timestamp, and reserved-token state;
+- token name/symbol and immutable launch metadata/context.
 
-Launch snapshot fields are written once. Future global config changes do not rewrite them.
+The constructor mint is cross-checked against the token/curve relationship and stored initial supply. A missing or contradictory constructor mint is a normalization/reconciliation failure.
 
-### 10.2 Buy normalization
+Day-6 deterministic rebuild must not depend on historical archive-state reads for mutable values. Immutable/snapshotted getters may be read at the current reconciliation head because accepted contract semantics guarantee they do not rewrite existing launch snapshots.
 
-Canonical trade identity is the `CurveBuy` log identity.
+Launch snapshot rows are write-once. Future Factory/FeePolicy changes do not mutate them.
+
+### Buy
+
+Canonical trade identity is the `CurveBuy` event identity.
 
 For the current accepted curve, a buy emits:
 
@@ -417,337 +358,257 @@ For the current accepted curve, a buy emits:
 - `OpeningProtectionApplied`;
 - `CurveBuy`.
 
-These can be interleaved with ERC-20 `Transfer` logs from other addresses. The transaction assembler tracks unconsumed curve-local buy context and, when `CurveBuy` is reached, consumes the matching prior refund/opening-protection context for the same emitting curve/buyer/recipient.
+The transaction assembler tracks unconsumed curve-local context and consumes the matching prior refund/opening-protection events when `CurveBuy` is reached for the same emitting curve/buyer/recipient.
 
-The normalized BUY stores:
+Normalized BUY fields include:
 
-- actor/buyer;
+- buyer/actor;
 - recipient;
 - offered quote = `spent + refund`;
-- actual spent quote;
+- actual `spent`;
 - tokens out;
 - base fee;
 - creator tax;
-- opening tax amount;
-- opening tax bps;
+- opening-tax bps/amount;
 - Launch+Buy exemption boolean;
 - refund;
 - net curve input = `spent - baseFee - creatorTax - openingTax`;
-- post-state derived by applying the accepted curve accounting transition.
+- deterministic post-state derived from the accepted curve transition.
 
-For the current curve, an `OpeningProtectionApplied` event is mandatory for each buy. Missing/mismatched correlation is an indexer normalization error; the block does not advance.
+For the current curve, `OpeningProtectionApplied` is mandatory for every buy. Missing or contradictory correlation blocks checkpoint advancement.
 
-If `LaunchAndBuyExecuted` is present later in the transaction, it is a consistency check against the already-normalized curve trade (`token`, `curve`, `buyer`, `recipient`, offered quote, spent, refund, tokens out). It is not a second trade.
+If `LaunchAndBuyExecuted` exists later in the same transaction, it cross-checks the already normalized curve trade; it is never a second trade.
 
-### 10.3 Sell normalization
+### Sell
 
-Canonical trade identity is the `CurveSell` log identity.
+Canonical trade identity is `CurveSell`.
 
-The normalized SELL stores:
+Normalized SELL fields include seller, recipient, tokens in, net quote out, base fee, creator tax, gross curve quote out (`quoteOut + fee + creatorTax`), zero opening tax, and deterministic post-state.
 
-- seller;
-- recipient;
-- tokens in;
-- net quote out;
-- base fee;
-- creator tax;
-- gross curve quote out = `quoteOut + fee + creatorTax`;
-- opening tax = zero;
-- post-state derived by the accepted curve transition.
+### Price/volume projection
 
-### 10.4 Market price and volume semantics
+To avoid fee asymmetry in curve execution price:
 
-To avoid fee asymmetry in the chart price:
+- BUY curve execution price uses `netCurveInput / tokensOut`;
+- SELL curve execution price uses `grossCurveQuoteOut / tokensIn`.
 
-- BUY curve execution price is derived from `netCurveInput / tokensOut`;
-- SELL curve execution price is derived from `grossCurveQuoteOut / tokensIn`.
-
-User-visible traded quote volume is:
+User-visible traded quote volume uses:
 
 - BUY: actual `spent`;
-- SELL: gross curve quote out (`quoteOut + fee + creatorTax`).
+- SELL: gross curve quote out.
 
-No JavaScript floating point is used for protocol amounts. Derived price/candle values use arbitrary-precision decimal/integer arithmetic and are explicitly display projections.
+All price/candle calculations use exact integer/arbitrary-precision decimal math, never binary floating point.
 
-### 10.5 Fee credit/claim normalization
+### Fee credits and claims
 
-`FeeEscrow.FeeCredited` is the only canonical event that creates an indexed claim entitlement. `FeesSwept`, `LaunchFeeCredited`, and graduation dust events are attribution/audit context and must not create a second credit row.
+`FeeEscrow.FeeCredited` is the only canonical event that creates indexed claim entitlement. `FeesSwept`, `LaunchFeeCredited`, and graduation dust events are attribution/audit context and cannot create a second entitlement row.
 
-Each `fee_credits` row stores the FeeEscrow event identity, creditor, recipient, amount, recipient balance after, total outstanding after, and derived source/token classification where deterministic.
+`fee_credits` stores the FeeEscrow event identity, creditor, recipient, amount, recipient balance after, and total outstanding after, plus deterministic source/token attribution where available.
 
-Each `fee_claims` row comes only from `FeeEscrow.FeeClaimed` and stores recipient, amount, remaining balance, and total outstanding.
+`fee_claims` comes only from `FeeEscrow.FeeClaimed` and stores recipient, amount, remaining balance, and total outstanding.
 
-Claims consume an aggregate recipient escrow balance; they are not artificially allocated back to individual tokens.
+Claims reduce an aggregate recipient escrow balance; they are not artificially assigned back to individual tokens.
 
-Token/source attribution rules:
+Attribution rules:
 
-- curve creditor -> exact curve/token mapping;
-- Factory creditor -> correlate the same-transaction `LaunchFeeCredited` event; classification is protocol launch fee;
-- GraduationCoordinator creditor -> correlate ordered curve-release/graduation events in the same transaction to the current graduation token;
-- if future code changes make attribution ambiguous, entitlement still comes from FeeEscrow but the current decoder version must not silently invent per-token revenue attribution.
+- curve creditor → exact curve/token;
+- Factory creditor → same-transaction `LaunchFeeCredited` correlation;
+- GraduationCoordinator creditor → ordered same-transaction graduation/curve-release context;
+- if future code makes attribution ambiguous, the entitlement remains valid from FeeEscrow but per-token attribution is `unavailable` rather than guessed.
 
-### 10.6 Graduation normalization
+### Graduation
 
-Projection transitions follow actual contract events/state:
+Projection transitions follow actual accepted events/state:
 
-- `GraduationReady` -> ready/processing signal only;
-- `GraduationAutoAttemptFailed` -> operational failure signal only, not a financial rollback;
-- `CurveGraduationReleased` -> curve custody/release audit transition;
-- `GraduationSwept` -> coordinator `SWEPT` phase and exact swept amounts;
-- `GraduationCompleted` -> `POOL_CREATED`, adapter/pool/position identity and used/locked/dust amounts;
-- `GraduationRescued` -> `RESCUED`;
-- locker events -> permanent-lock evidence/projection.
+- `GraduationReady` → ready/processing signal;
+- `GraduationAutoAttemptFailed` → operational failure signal, not financial rollback;
+- `CurveGraduationReleased` → curve-release audit transition;
+- `GraduationSwept` → coordinator `SWEPT` phase and exact swept values;
+- `GraduationCompleted` → `POOL_CREATED` plus adapter/pool/position/used/locked/dust data;
+- `GraduationRescued` → `RESCUED`;
+- locker events → permanent-lock evidence.
 
-`GraduationCompleted` never means “safe investment”; it means the accepted onchain graduation/lock path completed.
+`GraduationCompleted` means the accepted onchain graduation/lock path completed. It is never labeled as an investment-safety guarantee.
 
-### 10.7 Holder normalization
+### Holders
 
-Launch-token ERC-20 `Transfer` events update the rebuildable current holder snapshot.
+Launch-token ERC-20 `Transfer` events update the rebuildable holder snapshot:
 
-- mint from zero increases recipient balance/current supply;
-- ordinary transfer debits sender and credits recipient;
-- burn to zero debits sender/current supply;
-- zero address is never a holder;
-- known protocol addresses are tagged using manifest + launch-specific curve/coordinator/locker/adapter context.
+- zero → recipient: mint;
+- sender → recipient: transfer;
+- sender → zero: burn;
+- zero address is never a holder.
 
-Top-10 user concentration excludes known protocol addresses, matching 04C. The raw holder view can still identify protocol-held balances.
+Known protocol addresses are tagged from manifest + launch-specific curve/coordinator/locker/adapter context. Top-10 user concentration excludes known protocol addresses as required by 04C.
 
-### 10.8 Admin/security normalization
+### Admin/security
 
-`admin_events` records privileged/config/recovery events including:
+`admin_events` records actual privileged/config/recovery events, including ownership transfer, guardian/restriction/graduation-pause changes, FeePolicy/sweep-operator changes, FeeEscrow creditor changes, Factory deployer/coordinator/config changes, locker coordinator binding, and graduation rescue.
 
-- ownership transfer;
-- guardian changes;
-- restriction changes;
-- graduation pause changes;
-- FeePolicy updates/sweep-operator changes;
-- FeeEscrow creditor authorization;
-- Factory deployer/coordinator/config changes;
-- locker coordinator binding;
-- graduation rescue.
-
-Where an event only announces a version change but not the new full config (for example Factory `LaunchConfigUpdated`), a block-scoped chain read may enrich the admin record. The event remains the trigger; the chain read supplies the actual contract state at that block.
+A mutable config change event is recorded with the exact fields emitted by the canonical contract. Day-6 rebuild **does not require archive RPC calls to recover an un-emitted historical mutable config snapshot**. Exact per-launch economics remain available from immutable launch snapshots. If a future admin event needs a fuller historical config record, the contract/event/interface must supply reconstructable evidence or that extra field remains unavailable; the indexer cannot invent it from current state.
 
 ---
 
-## 11. Arc finality and defensive integrity behavior
+## 11. Arc finality and integrity behavior
 
-The Project Source references Arc deterministic finality. Current official Arc documentation was rechecked on 2026-08-09 and states that committed blocks are immediately irreversible, with no confirmation window and no normal reorganization handling requirement.
+The Project Source points to Arc deterministic finality. Current official Arc documentation was rechecked on 2026-08-09 and states that committed blocks are immediately irreversible and do not require a normal confirmation/reorg window.
 
-Therefore Day 6 freezes these semantics:
+Day 6 therefore freezes:
 
-1. the indexer processes Arc blocks once they are returned as committed/latest chain blocks by the configured Arc RPC;
-2. there is **no invented confirmation-count threshold**;
-3. there is no normal rollback/reorg projection subsystem;
-4. overlap replay exists for restart/crash/idempotency and missed-request recovery, not probabilistic-finality handling;
-5. `indexer_checkpoints` stores the exact committed block number + hash;
-6. if a previously committed checkpoint block hash ever differs from a provider response, Bread treats it as `FINALITY_OR_PROVIDER_INTEGRITY_VIOLATION` rather than silently rewriting history;
-7. on that condition, checkpoint advancement stops, another configured provider is consulted, the API exposes degraded status, and recovery requires the explicit rebuild/reconciliation path before normal advancement resumes.
+1. process Arc blocks once they are committed/current according to the configured Arc RPC;
+2. no invented confirmation-count threshold;
+3. no normal probabilistic-reorg rollback subsystem;
+4. overlap replay exists for restart/crash/idempotency and missed-request recovery, not confirmation handling;
+5. checkpoint stores exact committed block number + hash;
+6. if a previously checkpointed block hash ever differs from provider evidence, classify `FINALITY_OR_PROVIDER_INTEGRITY_VIOLATION` rather than silently rewriting history;
+7. stop advancement, cross-check another configured provider, expose degraded status, and require explicit rebuild/reconciliation before resuming if the inconsistency is real.
 
-This defensive incident path does not contradict Arc's no-reorg model; it catches provider corruption, wrong-chain connections, or an unexpected network-level invariant violation.
+This defensive path detects provider corruption, wrong-chain connections, or an unexpected network-level invariant violation without pretending Arc normally reorgs.
 
 ---
 
-## 12. Transactional ingestion and checkpoint rules
+## 12. Transactional ingestion/checkpoint rule
 
-For each stack, one active ingestor is preferred. Correctness does not depend on a single process.
+For each stack, one active ingestor is preferred; correctness does not depend on only one process.
 
-- An indexer process obtains a stack-scoped PostgreSQL advisory lease where practical to avoid redundant active writers.
-- Every write batch additionally locks the stack's `indexer_checkpoints` row `FOR UPDATE`.
-- Event-journal uniqueness is the final duplicate-application guard.
+- use a stack-scoped PostgreSQL advisory lease where practical;
+- every write batch additionally locks the stack's `indexer_checkpoints` row `FOR UPDATE`;
+- journal uniqueness is the last duplicate-effect guard.
 
-A batch may cover multiple contiguous blocks, but it may not skip a block range.
+Before entering/committing the DB transaction:
 
-Before commit:
-
-- all RPC reads for the range succeeded;
-- every known-contract log decoded under the stack ABI version;
-- all required same-transaction correlations/enrichments are valid;
-- block ordering/parent/hash continuity for the fetched range is coherent with the starting checkpoint.
+- all required RPC reads for the range succeeded;
+- all relevant known-contract logs were classified/decoded;
+- all required same-transaction correlations are valid;
+- block/hash/parent continuity agrees with the starting checkpoint;
+- the block range is contiguous.
 
 Inside one PostgreSQL transaction:
 
 1. lock checkpoint;
-2. insert all new journal rows in canonical order;
-3. apply projection changes only for journal rows newly inserted in this transaction;
-4. update aggregates/candles/metrics deterministically;
-5. advance the checkpoint to the exact final block/hash of the contiguous applied range;
+2. insert new canonical journal rows in chain order;
+3. apply projection effects **only for rows newly inserted by this transaction**;
+4. update rollups/candles/metrics deterministically;
+5. advance checkpoint to the exact final block/hash;
 6. commit.
 
-A crash before commit leaves neither journal rows, projections nor checkpoint advancement. A crash after commit may lose post-commit cache/realtime notifications, but the database remains correct and Redis TTL/refetch behavior heals presentation state.
+Crash before commit leaves journal/projections/checkpoint unchanged. Crash after commit may lose cache/fanout notifications but not canonical DB state.
 
 ---
 
 ## 13. Overlap replay
 
-On restart/catch-up, the indexer intentionally begins before the existing checkpoint using a bounded configured overlap window.
+Restart/catch-up intentionally begins before the existing checkpoint by a bounded configured overlap window.
 
-The overlap window is an operational runtime value validated by `@bread/config`; it is not an Arc finality value and does not claim a required confirmation depth.
+The overlap size is an operational runtime value validated by `@bread/config`; it is **not** an Arc confirmation depth.
 
 Rules:
 
-- start never precedes the manifest `deploymentStartBlock`;
-- journal PK conflicts do not reapply projections;
+- never start before manifest `deploymentStartBlock`;
+- journal conflicts do not reapply projection effects;
 - checkpoint never regresses;
-- newly discovered events after the previous checkpoint apply normally;
-- repeated replay of the same exact range produces byte/logically equivalent projection state;
-- no duplicate trades, fee credits, claims, admin events, holder effects, graduation outcomes, candles, rollups or metrics are created.
+- new events beyond the old checkpoint apply normally;
+- replaying a completed range produces equivalent journal/projection state;
+- no duplicate trades, credits, claims, admin effects, holder effects, graduation outcomes, candles, rollups, or metrics.
 
-`OVERLAP_REPLAY_IDEMPOTENT` requires snapshot/count/hash equality before and after replay of an already-complete range.
+`OVERLAP_REPLAY_IDEMPOTENT` requires exact identity/count/state-hash equivalence before and after replay of an already-complete range.
 
 ---
 
-## 14. PostgreSQL table contract
+## 14. PostgreSQL schema
 
-The Day-6 schema contains the source-defined families plus `event_journal`.
+The source-defined families remain mandatory, plus `event_journal`.
 
 ### `protocol_stacks`
 
-Immutable/versioned stack identity and deployment evidence:
+Identity: `(chain_id, stack_version, factory_address)`.
 
-- chain id;
-- stack version;
-- Factory address;
-- deployment start block;
-- protocol/network manifest hashes;
-- source commit;
-- expected deployment/code hashes when available from verified deployment evidence;
-- adapter family/address/config hash;
-- created/registered timestamps.
+Stores deployment start block, network/protocol manifest hashes, source commit, canonical quote asset, stack addresses, adapter family/address/config hash, and **expected runtime code hashes for every active/registered Bread deployment required by reconciliation**.
 
-Primary identity: `(chain_id, stack_version, factory_address)`.
+Expected code hashes are not optional for an active indexed stack. Test/local stacks generate/freeze them from their deployment evidence; production stacks obtain them from the verified deployment/manifest process. Missing expected hashes means the stack cannot obtain `REC-05`/`RECONCILE_PASS`; values are never guessed to fill the gap.
 
 ### `launches`
 
 Immutable launch identity/snapshot:
 
 - chain/token/curve;
-- protocol stack identity;
+- stack identity;
 - original deployer;
 - creator fee recipient;
 - creator tax bps;
-- launch/economics digest;
+- economics digest;
 - config version;
 - launch timestamp/block/event identity;
 - quote asset;
-- supply;
+- **initial supply from constructor mint**;
 - phantom quote;
 - graduation threshold;
-- snapshotted FeePolicy values;
+- snapshotted fee-policy values;
 - coordinator;
 - adapter/family/config hash;
 - reserved-token baseline.
 
-Primary identity: `(chain_id, token_address)`.
+Identity: `(chain_id, token_address)`.
 
 ### `launch_state`
 
-Current rebuildable state:
+Current rebuildable curve/graduation projection: tracked quote/tokens, quote-fee/creator-tax balances, derived real/virtual reserves, sellable tokens, readiness/graduated state, graduation phase/swept values, pool/position identity, permanent-lock evidence, and last applied event/checkpoint.
 
-- tracked quote/tokens;
-- quote-fee balance;
-- creator-tax balance;
-- derived real/virtual reserves;
-- sellable tokens;
-- ready/graduated state;
-- graduation phase;
-- swept values;
-- pool/position identity;
-- permanent-lock evidence;
-- last applied event/checkpoint.
-
-No field here can authorize a financial action.
+No field here authorizes a financial action.
 
 ### `trades`
 
-Append-only normalized trade rows keyed by canonical `chainId + txHash + logIndex`, with exact integer amounts/taxes/refund and derived execution-price representation.
+Append-only normalized buys/sells keyed by canonical event identity with exact integer amounts, taxes, refunds, and derived execution-price representation.
 
-### `fee_credits`
+### `fee_credits` / `fee_claims`
 
-Append-only FeeEscrow credit events only.
-
-### `fee_claims`
-
-Append-only FeeEscrow claim events only.
+Append-only canonical FeeEscrow entitlement/claim events only.
 
 ### `creator_rollups`
 
-Rebuildable wallet-level aggregates, including created-launch count and credited/claimed revenue views. Revenue role and original-deployer role remain distinct when the launch's creator-fee recipient differs from the deployer.
+Rebuildable aggregates for created launches and deterministic fee-credit/claim views. Original deployer and creator-fee recipient remain distinct identities.
 
 ### `holder_snapshots`
 
-Current per-token/per-holder indexed balance snapshot with last source event/checkpoint and protocol-address classification. This table supports holders and portfolio reads. It is derived from launch-token Transfers and is not an authoritative wallet balance service.
+Current per-token/per-holder derived balances, last event/checkpoint, and protocol-address classification. It is not an authoritative wallet-balance service.
 
 ### `market_candles`
 
-Derived OHLCV buckets from normalized curve trades. Initial supported chart intervals are `1m`, `5m`, and `1h`; wider UI periods are composed from these/query aggregation rather than creating a second trade source.
-
-Candle values use exact/arbitrary-precision arithmetic. Rebuild from trades must reproduce the same buckets.
+Derived OHLCV buckets from normalized curve trades. Initial stored intervals: `1m`, `5m`, `1h`; broader periods may query/aggregate these rather than creating another trade source. Rebuild from trades must reproduce equivalent buckets.
 
 ### `token_metrics`
 
-Current derived activity/market fields:
+Derived current activity/market fields including last curve price representation/source, market-cap display projection where valid, 5m/1h/24h quote volume, 1h/24h trade count, 1h/24h unique traders, holder counts, top-10 non-protocol concentration, graduation progress bps, last activity, and graduation state.
 
-- spot/last curve price representation and price source;
-- market-cap display projection where price is available;
-- 5m/1h/24h quote volume;
-- 1h/24h trade count;
-- 1h/24h unique traders;
-- holder counts;
-- top-10 non-protocol concentration;
-- graduation progress bps;
-- last activity block/time;
-- graduated/processing state.
-
-For an active curve, spot price derives from the accepted constant-product reserve state with arbitrary-precision arithmetic. After graduation, Day 6 does **not** fabricate a live DEX price from the old curve. Until a separately ratified DEX-price source is indexed, the API marks the last curve value as historical/last-curve rather than current DEX market price.
+For active curves, spot display derives from accepted reserve state with exact arithmetic. After graduation, Day 6 **does not pretend the final curve price is a current DEX price**. Until a separately ratified live DEX-price source exists, the API marks the last curve value historical/last-curve or current price unavailable.
 
 ### `indexer_checkpoints`
 
-One current finalized/committed cursor per stack:
-
-- stack identity;
-- deployment start block;
-- last committed block number;
-- last committed block hash;
-- block timestamp;
-- last canonical event identity when one exists in the block/range;
-- decoder/projection schema version;
-- updated timestamp;
-- current ingestion health state.
+One committed cursor per stack: deployment start block, last committed block number/hash/timestamp, last canonical event identity where present, decoder/projection schema version, updated time, and ingestion health.
 
 ### `admin_events`
 
-Append-only normalized privileged/config/recovery event history keyed by canonical event identity.
+Append-only normalized privileged/config/recovery events keyed by canonical event identity.
 
 ### `metadata`
 
-Sanitized display metadata separated from financial state:
-
-- name/symbol;
-- logo/description;
-- socials/links;
-- sanitization/schema version;
-- source block/event context.
-
-Onchain strings are attacker-controlled display input. No HTML execution is permitted. URLs are parsed/allowlisted by scheme; API metadata processing does not perform arbitrary remote fetches.
+Sanitized display metadata separate from financial state: name/symbol, logo/description, socials/links, sanitization version, and source context. Onchain strings are attacker-controlled display input; no HTML execution or arbitrary server-side remote fetch is permitted.
 
 ---
 
-## 15. Derived feed algorithms
+## 15. Deterministic feeds
 
-04A requires an explicit indexer algorithm for Trending and prohibits disguised paid placement. The source does not ratify a weighted score, so Day 6 uses transparent deterministic ordering rather than a hidden weighted formula.
+04A requires an explicit Trending indexer algorithm and prohibits disguising paid placement as organic trending. No controlling source freezes a weighted ranking score, so Day 6 uses transparent deterministic ordering.
 
 ### New
 
-Active/all launches ordered by:
-
 1. launch block/time descending;
-2. canonical launch event log index descending;
-3. token address ascending as deterministic tie-breaker.
+2. launch log index descending;
+3. token address ascending tie-breaker.
 
 ### Trending
 
-Eligible launches with activity in the trailing one-hour indexed window ordered by:
+Eligible launches with activity in trailing indexed 1h, ordered by:
 
 1. `volume_usdc_1h` descending;
 2. `unique_traders_1h` descending;
@@ -755,7 +616,7 @@ Eligible launches with activity in the trailing one-hour indexed window ordered 
 4. latest activity block/log descending;
 5. token address ascending.
 
-There is no paid-placement field in organic trending order. Any future sponsored placement must be separately labeled and cannot alter this organic ordering silently.
+No paid-placement field changes organic ranking. Future sponsorship must be separately labeled and cannot silently alter this algorithm.
 
 ### Near Graduation
 
@@ -766,82 +627,64 @@ Non-graduated launches ordered by:
 3. launch time descending;
 4. token address ascending.
 
-Graduation progress is the exact rebuildable ratio of real tracked quote toward the snapshotted `graduationThreshold`, clamped to 0–10,000 bps. Readiness/phase still comes from accepted curve/coordinator semantics; the percentage never overrides the actual readiness flag.
+Progress is exact rebuildable real tracked quote / snapshotted graduation threshold, clamped to 0–10,000 bps. Actual readiness/phase still comes from the accepted contracts.
 
 ### Graduated
 
-`POOL_CREATED` launches ordered by graduation-completion block/log descending, token address tie-breaker.
-
-A rescued launch is not represented as successfully graduated.
+`POOL_CREATED` launches ordered by graduation-completion block/log descending, then token address. `RESCUED` is not represented as successfully graduated.
 
 ---
 
 ## 16. Protocol SDK transaction contract
 
-All prepared Bread user transactions have `value = 0n` for V1 protocol financial value because ERC-20 USDC is the quote asset; native Arc balance is gas only.
+All Bread V1 prepared financial transactions have `value = 0n` because the quote asset is ERC-20 USDC; native Arc balance is gas only.
 
-Builders accept validated `ProtocolContext` + typed amounts/addresses and return the 06B `PreparedTransaction` shape plus structured preflight/simulation information.
+Builders accept validated `ProtocolContext` + typed amounts/addresses and return the 06B `PreparedTransaction` shape plus typed simulation/preflight metadata.
 
 ### Buy
 
-Target: launch curve `buy(quoteIn, minTokensOut, recipient)`.
-
-Builder/simulation exposes:
-
-- curve/token context;
-- USDC spender/allowance requirement;
-- expected output where simulation is available;
-- base fee/creator tax/opening-tax context from current chain reads;
-- no signing/submission.
+Prepare curve `buy(quoteIn, minTokensOut, recipient)`, exposing exact spender/allowance requirement and current-chain simulation context. The SDK may display predicted fees/taxes; it does not become pricing authority.
 
 ### Sell
 
-Target: launch curve `sell(tokensIn, minQuoteOut, recipient)`.
-
-Exposes launch-token allowance requirement and simulation result.
+Prepare curve `sell(tokensIn, minQuoteOut, recipient)` with launch-token allowance requirement and simulation.
 
 ### Launch
 
-Target: Factory `launchToken(params)` using the exact accepted `IBreadLaunchFactory.LaunchParams` semantics and current `expectedEconomics` digest support.
+Prepare Factory `launchToken(params)` using the accepted `IBreadLaunchFactory.LaunchParams` and current `expectedEconomics` digest support.
 
 ### Launch + Buy
 
-Target: Factory `launchTokenAndBuy(params, quoteIn, minTokensOut, recipient)`.
-
-The SDK does not duplicate curve math to create an alternate authority. It may display/simulate expected values, but final transaction behavior is the existing Factory/curve path.
+Prepare Factory `launchTokenAndBuy(params, quoteIn, minTokensOut, recipient)` using the existing Factory/curve path. The SDK must not reimplement money math as a competing execution path.
 
 ### Claim
 
-Target: canonical FeeEscrow `claim()` or `claim(amount)` according to whether an optional exact amount is requested.
-
-Indexed API claimable data is informational; simulation/current FeeEscrow chain state is used before signing.
+Prepare FeeEscrow `claim()` or `claim(amount)`. Indexed claimable data is informational; current-chain FeeEscrow state/simulation is checked before signing.
 
 ### RetryGraduation
 
-The current accepted Day-5 lifecycle has two permissionless retryable stages. `prepareRetryGraduation` reads the canonical coordinator phase:
+Read canonical coordinator phase:
 
-- `NOT_GRADUATED` with a ready curve -> prepare `GraduationCoordinator.sweep(token)`;
-- `SWEPT` -> prepare `GraduationCoordinator.createPool(token)`;
-- `POOL_CREATED` -> return typed terminal/already-complete result, no transaction;
-- `RESCUED` -> return typed terminal/rescued result, no transaction.
+- `NOT_GRADUATED` + ready curve → prepare `GraduationCoordinator.sweep(token)`;
+- `SWEPT` → prepare `GraduationCoordinator.createPool(token)`;
+- `POOL_CREATED` → typed terminal/already-complete result, no tx;
+- `RESCUED` → typed terminal/rescued result, no tx.
 
 It never changes the snapshotted adapter/destination.
 
-### Approval support
+### Approval helper
 
-Builders return required asset/spender/amount allowance metadata. A small canonical ERC-20 approval helper may be exported by the SDK so the frontend does not hand-encode approvals. This helper is generic wallet preparation, not a Bread server transaction path.
+SDK may export a canonical generic ERC-20 approval preparation helper so the frontend does not hand-encode approvals. It still does not submit/sign.
 
-### Simulation and decoding
+### Error/event decoding
 
-Simulation accepts a viem `PublicClient` and account/address context; it never needs a private key.
-
-Custom errors are decoded through the same generated ABI registry. Unknown selectors return a typed `UNKNOWN_REVERT` retaining bounded technical details rather than fabricating a human reason.
+Simulation uses a viem `PublicClient` + account context only. Custom errors use the same generated version-aware ABI registry. Unknown selectors return typed `UNKNOWN_REVERT` with bounded technical detail rather than a fabricated human explanation.
 
 ---
 
-## 17. API response and freshness envelope
+## 17. API freshness envelope
 
-Every successful indexed response uses a shared envelope:
+Every successful indexed response uses one shared envelope:
 
 ```ts
 type IndexedResponse<T> = {
@@ -851,110 +694,80 @@ type IndexedResponse<T> = {
 };
 ```
 
-`FreshnessMeta` contains at least:
+`FreshnessMeta` includes at least:
 
 - `chainId`;
-- current API/indexer schema version;
-- indexed-through block number (decimal string);
+- API/indexer schema version;
+- indexed-through block number as decimal string;
 - indexed-through block hash;
 - indexed-through block timestamp;
 - `servedAt`;
 - `source: "bread-indexer"`;
-- freshness status: `FRESH | LAGGING | REBUILDING | DEGRADED`;
-- optional observed Arc head block number and derived lag blocks when the service has a current observation;
-- cache state (`HIT | MISS | STALE_SAFE | BYPASS`) when applicable;
-- stack version where the response is single-stack; multi-item feed entries carry their own stack version.
+- `status: "FRESH" | "LAGGING" | "REBUILDING" | "DEGRADED"`;
+- optional observed Arc head + derived lag blocks;
+- cache state where applicable;
+- stack version for single-stack responses, while multi-stack feed items carry their own stack identity.
 
-Serving a cached response never rewrites its indexed-through block to look newer. `servedAt` may be current; the cached checkpoint remains the checkpoint that produced the data.
+A cached response keeps the checkpoint that produced it; only `servedAt` changes. Cache cannot make old data look newly indexed.
 
-`FRESH` is an operational indexer label, not a statement that the API is financial authority.
+`FRESH` is an operational freshness label, never a statement that the API is financial authority.
 
 ---
 
-## 18. Required read endpoints
+## 18. Required public read API
 
 ### `GET /v1/feed`
 
-Query:
-
-- `view=new|trending|graduating|graduated`;
-- bounded `limit`;
-- opaque deterministic cursor.
-
-Returns token-card-ready indexed summaries and freshness metadata.
+`view=new|trending|graduating|graduated`, bounded limit, opaque deterministic cursor. Returns token-card-ready indexed summaries + freshness.
 
 ### `GET /v1/search`
 
-Searches:
+Searches exact contract, exact creator wallet, normalized ticker exact/prefix, and normalized name prefix. Address-like queries may run immediately; text queries use the 04C approximate two-character threshold. Exact contract match outranks duplicate-name/ticker results. No unbounded substring/offset scan.
 
-- exact canonical contract address;
-- exact creator wallet;
-- case-normalized ticker exact/prefix;
-- case-normalized token-name prefix.
-
-Address-like queries may execute immediately. Text queries use the 04C approximate two-character minimum. Exact contract match outranks duplicate-name/ticker results.
-
-No unbounded substring/offset scan is introduced for Day 6. Search has its own stricter rate-limit bucket and DB concurrency cap.
+Search has a separate stricter rate-limit/concurrency budget from cached feed reads.
 
 ### `GET /v1/tokens/:address`
 
-Returns immutable launch snapshot + current indexed launch state + metrics + sanitized metadata + graduation/lock status + freshness.
+Immutable launch snapshot + current indexed state + metrics + sanitized metadata + graduation/lock state + freshness.
 
 ### `GET /v1/tokens/:address/trades`
 
-Deterministic reverse chronological cursor by `(blockNumber, transactionIndex, logIndex)` with canonical event ID.
+Reverse chronological deterministic cursor over `(blockNumber, transactionIndex, logIndex)` and canonical event ID.
 
 ### `GET /v1/tokens/:address/holders`
 
-Returns derived holder rows with protocol-address tagging and top-holder concentration metadata. It is explicitly indexed/derived, not a chain balance assertion.
+Derived holder balances with protocol-address tagging and concentration metadata. Clearly indexed/derived, not chain balance authority.
 
 ### `GET /v1/portfolio/:address`
 
-Returns indexed launch-token holdings and relevant activity for the wallet. No PnL/average entry is exposed unless cost basis is complete and reliable. External transfers make naive average-entry reconstruction unsafe, so Day 6 does not fabricate PnL.
-
-If a graduated token lacks a live ratified DEX-price source, portfolio value for that token is marked unavailable/historical rather than pretending the final curve price is current.
+Indexed launch-token holdings/activity. No PnL/average entry unless cost basis is complete/reliable. External transfers make naive cost basis unsafe, so Day 6 does not fabricate it. Graduated tokens without a ratified live DEX-price source expose price/value as unavailable or explicitly historical.
 
 ### `GET /v1/creators/:address`
 
-Returns launches created by the wallet, fee-recipient relationships, indexed credited/claimed/claimable aggregate views, and per-launch earned revenue where deterministic event attribution exists.
-
-The API does not claim that indexed claimable amount supersedes `FeeEscrow.balanceOf` onchain.
+Launches created, fee-recipient relationships, indexed credited/claimed/claimable aggregates, and per-launch earned revenue only where event attribution is deterministic. Indexed claimable does not supersede onchain `FeeEscrow.balanceOf`.
 
 ### `GET /v1/status`
 
-Returns no secrets. Includes:
-
-- chain/stack identities supported;
-- current checkpoint/head observation/lag;
-- DB/Redis/RPC/indexer health classes;
-- backlog/queue state;
-- rebuild mode;
-- last reconciliation verdict/time/report identity;
-- cache/fanout degraded state;
-- decoder/schema version.
-
-RPC URLs, credentials, database DSNs, admin secrets, and private operational tokens are never returned.
+No secrets. Returns supported chain/stack identities, checkpoint/head/lag, DB/Redis/RPC/indexer health classes, backlog/queue state, rebuild mode, last reconciliation verdict/report identity, cache/fanout degradation, and decoder/schema version. Never returns RPC credentials/URLs with secrets, DSNs, admin secrets, or private tokens.
 
 ---
 
-## 19. Input validation, cursors and errors
+## 19. Validation, cursors and API errors
 
 ### Addresses
 
-All route/query addresses are parsed/canonicalized with viem. Invalid length/checksum/hex shape -> HTTP 400. The database never receives raw unvalidated address strings as lookup identities.
+All route/query addresses are parsed/canonicalized with viem before DB work. Invalid address shape/checksum → 400.
 
 ### Pagination
 
-- cursor pagination only for feeds/trades/holders/large creator lists;
-- no unbounded offset pagination;
-- cursors are versioned, base64url-encoded structured sort keys;
-- cursor input length and decoded fields are bounded;
-- malformed/unknown cursor version -> HTTP 400;
-- default/max page sizes are central constants/types, not per-route private values.
+- cursor pagination for feeds/trades/holders/large creator lists;
+- no unbounded offsets;
+- versioned base64url structured sort-key cursor;
+- bounded cursor length/decoded fields;
+- malformed/unknown cursor version → 400;
+- page defaults/maxima are shared canonical constants/types.
 
-### Errors
-
-Shared API error shape:
+### Error shape
 
 ```ts
 type ApiError = {
@@ -967,453 +780,365 @@ type ApiError = {
 };
 ```
 
-Expected classes:
-
-- 400 invalid input/cursor;
-- 404 unknown launch/resource;
-- 429 endpoint-class rate limit, with bounded retry metadata;
-- 503 dependency/rebuild state where serving would misrepresent availability;
-- 500 unexpected internal error with no secret/raw stack exposure.
+Expected classes: 400 input, 404 unknown resource, 429 endpoint-class rate limit, 503 dependency/rebuild state where serving would misrepresent availability, 500 bounded internal error without secret/raw-stack leakage.
 
 ---
 
 ## 20. Cache design
 
-Redis accelerates reads; it never owns projection state.
+Redis accelerates reads only.
 
-### Key model
+Cache keys include schema version, chain/stack/token/feed identity, normalized query/cursor, and logical generation counters.
 
-Cache keys include:
+Committed projection changes produce affected cache domains. **Only after DB commit** are their Redis generations invalidated/incremented.
 
-- schema version;
-- chain id;
-- stack/feed/token identity;
-- normalized query/cursor;
-- a logical generation counter for invalidatable hot domains.
+### Stampede control
 
-Logical generation keys avoid wildcard deletion:
+For a hot cache miss:
 
-- stack/feed generation;
-- token generation;
-- holder generation where separately useful.
-
-A committed projection produces a set of affected cache domains. Only after DB commit are the corresponding Redis generations incremented/invalidated.
-
-### Read-through and stampede control
-
-For hot cache misses:
-
-- one cross-instance Redis single-flight lock is attempted per normalized cache key;
-- waiters use bounded jitter/wait and then read the filled cache;
-- DB concurrency is capped independently so Redis failure cannot create an unbounded stampede;
-- no recursive/unbounded retry loop is permitted.
+- attempt one cross-instance Redis single-flight lock per normalized key;
+- waiters use bounded jitter/wait then read the filled cache;
+- DB concurrency has an independent cap so Redis failure cannot create an unbounded stampede;
+- no recursive/unbounded retry loops.
 
 ### Safe stale behavior
 
-Brief stale-but-marked responses are allowed only for non-transactional discovery/analytics surfaces such as feed/card analytics when within a configured maximum stale window.
-
-No stale-safe mode may disguise old data as current. Portfolio/claimable/holder state and transaction-critical preparation never rely on stale cache as authority; the SDK performs current chain validation/simulation before signing.
+Brief stale-but-marked responses are allowed only for non-transactional discovery/secondary analytics within a configured stale window. Portfolio/claimable/holder displays never treat stale cache as financial authority; transaction preparation always validates/simulates current chain state before signing.
 
 ### Redis failure
 
-- PostgreSQL projection remains valid;
-- cache is marked degraded;
-- hot reads fall back through bounded local/process single-flight + DB concurrency controls;
-- search may return 503 when the service cannot enforce the separate protective rate limit safely;
-- no database checkpoint is rolled back because Redis failed.
+DB projections remain valid; cache becomes degraded; eligible hot reads use bounded process-level single-flight + DB concurrency controls. Search may return 503 if its protective limiter cannot be enforced safely. Redis failure never rolls back a committed checkpoint.
 
 ---
 
-## 21. Realtime fanout
+## 21. Realtime fanout semantics
 
-Day 6 freezes the semantic fanout contract, not a browser-specific transport implementation.
+Day 6 freezes the semantic contract; Day 7 may choose the browser transport that consumes it.
 
-The API/runtime may expose the chosen Day-7 transport over this contract, but the Day-6 producer/hub rules are fixed:
+Rules:
 
-- one shared chain/indexer source, never one Arc subscription per browser;
-- fanout is by logical channel;
-- canonical message identity is the causal onchain event ID;
-- publish only after the DB transaction commits;
-- clients deduplicate by event ID;
-- realtime payloads are invalidation hints, not financial state authority;
-- clients refetch indexed state after relevant messages and after every disconnect/reconnect;
-- slow-consumer queues/buffers are bounded; slow consumers are dropped/degraded rather than allowing unbounded memory growth.
+- one shared indexer/chain source, never one Arc subscription per browser;
+- fanout by logical channel;
+- causal event ID is stable for dedupe;
+- publish only after DB commit;
+- realtime payload is an invalidation hint, not financial authority;
+- client refetches after relevant message and after disconnect/reconnect;
+- slow-consumer buffers are bounded; slow clients are disconnected/degraded rather than causing unbounded memory growth.
 
 Initial logical channels:
 
-- `stack:<chainId>:<stackVersion>:feed`;
-- `token:<chainId>:<tokenAddress>`;
-- `wallet:<chainId>:<walletAddress>` only where needed for creator/portfolio invalidation, never for chain subscription fanout.
+- `stack:<chainId>:<stackVersion>:feed`
+- `token:<chainId>:<tokenAddress>`
+- `wallet:<chainId>:<walletAddress>` where useful for portfolio/creator invalidation
 
-A fanout message contains only bounded invalidation data such as:
+Messages are bounded: event ID, channel, change kind/domain, affected identity, committed checkpoint block/hash. They do not broadcast full large trade/token objects to every client.
 
-- event ID;
-- channel;
-- changed domain/kind;
-- token/wallet identity when relevant;
-- committed checkpoint block/hash.
-
-It does not replicate a large token/trade payload to every subscriber. Consumers refetch and client-side requests coalesce.
-
-If publication fails after commit, the database remains correct. Cache TTLs and reconnect/refetch recover presentation. The failure is observable and `GET /v1/status` reports degraded fanout/cache health.
+A post-commit publication failure leaves DB state correct; TTL/reconnect/refetch heals presentation and `/v1/status` reports degraded fanout/cache health.
 
 ---
 
-## 22. Reconciliation command
+## 22. Reconciliation
 
-Canonical operator surface:
+Canonical operator command:
 
 `reconcile --network arc-testnet --stack <version>`
 
-Reconciliation reads chain independently of the projection it is validating and emits a machine-readable JSON report plus a human-readable summary.
+The command independently reads chain evidence and emits machine-readable JSON plus human summary containing report version, chain/stack/Factory, source commit/manifest hashes, deployment start block, checked-through block/hash, timing, individual check status/evidence, explicit mismatches, and overall `PASS | FAIL`.
 
-Report identity includes:
+### REC-01 — Launch completeness
 
-- report schema version;
-- network/chain id;
-- stack version/Factory;
-- source commit/manifest hashes;
-- deployment start block;
-- checked-through block/hash;
-- started/completed time;
-- each check ID/status;
-- explicit mismatches;
-- overall `PASS | FAIL`.
+Independently scan Factory `LaunchCreated` from deployment start through the checked block. Compare event identities/count/tokens with `event_journal` + `launches`.
 
-### Required checks
+### REC-02 — Curve state
 
-#### REC-01 Launch event/projection completeness
+For every launch, compare onchain canonical curve getters with indexed tracked quote/tokens, quote-fee/creator-tax balances, reserves, reserved/sellable state, and graduated/readiness state.
 
-Independently scan Factory `LaunchCreated` logs from deployment start through the checked block. Compare canonical identities/count/tokens against `event_journal` and `launches`.
+Any mismatch is FAIL; DB never overrides chain.
 
-#### REC-02 Curve tracked state
-
-For every indexed launch, call canonical curve getters at the reconciliation block and compare:
-
-- tracked quote;
-- tracked tokens;
-- quote fee balance;
-- creator tax balance;
-- reserves;
-- reserved/sellable state;
-- graduated/readiness state.
-
-Mismatch is FAIL; there is no database-authority override.
-
-#### REC-03 FeeEscrow solvency/projection
+### REC-03 — FeeEscrow solvency/projection
 
 Onchain:
 
-- read FeeEscrow `totalOutstanding`;
+- read `totalOutstanding`;
 - read canonical USDC `balanceOf(FeeEscrow)`;
-- require custody >= outstanding (surplus/donations are allowed).
+- require custody >= outstanding; surplus/donations are allowed.
 
 Projection:
 
-- reconstruct recipient balances/outstanding from `fee_credits` minus `fee_claims`;
-- require projected aggregate outstanding == onchain `totalOutstanding` at the checked block.
+- reconstruct outstanding from `fee_credits - fee_claims`;
+- require projected aggregate outstanding == onchain `totalOutstanding` at checked block.
 
-No equality between custody and outstanding is required because surplus can exist.
+Custody does not have to equal outstanding because surplus may exist.
 
-#### REC-04 Graduation
+### REC-04 — Graduation/lock
 
-Compare each indexed coordinator phase/amount/pool/position identity to `getGraduation(token)` and, for completed launches, verify permanent locker evidence (`isPositionLocked`/locked position and residue where applicable).
+Compare indexed coordinator phase/amount/pool/position fields with `getGraduation(token)`. For completed launches verify permanent-lock evidence through locker getters.
 
-#### REC-05 Deployment identity/code hashes
+### REC-05 — Deployment identity/code hashes
 
-For every manifest-required Bread deployment, verify address code exists and compare expected code hash where deployment evidence provides one. Verify chain id and canonical quote-asset identity/decimals through the existing config/deployment validation path.
+For every required registered stack deployment:
 
-No absent Arc mainnet/DEX value is guessed to make this pass.
+- address has code;
+- actual runtime code hash equals the expected code hash frozen in stack deployment evidence/manifest;
+- chain id and canonical quote asset identity/decimals pass existing config validation.
 
-#### REC-06 Checkpoint continuity
+A missing expected code hash is itself FAIL for an active/registered stack. No production/mainnet value is guessed to make this pass.
 
-- stored checkpoint block/hash must equal chain;
-- no journal row may be beyond checkpoint;
-- an independent contiguous event scan from deployment start through checkpoint must produce the same relevant canonical event identity set as the journal;
-- decoder/stack version must match the registered stack.
+### REC-06 — Checkpoint continuity
 
-This independent scan is intentionally stronger than trusting one cursor row.
+- checkpoint block/hash equals chain;
+- no journal row lies beyond checkpoint;
+- an independent contiguous scan from deployment start through checkpoint yields the same relevant canonical event identity set as the journal;
+- decoder/stack version matches registered stack.
 
-### Reconciliation failure
-
-A mismatch produces `FAIL` with exact expected/actual evidence. It never rewrites chain or silently patches projection state. Recovery is rebuild/reconcile or an explicitly reviewed bug repair.
+Reconciliation failure produces explicit expected/actual evidence. It never silently patches projection state.
 
 ---
 
 ## 23. Delete-DB rebuild
 
-`rebuild` starts from a blank Day-6 projection database/schema state after migrations and replays from manifest `deploymentStartBlock` through the chosen committed Arc head.
+Rebuild starts from an empty Day-6 projection database after migrations and replays from manifest `deploymentStartBlock` through a chosen committed Arc head.
 
 Rules:
 
-1. never seed projection state from an old projection dump as canonical input;
-2. use manifests + canonical chain logs/reads;
-3. rebuild `event_journal` and all projections deterministically;
-4. run full reconciliation at the rebuild target block;
-5. emit a rebuild report containing counts/checkpoint/report hash/verdict;
-6. only a reconciled rebuild is eligible to replace an active projection.
+1. old projection dumps are never canonical input;
+2. inputs are manifests + canonical chain logs/accepted immutable reads;
+3. rebuild journal + all projections deterministically;
+4. run full reconciliation at the rebuild target;
+5. emit rebuild report with identity/count/checkpoint/report hash/verdict;
+6. only a reconciled rebuild may replace an active projection.
 
-Production recovery should build/reconcile a replacement/shadow database or otherwise stop writer exposure rather than serving a half-rebuilt schema. The Day-6 destructive acceptance test is isolated/local/test infrastructure and cannot point at a production DSN without an explicit destructive-operation guard.
+Production recovery builds/reconciles a replacement/shadow database or otherwise removes partially rebuilt state from public serving. The destructive acceptance test uses isolated/local/test infrastructure and is guarded so it cannot target a production DSN by accident.
 
-`DELETE_DB_REBUILD_PASS` requires equivalent canonical journal identity sets and equivalent externally relevant projection results at the same target block before/after deletion.
+`DELETE_DB_REBUILD_PASS` requires the same canonical event-identity set and equivalent externally relevant projection outputs at the same target block before/after deletion.
 
 ---
 
-## 24. Failure and recovery semantics
+## 24. Failure/recovery semantics
 
-### RPC unavailable/disagreeing
+### RPC unavailable
 
-- do not advance checkpoint;
-- use bounded configured provider failover;
-- no infinite retry amplification;
-- provider disagreement on already committed block hash -> integrity incident and stop/reconcile path.
+No checkpoint advancement. Use bounded configured provider failover and bounded retry/backoff. No retry amplification.
 
-### Unknown/invalid log decoding
+### Previously checkpointed hash mismatch
 
-- no partial block/range commit;
-- checkpoint stays at previous valid block;
-- expose decoder error/degraded status;
-- fix canonical ABI/version support, then replay.
+Classify integrity/finality incident, stop, cross-check another provider, expose degraded state, then rebuild/reconcile before resuming if real.
 
-### Database transaction failure
+### Unknown event/version drift
 
-- atomic rollback journal + projections + checkpoint;
-- retry from prior checkpoint/overlap;
-- uniqueness/idempotency prevents duplication.
+No partial block/range commit. Keep prior checkpoint, report decoder/version degradation, repair canonical ABI policy, replay.
+
+### DB transaction failure
+
+Atomic rollback of journal + projections + checkpoint; retry from prior checkpoint/overlap.
 
 ### Indexer stopped
 
-- API may continue serving the last durable projection with truthful `LAGGING`/`DEGRADED` freshness metadata;
-- no chain financial behavior changes;
-- on recovery, overlap replay then catch-up.
+API may serve last durable projection with truthful `LAGGING`/`DEGRADED` metadata. Chain finance is unaffected. On restart: overlap replay → catch-up.
 
-### Redis/cache/realtime unavailable
+### Redis/cache/fanout unavailable
 
-- no DB rollback;
-- bounded DB fallback for eligible reads;
-- explicit cache/fanout degradation;
-- reconnect/refetch heals clients.
+No DB rollback. Eligible reads use bounded DB fallback; report degradation; clients heal through refetch.
 
-### Database unavailable
+### DB unavailable
 
-- eligible very-short stale non-financial cache may be served only if clearly marked and within stale bounds;
-- otherwise 503;
-- no raw-RPC fallback is introduced as a secret second API/indexer implementation.
+Only very short stale non-financial cache may be served if clearly marked and within stale limits; otherwise 503. No hidden raw-RPC API fallback becomes a second implementation.
 
 ### Reconciliation mismatch
 
-- status becomes degraded;
-- public API may continue truthful stale/indexed reads if safe, but operator acceptance/release gates fail;
-- no auto-correction by comparing and choosing the database value;
-- rebuild from chain and investigate root cause.
+Release/acceptance gate fails. Public indexed reads may remain available only with truthful degraded state where safe. Recovery is root-cause repair + rebuild/reconcile, never “choose the DB value.”
 
 ---
 
-## 25. Capacity/backpressure design required on Day 6
+## 25. Day-6 scale/backpressure
 
-Day 8 remains the full >=10,000-client integrated stress proof. Day 6 still performs the first meaningful concurrency proof and must already have the architecture needed to scale.
+Day 8 remains the full >=10,000 concurrent-client stress proof. Day 6 must already exercise the architecture meaningfully.
 
 ### API
 
-- stateless/horizontally replicable route handlers;
+- horizontally replicable stateless handlers;
 - bounded PostgreSQL pool;
 - bounded Redis/RPC concurrency;
-- deterministic cursor/indexed queries only;
+- indexed/cursor queries only;
 - separate search limiter/concurrency budget;
-- cache-first hot feed/token reads;
+- cache-first feed/token reads;
 - no unbounded request queue.
 
 ### Indexer
 
-- bounded block range and address chunks;
-- bounded provider concurrency;
-- one canonical stack writer lease + DB correctness guards;
-- no unbounded in-memory event queue;
-- canonical projection application has priority over secondary enrichment;
-- lag/backlog metrics always exposed.
+- bounded block range/address chunks/provider concurrency;
+- stack writer lease + DB correctness guards;
+- no unbounded event queue;
+- canonical projection application outranks secondary enrichment;
+- lag/backlog metrics exposed.
 
 ### Realtime
 
-- one post-commit publication per causal canonical projection event, shared to logical channel consumers;
-- no browser-specific chain subscription;
+- one post-commit invalidation per causal canonical change into shared logical channels;
+- no per-browser chain subscription;
 - bounded slow-consumer buffer;
-- clients coalesce refetches.
+- client refetch coalescing.
 
-### Day-6 concurrency acceptance semantics
+### First meaningful Day-6 concurrency test
 
-The Day-6 test must exercise all of these **at the same time**:
+Exercise together:
 
-1. concurrent hot feed/token reads exceeding the configured DB pool size;
-2. a cold-cache stampede on the same hot key;
-3. an overlap replay containing already-journaled events;
-4. a new committed event that updates a projection and causes post-commit cache/fanout effects;
-5. multiple logical fanout consumers including a deliberately slow consumer;
-6. bounded search requests under its separate limiter.
+1. concurrent hot feed/token reads exceeding configured DB pool size;
+2. cold-cache stampede for one hot key;
+3. overlap replay containing already-journaled events;
+4. a newly committed event causing projection + post-commit cache/fanout effects;
+5. multiple logical fanout consumers including a deliberately slow one;
+6. bounded search traffic under its separate limiter.
 
-The pass condition is functional/correctness under concurrency: one durable event effect, no replay duplicates, bounded queues/pools, collapsed hot-cache misses, no per-client Arc RPC fanout, slow-consumer containment, truthful freshness, and no read errors other than intentionally enforced rate/backpressure responses. Day 8 applies the full 06I 10,000-client and p95/error-rate capacity thresholds.
+Pass means: one durable event effect, zero replay duplicates, bounded queues/pools, collapsed cache misses, no per-client Arc RPC fanout, slow-consumer containment, truthful freshness, and only intentional rate/backpressure errors. Day 8 later applies the full 06I 10,000-client/p95/error-rate stress gate.
 
 ---
 
-## 26. Security/trust-boundary implications
+## 26. Security/trust boundaries
 
-1. Metadata is hostile display input; it never changes financial projections.
-2. API input is hostile; addresses/cursors/search limits are validated before DB work.
-3. Indexer RPC data is verified against expected chain/stack/address identities and checkpoint hashes.
-4. Database corruption is recoverable because chain + manifests + deterministic code rebuild it.
+1. Metadata is hostile display input and cannot alter financial projections.
+2. API input is hostile; addresses/cursors/search bounds are validated before DB work.
+3. RPC evidence is checked against configured chain/stack/address/checkpoint identity.
+4. PostgreSQL corruption is recoverable from chain + manifests + deterministic code.
 5. Redis compromise/loss cannot create claim entitlement or transaction authority.
-6. No API route holds a user private key or transaction relay capability.
-7. No transaction builder takes an API-provided fee/economics value as authoritative without current-chain simulation/validation.
-8. Admin/security events are indexed and observable but API/indexer cannot perform the admin action.
-9. FeeEscrow entitlement is never inferred from upstream fee events when `FeeCredited` disagrees; reconciliation fails instead.
-10. Donation transfers to curve/FeeEscrow are not converted into tracked reserve/claim entitlement by indexer assumptions.
+6. No API route holds user keys or transaction-relay capability.
+7. SDK transaction preparation does not trust indexed fee/economics data where current-chain simulation/validation is required.
+8. Admin events are observable but API/indexer cannot perform the admin action.
+9. FeeEscrow entitlement comes only from FeeEscrow canonical events/state; upstream fee events never override disagreement.
+10. Donations cannot become tracked reserve/claim entitlement through indexer assumptions.
 
 ---
 
-## 27. Day-6 TDD/integration acceptance contract
+## 27. Required Day-6 proof contract
 
-Implementation must be decomposed by the later writing-plans workflow into small RED -> GREEN lanes. The design gate requires these final proofs:
-
-### SDK/type contract
+### Shared types/SDK
 
 - generated ABI drift check PASS;
-- manifest/address resolution tests PASS;
-- Buy/Sell/Launch/Launch+Buy/Claim/RetryGraduation builder encoding tests PASS;
-- simulation/custom-error decode tests PASS;
-- no key custody/server submission surface.
+- manifest/address resolution PASS;
+- Buy/Sell/Launch/Launch+Buy/Claim/RetryGraduation encoding PASS;
+- simulation/custom-error decode PASS;
+- no signing/key-custody/server-submit surface.
 
 ### DB/indexer
 
-- migration/schema tests PASS;
-- exact journal identity/ordering tests PASS;
-- same-transaction buy/refund/opening-tax normalization tests PASS;
-- launch discovery captures constructor Transfer + same-transaction Launch+Buy events;
-- fee credit entitlement is derived only from FeeEscrow;
-- graduation phase/event normalization PASS;
+- migration/schema PASS;
+- journal identity/order PASS;
+- dynamic launch discovery captures constructor mint + same-tx Launch+Buy activity;
+- buy/refund/opening-tax normalization PASS;
+- initial supply from constructor mint PASS;
+- fee entitlement derived only from FeeEscrow PASS;
+- graduation normalization PASS;
 - holder Transfer rebuild PASS;
-- checkpoint atomicity failure injection PASS;
+- admin events reconstruct without required archive-RPC mutable-state dependency;
+- checkpoint atomicity failure-injection PASS;
 - `OVERLAP_REPLAY_IDEMPOTENT` PASS;
 - `DELETE_DB_REBUILD_PASS` PASS.
 
 ### API/cache/fanout
 
-- all eight required routes schema tests PASS;
+- all eight required route schemas PASS;
 - address/cursor/page bounds PASS;
-- search separate rate limit PASS;
-- `API_FRESHNESS_METADATA_PRESENT` PASS for every indexed endpoint;
-- cache single-flight/invalidation-after-commit tests PASS;
-- disconnect/dedupe/refetch semantic fixture PASS;
-- first meaningful concurrent read/replay/cache/fanout test PASS.
+- separate search rate limit PASS;
+- `API_FRESHNESS_METADATA_PRESENT` on every indexed endpoint;
+- cache single-flight + post-commit invalidation PASS;
+- realtime dedupe/disconnect/refetch semantics PASS;
+- `FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS`.
 
 ### Reconciliation
 
-- launch count/event identity check PASS;
-- curve state check PASS;
-- FeeEscrow custody/outstanding/projected ledger check PASS;
-- graduation/locker state check PASS;
-- deployment/code-hash check PASS where verified expected hashes exist;
-- checkpoint continuity check PASS;
-- explicit mismatch fixtures FAIL with useful reports;
-- `RECONCILE_PASS` on the accepted integration fixture/environment.
+- REC-01 through REC-06 PASS on accepted integration fixture/environment;
+- mismatch fixtures produce explicit FAIL reports;
+- `RECONCILE_PASS` only when no required expected code hash/evidence is missing.
 
 ### Regression
 
-Every accepted Day-6 lane runs its focused tests plus affected shared/build/contract regressions. Final Day-6 head runs full repository CI. No Day-6 PASS exists while a prior accepted Day-1–Day-5 regression is red.
+Every lane runs focused + adjacent regressions. Final Day-6 head runs full exact-head repository CI. A prior Day-1–Day-5 regression failure blocks Day-6 PASS.
 
 ---
 
 ## 28. Required vertical wiring order
 
-The implementation plan must preserve this dependency direction:
-
 `actual Solidity interfaces/events`
 → `generated ABI registry`
 → `@bread/types + @bread/protocol-sdk`
-→ `@bread/db schema/repositories`
-→ `@bread/indexer journal + reducers`
-→ `@bread/api read contract`
+→ `@bread/db`
+→ `@bread/indexer`
+→ `@bread/api`
 → `Day-7 web consumers`
 
-No lane may introduce a private replacement interface while waiting for another lane.
-
-For a future consumer not yet implemented (Day-7 web), Day 6 must leave executable API/SDK fixtures/contract tests as the frozen handoff.
+No lane may create a private substitute interface while waiting for another layer. Day 6 leaves executable API/SDK fixtures/contract tests as the frozen handoff for the not-yet-built Day-7 consumer.
 
 ---
 
-## 29. Explicit non-goals / prohibited shortcuts
+## 29. Explicit non-goals
 
 Day 6 does **not**:
 
 - change accepted Solidity financial behavior;
 - add a server trade/claim/launch relay;
 - add private-key custody;
-- make PostgreSQL, Redis, the event journal, indexer or API a protocol authority;
-- invent Arc mainnet addresses;
-- invent canonical Arc DEX deployment addresses;
+- make PostgreSQL/Redis/journal/indexer/API financial authority;
+- invent Arc mainnet/canonical DEX values;
 - freeze unresolved Bread production economics/admin addresses;
-- claim exact current-live Pons source/runtime parity;
-- claim Pons/Bread audit-clean status;
-- index arbitrary external DEX state as current Bread price without a ratified source;
-- expose PnL/average entry from incomplete transfer history assumptions;
-- implement one chain subscription per browser;
+- claim exact current-live Pons parity or audit-clean status;
+- invent a Buyback event/state absent from the accepted current contract surface;
+- claim a current DEX price after graduation without a ratified DEX-price source;
+- expose fabricated PnL/average entry from incomplete cost basis;
+- add one chain subscription per browser;
 - add asynchronous journal-to-projection workers;
-- skip the written spec review gate;
-- start production Day-6 code before the detailed writing-plans output is approved for execution by the workflow.
+- rely on archive RPC for deterministic rebuild of mutable un-emitted config history;
+- skip the written-spec review gate;
+- start production Day-6 code before the writing-plans gate.
 
 ---
 
-## 30. Resolved design questions / remaining gates
+## 30. Remaining external/release gates
 
-### Resolved by Source + accepted architecture + current contract inspection
-
-- persistence architecture: transactional journal + synchronous projections;
-- canonical journal/trade identity;
-- deterministic event order;
-- actual event sources and same-transaction buy correlation;
-- launch snapshot enrichment from chain rather than contract-event redesign;
-- Arc finality behavior: committed block is final, no guessed confirmation depth;
-- integrity response to impossible checkpoint-hash drift;
-- checkpoint transaction boundary;
-- overlap replay semantics;
-- package/schema ownership;
-- FeeEscrow entitlement authority;
-- holder derivation source;
-- graduation phase source;
-- API freshness shape and non-authority language;
-- cache invalidation timing;
-- realtime logical-channel/dedup/refetch semantics;
-- deterministic feed order including explicit organic Trending algorithm;
-- rebuild/reconciliation semantics;
-- failure/degraded behavior;
-- first Day-6 concurrency proof scope.
-
-### Deliberately still external/release-gated, with no Day-6 guess
+These remain deliberately unresolved and are **not** Day-6 guesses:
 
 - `BREAD_PRODUCTION_ECONOMICS_CONFIG`;
 - Arc mainnet manifest values;
-- canonical Arc V4/V3 deployment activation;
-- future live DEX price indexing source for graduated tokens;
-- unresolved exact-current Pons parity claims;
-- future Pons audit findings / Bread independent release review.
+- canonical Arc V4/V3 activation evidence;
+- future live DEX-price indexing source for graduated tokens;
+- exact-current Pons parity claims;
+- future Pons audit findings and Bread independent release review.
 
-None of those external gates blocks Day-6 local/test implementation of the frozen SDK/indexer/API architecture.
+They do not block local/test Day-6 implementation of this frozen architecture.
 
 ---
 
-## 31. Written-spec review gate
+## 31. Self-review result
 
-This file must be reviewed as the written Day-6 design before `superpowers:writing-plans` is invoked.
+Self-review checked placeholders, contradictions, scope, authority leakage, reconstruction dependencies, and ambiguity.
 
-Required review questions:
+Corrections made before requesting user review:
 
-1. Does any statement conflict with the uploaded Source Pack or accepted Day-1–Day-5 behavior?
-2. Does any projection accidentally become financial authority?
-3. Does any normalized event duplicate an existing onchain ledger/event meaning?
-4. Are same-transaction buy/refund/opening-tax and graduation/fee-credit correlations deterministic under the actual contracts?
-5. Is Arc finality handled without an invented confirmation model?
-6. Are cache/realtime effects strictly post-commit and disposable?
-7. Can delete-DB rebuild/reconciliation prove the whole application view from chain again?
-8. Are Day-6 scale/backpressure requirements started now rather than deferred to Day 8?
-9. Are unresolved production/mainnet values still explicit gates instead of placeholders/defaults?
-10. Is the next implementation boundary small enough for RED -> GREEN lanes and continuous vertical wiring?
+1. **Initial supply:** changed from a later `totalSupply()` enrichment assumption to the immutable constructor mint `Transfer(0 → curve)` in the launch transaction.
+2. **Event drift policy:** separated `INDEXED_CANONICAL`, `KNOWN_IGNORED` (e.g. `Approval`), and truly `UNKNOWN` events so ordinary irrelevant logs do not falsely halt ingestion.
+3. **Historical mutable config:** removed archive-RPC reads as a deterministic rebuild requirement; mutable admin history is recorded only from reconstructable canonical evidence.
+4. **Deployment code hashes:** made expected runtime hashes mandatory for any active/registered stack to obtain REC-05/RECONCILE PASS.
+5. **Buyback:** made the current absence of an accepted Buyback event surface explicit; Day 6 will not synthesize one because 06B lists the family abstractly.
+6. **Integer serialization:** decoded event integers and API protocol amounts remain lossless decimal strings at JSON boundaries.
 
-Only after this written spec passes the required user review may the writing-plans workflow produce the detailed implementation plan. Production Day-6 implementation remains blocked until that plan gate is complete.
+No `TODO`, `TBD`, unresolved placeholder value, guessed production address/economics value, or deferred financial-authority decision remains in this design.
+
+---
+
+## 32. Written-spec review gate
+
+The next step is the required **user review of this written spec**. Production Day-6 implementation remains blocked.
+
+Review criteria:
+
+1. no conflict with the uploaded Source Pack or accepted Day-1–Day-5 behavior;
+2. no database/cache/API financial authority;
+3. no duplicated claim/trade/graduation semantics;
+4. deterministic same-transaction normalization against the actual contracts;
+5. Arc finality handled without guessed confirmation counts;
+6. cache/realtime strictly post-commit and disposable;
+7. delete-DB rebuild/reconciliation can reconstruct the application view from chain;
+8. Day-6 scale work begins now rather than Day 8;
+9. unresolved production/mainnet values remain explicit external gates;
+10. implementation can be decomposed into small continuously integrated RED → GREEN lanes.
+
+Only after the user approves this written design may `superpowers:writing-plans` be invoked to create the detailed Day-6 implementation plan. Only after that plan gate may Day-6 production implementation begin.
