@@ -1,4 +1,4 @@
-import { IndexerRepository, type BreadDb } from '../../../packages/db/src/index.js';
+import { IndexerRepository, ReadRepository, type BreadDb } from '../../../packages/db/src/index.js';
 import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
 import type { Hex32 } from '../../../packages/types/src/index.js';
 
@@ -18,9 +18,17 @@ export type ApplyRangeInput = Readonly<{
 }>;
 
 export async function applyRange(input: ApplyRangeInput) {
+  const readRepository = new ReadRepository(input.db);
+  const knownLaunches = await readRepository.listLaunchIdentities(
+    input.context.chainId,
+    input.context.stackVersion,
+    input.context.factoryAddress,
+  );
+
   const normalized = await normalizeTransactionLogs({
     client: input.client,
     context: input.context,
+    knownLaunches,
     logs: input.logs,
     toBlock: input.toBlock,
     toBlockTimestamp: input.toBlockTimestamp,
