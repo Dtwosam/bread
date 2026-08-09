@@ -103,7 +103,7 @@ describe('Day 6 Task 4 source conformance', () => {
     expect((result?.description?.length ?? 0)).toBeLessThan(10_000);
   });
 
-  it('status data exposes observed head and derived lag without secrets', async () => {
+  it('status data exposes observed head, lag, and explicit unavailable backlog/queue without secrets', async () => {
     const module = await optionalModule('../../apps/api/src/routes/status.ts');
     const buildStatusData = module.buildStatusData as
       | ((checkpoint: Record<string, unknown>, meta: FreshnessMeta) => Readonly<Record<string, unknown>>)
@@ -142,6 +142,8 @@ describe('Day 6 Task 4 source conformance', () => {
     expect(data).toMatchObject({
       observedHeadBlock: '103',
       lagBlocks: '3',
+      backlog: 'UNAVAILABLE',
+      queue: 'UNAVAILABLE',
       health: { db: 'HEALTHY', indexer: 'LAGGING' },
     });
     expect(JSON.stringify(data)).not.toMatch(/password|secret|dsn|rpcUrl/i);
