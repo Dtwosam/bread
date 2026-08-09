@@ -1,0 +1,37 @@
+name: day6-task10-digest-test-fix
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-digest-test:
+    if: github.head_ref == 'agent/day6-task10-rebuild-reconcile'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: agent/day6-task10-rebuild-reconcile
+      - name: Correct non-semantic journal timestamp exclusion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/day6/rebuild-reconcile.test.ts')
+          text = path.read_text()
+          old = "to_jsonb(j) - 'created_at'"
+          new = "to_jsonb(j) - 'inserted_at'"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one digest marker, got {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+          git diff --check
+          git diff -- tests/day6/rebuild-reconcile.test.ts
+      - name: Commit exact test correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add tests/day6/rebuild-reconcile.test.ts
+          git commit -m 'test(day6): exclude journal insertion timestamp from rebuild digest'
+          git push origin HEAD:agent/day6-task10-rebuild-reconcile
