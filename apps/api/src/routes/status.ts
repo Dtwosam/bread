@@ -46,7 +46,7 @@ export function buildStatusData(checkpoint: StatusCheckpoint, meta: FreshnessMet
     health: {
       db: 'HEALTHY',
       indexer: indexerHealth(meta),
-      redis: meta.cache === 'DEGRADED' ? 'DEGRADED' : 'UNKNOWN',
+      redis: meta.cache === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'UNKNOWN',
       rpc: 'UNKNOWN',
     },
     cache: meta.cache,
