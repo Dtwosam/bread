@@ -1,7 +1,13 @@
 import { createRequire } from 'node:module';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalIndexedEvent, IndexerProtocolContext, ProjectionReducer } from '../../packages/db/src/index.ts';
+import {
+  adminEvents,
+  type BreadDb,
+  type CanonicalIndexedEvent,
+  type IndexerProtocolContext,
+  type ProjectionReducer,
+} from '../../packages/db/src/index.ts';
 
 const RUN_DB = process.env.BREAD_DB_INTEGRATION === '1';
 const address = (value: number) => `0x${value.toString(16).padStart(40, '0')}`;
@@ -162,7 +168,7 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
   beforeEach(async () => {
     const db = await import('../../packages/db/src/index.ts');
     await db.migrateBreadDb(pool);
-    await pool.query('TRUNCATE event_journal, token_metrics, indexer_checkpoints, protocol_stacks CASCADE');
+    await pool.query('TRUNCATE event_journal, admin_events, indexer_checkpoints, protocol_stacks CASCADE');
   });
 
   it('replays an overlap without duplicate projection effects and never regresses checkpoint', async () => {
@@ -171,16 +177,19 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
     expect(replay.replayOverlap).toBeTypeOf('function');
 
     const db = dbModule.createBreadDb(pool);
-    const reducer: ProjectionReducer = async (tx) => {
-      const database = tx as typeof db;
-      await database.execute(
-        (await import('drizzle-orm')).sql`
-          INSERT INTO token_metrics (chain_id, token_address, trade_count)
-          VALUES (${context.chainId}, ${address(10)}, '1')
-          ON CONFLICT (chain_id, token_address)
-          DO UPDATE SET trade_count = token_metrics.trade_count + 1
-        `,
-      );
+    const reducer: ProjectionReducer = async (tx, projectedEvent) => {
+      const database = tx as BreadDb;
+      await database.insert(adminEvents).values({
+        chainId: projectedEvent.identity.chainId,
+        transactionHash: projectedEvent.identity.transactionHash,
+        logIndex: projectedEvent.identity.logIndex,
+        contractAddress: projectedEvent.contractAddress,
+        eventName: 'TASK8_TEST_PROJECTION',
+        actorAddress: null,
+        payload: {},
+        blockNumber: projectedEvent.blockNumber.toString(10),
+        stackVersion: projectedEvent.stackVersion,
+      });
     };
     const repository = new dbModule.IndexerRepository(db, [reducer]);
 
@@ -206,16 +215,23 @@ describe.skipIf(!RUN_DB)('Day 6 Task 8 replay commit boundary against PostgreSQL
         toBlockTimestamp: event.blockTimestamp,
         events: [event],
       }),
-      applyRange: (range: Record<string, unknown>) => repository.applyCanonicalRange({ context, ...(range as never) }),
+      applyRange: (range) => repository.applyCanonicalRange({
+        context,
+        fromBlock: range.fromBlock,
+        toBlock: range.toBlock,
+        toBlockHash: String(range.toBlockHash),
+        toBlockTimestamp: range.toBlockTimestamp as bigint,
+        events: range.events as readonly CanonicalIndexedEvent[],
+      }),
       publish,
     });
 
     expect(result.fromBlock).toBe(100n);
     const journal = await pool.query('SELECT count(*)::int AS count FROM event_journal');
-    const metric = await pool.query('SELECT trade_count::text AS count FROM token_metrics WHERE token_address = $1', [address(10)]);
+    const projection = await pool.query('SELECT count(*)::int AS count FROM admin_events');
     const checkpoint = await pool.query('SELECT indexed_through_block::text AS block FROM indexer_checkpoints');
     expect(journal.rows[0]?.count).toBe(1);
-    expect(metric.rows[0]?.count).toBe('1');
+    expect(projection.rows[0]?.count).toBe(1);
     expect(checkpoint.rows[0]?.block).toBe('100');
     expect(publish).not.toHaveBeenCalled();
   });
