@@ -1,7 +1,14 @@
-import { and, asc, desc, eq, isNotNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNotNull, lt, or } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
 import { indexerCheckpoints, launches } from '../schema/projections.js';
+
+export type NewLaunchCursorKey = Readonly<{
+  launchBlockNumber: string;
+  launchTimestamp: string;
+  launchLogIndex: number;
+  tokenAddress: string;
+}>;
 
 export function decimalIntegerToBigInt(value: string | number | bigint): bigint {
   if (typeof value === 'bigint') return value;
@@ -98,8 +105,30 @@ export class ReadRepository {
     stackVersion: string,
     factoryAddress: string,
     limit: number,
+    cursor?: NewLaunchCursorKey,
   ) {
-    const boundedLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+    const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
+    const cursorPredicate = cursor
+      ? or(
+          lt(launches.launchBlockNumber, cursor.launchBlockNumber),
+          and(
+            eq(launches.launchBlockNumber, cursor.launchBlockNumber),
+            lt(launches.launchTimestamp, cursor.launchTimestamp),
+          ),
+          and(
+            eq(launches.launchBlockNumber, cursor.launchBlockNumber),
+            eq(launches.launchTimestamp, cursor.launchTimestamp),
+            lt(launches.launchLogIndex, cursor.launchLogIndex),
+          ),
+          and(
+            eq(launches.launchBlockNumber, cursor.launchBlockNumber),
+            eq(launches.launchTimestamp, cursor.launchTimestamp),
+            eq(launches.launchLogIndex, cursor.launchLogIndex),
+            gt(launches.tokenAddress, cursor.tokenAddress.toLowerCase()),
+          ),
+        )
+      : undefined;
+
     const rows = await this.db
       .select()
       .from(launches)
@@ -110,6 +139,7 @@ export class ReadRepository {
           eq(launches.factoryAddress, factoryAddress.toLowerCase()),
           isNotNull(launches.launchTimestamp),
           isNotNull(launches.initialSupply),
+          cursorPredicate,
         ),
       )
       .orderBy(
