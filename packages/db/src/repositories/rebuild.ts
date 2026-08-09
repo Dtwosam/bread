@@ -244,7 +244,7 @@ export class RebuildRepository {
     const persistedStates = rows<{
       tokenAddress: string; trackedQuote: string | null; trackedTokens: string | null; quoteFeeBalance: string | null;
       creatorTaxBalance: string | null; realQuoteReserve: string | null; virtualQuoteReserve: string | null;
-      remainingSellableTokens: string | null; readyToGraduate: boolean | null; graduationPhase: string;
+      remainingSellableTokens: string | null; readyToGraduate: boolean | null; graduationPhase: string | null;
       sweptTokenAmount: string | null; sweptUsdcAmount: string | null; poolId: string | null; positionId: string | null;
       positionLocked: boolean; tokenSupplyLocked: string | null;
     }>(stateResult).map((row) => ({
@@ -257,7 +257,7 @@ export class RebuildRepository {
       virtualQuoteReserve: row.virtualQuoteReserve === null ? null : BigInt(row.virtualQuoteReserve),
       remainingSellableTokens: row.remainingSellableTokens === null ? null : BigInt(row.remainingSellableTokens),
       readyToGraduate: row.readyToGraduate,
-      graduationPhase: row.graduationPhase,
+      graduationPhase: row.graduationPhase ?? 'NOT_GRADUATED',
       sweptTokenAmount: row.sweptTokenAmount === null ? null : BigInt(row.sweptTokenAmount),
       sweptUsdcAmount: row.sweptUsdcAmount === null ? null : BigInt(row.sweptUsdcAmount),
       poolId: row.poolId,
