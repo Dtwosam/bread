@@ -12,6 +12,9 @@ const actual = await readFile(outputPath, 'utf8');
 if (actual !== expected) {
   console.error('bread-abi-check: FAIL: generated ABI registry is stale');
   console.error('Run `pnpm abi:generate` after `forge build` and commit the result.');
+  console.error('--- BEGIN EXPECTED GENERATED ABI ---');
+  console.error(expected);
+  console.error('--- END EXPECTED GENERATED ABI ---');
   process.exit(1);
 }
 
