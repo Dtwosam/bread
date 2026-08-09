@@ -79,7 +79,7 @@ contract DeployDay5Graduation {
 
         VM.startBroadcast(deploymentKey);
         deployment = _deployAndWire(input);
-        _handoffOwnership(deployment, input);
+        _handoffOwnership(deployment, input.protocolAdmin);
         VM.stopBroadcast();
     }
 
@@ -193,18 +193,12 @@ contract DeployDay5Graduation {
         d.factory.setLaunchConfig(config);
     }
 
-    function _handoffOwnership(Deployment memory d, Inputs memory input) private {
-        BreadFeePolicy feePolicy = d.feePolicy;
-        BreadFeeEscrow feeEscrow = d.feeEscrow;
-        BreadEmergencyController emergencyController = d.emergencyController;
-        BreadLaunchFactory factory = d.factory;
-        GraduationCoordinator coordinator = d.coordinator;
-
-        feePolicy.transferOwnership(input.protocolAdmin);
-        feeEscrow.transferOwnership(input.protocolAdmin);
-        emergencyController.transferOwnership(input.protocolAdmin);
-        factory.transferOwnership(input.protocolAdmin);
-        coordinator.transferOwnership(input.protocolAdmin);
+    function _handoffOwnership(Deployment memory d, address protocolAdmin) private {
+        d.feePolicy.transferOwnership(protocolAdmin);
+        d.feeEscrow.transferOwnership(protocolAdmin);
+        d.emergencyController.transferOwnership(protocolAdmin);
+        d.factory.transferOwnership(protocolAdmin);
+        d.coordinator.transferOwnership(protocolAdmin);
     }
 
     function _u16(string memory name, uint256 value) private pure returns (uint16 result) {
