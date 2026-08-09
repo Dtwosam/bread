@@ -45,7 +45,7 @@ describe('Day 6 Task 4 source conformance', () => {
   it('classifies a later-range event from a previously indexed launch address', async () => {
     const module = await optionalModule('../../apps/indexer/src/normalize.ts');
     const normalizeTransactionLogs = module.normalizeTransactionLogs as
-      | ((input: Record<string, unknown>) => Promise<{ events: readonly Array<{ contractRole: string; eventName: string }> }>)
+      | ((input: Record<string, unknown>) => Promise<{ events: ReadonlyArray<{ contractRole: string; eventName: string }> }>)
       | undefined;
     expect(normalizeTransactionLogs).toBeTypeOf('function');
 
