@@ -370,6 +370,10 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
         toBlockTimestamp: 1_786_262_400n,
         logs: fromBlock <= 100n && toBlock >= 100n ? launchLogs : [],
       }),
+      verifyRebuildTarget: async () => ({
+        targetMode: 'LOCAL_TEST',
+        targetIdentity: `${schemaName}:deterministic-rebuild`,
+      }),
       chain: authoritativeReader({
         scanCanonicalEventIdentities: async () => [
           { transactionHash: txHash, logIndex: 0 },
