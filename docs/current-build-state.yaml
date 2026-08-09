@@ -1,4 +1,4 @@
-schema_version: 1.12
+schema_version: 1.15
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -10,13 +10,12 @@ completed_checkpoints:
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
-  - "Day 5 preflight: DAY_5_PREFLIGHT_RECONCILIATION_PASS"
-  - "Day 5 source gate: PROJECT_SOURCE_V1_5_DAY5_RATIFICATION_RATIFIED"
-  - "Day 5 design: WRITTEN_DESIGN_APPROVED"
-  - "Day 5 plan: IMPLEMENTATION_PLAN_V2_SELF_REVIEWED"
-active_checkpoint: "Day 5 — graduation implementation merge/closeout gate"
-active_lane: "PR #27 implementation candidate is audited and green; evidence/state stamp requires exact-head CI before guarded merge"
-active_gate: DAY5_EVIDENCE_BEARING_EXACT_HEAD_CI_AND_GUARDED_MERGE
+  - "Day 5 preflight/source/design/plan: PASS and RATIFIED"
+  - "Day 5 implementation PR #27: GUARDED_MERGE_PASS"
+  - "Day 5 post-merge adversarial security PR #28: PASS and MERGED"
+active_checkpoint: "Day 5 — fresh merged-main closeout after adversarial hardening"
+active_lane: "Closeout PR #30 starts from hardened main and must pass prerequisite CI, stamped CI, guarded merge, then durable handoff"
+active_gate: DAY5_HARDENED_MAIN_CLOSEOUT_PREREQUISITE_CI
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -27,61 +26,63 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY5-DESIGN-PLAN-MERGED-BASELINE
+  id: DAY5-HARDENED-MERGED-MAIN
   branch: main
-  head: ee315b4feb255b6c84c0b1ef51623a1155d77844
+  head: 6608222f0716f52392922291288ac94f4b55f84a
   day4_closeout_milestone: 7533b9f243e1c53106188aa662919f6166448f2e
-  day4_durable_handoff_main: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
-  day5_preflight_evidence_main: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
   day5_start_baseline: ee315b4feb255b6c84c0b1ef51623a1155d77844
-  status: DAY5_IMPLEMENTATION_CANDIDATE_GREEN_PENDING_GUARDED_MERGE
+  day5_implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
+  day5_implementation_ci: 31285733919
+  day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
+  day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
+  day5_postmerge_security_ci: 31285860020
+  status: DAY5_HARDENED_MAIN_CLOSEOUT_PENDING
 working_branches:
-  - agent/day5-graduation-adapter-lock
+  - checkpoint/day5-merged-main-closeout-v2
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   day5_implementation_pr: 27
-  day5_implementation_branch: agent/day5-graduation-adapter-lock
-  day5_design_spec: docs/superpowers/specs/2026-08-08-day5-graduation-coordinator-design.md
-  day5_plan: docs/superpowers/plans/2026-08-08-day5-graduation-coordinator-v2.md
+  day5_postmerge_security_pr: 28
+  day5_superseded_closeout_pr: 29
+  day5_closeout_pr: 30
   day5_candidate_evidence: docs/evidence/day5-graduation-adapter-lock.md
+  day5_closeout_evidence: docs/evidence/day5-merged-main-closeout.md
   day5_production_code_started: true
-  day5_production_code_status: RATIFIED_PENDING_GUARDED_MERGE
+  day5_production_code_status: MERGED_HARDENED_PENDING_CLOSEOUT_AND_HANDOFF
   day6_production_code_started: false
 day5_scope:
-  production_status: GREEN_CANDIDATE_PENDING_GUARDED_MERGE_AND_CLOSEOUT
+  production_status: HARDENED_MERGED_MAIN_PENDING_CLOSEOUT_AND_DURABLE_HANDOFF
   implemented:
-    - GraduationCoordinator
-    - IGraduationAdapter
+    - GraduationCoordinator and IGraduationAdapter
+    - immutable per-launch graduation destination snapshots
     - permanent liquidity locker
-    - V3 fallback behind the common interface, inactive on Arc manifests
-    - failed automatic graduation and retry behavior
+    - inactive V3 fallback behind the common interface
+    - failed automatic graduation/retry/replay handling
     - explicit dust, donation and wrong-dependency handling
-    - deploy/configure/verify/live-smoke scripts and fail-closed manifests
+    - delayed paused-only rescue and non-renounceable recovery authority
+    - fail-closed deploy/configure/verify/live-smoke operations
+    - temporary deployment authority with exact post-wiring Protocol Admin handoff
+    - post-merge adversarial shared-custody/reentrancy/allowance/rollback proof suite
   v4_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
   v3_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
-  end_gate_candidate:
+  candidate_verdicts:
     - FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS
     - INV_050_056_PASS
     - RETRY_CANNOT_DUPLICATE_LIQUIDITY
     - RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS
-  emergency_continuity: "graduationPaused is restriction-only; Guardian may tighten/pause only; Protocol Admin alone clears/recovery-executes under exact state/time gates"
-  recovery_authority: "coordinator ownership is transferable but renunciation is disabled so delayed stuck-graduation recovery authority cannot be accidentally burned"
 verification:
-  day5_audited_implementation_head: 1f4a8808ce145271f836313e5fd3c73695bc9281
-  day5_audited_implementation_run: 31285422630
-  day5_audited_implementation_jobs: PASS_ALL_FOUR
-  day5_foundry_suites: 34
-  day5_foundry_tests: 196
-  day5_foundry_failures: 0
-  day5_inv_050_056: PASS
-  day5_full_lifecycle: PASS
-  day5_retry_duplicate_liquidity: PASS
-  day5_retry_double_spend: PASS
-  day5_operations_validation: PASS
-  day5_candidate_evidence_commit: 1abda4584ab99c74b09378a13ff291c673203076
-  evidence_bearing_head_ci: PENDING_THIS_STATE_COMMIT
-  merged_main_closeout: NOT_STARTED
+  implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
+  implementation_ci: 31285733919
+  implementation_jobs: PASS_ALL_FOUR
+  implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
+  postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
+  postmerge_security_ci: 31285860020
+  postmerge_security_jobs: PASS_ALL_FOUR
+  hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
+  hardened_main_closeout_prerequisite_ci: PENDING_THIS_STATE_COMMIT
+  stamped_closeout_ci: NOT_STARTED
+  durable_handoff: NOT_STARTED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -89,26 +90,24 @@ blockers:
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; not a Bread Day-5 engineering blocker"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; not a Day-5 engineering blocker"
   PONS_V2_RUNTIME_REFERENCE: "numeric reference state remains pending; do not guess"
-  BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics and authority values remain unfrozen"
+  BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "no public completed Pons audit report verified; continuing watch; Bread independent review remains required before unrestricted public funds"
-  ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet or canonical DEX values may be invented"
+  ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 security_review:
-  source_led_manual_review: COMPLETE_FOR_DAY5_CANDIDATE
+  source_led_manual_review: COMPLETE_FOR_DAY5_IMPLEMENTATION
   coordinator_renounce_hardening: RED_GREEN_VERIFIED
-  permanent_locker_escape_review: PASS_CANDIDATE
-  retry_replay_custody_review: PASS_CANDIDATE
+  deployment_authority_handoff: EXACT_HEAD_CI_VERIFIED_BEFORE_MERGE
+  postmerge_adversarial_suite: MERGED_AND_EXACT_HEAD_CI_VERIFIED
   external_independent_review: OPEN_PUBLIC_MAINNET_RELEASE_GATE
-  pons_audit_clean_claim: NONE
 next_action: >-
-  Run all four repository CI jobs on the evidence-bearing PR #27 head created by this build-state update. If and only if that exact head is green, reverify main, PR head, mergeability and review state; mark PR ready and merge with expected-head protection. Then verify actual merged main and perform a fresh docs-only Day-5 merged-main closeout plus durable handoff. Do not begin Day-6 production work until Day 5 is durably closed.
+  Run all four repository jobs on closeout PR #30's exact prerequisite head. If all pass, stamp that exact head/run into closeout evidence and state, rerun all four jobs on the stamped head, then guarded-merge only if PR #30 head/base/mergeability/reviews remain unchanged. Verify merged main and create a durable post-closeout handoff. Day 6 production remains blocked until that handoff is durable on main.
 do_not_do:
-  - "Do not call Day 5 durably complete before guarded merge plus fresh merged-main closeout/handoff."
-  - "Do not start Day-6 production code from an unmerged Day-5 branch."
-  - "Do not reopen closed Day-4 economics/security behavior without a newly ratified source change."
-  - "Do not claim exact current-live Pons V2 source/runtime parity."
-  - "Do not claim Pons V2 is audit-clean."
-  - "Do not infer or guess Pons runtime numbers, Bread production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
-  - "Do not activate a V4/V3 Arc network adapter without official deployment evidence and compatibility tests."
+  - "Do not merge superseded closeout PR #29."
+  - "Do not call Day 5 durably complete before PR #30 stamped closeout merge and durable handoff."
+  - "Do not start Day-6 production code before durable Day-5 handoff main."
+  - "Do not claim exact current-live Pons V2 source/runtime parity or audit-clean status."
+  - "Do not infer or guess production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
+  - "Do not activate V4/V3 on Arc without official deployment evidence and compatibility tests."
   - "When chat context is roughly 90% full, stop before a new critical slice and write a durable handoff/rollover prompt."
