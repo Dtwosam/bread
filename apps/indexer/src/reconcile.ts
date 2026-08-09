@@ -42,7 +42,10 @@ export type ReconciliationChainReader = Readonly<{
   }>>;
   readGraduationState: (input: Readonly<{ tokenAddress: string; blockNumber: bigint }>) => Promise<Readonly<{
     phase: string;
+    sweptTokenAmount: bigint;
+    sweptUsdcAmount: bigint;
     poolId: string | null;
+    positionId: bigint | null;
     positionLocked: boolean;
     tokenSupplyLocked: bigint;
   }>>;
@@ -251,19 +254,31 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     graduationActual.push({
       token: launch.tokenAddress,
       phase: projected?.graduationPhase ?? null,
+      sweptTokenAmount: projected?.sweptTokenAmount ?? 0n,
+      sweptUsdcAmount: projected?.sweptUsdcAmount ?? 0n,
       poolId: projected?.poolId ?? null,
+      positionId: projected?.positionId ?? null,
       positionLocked: projected?.positionLocked ?? null,
-      tokenSupplyLocked: projected?.tokenSupplyLocked ?? null,
+      tokenSupplyLocked: projected?.tokenSupplyLocked ?? 0n,
     });
     if (
       !projected ||
       projected.graduationPhase !== authoritative.phase ||
+      (projected.sweptTokenAmount ?? 0n) !== authoritative.sweptTokenAmount ||
+      (projected.sweptUsdcAmount ?? 0n) !== authoritative.sweptUsdcAmount ||
       (projected.poolId ?? null)?.toLowerCase() !== (authoritative.poolId ?? null)?.toLowerCase() ||
+      (projected.positionId ?? null) !== authoritative.positionId ||
       projected.positionLocked !== authoritative.positionLocked ||
       (projected.tokenSupplyLocked ?? 0n) !== authoritative.tokenSupplyLocked
     ) graduationMatch = false;
   }
-  checks.push(check('REC-04', graduationMatch, graduationExpected, graduationActual, 'Coordinator/locker projection must match authoritative graduation state.'));
+  checks.push(check(
+    'REC-04',
+    graduationMatch,
+    graduationExpected,
+    graduationActual,
+    'Coordinator/locker phase, swept amounts, pool/position identity and lock projection must match authoritative graduation state.',
+  ));
 
   const expectedHashes = snapshot.stack?.runtimeCodeHashes ?? null;
   const observedHashes: Record<string, string> = {};
