@@ -25,11 +25,11 @@ jobs:
         run: docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
       - name: Verify Redis
         run: test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
-      - name: Run Day 6 Task 5 trade vertical against PostgreSQL
+      - name: Run Day 6 Task 5 trade vertical and conformance against PostgreSQL
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
-        run: pnpm exec vitest run tests/day6/trade-vertical.test.ts
+        run: pnpm exec vitest run tests/day6/trade-vertical.test.ts tests/day6/trade-conformance.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
