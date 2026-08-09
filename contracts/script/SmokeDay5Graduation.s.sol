@@ -23,12 +23,33 @@ contract SmokeDay5Graduation {
 
     error InvalidPrivateKeyOwner();
     error InvalidSmokeInput();
+    error SmokeApprovalFailed();
     error GraduationDidNotComplete();
     error PositionNotPermanentlyLocked();
     error GraduationResidueNotReconciled();
     error CreatorClaimPathMissing();
     error CreatorClaimMismatch();
     error ReplayUnexpectedlySucceeded();
+
+    struct SmokeContext {
+        IBreadLaunchFactory factory;
+        GraduationCoordinator coordinator;
+        BreadPermanentLiquidityLocker locker;
+        IERC20 usdc;
+        BreadFeeEscrow feeEscrow;
+        address operator;
+    }
+
+    struct SmokeInput {
+        uint256 quoteIn;
+        uint256 minTokensOut;
+        uint16 creatorTaxBps;
+    }
+
+    struct LaunchResult {
+        address token;
+        address curve;
+    }
 
     event Day5SmokePass(
         address indexed token,
@@ -41,81 +62,126 @@ contract SmokeDay5Graduation {
     function run() external {
         uint256 privateKey = VM.envUint("BREAD_SMOKE_PRIVATE_KEY");
         address operator = VM.addr(privateKey);
-        address expectedOperator = VM.envAddress("BREAD_SMOKE_OPERATOR");
-        if (operator != expectedOperator) revert InvalidPrivateKeyOwner();
+        if (operator != VM.envAddress("BREAD_SMOKE_OPERATOR")) revert InvalidPrivateKeyOwner();
 
-        IBreadLaunchFactory factory = IBreadLaunchFactory(VM.envAddress("BREAD_FACTORY"));
-        GraduationCoordinator coordinator = GraduationCoordinator(VM.envAddress("BREAD_GRADUATION_COORDINATOR"));
-        BreadPermanentLiquidityLocker locker =
-            BreadPermanentLiquidityLocker(VM.envAddress("BREAD_PERMANENT_LIQUIDITY_LOCKER"));
-        IERC20 usdc = IERC20(VM.envAddress("BREAD_USDC"));
-        BreadFeeEscrow feeEscrow = BreadFeeEscrow(coordinator.feeEscrow());
-        uint256 quoteIn = VM.envUint("BREAD_SMOKE_QUOTE_IN");
-        uint256 minTokensOut = VM.envUint("BREAD_SMOKE_MIN_TOKENS_OUT");
-        uint256 creatorTaxRaw = VM.envUint("BREAD_SMOKE_CREATOR_TAX_BPS");
-        if (quoteIn == 0 || minTokensOut == 0 || creatorTaxRaw == 0 || creatorTaxRaw > type(uint16).max) {
-            revert InvalidSmokeInput();
-        }
-
-        (IBreadLaunchFactory.LaunchConfig memory config,) = factory.currentLaunchConfig();
-        uint256 totalApproval = config.launchFeeUsdc + quoteIn;
-        if (usdc.balanceOf(operator) < totalApproval) revert InvalidSmokeInput();
+        SmokeContext memory context = _readContext(operator);
+        SmokeInput memory input = _readInput();
+        _validateFunding(context, input);
 
         VM.startBroadcast(privateKey);
-        require(usdc.approve(address(factory), totalApproval), "SMOKE_APPROVE_FAILED");
-        (address token, address curveAddress, uint256 tokensOut) = factory.launchTokenAndBuy(
-            IBreadLaunchFactory.LaunchParams({
-                name: "Bread Day5 Smoke",
-                symbol: "BD5S",
-                logo: "",
-                description: "Day-5 operational smoke",
-                twitter: "",
-                telegram: "",
-                discord: "",
-                website: "",
-                farcaster: "",
-                creatorFeeRecipient: operator,
-                creatorTaxBps: uint16(creatorTaxRaw),
-                expectedEconomics: factory.previewLaunchEconomics()
-            }),
-            quoteIn,
-            minTokensOut,
-            operator
-        );
-        if (tokensOut < minTokensOut) revert InvalidSmokeInput();
+        LaunchResult memory launch = _launch(context, input);
+        IGraduationCoordinator.GraduationRecord memory graduation = _completeGraduation(context, launch);
+        uint256 creatorClaimed = _claimCreatorFees(context);
+        _assertReplayRejected(context.coordinator, launch.token);
+        VM.stopBroadcast();
 
-        BreadBondingCurve curve = BreadBondingCurve(curveAddress);
-        IGraduationCoordinator.GraduationRecord memory graduation = coordinator.getGraduation(token);
-        if (graduation.phase == IGraduationCoordinator.GraduationPhase.NOT_GRADUATED && curve.readyToGraduate()) {
-            coordinator.sweep(token);
-            graduation = coordinator.getGraduation(token);
+        emit Day5SmokePass(
+            launch.token,
+            launch.curve,
+            graduation.poolId,
+            graduation.positionId,
+            creatorClaimed
+        );
+    }
+
+    function _readContext(address operator) private returns (SmokeContext memory context) {
+        context.factory = IBreadLaunchFactory(VM.envAddress("BREAD_FACTORY"));
+        context.coordinator = GraduationCoordinator(VM.envAddress("BREAD_GRADUATION_COORDINATOR"));
+        context.locker = BreadPermanentLiquidityLocker(VM.envAddress("BREAD_PERMANENT_LIQUIDITY_LOCKER"));
+        context.usdc = IERC20(VM.envAddress("BREAD_USDC"));
+        context.feeEscrow = BreadFeeEscrow(context.coordinator.feeEscrow());
+        context.operator = operator;
+    }
+
+    function _readInput() private returns (SmokeInput memory input) {
+        uint256 creatorTaxRaw = VM.envUint("BREAD_SMOKE_CREATOR_TAX_BPS");
+        input.quoteIn = VM.envUint("BREAD_SMOKE_QUOTE_IN");
+        input.minTokensOut = VM.envUint("BREAD_SMOKE_MIN_TOKENS_OUT");
+        if (
+            input.quoteIn == 0 || input.minTokensOut == 0 || creatorTaxRaw == 0
+                || creatorTaxRaw > type(uint16).max
+        ) revert InvalidSmokeInput();
+        input.creatorTaxBps = uint16(creatorTaxRaw);
+    }
+
+    function _validateFunding(SmokeContext memory context, SmokeInput memory input) private view {
+        (IBreadLaunchFactory.LaunchConfig memory config,) = context.factory.currentLaunchConfig();
+        uint256 totalApproval = config.launchFeeUsdc + input.quoteIn;
+        if (context.usdc.balanceOf(context.operator) < totalApproval) revert InvalidSmokeInput();
+    }
+
+    function _launch(SmokeContext memory context, SmokeInput memory input)
+        private
+        returns (LaunchResult memory launch)
+    {
+        (IBreadLaunchFactory.LaunchConfig memory config,) = context.factory.currentLaunchConfig();
+        uint256 totalApproval = config.launchFeeUsdc + input.quoteIn;
+        if (!context.usdc.approve(address(context.factory), totalApproval)) revert SmokeApprovalFailed();
+
+        uint256 tokensOut;
+        (launch.token, launch.curve, tokensOut) = context.factory.launchTokenAndBuy(
+            _launchParams(context, input.creatorTaxBps),
+            input.quoteIn,
+            input.minTokensOut,
+            context.operator
+        );
+        if (tokensOut < input.minTokensOut) revert InvalidSmokeInput();
+    }
+
+    function _launchParams(SmokeContext memory context, uint16 creatorTaxBps)
+        private
+        view
+        returns (IBreadLaunchFactory.LaunchParams memory params)
+    {
+        params.name = "Bread Day5 Smoke";
+        params.symbol = "BD5S";
+        params.description = "Day-5 operational smoke";
+        params.creatorFeeRecipient = context.operator;
+        params.creatorTaxBps = creatorTaxBps;
+        params.expectedEconomics = context.factory.previewLaunchEconomics();
+    }
+
+    function _completeGraduation(SmokeContext memory context, LaunchResult memory launch)
+        private
+        returns (IGraduationCoordinator.GraduationRecord memory graduation)
+    {
+        BreadBondingCurve curve = BreadBondingCurve(launch.curve);
+        graduation = context.coordinator.getGraduation(launch.token);
+        if (
+            graduation.phase == IGraduationCoordinator.GraduationPhase.NOT_GRADUATED
+                && curve.readyToGraduate()
+        ) {
+            context.coordinator.sweep(launch.token);
+            graduation = context.coordinator.getGraduation(launch.token);
         }
         if (graduation.phase == IGraduationCoordinator.GraduationPhase.SWEPT) {
-            coordinator.createPool(token);
-            graduation = coordinator.getGraduation(token);
+            context.coordinator.createPool(launch.token);
+            graduation = context.coordinator.getGraduation(launch.token);
         }
         if (graduation.phase != IGraduationCoordinator.GraduationPhase.POOL_CREATED) {
             revert GraduationDidNotComplete();
         }
-        if (!locker.isPositionLocked(token)) revert PositionNotPermanentlyLocked();
+        if (!context.locker.isPositionLocked(launch.token)) revert PositionNotPermanentlyLocked();
         if (graduation.sweptUsdc != 0 || graduation.sweptTokens != 0 || graduation.poolTokenAmount != 0) {
             revert GraduationResidueNotReconciled();
         }
+    }
 
-        uint256 creatorCredit = feeEscrow.balanceOf(operator);
+    function _claimCreatorFees(SmokeContext memory context) private returns (uint256 creatorClaimed) {
+        uint256 creatorCredit = context.feeEscrow.balanceOf(context.operator);
         if (creatorCredit == 0) revert CreatorClaimPathMissing();
-        uint256 beforeClaim = usdc.balanceOf(operator);
-        uint256 creatorClaimed = feeEscrow.claim();
-        if (creatorClaimed != creatorCredit || usdc.balanceOf(operator) != beforeClaim + creatorClaimed) {
-            revert CreatorClaimMismatch();
-        }
+        uint256 beforeClaim = context.usdc.balanceOf(context.operator);
+        creatorClaimed = context.feeEscrow.claim();
+        if (
+            creatorClaimed != creatorCredit
+                || context.usdc.balanceOf(context.operator) != beforeClaim + creatorClaimed
+        ) revert CreatorClaimMismatch();
+    }
 
+    function _assertReplayRejected(GraduationCoordinator coordinator, address token) private {
         (bool replay,) = address(coordinator).call(
             abi.encodeWithSelector(coordinator.createPool.selector, token)
         );
         if (replay) revert ReplayUnexpectedlySucceeded();
-        VM.stopBroadcast();
-
-        emit Day5SmokePass(token, curveAddress, graduation.poolId, graduation.positionId, creatorClaimed);
     }
 }
