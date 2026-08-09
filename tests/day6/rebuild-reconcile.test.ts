@@ -236,9 +236,13 @@ async function insertJournalEvent(
 function authoritativeReader(overrides: Record<string, unknown> = {}) {
   const runtimeHashes: Record<string, string> = {
     [factory.toLowerCase()]: hash('1'),
+    [context.addresses.deployer!.toLowerCase()]: hash('c'),
+    [context.addresses.feePolicy!.toLowerCase()]: hash('d'),
     [feeEscrow.toLowerCase()]: hash('2'),
-    [coordinator.toLowerCase()]: hash('3'),
+    [context.addresses.emergencyController!.toLowerCase()]: hash('e'),
     [locker.toLowerCase()]: hash('4'),
+    [coordinator.toLowerCase()]: hash('3'),
+    [adapter.toLowerCase()]: hash('8'),
   };
   return {
     countLaunchCreated: async () => 1n,
@@ -328,7 +332,19 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
       logs: launchLogs,
     });
     await pool.query(`UPDATE protocol_stacks SET runtime_code_hashes=$1::jsonb WHERE chain_id=$2 AND stack_version=$3 AND factory_address=$4`, [
-      JSON.stringify({ factory: hash('1'), feeEscrow: hash('2') }), context.chainId, context.stackVersion, factory,
+      JSON.stringify({
+        factory: hash('1'),
+        deployer: hash('c'),
+        feePolicy: hash('d'),
+        feeEscrow: hash('2'),
+        emergencyController: hash('e'),
+        locker: hash('4'),
+        coordinator: hash('3'),
+        graduationAdapter: hash('8'),
+      }),
+      context.chainId,
+      context.stackVersion,
+      factory,
     ]);
 
     const otherStack = 'task10-other-stack';
@@ -364,7 +380,11 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
     });
     const after = await digestStack(pool);
     expect(after).toBe(before);
-    expect(result).toMatchObject({ fromBlock: '100', toBlock: '100', reconciliation: expect.any(Object) });
+    expect(result).toMatchObject({
+      fromBlock: '100',
+      toBlock: '100',
+      reconciliation: { status: 'PASS' },
+    });
 
     const other = await pool.query(`SELECT count(*)::int AS count FROM launches WHERE stack_version=$1 AND factory_address=$2`, [otherStack, otherFactory]);
     expect(other.rows[0]?.count).toBe(1);
