@@ -9,9 +9,17 @@ export type ReconciliationCheck = Readonly<{
 }>;
 
 export type ReconciliationReport = Readonly<{
+  reportVersion: string;
   status: 'PASS' | 'FAIL';
   chainId: number;
   stackVersion: string;
+  factoryAddress: string;
+  manifestHash: string | null;
+  sourceHash: string | null;
+  deploymentStartBlock: string;
   checkedBlock: string;
+  checkedBlockHash: string;
+  startedAt: string;
+  completedAt: string;
   checks: readonly ReconciliationCheck[];
 }>;
