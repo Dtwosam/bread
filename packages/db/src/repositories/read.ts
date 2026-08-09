@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNotNull, lt, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNotNull, lt, or, sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
 import { indexerCheckpoints, launches } from '../schema/projections.js';
@@ -8,6 +8,42 @@ export type NewLaunchCursorKey = Readonly<{
   launchTimestamp: string;
   launchLogIndex: number;
   tokenAddress: string;
+}>;
+
+export type TradeCursorKey = Readonly<{
+  blockNumber: string;
+  transactionIndex: number;
+  logIndex: number;
+  transactionHash: string;
+}>;
+
+export type TradeReadRow = Readonly<{
+  chainId: number;
+  transactionHash: string;
+  logIndex: number;
+  tokenAddress: string;
+  curveAddress: string;
+  side: string;
+  traderAddress: string;
+  recipientAddress: string;
+  baseAmount: string;
+  quoteAmount: string;
+  feeAmount: string;
+  taxAmount: string;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionIndex: number;
+  stackVersion: string;
+  offeredQuote: string;
+  openingTaxBps: string;
+  openingTaxAmount: string;
+  launchBuyExempt: boolean;
+  refundAmount: string;
+  netCurveInput: string;
+  netQuoteOut: string;
+  grossCurveQuoteOut: string;
+  executionPriceNumerator: string;
+  executionPriceDenominator: string;
 }>;
 
 export function decimalIntegerToBigInt(value: string | number | bigint): bigint {
@@ -39,6 +75,11 @@ function normalizeLaunchRow(row: typeof launches.$inferSelect) {
     reservedTokensBaseline: optionalBigInt(row.reservedTokensBaseline),
     launchBlockNumber: decimalIntegerToBigInt(row.launchBlockNumber),
   } as const;
+}
+
+function resultRows<T>(result: unknown): T[] {
+  const candidate = result as { rows?: T[] };
+  return Array.isArray(candidate?.rows) ? candidate.rows : [];
 }
 
 export class ReadRepository {
@@ -150,5 +191,52 @@ export class ReadRepository {
       )
       .limit(boundedLimit);
     return rows.map(normalizeLaunchRow);
+  }
+
+  async listTrades(chainId: number, tokenAddress: string, limit: number, cursor?: TradeCursorKey): Promise<TradeReadRow[]> {
+    const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
+    const cursorClause = cursor
+      ? sql`AND (
+          block_number < ${cursor.blockNumber}
+          OR (block_number = ${cursor.blockNumber} AND transaction_index < ${cursor.transactionIndex})
+          OR (block_number = ${cursor.blockNumber} AND transaction_index = ${cursor.transactionIndex} AND log_index < ${cursor.logIndex})
+        )`
+      : sql``;
+    const result = await this.db.execute(sql`
+      SELECT
+        chain_id AS "chainId",
+        transaction_hash AS "transactionHash",
+        log_index AS "logIndex",
+        token_address AS "tokenAddress",
+        curve_address AS "curveAddress",
+        side,
+        trader_address AS "traderAddress",
+        recipient_address AS "recipientAddress",
+        base_amount::text AS "baseAmount",
+        quote_amount::text AS "quoteAmount",
+        fee_amount::text AS "feeAmount",
+        tax_amount::text AS "taxAmount",
+        block_number::text AS "blockNumber",
+        block_timestamp::text AS "blockTimestamp",
+        transaction_index AS "transactionIndex",
+        stack_version AS "stackVersion",
+        offered_quote::text AS "offeredQuote",
+        opening_tax_bps::text AS "openingTaxBps",
+        opening_tax_amount::text AS "openingTaxAmount",
+        launch_buy_exempt AS "launchBuyExempt",
+        refund_amount::text AS "refundAmount",
+        net_curve_input::text AS "netCurveInput",
+        net_quote_out::text AS "netQuoteOut",
+        gross_curve_quote_out::text AS "grossCurveQuoteOut",
+        execution_price_numerator::text AS "executionPriceNumerator",
+        execution_price_denominator::text AS "executionPriceDenominator"
+      FROM trades
+      WHERE chain_id = ${chainId}
+        AND token_address = ${tokenAddress.toLowerCase()}
+        ${cursorClause}
+      ORDER BY block_number DESC, transaction_index DESC, log_index DESC
+      LIMIT ${boundedLimit}
+    `);
+    return resultRows<TradeReadRow>(result);
   }
 }
