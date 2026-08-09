@@ -125,8 +125,9 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     await pool.query(`INSERT INTO event_journal
       (chain_id, transaction_hash, log_index, block_number, block_hash, block_timestamp, transaction_index,
        contract_address, contract_role, stack_version, topic0, topics, data, event_name, payload, token_address, curve_address)
-      VALUES ($1,$2,1,'100',$3,'1786262400',0,$4,'FACTORY',$5,$6,ARRAY[$6]::text[],'0x','LaunchCreated','{}'::jsonb,$7,$8)`, [
-      context.chainId, hash(100), hash(100), context.factoryAddress, context.stackVersion, hash(900), token, curve,
+      VALUES ($1,$2,1,'100',$3,'1786262400',0,$4,'FACTORY',$5,$6,$7::jsonb,'0x','LaunchCreated','{}'::jsonb,$8,$9)`, [
+      context.chainId, hash(100), hash(100), context.factoryAddress, context.stackVersion, hash(900),
+      JSON.stringify([hash(900)]), token, curve,
     ]);
   }
 
@@ -178,8 +179,9 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     await pool.query(`INSERT INTO event_journal
       (chain_id, transaction_hash, log_index, block_number, block_hash, block_timestamp, transaction_index,
        contract_address, contract_role, stack_version, topic0, topics, data, event_name, payload)
-      VALUES ($1,$2,0,'106',$3,'1786262406',0,$4,'FACTORY',$5,$6,ARRAY[$6]::text[],'0x','OwnershipTransferred','{}'::jsonb)`, [
+      VALUES ($1,$2,0,'106',$3,'1786262406',0,$4,'FACTORY',$5,$6,$7::jsonb,'0x','OwnershipTransferred','{}'::jsonb)`, [
       context.chainId, hash(106), hash(106), context.factoryAddress, context.stackVersion, hash(901),
+      JSON.stringify([hash(901)]),
     ]);
     const report = await reconcile(baseChain({ scanCanonicalEventIdentities: async () => [] }));
     expect(report.checks.find((check) => check.id === 'REC-06')?.status).toBe('FAIL');
