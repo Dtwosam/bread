@@ -52,7 +52,7 @@ function baseChain(overrides: Record<string, unknown> = {}) {
     }),
     readFeeEscrowState: async () => ({ totalOutstanding: 50n, custody: 55n }),
     readGraduationState: async () => ({
-      phase: 'SWEPT', sweptTokenAmount: 100n, sweptPairAmount: 50n, poolId: null, positionId: null,
+      phase: 'SWEPT', sweptTokenAmount: 100n, sweptUsdcAmount: 50n, poolId: null, positionId: null,
       positionLocked: false, tokenSupplyLocked: 0n,
     }),
     getRuntimeCodeHash: async (target: string) => ({
@@ -109,7 +109,7 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     await pool.query(`INSERT INTO launch_state
       (chain_id, token_address, tracked_quote, tracked_tokens, quote_fee_balance, creator_tax_balance,
        real_quote_reserve, virtual_quote_reserve, remaining_sellable_tokens, ready_to_graduate,
-       graduation_phase, swept_token_amount, swept_pair_amount, pool_id, position_id, position_locked,
+       graduation_phase, swept_token_amount, swept_usdc_amount, pool_id, position_id, position_locked,
        token_supply_locked, latest_block_number, latest_transaction_hash, latest_log_index)
       VALUES ($1,$2,'500','800','20','5','500','750','700',false,'SWEPT','100','50',NULL,NULL,false,'0','105',$3,2)`, [context.chainId, token, hash(105)]);
     await pool.query(`INSERT INTO fee_credits
@@ -160,8 +160,8 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     await seedBase();
     const report = await reconcile(baseChain({
       readGraduationState: async () => ({
-        phase: 'SWEPT', sweptTokenAmount: 999n, sweptPairAmount: 50n, poolId: null,
-        positionId: hash(333), positionLocked: false, tokenSupplyLocked: 0n,
+        phase: 'SWEPT', sweptTokenAmount: 999n, sweptUsdcAmount: 50n, poolId: null,
+        positionId: 333n, positionLocked: false, tokenSupplyLocked: 0n,
       }),
     }));
     expect(report.checks.find((check) => check.id === 'REC-04')?.status).toBe('FAIL');
