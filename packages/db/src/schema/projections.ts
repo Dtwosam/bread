@@ -8,6 +8,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 const amount = (name: string) => numeric(name, { precision: 78, scale: 0 });
@@ -28,7 +29,7 @@ export const protocolStacks = pgTable(
     runtimeCodeHashes: jsonb('runtime_code_hashes').$type<Record<string, string>>(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.chainId, table.stackVersion] })],
+  (table) => [primaryKey({ columns: [table.chainId, table.stackVersion, table.factoryAddress] })],
 );
 
 export const launches = pgTable(
@@ -54,7 +55,7 @@ export const launches = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.chainId, table.tokenAddress] }),
-    index('launches_curve_idx').on(table.chainId, table.curveAddress),
+    unique('launches_chain_curve_unique').on(table.chainId, table.curveAddress),
     index('launches_stack_idx').on(table.chainId, table.stackVersion, table.launchBlockNumber),
   ],
 );
@@ -207,11 +208,19 @@ export const indexerCheckpoints = pgTable(
   {
     chainId: integer('chain_id').notNull(),
     stackVersion: text('stack_version').notNull(),
+    factoryAddress: text('factory_address').notNull(),
+    deploymentStartBlock: amount('deployment_start_block').notNull(),
     indexedThroughBlock: amount('indexed_through_block').notNull(),
     indexedThroughBlockHash: text('indexed_through_block_hash').notNull(),
+    indexedThroughBlockTimestamp: amount('indexed_through_block_timestamp'),
+    lastTransactionHash: text('last_transaction_hash'),
+    lastLogIndex: integer('last_log_index'),
+    decoderSchemaVersion: text('decoder_schema_version').notNull().default('day6-v1'),
+    status: text('status').notNull().default('COMMITTED'),
+    appliedAt: timestamp('applied_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.chainId, table.stackVersion] })],
+  (table) => [primaryKey({ columns: [table.chainId, table.stackVersion, table.factoryAddress] })],
 );
 
 export const adminEvents = pgTable(
