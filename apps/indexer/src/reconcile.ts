@@ -393,6 +393,8 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     item.blockNumber >= input.context.deploymentStartBlock
     && item.blockNumber <= input.checkedBlock
     && item.blockNumber <= (checkpoint?.indexedThroughBlock ?? -1n));
+  const journalDecoderMatch = snapshot.journal.every((item) => item.decoderSchemaVersion === DAY6_DB_SCHEMA_VERSION);
+  const observedJournalDecoderVersions = [...new Set(snapshot.journal.map((item) => item.decoderSchemaVersion))].sort();
   const checkpointPass = Boolean(
     checkpoint &&
     snapshot.stack &&
@@ -403,6 +405,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     checkpoint.decoderSchemaVersion === DAY6_DB_SCHEMA_VERSION &&
     checkpoint.status === 'COMMITTED' &&
     journalWithinCheckpoint &&
+    journalDecoderMatch &&
     journalIdentityMatch
   );
   checks.push(check(
@@ -413,15 +416,18 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       indexedThroughBlock: input.checkedBlock,
       indexedThroughBlockHash: observedCheckpointHash.toLowerCase(),
       decoderSchemaVersion: DAY6_DB_SCHEMA_VERSION,
+      journalDecoderSchemaVersion: DAY6_DB_SCHEMA_VERSION,
       status: 'COMMITTED',
       canonicalEventIdentities: authoritativeEventIdentities,
     },
     {
       checkpoint: checkpoint ?? 'MISSING_CHECKPOINT',
       journalWithinCheckpoint,
+      journalDecoderMatch,
+      journalDecoderSchemaVersions: observedJournalDecoderVersions,
       canonicalEventIdentities: projectedEventIdentities,
     },
-    'Checkpoint must match chain, active decoder schema and selected stack continuity, contain no journal rows beyond the checkpoint, and match the canonical chain event-identity set.',
+    'Checkpoint and selected journal rows must match chain, active decoder schema and selected stack continuity, contain no journal rows beyond the checkpoint, and match the canonical chain event-identity set.',
   ));
 
   return {
