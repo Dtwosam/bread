@@ -19,7 +19,7 @@ completed_checkpoints:
   - "Day 6 written design/spec PR #35: APPROVED, EXACT_HEAD_CI_PASS, MERGED"
   - "Day 6 detailed RED->GREEN implementation plan PR #36: SELF_REVIEWED, EXACT_HEAD_CI_PASS, MERGED"
 active_checkpoint: "Day 6 — Task 1 canonical shared protocol contract"
-active_lane: "Task 1 GREEN candidate written after proven RED; exact verification/merge blocked by zero-step GitHub Actions jobs"
+active_lane: "Task 1 exact local verification recovered; generated ABI candidate ready for fresh exact-head GitHub CI"
 active_gate: DAY6_TASK1_EXACT_HEAD_GREEN_AND_GUARDED_MERGE_REQUIRED
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -137,15 +137,27 @@ day6_task1:
   expanded_red_ci: 31288144341
   red_evidence: docs/evidence/day6-task1-shared-contract-red.md
   candidate_before_continuity_docs: 735c29e5ead12ac5ad557c8fc7109967f2a4735d
-  implementation_status: GREEN_CANDIDATE_NOT_VERIFIED
-  exact_abi_status: GENERATED_TARGET_PRESENT_BUT_FOUNDRY_DRIFT_CHECK_NOT_YET_EXECUTED_SUCCESSFULLY
+  implementation_status: LOCAL_EXACT_GATES_PASS_CANDIDATE_GITHUB_CI_PENDING
+  exact_abi_status: EXACT_FOUNDRY_ARTIFACT_GENERATION_AND_LOCAL_DRIFT_CHECK_PASS
   auxiliary_local_typescript_check: PASS_WITH_STUBBED_EXTERNAL_MODULES_NON_AUTHORITATIVE
+  local_verification:
+    starting_head: 4cf874ae05c564c07838e5ee26d2163153f77a51
+    verified_at: 2026-08-09
+    node: 24.18.0
+    pnpm: 11.15.1
+    foundry: v1.5.0
+    bootstrap_tests: 9_PASS
+    focused_day6_tests: 4_PASS
+    foundry_tests: 201_PASS_35_SUITES
+    abi_registry_sha256: cbc7593265f813421cf20488c21a7f1f051c40bc5d3ca10ae17055bfb28debe4
+    infrastructure: POSTGRES_READY_REDIS_PONG_AND_CLEAN_DOWN_PASS
+    evidence: docs/evidence/day6-task1-shared-contract-local-verification.md
   github_actions_blocker:
     first_zero_step_run: 31288355378
     second_zero_step_run: 31288420878
     symptom: "all four jobs completed failure with zero steps and no job logs; repository commands did not execute"
     disposition: EXTERNAL_EXECUTION_BLOCKER_DO_NOT_TREAT_AS_CODE_FAILURE_OR_PASS
-  pass_status: NOT_CLAIMED
+  pass_status: NOT_CLAIMED_PENDING_FRESH_EXACT_HEAD_GITHUB_CI_AND_GUARDED_MERGE
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -162,7 +174,7 @@ execution_blockers:
   GITHUB_ACTIONS_ZERO_STEP_FAILURES: >-
     Exact Task-1 verification cannot currently execute because consecutive PR #37 workflow attempts created failed jobs with zero steps. Do not bypass the exact-head CI/Foundry gate and do not begin Task 2.
 next_action: >-
-  Resume from PR #37. First verify current main remains 81db147ef7be8191981fb10afd425fa4f2f0e280 or reconcile any movement. Trigger a fresh exact-head PR #37 CI only when GitHub Actions can execute job steps. Use the Foundry ABI drift check output to replace packages/protocol-sdk/src/abi/generated.ts with the exact generated registry if needed. Then require focused Day-6 tests, pnpm validate, pnpm typecheck, pnpm build, Foundry build/tests and ABI drift check all green on the exact head. Only after guarded Task-1 merge and durable handoff may Task 2 begin.
+  Push the locally verified Task-1 candidate to PR #37 and trigger fresh exact-head GitHub CI. Require all four jobs to execute real steps and pass on the pushed head. Only after exact-head CI, source/design conformance review, guarded Task-1 merge, merged-main verification, and a durable post-merge handoff may Task 2 begin.
 do_not_do:
   - "Do not claim Day-6 Task 1 PASS from the current GREEN candidate."
   - "Do not bypass exact Foundry ABI generation/drift verification."
