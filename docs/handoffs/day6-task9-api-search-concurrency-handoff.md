@@ -14,7 +14,7 @@ Task-8 durable predecessor: `5549f236460e923159eda3b1e12864b8a4d0ed0a`
 
 Task-9 evidence: `docs/evidence/day6-first-concurrent-read-replay-cache-fanout.md`
 
-Durable handoff PR: pending
+Durable handoff PR: #54
 
 ## Accepted Task-9 behavior
 
@@ -97,12 +97,11 @@ Task 10 MUST NOT start from the implementation merge alone.
 
 Required continuation order:
 
-1. bind the actual Task-9 durable handoff PR identity into this handoff/current build state;
-2. freeze the handoff branch;
-3. run inherited CI plus retained Task-5/6/7/8 and dedicated Task-9 exact-head gates;
-4. guarded-merge the handoff only if all required jobs execute real steps and pass;
-5. verify `main` exactly matches the handoff merge;
-6. only then start Day-6 Task 10 from that durable `main` baseline, RED-first.
+1. freeze this Task-9 durable handoff branch after the PR #54/current-state identity write;
+2. run inherited CI plus retained Task-5/6/7/8 and dedicated Task-9 exact-head gates;
+3. guarded-merge PR #54 only if all required jobs execute real steps and pass;
+4. verify `main` exactly matches the handoff merge;
+5. only then start Day-6 Task 10 from that durable `main` baseline, RED-first.
 
 `DAY6_TASK9_IMPLEMENTATION = GUARDED_MERGE_PASS`
 
