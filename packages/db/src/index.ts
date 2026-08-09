@@ -33,6 +33,13 @@ export {
 export { ReadRepository, decimalIntegerToBigInt } from './repositories/read.js';
 export { SearchRepository, type SearchLaunchInput, type SearchLaunchRow } from './repositories/search.js';
 export {
+  RebuildRepository,
+  type ReconciliationLaunchRow,
+  type ReconciliationLaunchStateRow,
+  type ReconciliationSnapshot,
+  type ReconciliationStackRow,
+} from './repositories/rebuild.js';
+export {
   applyCanonicalTradeProjection,
   type CanonicalTradeProjection,
 } from './repositories/trades.js';
