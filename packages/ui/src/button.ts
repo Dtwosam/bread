@@ -37,6 +37,25 @@ export function Button({
       'aria-label': ariaLabel,
       onClick,
     },
-    loading ? loadingLabel : children,
+    createElement(
+      'span',
+      { className: 'bread-button__content' },
+      createElement(
+        'span',
+        {
+          className: 'bread-button__label',
+          'aria-hidden': loading,
+        },
+        children,
+      ),
+      createElement(
+        'span',
+        {
+          className: 'bread-button__loading',
+          'aria-hidden': !loading,
+        },
+        loadingLabel,
+      ),
+    ),
   );
 }
