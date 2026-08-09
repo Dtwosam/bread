@@ -47,9 +47,8 @@ function containsMutationRoute(source) {
   const routeCalls =
     source.match(/\.route\s*\(\s*\{[\s\S]{0,2000}?\}\s*\)/gi) ?? [];
   return routeCalls.some((routeCall) => {
-    const mutationMethod = /method\s*:\s*["'](?:POST|PUT|PATCH|DELETE)["']/i.test(
-      routeCall,
-    );
+    const mutationMethod =
+      /method\s*:\s*["'](?:POST|PUT|PATCH|DELETE)["']/i.test(routeCall);
     const v1Path = /(?:url|path)\s*:\s*["']\/v1\//i.test(routeCall);
     return mutationMethod && v1Path;
   });
@@ -152,7 +151,9 @@ requirePattern(
 
 await access("scripts/abi/check-bread-abi.mjs");
 const packageJson = JSON.parse(await readRequired("package.json"));
-if (packageJson.scripts?.["abi:check"] !== "node scripts/abi/check-bread-abi.mjs") {
+if (
+  packageJson.scripts?.["abi:check"] !== "node scripts/abi/check-bread-abi.mjs"
+) {
   throw new Error("package.json must retain canonical abi:check wiring");
 }
 const ci = await readRequired(".github/workflows/ci.yml");
