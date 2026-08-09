@@ -7,6 +7,8 @@ on:
       - 'packages/ui/**'
       - 'apps/web/**'
       - 'tests/day7/ui-foundation.test.ts'
+      - 'docs/current-build-state.yaml'
+      - 'docs/handoffs/day7-task1-public-web-foundation-handoff.md'
       - 'pnpm-lock.yaml'
       - 'package.json'
   push:
