@@ -1,4 +1,4 @@
-schema_version: 1.13
+schema_version: 1.14
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -12,9 +12,10 @@ completed_checkpoints:
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
   - "Day 5 preflight/source/design/plan: PASS and RATIFIED"
   - "Day 5 implementation PR #27: GUARDED_MERGE_PASS"
-active_checkpoint: "Day 5 — fresh merged-main closeout"
-active_lane: "Verify actual merged main through closeout prerequisite CI, stamp exact evidence, rerun CI, then durable handoff"
-active_gate: DAY5_MERGED_MAIN_CLOSEOUT_PREREQUISITE_CI
+  - "Day 5 merged-main closeout prerequisite: PASS"
+active_checkpoint: "Day 5 — stamped merged-main closeout"
+active_lane: "Stamped closeout evidence/state must pass fresh exact-head CI before guarded merge"
+active_gate: DAY5_STAMPED_CLOSEOUT_EXACT_HEAD_CI
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -33,20 +34,21 @@ integration_baseline:
   day5_implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
   day5_implementation_ci: 31285733919
   day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
-  status: DAY5_IMPLEMENTATION_MERGED_CLOSEOUT_PENDING
+  status: DAY5_STAMPED_CLOSEOUT_CI_PENDING
 working_branches:
   - checkpoint/day5-merged-main-closeout
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   day5_implementation_pr: 27
+  day5_closeout_pr: 29
   day5_candidate_evidence: docs/evidence/day5-graduation-adapter-lock.md
   day5_closeout_evidence: docs/evidence/day5-merged-main-closeout.md
   day5_production_code_started: true
-  day5_production_code_status: MERGED_PENDING_FRESH_MAIN_CLOSEOUT
+  day5_production_code_status: MERGED_PENDING_STAMPED_CLOSEOUT_AND_HANDOFF
   day6_production_code_started: false
 day5_scope:
-  production_status: MERGED_PENDING_CLOSEOUT_AND_DURABLE_HANDOFF
+  production_status: MERGED_PENDING_STAMPED_CLOSEOUT_AND_DURABLE_HANDOFF
   implemented:
     - GraduationCoordinator and IGraduationAdapter
     - immutable per-launch graduation destination snapshots
@@ -72,8 +74,10 @@ verification:
   premerge_foundry_failures: 0
   guarded_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
   main_identity_after_merge: VERIFIED_IDENTICAL
-  merged_main_closeout_prerequisite_ci: PENDING_THIS_STATE_COMMIT
-  stamped_closeout_ci: NOT_STARTED
+  merged_main_closeout_prerequisite_head: bfc6058c56ef303d3a67bda49ea5276e9ab95da7
+  merged_main_closeout_prerequisite_ci: 31285840826
+  merged_main_closeout_prerequisite_jobs: PASS_ALL_FOUR
+  stamped_closeout_ci: PENDING_THIS_STATE_COMMIT
   durable_handoff: NOT_STARTED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -95,9 +99,9 @@ security_review:
   retry_replay_custody_review: PASS_CANDIDATE
   external_independent_review: OPEN_PUBLIC_MAINNET_RELEASE_GATE
 next_action: >-
-  Run all four repository CI jobs on this fresh merged-main closeout prerequisite head. If all pass, stamp the exact prerequisite head and run into the Day-5 closeout evidence/state, rerun all four jobs on the stamped head, and merge only that exact green head with expected-head protection. Then create and merge the durable post-closeout handoff. Day 6 production work remains blocked until that handoff is durable on main.
+  Run all four repository CI jobs on the stamped PR #29 head created by this build-state update. If and only if that exact head passes, reverify PR #29 head, main, mergeability and review state; mark ready and merge with expected-head protection. Then verify actual merged main and create the durable post-closeout handoff. Day 6 production remains blocked until the handoff is durable on main.
 do_not_do:
-  - "Do not call Day 5 durably complete before stamped merged-main closeout and durable handoff."
+  - "Do not call Day 5 durably complete before stamped closeout merge and durable handoff."
   - "Do not start Day-6 production code from a closeout branch."
   - "Do not reopen closed Day-4 behavior without a newly ratified source change."
   - "Do not claim exact current-live Pons V2 source/runtime parity or audit-clean status."
