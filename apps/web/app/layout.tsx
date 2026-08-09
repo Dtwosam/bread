@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Inter } from 'next/font/google';
 
-import { MobileNavigation, Navigation } from '../../../packages/ui/src/index';
-import '../../../packages/ui/src/theme.css';
+import { MobileNavigation, Navigation } from '@bread/ui';
+import '@bread/ui/theme.css';
 import './globals.css';
 
 const inter = Inter({
