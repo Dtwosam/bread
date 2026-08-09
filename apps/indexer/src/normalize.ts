@@ -17,6 +17,7 @@ import {
 } from '../../../packages/protocol-sdk/src/index.js';
 
 import type { RpcLog } from './discovery.js';
+import { correlateCanonicalTrades, type NormalizedTrade } from './trades.js';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const MAX_DISPLAY_TEXT = 4_096;
@@ -68,6 +69,7 @@ export type LaunchSnapshot = Readonly<{
 export type NormalizedRange = Readonly<{
   events: readonly DecodedBreadEvent[];
   launchSnapshots: ReadonlyMap<string, LaunchSnapshot>;
+  trades: readonly NormalizedTrade[];
 }>;
 
 export type NormalizeTransactionLogsInput = Readonly<{
@@ -294,7 +296,7 @@ async function buildLaunchSnapshot(
   ]);
 
   if (asAddress(curveToken, 'curve.token') !== token) throw new Error('curve token mismatch');
-  if (asAddress(pairToken, 'curve.pairToken') !== context.quoteAsset.toLowerCase()) throw new Error('curve quote asset mismatch');
+  if (asAddress(pairToken, 'curve.pairToken') !== input.context.quoteAsset.toLowerCase()) throw new Error('curve quote asset mismatch');
   if (asAddress(curveCoordinator, 'curve.graduationCoordinator') !== asAddress(factoryRecord.graduationCoordinator, 'Factory.getLaunch.graduationCoordinator')) {
     throw new Error('curve graduation coordinator mismatch');
   }
@@ -466,5 +468,18 @@ export async function normalizeTransactionLogs(input: NormalizeTransactionLogsIn
     } as DecodedBreadEvent);
   }
 
-  return { events, launchSnapshots };
+  const tradeLaunches = [
+    ...(input.knownLaunches ?? []),
+    ...[...launchSnapshots.values()].map((snapshot) => ({
+      tokenAddress: snapshot.tokenAddress,
+      curveAddress: snapshot.curveAddress,
+    })),
+  ];
+  const trades = correlateCanonicalTrades({
+    context: input.context,
+    knownLaunches: tradeLaunches,
+    events,
+  });
+
+  return { events, launchSnapshots, trades };
 }
