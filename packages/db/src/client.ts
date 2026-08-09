@@ -53,7 +53,7 @@ async function readMigrationSql(): Promise<string> {
     new URL('../drizzle/0001_day6_read_stack.sql', import.meta.url),
     'utf8',
   );
-  return migrationSqlPromise;
+  return migrationSqlPromise!;
 }
 
 /**
