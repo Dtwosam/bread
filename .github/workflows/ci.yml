@@ -16,7 +16,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24.18.0
-      - run: node scripts/validation/validate-all.mjs
+      - name: Run repository validation including Day 6 closeout
+        run: node scripts/validation/validate-all.mjs
+      - name: Run explicit Day 6 read-stack closeout validator
+        run: node scripts/validation/validate-day6-read-stack.mjs
       - run: node --test tests/bootstrap/*.test.mjs
       - run: node tests/bootstrap/bootstrap-smoke.mjs
 
@@ -34,17 +37,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm validate
       - run: pnpm test
-      - run: pnpm test:day6
+      - name: Run full Day 6 test suite
+        run: pnpm test:day6
       - run: pnpm exec tsc --ignoreConfig --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck tests/day6/shared-contract.types.ts
-      - name: Check Day 4 changed-file formatting
+      - name: Check source-integrity and Day 6 closeout formatting
         run: >-
           pnpm exec prettier --check
           .github/workflows/ci.yml
           config/protocol/day4-launch-control-source-inventory.json
           docs/current-build-state.yaml
           docs/evidence/day4-factory-launch-buy-snipe-emergency.md
+          docs/evidence/day6-sdk-indexer-api-closeout.md
           scripts/validation/validate-all.mjs
           scripts/validation/validate-day4-launch-control-source-integrity.mjs
+          scripts/validation/validate-day6-read-stack.mjs
       - run: pnpm typecheck
       - run: pnpm build
       - name: Verify build leaves tracked workspace clean

@@ -9,6 +9,7 @@ const scripts = [
   "scripts/validation/validate-day4-launch-control-source-integrity.mjs",
   "scripts/validation/validate-day5-graduation-source-integrity.mjs",
   "scripts/validation/validate-day5-graduation-operations.mjs",
+  "scripts/validation/validate-day6-read-stack.mjs",
 ];
 
 for (const script of scripts) {
