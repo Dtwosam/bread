@@ -99,25 +99,48 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
       });
     }
 
-    const launch = await deps.repository.getLaunch(deps.context.chainId, tokenAddress);
-    if (!launch) {
+    const load = async () => {
+      const launch = await deps.repository.getLaunch(deps.context.chainId, tokenAddress);
+      if (!launch) return { found: false as const };
+
+      const [state, metrics] = await Promise.all([
+        deps.repository.getLaunchState(deps.context.chainId, tokenAddress),
+        deps.repository.getTokenMetrics(deps.context.chainId, tokenAddress),
+      ]);
+      const meta = await deps.freshness();
+      return {
+        found: true as const,
+        data: {
+          ...serializeLaunch(launch),
+          curveState: serializeCurveState(state),
+          metrics: serializeTradeMetrics(metrics),
+        },
+        meta,
+      };
+    };
+
+    const cacheResult = deps.cache
+      ? await deps.cache.getOrLoad({
+          channel: `token:${deps.context.chainId}:${tokenAddress}`,
+          key: 'detail',
+          load,
+        })
+      : { value: await load(), cache: 'BYPASS' as const };
+
+    if (!cacheResult.value.found) {
       return reply.code(404).send({
         error: { code: 'TOKEN_NOT_FOUND', message: 'Token is not indexed by Bread.', requestId: request.id },
       });
     }
 
-    const [state, metrics] = await Promise.all([
-      deps.repository.getLaunchState(deps.context.chainId, tokenAddress),
-      deps.repository.getTokenMetrics(deps.context.chainId, tokenAddress),
-    ]);
-    const meta = await deps.freshness();
+    const now = (deps.now ?? (() => new Date()))();
     return {
-      data: {
-        ...serializeLaunch(launch),
-        curveState: serializeCurveState(state),
-        metrics: serializeTradeMetrics(metrics),
+      data: cacheResult.value.data,
+      meta: {
+        ...cacheResult.value.meta,
+        servedAt: now.toISOString(),
+        cache: cacheResult.cache,
       },
-      meta,
     };
   });
 }
