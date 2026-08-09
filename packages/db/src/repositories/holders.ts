@@ -1,11 +1,18 @@
 import { sql } from 'drizzle-orm';
 
-import type { DecodedBreadEvent } from '../../../types/src/index.js';
 import type { BreadDb } from '../client.js';
+import type { CanonicalIndexedEvent } from './indexer.js';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
 type SqlRows<T> = Readonly<{ rows?: T[] }>;
+
+type TransferPayload = Readonly<{
+  from: string;
+  to: string;
+  value: bigint;
+}>;
 
 export type HolderProjectionContext = Readonly<{
   chainId: number;
@@ -16,6 +23,23 @@ export type HolderProjectionContext = Readonly<{
 function rows<T>(result: unknown): T[] {
   const candidate = result as SqlRows<T>;
   return Array.isArray(candidate.rows) ? candidate.rows : [];
+}
+
+function readTransferPayload(event: CanonicalIndexedEvent): TransferPayload {
+  const from = event.payload.from;
+  const to = event.payload.to;
+  const value = event.payload.value;
+  if (
+    typeof from !== 'string' ||
+    !ADDRESS_RE.test(from) ||
+    typeof to !== 'string' ||
+    !ADDRESS_RE.test(to) ||
+    typeof value !== 'bigint' ||
+    value < 0n
+  ) {
+    throw new Error('holder integrity: malformed canonical Transfer payload');
+  }
+  return { from: from.toLowerCase(), to: to.toLowerCase(), value };
 }
 
 async function resolveProtocolAddresses(
@@ -124,7 +148,7 @@ async function refreshHolderCount(db: BreadDb, chainId: number, tokenAddress: st
 
 export async function applyHolderTransferProjection(
   db: BreadDb,
-  event: DecodedBreadEvent,
+  event: CanonicalIndexedEvent,
   context: HolderProjectionContext,
 ): Promise<void> {
   if (event.eventName !== 'Transfer') return;
@@ -134,18 +158,20 @@ export async function applyHolderTransferProjection(
   if (event.identity.chainId !== context.chainId) {
     throw new Error('holder integrity: event chain does not match projection context');
   }
+  if (!ADDRESS_RE.test(event.contractAddress)) {
+    throw new Error('holder integrity: launch token contract address is malformed');
+  }
 
+  const payload = readTransferPayload(event);
   const tokenAddress = event.contractAddress.toLowerCase();
   const protocolAddresses = await resolveProtocolAddresses(db, tokenAddress, context);
-  const from = event.payload.from.toLowerCase();
-  const to = event.payload.to.toLowerCase();
 
   await adjustBalance(db, {
     chainId: context.chainId,
     tokenAddress,
-    holderAddress: from,
-    delta: -event.payload.value,
-    isProtocolAddress: protocolAddresses.has(from),
+    holderAddress: payload.from,
+    delta: -payload.value,
+    isProtocolAddress: protocolAddresses.has(payload.from),
     blockNumber: event.blockNumber,
     transactionHash: event.identity.transactionHash,
     logIndex: event.identity.logIndex,
@@ -153,9 +179,9 @@ export async function applyHolderTransferProjection(
   await adjustBalance(db, {
     chainId: context.chainId,
     tokenAddress,
-    holderAddress: to,
-    delta: event.payload.value,
-    isProtocolAddress: protocolAddresses.has(to),
+    holderAddress: payload.to,
+    delta: payload.value,
+    isProtocolAddress: protocolAddresses.has(payload.to),
     blockNumber: event.blockNumber,
     transactionHash: event.identity.transactionHash,
     logIndex: event.identity.logIndex,
