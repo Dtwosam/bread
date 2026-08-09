@@ -358,8 +358,8 @@ export class ReadRepository {
     const canonicalToken = tokenAddress.toLowerCase();
     const cursorClause = cursor
       ? sql`AND (
-          balance < ${cursor.balance}
-          OR (balance = ${cursor.balance} AND holder_address > ${cursor.holderAddress.toLowerCase()})
+          balance < CAST(${cursor.balance} AS numeric)
+          OR (balance = CAST(${cursor.balance} AS numeric) AND holder_address > ${cursor.holderAddress.toLowerCase()})
         )`
       : sql``;
     const result = await this.db.execute(sql`
