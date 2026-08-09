@@ -258,7 +258,7 @@ function authoritativeReader(overrides: Record<string, unknown> = {}) {
       reservedTokens: 200n,
       remainingSellableTokens: 600n,
       readyToGraduate: false,
-      graduated: false,
+      graduated: true,
     }),
     readFeeEscrowState: async () => ({ totalOutstanding: 50n, custody: 55n }),
     readGraduationState: async () => ({
