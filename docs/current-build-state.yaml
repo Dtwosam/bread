@@ -1,4 +1,4 @@
-schema_version: 1.13
+schema_version: 1.14
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -16,9 +16,10 @@ completed_checkpoints:
   - "Day 5 plan: IMPLEMENTATION_PLAN_V2_SELF_REVIEWED"
   - "Day 5 implementation: PR_27_GUARDED_MERGE_COMPLETE"
   - "Day 5 adversarial hardening: PR_28_GUARDED_MERGE_COMPLETE"
-active_checkpoint: "Day 5 — merged-main closeout prerequisite"
+  - "Day 5 closeout prerequisite: FOUR_JOB_CI_PASS"
+active_checkpoint: "Day 5 — stamped merged-main closeout final CI"
 active_lane: "DOCUMENTATION_ONLY_CLOSEOUT"
-active_gate: DAY5_MERGED_MAIN_CLOSEOUT_PREREQUISITE_CI
+active_gate: DAY5_MERGED_MAIN_CLOSEOUT_STAMPED_EXACT_HEAD_CI
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -38,7 +39,7 @@ integration_baseline:
   day5_start_baseline: ee315b4feb255b6c84c0b1ef51623a1155d77844
   day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
   day5_security_merge: 6608222f0716f52392922291288ac94f4b55f84a
-  status: DAY5_MERGED_MAIN_CLOSEOUT_PREREQUISITE_PENDING
+  status: DAY5_MERGED_MAIN_CLOSEOUT_STAMPED_PENDING_FINAL_CI
 working_branches:
   - agent/day5-merged-main-closeout
 repository:
@@ -50,15 +51,16 @@ repository:
   day5_security_pr: 28
   day5_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
   day5_security_merge: 6608222f0716f52392922291288ac94f4b55f84a
+  day5_closeout_pr: 31
   day5_design_spec: docs/superpowers/specs/2026-08-08-day5-graduation-coordinator-design.md
   day5_plan: docs/superpowers/plans/2026-08-08-day5-graduation-coordinator-v2.md
   day5_candidate_evidence: docs/evidence/day5-graduation-adapter-lock.md
   day5_closeout_evidence: docs/evidence/day5-merged-main-closeout.md
   day5_production_code_started: true
-  day5_production_code_status: MERGED_PENDING_CLOSEOUT_STAMP
+  day5_production_code_status: MERGED_PENDING_STAMPED_CLOSEOUT_CI
   day6_production_code_started: false
 day5_scope:
-  production_status: MERGED_MAIN_PENDING_STAMPED_CLOSEOUT
+  production_status: MERGED_MAIN_STAMPED_CLOSEOUT_PENDING_FINAL_CI
   implemented:
     - GraduationCoordinator
     - IGraduationAdapter
@@ -95,9 +97,11 @@ verification:
   day5_retry_double_spend: PASS
   day5_operations_validation: PASS
   day5_post_merge_security: PASS
-  merged_main_closeout_prerequisite_head: PENDING_THIS_STATE_COMMIT
-  merged_main_closeout_prerequisite_ci: PENDING_THIS_STATE_COMMIT
-  merged_main_closeout: NOT_STAMPED
+  merged_main_closeout_prerequisite_head: da87b83ae7726cf639ad676dde2fc93f69579d90
+  merged_main_closeout_prerequisite_ci: 31286039724
+  merged_main_closeout_prerequisite_jobs: PASS_ALL_FOUR
+  merged_main_closeout_stamped_head_ci: PENDING_THIS_STATE_COMMIT
+  merged_main_closeout: STAMPED_PENDING_FINAL_CI
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -122,9 +126,9 @@ security_review:
   deployment_key_safe_handoff_review: PASS
   external_independent_review: OPEN_PUBLIC_MAINNET_RELEASE_GATE
   pons_audit_clean_claim: NONE
-day5_production_ratification: MERGED_MAIN_CLOSEOUT_PREREQUISITE_PENDING
+day5_production_ratification: MERGED_MAIN_CLOSEOUT_STAMPED_PENDING_FINAL_CI
 next_action: >-
-  Run all four repository CI jobs on this documentation-only Day-5 merged-main closeout prerequisite head. If and only if that exact head is green, stamp its exact commit and CI run into docs/evidence/day5-merged-main-closeout.md and this build state, set the closeout state to STAMPED_PENDING_FINAL_CI, and rerun all four jobs on the stamped head. Merge only that exact stamped head with expected-head protection. Do not begin Day-6 production work until the stamped closeout is merged and durable final-state handoff/normalization is complete.
+  Run all four repository CI jobs on this stamped documentation-only Day-5 closeout head. If and only if that exact head is green, reverify current main, PR #31 exact head, mergeability and review state; mark ready and merge with expected-head protection. Then verify actual merged main and create the final durable Day-5 state normalization/handoff with no recursive pending marker. Do not begin Day-6 production work before that durable final-state handoff is green and merged.
 do_not_do:
   - "Do not issue the final Day-5 verdict before stamped closeout CI and guarded closeout merge."
   - "Do not start Day-6 production code before Day 5 is durably closed."
