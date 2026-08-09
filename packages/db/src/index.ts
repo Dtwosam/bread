@@ -20,6 +20,7 @@ export {
 } from './schema/projections.js';
 
 export {
+  DAY6_DB_SCHEMA_VERSION,
   IndexerRepository,
   type ApplyCanonicalRangeInput,
   type ApplyCanonicalRangeResult,
