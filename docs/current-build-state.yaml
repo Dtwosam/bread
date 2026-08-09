@@ -1,4 +1,4 @@
-schema_version: 1.26
+schema_version: 1.27
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -25,9 +25,10 @@ completed_checkpoints:
   - "Day 6 Task 3 PR #41: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 3 durable handoff PR #42: EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 4 PR #43: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
-active_checkpoint: "Day 6 — Task 4 durable integration handoff"
-active_lane: "Task 4 is integrated on main; durable handoff PR #44 must exact-head pass and guarded-merge before Task 5 starts"
-active_gate: DAY6_TASK4_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK5
+  - "Day 6 Task 4 durable handoff PR #44: EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
+active_checkpoint: "Day 6 — Task 5 canonical trade vertical"
+active_lane: "Task 5 implementation and source-conformance are GREEN; documentation-bearing exact-head inherited CI plus dedicated Task-5 PostgreSQL CI must pass before guarded merge"
+active_gate: DAY6_TASK5_DOCS_BEARING_EXACT_HEAD_CI_REQUIRED_BEFORE_MERGE
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -38,7 +39,7 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY6-TASK4-INTEGRATED-MAIN
+  id: DAY6-TASK4-DURABLE-MAIN
   branch: main
   day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
@@ -52,9 +53,10 @@ integration_baseline:
   day6_task3_merge: 457138c0b79bc20177437b871a8b258a54f83b49
   day6_task3_handoff_merge: cf1078109297f56f060113576d364e920e368d17
   day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
-  status: DAY6_TASK4_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
+  day6_task4_handoff_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
+  status: DAY6_TASK4_DURABLE_PASS_TASK5_IMPLEMENTATION_GREEN_UNMERGED
 working_branches:
-  - docs/day6-task4-handoff
+  - agent/day6-task5-trade-vertical
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -73,6 +75,7 @@ repository:
   day6_task3_handoff_pr: 42
   day6_task4_pr: 43
   day6_task4_handoff_pr: 44
+  day6_task5_pr: 45
   day5_production_code_status: INTEGRATED_PASS_DURABLE
   day6_production_code_started: true
 project_process_note:
@@ -172,6 +175,24 @@ verification:
   day6_task4_final_ci_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
   day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
   main_identity_after_day6_task4: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task4_handoff_head: 53f2878b1098f632167b3caacc61c59d15b6cb1c
+  day6_task4_handoff_ci: 31314348691
+  day6_task4_handoff_ci_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
+  day6_task4_handoff_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
+  main_identity_after_day6_task4_handoff: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task5_original_red_head: e4f5fb928934becf1328386156fb87737ecc99b5
+  day6_task5_original_red_ci: 31314769880
+  day6_task5_original_red_dedicated_ci: 31314769925
+  day6_task5_first_green_head: 09f80768c2491f70e9796990f982cec44ddb73af
+  day6_task5_first_green_ci: 31319055557
+  day6_task5_first_green_dedicated_ci: 31319055577
+  day6_task5_conformance_red_head: a59ff8e3303efc26777498aa2b1f944b97b5a227
+  day6_task5_conformance_red_ci: 31319230281
+  day6_task5_conformance_red_dedicated_ci: 31319230299
+  day6_task5_implementation_green_head: c0ad021ceb3588c4a995a627f167d86cd00aa84d
+  day6_task5_implementation_green_ci: 31319458045
+  day6_task5_implementation_green_dedicated_ci: 31319458039
+  day6_task5_implementation_green_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_DEDICATED_POSTGRES_8_OF_8
 day6_handoff_contract:
   scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
   authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
@@ -436,10 +457,47 @@ day6_task4:
   durable_handoff:
     branch: docs/day6-task4-handoff
     pr: 44
+    exact_head: 53f2878b1098f632167b3caacc61c59d15b6cb1c
+    ci: 31314348691
+    jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_POSTGRES_12_OF_12
+    guarded_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
     evidence: docs/handoffs/day6-task4-canonical-launch-vertical-integrated-2026-08-09.md
-    status: FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_PENDING
-  implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
+    status: INTEGRATED_PASS
+  implementation_status: INTEGRATED_PASS_DURABLE
   pass_status: DAY6_TASK4_CANONICAL_LAUNCH_VERTICAL_INTEGRATED_PASS
+day6_task5:
+  branch: agent/day6-task5-trade-vertical
+  pr: 45
+  baseline: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
+  evidence: docs/evidence/day6-task5-canonical-trade-vertical.md
+  original_red:
+    head: e4f5fb928934becf1328386156fb87737ecc99b5
+    inherited_ci: 31314769880
+    dedicated_ci: 31314769925
+    status: PROVEN
+  first_green:
+    head: 09f80768c2491f70e9796990f982cec44ddb73af
+    inherited_ci: 31319055557
+    dedicated_ci: 31319055577
+    dedicated_postgres: 5_PASS
+    status: GREEN_BEFORE_SOURCE_CONFORMANCE_REPAIR
+  source_conformance_red:
+    head: a59ff8e3303efc26777498aa2b1f944b97b5a227
+    inherited_ci: 31319230281
+    dedicated_ci: 31319230299
+    dedicated_result: 6_PASS_2_EXPECTED_FAIL
+    status: PROVEN
+  implementation_green:
+    head: c0ad021ceb3588c4a995a627f167d86cd00aa84d
+    inherited_ci: 31319458045
+    dedicated_ci: 31319458039
+    inherited_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
+    dedicated_postgres: 8_PASS
+    source_design_conformance: PASS
+  final_acceptance:
+    status: PENDING_DOCS_BEARING_EXACT_HEAD_CI_AND_GUARDED_MERGE
+  implementation_status: GREEN_CANDIDATE_UNMERGED
+  pass_status: DAY6_TASK5_PASS_NOT_YET_CLAIMED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -453,9 +511,9 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 next_action: >-
-  Run final exact-head CI on Task-4 durable handoff PR #44. Require all four jobs, including the inherited real-PostgreSQL Task-3/Task-4 suite (12/12), to pass. Then guarded-merge with expected-head protection and verify merged main. Only after that durable integration may Day-6 Task 5 start from the new main baseline, RED-first, limited to transaction-local BUY/SELL correlation, deterministic trade/candle/token-metric projections, and the source-defined trades/token/feed read enrichment.
+  Freeze the documentation-bearing Task-5 PR #45 head and run both exact-head workflows. Require the inherited CI all four jobs to pass and the dedicated Task-5 PostgreSQL/conformance suite to pass 8/8. Then verify main remains exactly ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9, guarded-merge PR #45 with expected-head protection, verify merged main, and create/integrate a docs-only Task-5 durable handoff before starting Day-6 Task 6.
 do_not_do:
-  - "Do not start Day-6 Task 5 before the Task-4 durable handoff is exact-head green and guarded-merged."
+  - "Do not start Day-6 Task 6 before Task-5 implementation and durable handoff are both exact-head green and guarded-merged."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not trust caller-supplied RetryGraduation phase/readiness instead of canonical contract reads."
