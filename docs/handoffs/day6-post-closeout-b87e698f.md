@@ -22,7 +22,7 @@ Post-closeout handoff branch:
 
 `docs/day6-post-closeout-b87e698f`
 
-Post-closeout handoff PR: pending creation
+Post-closeout handoff PR: #58
 
 ## Day-6 final acceptance
 
