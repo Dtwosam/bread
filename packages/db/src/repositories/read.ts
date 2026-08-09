@@ -358,25 +358,25 @@ export class ReadRepository {
     const canonicalToken = tokenAddress.toLowerCase();
     const cursorClause = cursor
       ? sql`AND (
-          balance < CAST(${cursor.balance} AS numeric)
-          OR (balance = CAST(${cursor.balance} AS numeric) AND holder_address > ${cursor.holderAddress.toLowerCase()})
+          h.balance < CAST(${cursor.balance} AS numeric)
+          OR (h.balance = CAST(${cursor.balance} AS numeric) AND h.holder_address > ${cursor.holderAddress.toLowerCase()})
         )`
       : sql``;
     const result = await this.db.execute(sql`
       SELECT
-        token_address AS "tokenAddress",
-        holder_address AS "holderAddress",
-        balance::text AS balance,
-        is_protocol_address AS "isProtocolAddress",
-        as_of_block_number::text AS "asOfBlockNumber",
-        last_transaction_hash AS "lastTransactionHash",
-        last_log_index AS "lastLogIndex"
-      FROM holder_snapshots
-      WHERE chain_id = ${chainId}
-        AND token_address = ${canonicalToken}
-        AND balance > 0
+        h.token_address AS "tokenAddress",
+        h.holder_address AS "holderAddress",
+        h.balance::text AS balance,
+        h.is_protocol_address AS "isProtocolAddress",
+        h.as_of_block_number::text AS "asOfBlockNumber",
+        h.last_transaction_hash AS "lastTransactionHash",
+        h.last_log_index AS "lastLogIndex"
+      FROM holder_snapshots h
+      WHERE h.chain_id = ${chainId}
+        AND h.token_address = ${canonicalToken}
+        AND h.balance > 0
         ${cursorClause}
-      ORDER BY balance DESC, holder_address ASC
+      ORDER BY h.balance DESC, h.holder_address ASC
       LIMIT ${boundedLimit}
     `);
     return resultRows<HolderReadRow>(result);
