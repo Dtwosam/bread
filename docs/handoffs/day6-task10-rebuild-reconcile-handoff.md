@@ -16,7 +16,7 @@ Task-10 evidence: `docs/evidence/day6-rebuild-reconcile.md`
 
 Durable handoff branch: `docs/day6-task10-handoff`
 
-Durable handoff PR: pending creation
+Durable handoff PR: #56
 
 ## Accepted Task-10 behavior
 
@@ -120,7 +120,7 @@ Required continuation order:
 1. update `docs/current-build-state.yaml` from the actual merged Task-10 main baseline;
 2. freeze this Task-10 handoff branch/PR with the exact implementation merge and CI evidence;
 3. run root CI plus retained Task-5/6/7/8/9 and dedicated Task-10 on the exact handoff head, requiring real runner steps and PASS;
-4. guarded-merge the handoff PR with expected-head protection;
+4. guarded-merge PR #56 with expected-head protection;
 5. verify actual `main` equals the handoff merge;
 6. only then determine the next approved Day-6 action / Task 11 from the controlling Day-6 implementation plan.
 
