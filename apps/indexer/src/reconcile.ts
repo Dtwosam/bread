@@ -27,6 +27,14 @@ export type ReconciliationChainReader = Readonly<{
   readCurveState: (input: Readonly<{ tokenAddress: string; curveAddress: string; blockNumber: bigint }>) => Promise<Readonly<{
     trackedQuote: bigint;
     trackedTokens: bigint;
+    quoteFeeBalance: bigint;
+    creatorTaxBalance: bigint;
+    realQuoteReserve: bigint;
+    virtualQuoteReserve: bigint;
+    reservedTokens: bigint;
+    remainingSellableTokens: bigint;
+    readyToGraduate: boolean;
+    graduated: boolean;
   }>>;
   readFeeEscrowState: (input: Readonly<{ feeEscrowAddress: string; quoteAsset: string; blockNumber: bigint }>) => Promise<Readonly<{
     totalOutstanding: bigint;
@@ -164,13 +172,54 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       blockNumber: input.checkedBlock,
     });
     const projected = states.get(launch.tokenAddress.toLowerCase());
-    curveExpected.push({ token: launch.tokenAddress, trackedQuote: authoritative.trackedQuote, trackedTokens: authoritative.trackedTokens });
-    curveActual.push({ token: launch.tokenAddress, trackedQuote: projected?.trackedQuote ?? null, trackedTokens: projected?.trackedTokens ?? null });
-    if (!projected || projected.trackedQuote !== authoritative.trackedQuote || projected.trackedTokens !== authoritative.trackedTokens) {
+    const expected = {
+      token: launch.tokenAddress,
+      trackedQuote: authoritative.trackedQuote,
+      trackedTokens: authoritative.trackedTokens,
+      quoteFeeBalance: authoritative.quoteFeeBalance,
+      creatorTaxBalance: authoritative.creatorTaxBalance,
+      realQuoteReserve: authoritative.realQuoteReserve,
+      virtualQuoteReserve: authoritative.virtualQuoteReserve,
+      reservedTokens: authoritative.reservedTokens,
+      remainingSellableTokens: authoritative.remainingSellableTokens,
+      readyToGraduate: authoritative.readyToGraduate,
+    };
+    const actual = {
+      token: launch.tokenAddress,
+      trackedQuote: projected?.trackedQuote ?? null,
+      trackedTokens: projected?.trackedTokens ?? null,
+      quoteFeeBalance: projected?.quoteFeeBalance ?? null,
+      creatorTaxBalance: projected?.creatorTaxBalance ?? null,
+      realQuoteReserve: projected?.realQuoteReserve ?? null,
+      virtualQuoteReserve: projected?.virtualQuoteReserve ?? null,
+      reservedTokens: launch.reservedTokensBaseline,
+      remainingSellableTokens: projected?.remainingSellableTokens ?? null,
+      readyToGraduate: projected?.readyToGraduate ?? null,
+    };
+    curveExpected.push(expected);
+    curveActual.push(actual);
+    if (
+      !projected ||
+      projected.trackedQuote !== authoritative.trackedQuote ||
+      projected.trackedTokens !== authoritative.trackedTokens ||
+      projected.quoteFeeBalance !== authoritative.quoteFeeBalance ||
+      projected.creatorTaxBalance !== authoritative.creatorTaxBalance ||
+      projected.realQuoteReserve !== authoritative.realQuoteReserve ||
+      projected.virtualQuoteReserve !== authoritative.virtualQuoteReserve ||
+      launch.reservedTokensBaseline !== authoritative.reservedTokens ||
+      projected.remainingSellableTokens !== authoritative.remainingSellableTokens ||
+      projected.readyToGraduate !== authoritative.readyToGraduate
+    ) {
       curvesMatch = false;
     }
   }
-  checks.push(check('REC-02', curvesMatch, curveExpected, curveActual, 'Projected tracked curve reserves must match authoritative curve state.'));
+  checks.push(check(
+    'REC-02',
+    curvesMatch,
+    curveExpected,
+    curveActual,
+    'Projected tracked reserves, fee buckets, reserve components, remaining allocation and readiness must match authoritative curve state.',
+  ));
 
   const feeEscrowAddress = input.context.addresses.feeEscrow;
   let feePass = false;
