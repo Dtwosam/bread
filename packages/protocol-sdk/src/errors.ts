@@ -11,7 +11,7 @@ export type DecodedBreadError =
       args: readonly unknown[];
     }>
   | Readonly<{
-      errorName: 'UNKNOWN_REVERT';
+      errorName: 'UnknownBreadError';
       data: Hex;
     }>;
 
@@ -42,7 +42,7 @@ function registeredErrorNames(abi: Abi): ReadonlySet<string> {
  */
 export function decodeBreadError(data: Hex, context: ProtocolContext): DecodedBreadError {
   const binding = createBreadStackAbiBinding(context.stackVersion);
-  const matches: Array<Exclude<DecodedBreadError, { errorName: 'UNKNOWN_REVERT' }>> = [];
+  const matches: Array<Exclude<DecodedBreadError, { errorName: 'UnknownBreadError' }>> = [];
 
   for (const [contractRole, registryKey] of roleToRegistryKey) {
     const abi = binding.registry[registryKey] as Abi;
@@ -59,5 +59,5 @@ export function decodeBreadError(data: Hex, context: ProtocolContext): DecodedBr
     }
   }
 
-  return matches.length === 1 ? matches[0]! : { errorName: 'UNKNOWN_REVERT', data };
+  return matches.length === 1 ? matches[0]! : { errorName: 'UnknownBreadError', data };
 }
