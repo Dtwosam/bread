@@ -30,6 +30,17 @@ async function collectTypeScriptFiles(directory) {
   return nested.flat();
 }
 
+function containsMutationRoute(source) {
+  if (/\.\s*(?:post|put|patch|delete)\s*\(\s*['"]\/v1\//i.test(source)) return true;
+
+  const routeCalls = source.match(/\.route\s*\(\s*\{[\s\S]{0,2000}?\}\s*\)/gi) ?? [];
+  return routeCalls.some((routeCall) => {
+    const mutationMethod = /method\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i.test(routeCall);
+    const v1Path = /(?:url|path)\s*:\s*['"]\/v1\//i.test(routeCall);
+    return mutationMethod && v1Path;
+  });
+}
+
 const routeContract = new Map([
   ['apps/api/src/routes/feed.ts', '/v1/feed'],
   ['apps/api/src/routes/search.ts', '/v1/search'],
@@ -62,7 +73,7 @@ for (const registration of requiredRegistrations) requireText(server, registrati
 const apiFiles = await collectTypeScriptFiles('apps/api/src');
 for (const file of apiFiles) {
   const source = await readRequired(file);
-  if (/\bapp\.(?:post|put|patch|delete)\s*\(\s*['"]\/v1\//.test(source)) {
+  if (containsMutationRoute(source)) {
     throw new Error(`production API financial/action surface must remain read-only: ${file}`);
   }
 }
