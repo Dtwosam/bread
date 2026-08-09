@@ -55,7 +55,7 @@ describe('Day 7 public web design foundation', () => {
     expect(theme?.breakpoints.desktopTradeCollapseBelow).toBe(1024);
   });
 
-  it('exports the frozen public navigation and accessible loading button behavior', async () => {
+  it('exports the frozen public navigation and accessible loading button behavior', () => {
     expect(exports).toHaveProperty('desktopNavigation');
     expect(exports).toHaveProperty('mobileNavigation');
     expect(exports).toHaveProperty('Button');
@@ -79,13 +79,10 @@ describe('Day 7 public web design foundation', () => {
     const Button = exports.Button as ((props: Record<string, unknown>) => unknown) | undefined;
     expect(typeof Button).toBe('function');
 
-    const { createElement } = await import('react');
-    const { renderToStaticMarkup } = await import('react-dom/server');
-    const markup = renderToStaticMarkup(
-      createElement(Button as never, { loading: true, children: 'Confirm' }),
-    );
-
-    expect(markup).toContain('aria-busy="true"');
-    expect(markup).toContain('Confirming...');
+    const element = Button?.({ loading: true, children: 'Confirm' }) as
+      | { props?: Record<string, unknown> }
+      | undefined;
+    expect(element?.props?.['aria-busy']).toBe(true);
+    expect(element?.props?.children).toBe('Confirming...');
   });
 });
