@@ -169,7 +169,8 @@ describe.skipIf(!RUN_DB)('Day 6 Task 6 contextual attribution and progress', () 
       ],
     });
 
-    const credits = (await pool.query(`SELECT token_address, attribution_status, amount::text FROM fee_credits ORDER BY amount DESC`)).rows;
+    const credits = (await pool.query(`SELECT token_address, attribution_status, amount::text FROM fee_credits`)).rows
+      .sort((left, right) => String(left.attribution_status).localeCompare(String(right.attribution_status)));
     expect(credits).toEqual([
       { token_address: token, attribution_status: 'EXACT_FACTORY_CONTEXT', amount: '20' },
       { token_address: token, attribution_status: 'EXACT_GRADUATION_CONTEXT', amount: '5' },
