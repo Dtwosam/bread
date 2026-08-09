@@ -215,6 +215,14 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     expect(report.checks.find((check) => check.id === 'REC-06')?.status).toBe('FAIL');
   });
 
+  it('REC-06 fails when a selected journal row uses a decoder schema different from the active Day-6 schema', async () => {
+    await seedBase();
+    await pool.query(`UPDATE event_journal SET decoder_schema_version='wrong-schema'
+      WHERE chain_id=$1 AND stack_version=$2`, [context.chainId, context.stackVersion]);
+    const report = await reconcile(baseChain());
+    expect(report.checks.find((check) => check.id === 'REC-06')?.status).toBe('FAIL');
+  });
+
   it('report carries source/manifest/factory/checkpoint/timing identity required by the operator contract', async () => {
     await seedBase();
     const report = await reconcile(baseChain());
