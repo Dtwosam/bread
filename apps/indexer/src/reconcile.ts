@@ -148,6 +148,7 @@ function isAddress(value: unknown): value is string {
 }
 
 export async function reconcileStack(input: ReconcileStackInput): Promise<ReconciliationReport> {
+  const startedAt = new Date().toISOString();
   if (input.checkedBlock < input.context.deploymentStartBlock) throw new Error('reconciliation block precedes deployment start');
   const repository = new RebuildRepository(input.db);
   const snapshot = await repository.reconciliationSnapshot(protocolContext(input.context));
@@ -377,10 +378,18 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
   ));
 
   return {
+    reportVersion: 'day6-reconciliation-v1',
     status: checks.every((item) => item.status === 'PASS') ? 'PASS' : 'FAIL',
     chainId: input.context.chainId,
     stackVersion: input.context.stackVersion,
+    factoryAddress: input.context.factoryAddress,
+    manifestHash: snapshot.stack?.manifestHash ?? null,
+    sourceHash: snapshot.stack?.sourceHash ?? null,
+    deploymentStartBlock: input.context.deploymentStartBlock.toString(10),
     checkedBlock: input.checkedBlock.toString(10),
+    checkedBlockHash: observedCheckpointHash.toLowerCase(),
+    startedAt,
+    completedAt: new Date().toISOString(),
     checks,
   };
 }
