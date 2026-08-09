@@ -200,7 +200,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     for (const [role, expectedHash] of Object.entries(expectedHashes).sort(([a], [b]) => a.localeCompare(b))) {
       const target = role === 'factory'
         ? input.context.factoryAddress
-        : snapshot.stack?.addresses[role] ?? input.context.addresses[role];
+        : snapshot.stack?.addresses[role] ?? (input.context.addresses as Readonly<Record<string, string | undefined>>)[role];
       if (!target) {
         observedHashes[role] = 'MISSING_ADDRESS';
         codeHashPass = false;
@@ -275,7 +275,7 @@ export async function rebuildStack(input: RebuildStackInput): Promise<RebuildSta
       context: input.context,
       fromBlock,
       toBlock,
-      toBlockHash: loaded.toBlockHash,
+      toBlockHash: loaded.toBlockHash as `0x${string}` ,
       ...(loaded.toBlockTimestamp === undefined ? {} : { toBlockTimestamp: loaded.toBlockTimestamp }),
       logs: loaded.logs,
     });
