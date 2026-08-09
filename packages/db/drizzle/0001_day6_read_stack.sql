@@ -58,9 +58,23 @@ CREATE TABLE IF NOT EXISTS launches (
   creator_tax_bps numeric(78,0),
   economics_digest text,
   config_version numeric(78,0),
+  launch_timestamp numeric(78,0),
   name text,
   symbol text,
   metadata jsonb,
+  quote_asset text,
+  initial_supply numeric(78,0),
+  phantom_quote numeric(78,0),
+  graduation_threshold numeric(78,0),
+  protocol_fee_recipient text,
+  trade_fee_bps numeric(78,0),
+  protocol_fee_share_bps numeric(78,0),
+  max_creator_tax_bps numeric(78,0),
+  graduation_coordinator text,
+  graduation_adapter text,
+  graduation_adapter_family integer,
+  graduation_config_hash text,
+  reserved_tokens_baseline numeric(78,0),
   launch_block_number numeric(78,0) NOT NULL,
   launch_transaction_hash text NOT NULL,
   launch_log_index integer NOT NULL,
@@ -69,6 +83,20 @@ CREATE TABLE IF NOT EXISTS launches (
   UNIQUE (chain_id, curve_address)
 );
 CREATE INDEX IF NOT EXISTS launches_stack_idx ON launches (chain_id, stack_version, launch_block_number);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS launch_timestamp numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS quote_asset text;
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS initial_supply numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS phantom_quote numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS graduation_threshold numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS protocol_fee_recipient text;
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS trade_fee_bps numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS protocol_fee_share_bps numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS max_creator_tax_bps numeric(78,0);
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS graduation_coordinator text;
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS graduation_adapter text;
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS graduation_adapter_family integer;
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS graduation_config_hash text;
+ALTER TABLE launches ADD COLUMN IF NOT EXISTS reserved_tokens_baseline numeric(78,0);
 
 CREATE TABLE IF NOT EXISTS launch_state (
   chain_id integer NOT NULL,
