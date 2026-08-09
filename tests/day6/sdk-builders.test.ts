@@ -225,7 +225,7 @@ describe('Day 6 Task 2 direct-wallet SDK builders', () => {
 
     const unknown = '0xdeadbeef' as Hex;
     expect(decodeBreadError?.(unknown, context)).toEqual({
-      errorName: 'UNKNOWN_REVERT',
+      errorName: 'UnknownBreadError',
       data: unknown,
     });
   });
