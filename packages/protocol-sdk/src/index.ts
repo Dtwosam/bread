@@ -1,4 +1,4 @@
-export const PROTOCOL_SDK_STATUS = 'day6-shared-contract' as const;
+export const PROTOCOL_SDK_STATUS = 'day6-sdk-builders' as const;
 
 export {
   PONS_V2_CURRENT_DOCS_CHAIN_ID,
@@ -24,5 +24,22 @@ export {
   type BreadStackAbiBinding,
   type DecodedBreadLog,
 } from './events.js';
+
+export {
+  prepareBuy,
+  prepareClaim,
+  prepareLaunch,
+  prepareLaunchAndBuy,
+  prepareRetryGraduation,
+  prepareSell,
+  simulatePreparedTransaction,
+  type AllowanceRequirement,
+  type GraduationPhase,
+  type LaunchParams,
+  type PreparedBreadTransaction,
+  type RetryGraduationResult,
+} from './builders.js';
+
+export { decodeBreadError, type DecodedBreadError } from './errors.js';
 
 export { breadAbiRegistry } from './abi/generated.js';
