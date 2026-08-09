@@ -1,4 +1,4 @@
-schema_version: 1.30
+schema_version: 1.31
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -29,9 +29,11 @@ completed_checkpoints:
   - "Day 6 Task 5 PR #45: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, DEDICATED_POSTGRES_8_OF_8, GUARDED_MERGE_PASS"
   - "Day 6 Task 5 durable handoff PR #46: EXACT_HEAD_CI_PASS, DEDICATED_POSTGRES_8_OF_8, GUARDED_MERGE_PASS"
   - "Day 6 Task 6 PR #47: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, RETAINED_TASK5_PASS, DEDICATED_POSTGRES_8_OF_8, GUARDED_MERGE_PASS"
-active_checkpoint: "Day 6 — Task 6 durable integration handoff"
-active_lane: "Task 6 is integrated on main at e8469fd25503fc5befb7668537cb02128d6ad223; durable handoff PR #48 must exact-head pass inherited CI, retained Task-5 regression and dedicated Task-6 PostgreSQL/conformance before Task 7 starts"
-active_gate: DAY6_TASK6_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK7
+  - "Day 6 Task 6 durable handoff PR #48: EXACT_HEAD_CI_PASS, RETAINED_TASK5_PASS, DEDICATED_TASK6_8_OF_8, GUARDED_MERGE_PASS"
+  - "Day 6 Task 7 PR #49: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, RETAINED_TASK5_TASK6_PASS, DEDICATED_POSTGRES_8_OF_8, GUARDED_MERGE_PASS"
+active_checkpoint: "Day 6 — Task 7 durable integration handoff"
+active_lane: "Task 7 is integrated on main at 311cb84cf33f54e03c7c91fe01dd80408aa9ff91; durable handoff PR #50 must exact-head pass inherited CI, retained Task-5 regression, retained Task-6 regression and dedicated Task-7 PostgreSQL/conformance before Task 8 starts"
+active_gate: DAY6_TASK7_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK8
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -42,7 +44,7 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY6-TASK6-INTEGRATED-MAIN
+  id: DAY6-TASK7-INTEGRATED-MAIN
   branch: main
   day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
@@ -60,9 +62,11 @@ integration_baseline:
   day6_task5_merge: 2779dce925c983ade93d1251aa80db57e4138c92
   day6_task5_handoff_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
   day6_task6_merge: e8469fd25503fc5befb7668537cb02128d6ad223
-  status: DAY6_TASK6_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
+  day6_task6_handoff_merge: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
+  day6_task7_merge: 311cb84cf33f54e03c7c91fe01dd80408aa9ff91
+  status: DAY6_TASK7_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
 working_branches:
-  - docs/day6-task6-handoff
+  - docs/day6-task7-handoff
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -85,6 +89,8 @@ repository:
   day6_task5_handoff_pr: 46
   day6_task6_pr: 47
   day6_task6_handoff_pr: 48
+  day6_task7_pr: 49
+  day6_task7_handoff_pr: 50
   day5_production_code_status: INTEGRATED_PASS_DURABLE
   day6_production_code_started: true
 project_process_note:
@@ -245,6 +251,37 @@ verification:
   day6_task6_final_jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_PASS_AND_DEDICATED_TASK6_8_OF_8
   day6_task6_merge: e8469fd25503fc5befb7668537cb02128d6ad223
   main_identity_after_day6_task6: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task6_handoff_head: caa8910c46737c4c27c7826d5deffc9798ca8c47
+  day6_task6_handoff_ci: 31323276386
+  day6_task6_handoff_task5_ci: 31323276422
+  day6_task6_handoff_dedicated_ci: 31323276387
+  day6_task6_handoff_jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_PASS_AND_DEDICATED_TASK6_8_OF_8
+  day6_task6_handoff_merge: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
+  main_identity_after_day6_task6_handoff: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task7_original_red_head: b92d01997b75aaec886aa0d5cb8c5473a78a28d8
+  day6_task7_original_red_ci: 31323847555
+  day6_task7_original_red_task5_ci: 31323847553
+  day6_task7_original_red_task6_ci: 31323847564
+  day6_task7_original_red_dedicated_ci: 31323847602
+  day6_task7_static_repair_head: cb01689fd9b60c9e3bd9e9239c5eee3227db0792
+  day6_task7_static_repair_ci: 31324916807
+  day6_task7_static_repair_task5_ci: 31324916802
+  day6_task7_static_repair_task6_ci: 31324916801
+  day6_task7_static_repair_dedicated_ci: 31324916814
+  day6_task7_implementation_green_head: c7f0503bd267ff0b1f9fb113c5aeb62a1ce0f46a
+  day6_task7_implementation_green_ci: 31325226954
+  day6_task7_implementation_green_task5_ci: 31325226945
+  day6_task7_implementation_green_task6_ci: 31325226943
+  day6_task7_implementation_green_dedicated_ci: 31325226938
+  day6_task7_implementation_green_jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_TASK6_PASS_AND_DEDICATED_TASK7_8_OF_8
+  day6_task7_final_head: 1bd392035392738bb41657bbc87d7273db7bec5e
+  day6_task7_final_ci: 31325546267
+  day6_task7_final_task5_ci: 31325546283
+  day6_task7_final_task6_ci: 31325546269
+  day6_task7_final_dedicated_ci: 31325546309
+  day6_task7_final_jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_TASK6_PASS_AND_DEDICATED_TASK7_8_OF_8
+  day6_task7_merge: 311cb84cf33f54e03c7c91fe01dd80408aa9ff91
+  main_identity_after_day6_task7: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
 day6_handoff_contract:
   scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
   authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
@@ -631,10 +668,60 @@ day6_task6:
   durable_handoff:
     branch: docs/day6-task6-handoff
     pr: 48
+    exact_head: caa8910c46737c4c27c7826d5deffc9798ca8c47
+    inherited_ci: 31323276386
+    retained_task5_ci: 31323276422
+    dedicated_ci: 31323276387
+    jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_PASS_AND_DEDICATED_POSTGRES_8_OF_8
+    guarded_merge: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
     evidence: docs/handoffs/day6-task6-fees-admin-graduation-integrated-2026-08-09.md
+    status: INTEGRATED_PASS
+  implementation_status: INTEGRATED_PASS_DURABLE
+  pass_status: DAY6_TASK6_FEES_ADMIN_GRADUATION_CREATOR_INTEGRATED_PASS
+day6_task7:
+  branch: agent/day6-task7-holders-portfolio
+  pr: 49
+  baseline: 17aa7f6ceb7b742305ae5ff06791444a2e1d6d45
+  evidence: docs/evidence/day6-task7-holders-portfolio.md
+  original_red:
+    head: b92d01997b75aaec886aa0d5cb8c5473a78a28d8
+    inherited_ci: 31323847555
+    retained_task5_ci: 31323847553
+    retained_task6_ci: 31323847564
+    dedicated_ci: 31323847602
+    status: PROVEN
+  static_repair_green:
+    head: cb01689fd9b60c9e3bd9e9239c5eee3227db0792
+    inherited_ci: 31324916807
+    retained_task5_ci: 31324916802
+    retained_task6_ci: 31324916801
+    dedicated_ci: 31324916814
+    status: PASS
+  implementation_green:
+    head: c7f0503bd267ff0b1f9fb113c5aeb62a1ce0f46a
+    inherited_ci: 31325226954
+    retained_task5_ci: 31325226945
+    retained_task6_ci: 31325226943
+    dedicated_ci: 31325226938
+    dedicated_postgres: 8_PASS
+    source_design_conformance: PASS
+  final_acceptance:
+    exact_head: 1bd392035392738bb41657bbc87d7273db7bec5e
+    inherited_ci: 31325546267
+    retained_task5_ci: 31325546283
+    retained_task6_ci: 31325546269
+    dedicated_ci: 31325546309
+    jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_TASK6_PASS_AND_DEDICATED_POSTGRES_8_OF_8
+    source_design_conformance: PASS
+    guarded_merge: 311cb84cf33f54e03c7c91fe01dd80408aa9ff91
+    main_identity_after_merge: VERIFIED_IDENTICAL
+  durable_handoff:
+    branch: docs/day6-task7-handoff
+    pr: 50
+    evidence: docs/handoffs/day6-task7-holders-portfolio-integrated-2026-08-09.md
     status: FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_PENDING
   implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
-  pass_status: DAY6_TASK6_FEES_ADMIN_GRADUATION_CREATOR_INTEGRATED_PASS
+  pass_status: DAY6_TASK7_HOLDERS_PORTFOLIO_INTEGRATED_PASS
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -648,9 +735,9 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 next_action: >-
-  Run all three exact-head workflows on Task-6 durable handoff PR #48. Require inherited CI all four jobs to pass, retained Task-5 PostgreSQL/conformance to pass, and dedicated Task-6 PostgreSQL/conformance to pass 8/8. Then guarded-merge with expected-head protection, verify merged main, and only then start Day-6 Task 7 from the new durable main baseline, RED-first and limited to holder reconstruction and portfolio reads.
+  Run all four exact-head workflows on Task-7 durable handoff PR #50. Require inherited CI all four jobs to pass, retained Task-5 and Task-6 PostgreSQL/conformance to pass, and dedicated Task-7 PostgreSQL/conformance to pass 8/8. Then guarded-merge with expected-head protection, verify merged main, and only then start Day-6 Task 8 from the new durable main baseline, RED-first and limited to replay/finality/cache/fanout.
 do_not_do:
-  - "Do not start Day-6 Task 7 before Task-6 durable handoff PR #48 is exact-head green and guarded-merged."
+  - "Do not start Day-6 Task 8 before Task-7 durable handoff PR #50 is exact-head green and guarded-merged."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not trust caller-supplied RetryGraduation phase/readiness instead of canonical contract reads."
@@ -658,5 +745,6 @@ do_not_do:
   - "Do not make DB/indexer/API authoritative for financial state."
   - "Do not create FeeEscrow entitlement from upstream fee/dust context events."
   - "Do not attribute creator revenue or claims to a token when exact attribution is unavailable or ambiguous."
+  - "Do not fabricate wallet PnL, average entry, graduated DEX price/value or holder concentration semantics without source authority."
   - "Do not reopen accepted Day-1-Day-5 financial semantics without newly ratified source authority."
   - "Do not infer or guess production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
