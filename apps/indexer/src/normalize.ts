@@ -19,10 +19,17 @@ import {
 import type { RpcLog } from './discovery.js';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+const MAX_DISPLAY_TEXT = 4_096;
+const MAX_DISPLAY_URL = 2_048;
 
 export type ChainReadClient = Readonly<{
   readContract: (request: Readonly<Record<string, unknown>>) => Promise<unknown>;
   getBlock?: (request: Readonly<{ blockNumber: bigint }>) => Promise<Readonly<{ timestamp: bigint }>>;
+}>;
+
+export type KnownLaunchIdentity = Readonly<{
+  tokenAddress: string;
+  curveAddress: string;
 }>;
 
 export type LaunchSnapshot = Readonly<{
@@ -66,6 +73,7 @@ export type NormalizedRange = Readonly<{
 export type NormalizeTransactionLogsInput = Readonly<{
   client: ChainReadClient;
   context: ProtocolContext;
+  knownLaunches?: readonly KnownLaunchIdentity[];
   logs: readonly RpcLog[];
   toBlock: bigint;
   toBlockTimestamp?: bigint;
@@ -109,6 +117,46 @@ function bigintifyNumbers(value: unknown): unknown {
     return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, bigintifyNumbers(item)]));
   }
   return value;
+}
+
+function sanitizeText(value: unknown, maximumLength = MAX_DISPLAY_TEXT): string {
+  return String(value ?? '')
+    .replace(/\\u0000/gi, '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .trim()
+    .slice(0, maximumLength);
+}
+
+function sanitizeDisplayUrl(value: unknown): string {
+  const candidate = sanitizeText(value, MAX_DISPLAY_URL);
+  if (candidate.length === 0) return '';
+  if (/^ipfs:\/\//i.test(candidate)) return candidate;
+  try {
+    const parsed = new URL(candidate);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? candidate : '';
+  } catch {
+    return '';
+  }
+}
+
+export function sanitizeDisplayMetadata(
+  input: Readonly<Record<string, unknown>>,
+): Readonly<Record<string, unknown>> {
+  const socialInput =
+    input.socials && typeof input.socials === 'object'
+      ? (input.socials as Readonly<Record<string, unknown>>)
+      : {};
+  return {
+    logo: sanitizeDisplayUrl(input.logo),
+    description: sanitizeText(input.description),
+    socials: {
+      twitter: sanitizeDisplayUrl(socialInput.twitter),
+      telegram: sanitizeDisplayUrl(socialInput.telegram),
+      discord: sanitizeDisplayUrl(socialInput.discord),
+      website: sanitizeDisplayUrl(socialInput.website),
+      farcaster: sanitizeDisplayUrl(socialInput.farcaster),
+    },
+  };
 }
 
 function eventKey(chainId: number, transactionHash: string, logIndex: number): string {
@@ -267,6 +315,18 @@ async function buildLaunchSnapshot(
   if (initialSupply <= 0n) throw new Error('constructor mint supply must be positive');
 
   const socials = Array.isArray(tokenSocials) ? tokenSocials : [];
+  const metadata = sanitizeDisplayMetadata({
+    logo: tokenLogo,
+    description: tokenDescription,
+    socials: {
+      twitter: socials[0],
+      telegram: socials[1],
+      discord: socials[2],
+      website: socials[3],
+      farcaster: socials[4],
+    },
+  });
+
   return {
     chainId: context.chainId,
     tokenAddress: token,
@@ -279,19 +339,9 @@ async function buildLaunchSnapshot(
     economicsDigest: asHex32(launchArgs.economicsDigest, 'LaunchCreated.economicsDigest'),
     configVersion: asBigInt(launchArgs.configVersion, 'LaunchCreated.configVersion'),
     launchTimestamp: asBigInt(factoryRecord.launchTimestamp, 'Factory.getLaunch.launchTimestamp'),
-    name: String(tokenName),
-    symbol: String(tokenSymbol),
-    metadata: {
-      logo: String(tokenLogo ?? ''),
-      description: String(tokenDescription ?? ''),
-      socials: {
-        twitter: String(socials[0] ?? ''),
-        telegram: String(socials[1] ?? ''),
-        discord: String(socials[2] ?? ''),
-        website: String(socials[3] ?? ''),
-        farcaster: String(socials[4] ?? ''),
-      },
-    },
+    name: sanitizeText(tokenName, 256),
+    symbol: sanitizeText(tokenSymbol, 64),
+    metadata,
     quoteAsset: asAddress(pairToken, 'curve.pairToken'),
     initialSupply,
     phantomQuote: asBigInt(phantomQuote, 'curve.phantomQuote'),
@@ -334,6 +384,10 @@ export async function normalizeTransactionLogs(input: NormalizeTransactionLogsIn
   }
 
   const dynamicRoles = new Map<string, BreadContractRole>();
+  for (const known of input.knownLaunches ?? []) {
+    dynamicRoles.set(asAddress(known.tokenAddress, 'known launch token'), 'LAUNCH_TOKEN');
+    dynamicRoles.set(asAddress(known.curveAddress, 'known launch curve'), 'CURVE');
+  }
   const launchSnapshots = new Map<string, LaunchSnapshot>();
 
   for (const launch of launches) {
