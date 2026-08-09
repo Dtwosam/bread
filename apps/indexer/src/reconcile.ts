@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import {
   DAY6_DB_SCHEMA_VERSION,
   RebuildRepository,
@@ -80,6 +82,32 @@ export type RebuildRange = Readonly<{
   logs: ApplyRangeInput['logs'];
 }>;
 
+export type RebuildTargetVerification = Readonly<{
+  targetMode: 'ISOLATED_REPLACEMENT' | 'LOCAL_TEST';
+  targetIdentity: string;
+}>;
+
+export type RebuildReportInput = Readonly<{
+  chainId: number;
+  stackVersion: string;
+  factoryAddress: string;
+  sourceHash: string | null;
+  manifestHash: string | null;
+  deploymentStartBlock: string;
+  targetBlock: string;
+  targetBlockHash: string;
+  canonicalEventCount: number;
+  rangesApplied: number;
+  targetMode: RebuildTargetVerification['targetMode'];
+  targetIdentity: string;
+  verdict: 'PASS' | 'FAIL';
+}>;
+
+export type RebuildReport = Readonly<RebuildReportInput & {
+  reportVersion: string;
+  reportHash: string;
+}>;
+
 export type RebuildStackInput = Readonly<{
   db: BreadDb;
   client: ApplyRangeInput['client'];
@@ -88,14 +116,14 @@ export type RebuildStackInput = Readonly<{
   batchSize: bigint;
   loadRange: (fromBlock: bigint, toBlock: bigint) => Promise<RebuildRange>;
   chain?: ReconciliationChainReader;
+  verifyRebuildTarget?: () => Promise<RebuildTargetVerification> | RebuildTargetVerification;
   /** Deprecated test-only input. Rebuild success always requires authoritative reconciliation. */
   skipReconciliation?: boolean;
 }>;
 
-export type RebuildStackResult = Readonly<{
+export type RebuildStackResult = Readonly<RebuildReport & {
   fromBlock: string;
   toBlock: string;
-  rangesApplied: number;
   reconciliation: ReconciliationReport;
 }>;
 
@@ -164,6 +192,40 @@ function projectedCurveGraduated(phase: string): boolean | null {
     default:
       return null;
   }
+}
+
+function normalizeHash(value: string | null): string | null {
+  return value === null ? null : value.toLowerCase();
+}
+
+export function buildRebuildReport(input: RebuildReportInput): RebuildReport {
+  if (!Number.isSafeInteger(input.canonicalEventCount) || input.canonicalEventCount < 0) {
+    throw new Error('rebuild report canonicalEventCount must be a non-negative safe integer');
+  }
+  if (!Number.isSafeInteger(input.rangesApplied) || input.rangesApplied < 0) {
+    throw new Error('rebuild report rangesApplied must be a non-negative safe integer');
+  }
+  if (!input.targetIdentity.trim()) throw new Error('rebuild report targetIdentity is required');
+
+  const reportVersion = 'day6-rebuild-v1';
+  const canonical = {
+    reportVersion,
+    verdict: input.verdict,
+    chainId: input.chainId,
+    stackVersion: input.stackVersion,
+    factoryAddress: input.factoryAddress.toLowerCase(),
+    sourceHash: normalizeHash(input.sourceHash),
+    manifestHash: normalizeHash(input.manifestHash),
+    deploymentStartBlock: input.deploymentStartBlock,
+    targetBlock: input.targetBlock,
+    targetBlockHash: input.targetBlockHash.toLowerCase(),
+    canonicalEventCount: input.canonicalEventCount,
+    rangesApplied: input.rangesApplied,
+    targetMode: input.targetMode,
+    targetIdentity: input.targetIdentity,
+  } as const;
+  const reportHash = createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
+  return { ...canonical, reportHash };
 }
 
 export async function reconcileStack(input: ReconcileStackInput): Promise<ReconciliationReport> {
@@ -441,6 +503,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     deploymentStartBlock: input.context.deploymentStartBlock.toString(10),
     checkedBlock: input.checkedBlock.toString(10),
     checkedBlockHash: observedCheckpointHash.toLowerCase(),
+    canonicalEventCount: authoritativeEventIdentities.length,
     startedAt,
     completedAt: new Date().toISOString(),
     checks,
@@ -452,6 +515,13 @@ export async function rebuildStack(input: RebuildStackInput): Promise<RebuildSta
   if (input.batchSize <= 0n) throw new Error('rebuild batchSize must be positive');
   if (input.skipReconciliation || !input.chain) {
     throw new Error('authoritative chain reader is required after rebuild; reconciliation cannot be skipped');
+  }
+  if (!input.verifyRebuildTarget) {
+    throw new Error('isolated rebuild target verification is required before destructive rebuild');
+  }
+  const target = await input.verifyRebuildTarget();
+  if ((target.targetMode !== 'ISOLATED_REPLACEMENT' && target.targetMode !== 'LOCAL_TEST') || !target.targetIdentity.trim()) {
+    throw new Error('isolated rebuild target verification returned an invalid target');
   }
 
   const repository = new RebuildRepository(input.db);
@@ -495,10 +565,26 @@ export async function rebuildStack(input: RebuildStackInput): Promise<RebuildSta
     throw new Error(`authoritative reconciliation failed: ${failedChecks || 'UNKNOWN'}`);
   }
 
-  return {
-    fromBlock: input.context.deploymentStartBlock.toString(10),
-    toBlock: input.targetBlock.toString(10),
+  const report = buildRebuildReport({
+    chainId: input.context.chainId,
+    stackVersion: input.context.stackVersion,
+    factoryAddress: input.context.factoryAddress,
+    sourceHash: reconciliation.sourceHash,
+    manifestHash: reconciliation.manifestHash,
+    deploymentStartBlock: input.context.deploymentStartBlock.toString(10),
+    targetBlock: input.targetBlock.toString(10),
+    targetBlockHash: reconciliation.checkedBlockHash,
+    canonicalEventCount: reconciliation.canonicalEventCount,
     rangesApplied,
+    targetMode: target.targetMode,
+    targetIdentity: target.targetIdentity,
+    verdict: 'PASS',
+  });
+
+  return {
+    ...report,
+    fromBlock: report.deploymentStartBlock,
+    toBlock: report.targetBlock,
     reconciliation,
   };
 }
