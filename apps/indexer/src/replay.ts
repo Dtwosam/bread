@@ -66,20 +66,29 @@ function boundedReplayStart(
 
 export async function replayOverlap<TApply extends ReplayApplyResult>(input: Readonly<{
   context: IndexerProtocolContext;
-  checkpointBlock: bigint;
+  checkpoint: Readonly<{ blockNumber: bigint; blockHash: string }>;
+  getBlockHash: (blockNumber: bigint) => Promise<string>;
   targetBlock: bigint;
   overlapBlocks: bigint;
   loadRange: (fromBlock: bigint, toBlock: bigint) => Promise<LoadedReplayRange>;
   applyRange: (range: LoadedReplayRange) => Promise<TApply>;
   publish?: (result: TApply) => Promise<void>;
 }>): Promise<ReplayOverlapResult<TApply>> {
-  if (input.targetBlock < input.checkpointBlock) {
+  // Arc committed-block continuity is an integrity boundary, not a probabilistic
+  // confirmation window. Verify the exact stored anchor before any log load or
+  // projection transaction can begin.
+  await verifyCheckpointAnchor({
+    checkpoint: input.checkpoint,
+    getBlockHash: input.getBlockHash,
+  });
+
+  if (input.targetBlock < input.checkpoint.blockNumber) {
     throw new Error('replay target cannot regress committed checkpoint');
   }
 
   const fromBlock = boundedReplayStart(
     input.context.deploymentStartBlock,
-    input.checkpointBlock,
+    input.checkpoint.blockNumber,
     input.overlapBlocks,
   );
   const loaded = await input.loadRange(fromBlock, input.targetBlock);
@@ -87,8 +96,8 @@ export async function replayOverlap<TApply extends ReplayApplyResult>(input: Rea
     throw new Error('replay loader returned a range different from the requested bounded overlap');
   }
 
-  // The apply call owns the durable PostgreSQL transaction. Nothing below is
-  // allowed to run until it resolves successfully.
+  // applyRange owns the durable PostgreSQL transaction. Nothing below is
+  // allowed to run until that transaction resolves successfully.
   const applyResult = await input.applyRange(loaded);
   const insertedEventIds = applyResult.insertedEventIds ?? [];
   if (insertedEventIds.length === 0 || !input.publish) {
@@ -110,8 +119,8 @@ export async function replayOverlap<TApply extends ReplayApplyResult>(input: Rea
     };
   } catch (error) {
     // Cache/realtime is acceleration only. The DB transaction has already
-    // committed, so a post-commit failure is surfaced as degraded state and
-    // never converted into a rollback/retry of financial read projections.
+    // committed, so publication failure is degraded presentation state and
+    // never converted into a rollback/retry of the committed projection.
     return {
       fromBlock,
       toBlock: input.targetBlock,
