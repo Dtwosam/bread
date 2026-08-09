@@ -18,8 +18,10 @@ export {
 
 export {
   classifyBreadLog,
+  createBreadStackAbiBinding,
   decodeBreadLog,
   isCanonicalBreadEventName,
+  type BreadStackAbiBinding,
   type DecodedBreadLog,
 } from './events.js';
 
