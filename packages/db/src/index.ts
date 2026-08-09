@@ -36,3 +36,4 @@ export {
   type CanonicalTradeProjection,
 } from './repositories/trades.js';
 export { applyFeeAdminGraduationProjection } from './repositories/fees-admin-graduation.js';
+export { CreatorRepository } from './repositories/creators.js';
