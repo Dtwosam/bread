@@ -21,9 +21,15 @@ type LaunchCreatedIdentity = Readonly<{
   tokenAddress: string;
 }>;
 
+type CanonicalEventIdentity = Readonly<{
+  transactionHash: string;
+  logIndex: number;
+}>;
+
 export type ReconciliationChainReader = Readonly<{
   countLaunchCreated: (input: Readonly<{ factoryAddress: string; fromBlock: bigint; toBlock: bigint }>) => Promise<bigint>;
   scanLaunchCreated: (input: Readonly<{ factoryAddress: string; fromBlock: bigint; toBlock: bigint }>) => Promise<readonly LaunchCreatedIdentity[]>;
+  scanCanonicalEventIdentities: (input: Readonly<{ fromBlock: bigint; toBlock: bigint }>) => Promise<readonly CanonicalEventIdentity[]>;
   readCurveState: (input: Readonly<{ tokenAddress: string; curveAddress: string; blockNumber: bigint }>) => Promise<Readonly<{
     trackedQuote: bigint;
     trackedTokens: bigint;
@@ -131,6 +137,10 @@ function stateByToken(states: readonly ReconciliationLaunchStateRow[]): Map<stri
 
 function launchIdentityKey(value: LaunchCreatedIdentity): string {
   return `${value.transactionHash.toLowerCase()}:${value.logIndex}:${value.tokenAddress.toLowerCase()}`;
+}
+
+function eventIdentityKey(value: CanonicalEventIdentity): string {
+  return `${value.transactionHash.toLowerCase()}:${value.logIndex}`;
 }
 
 function isAddress(value: unknown): value is string {
@@ -323,6 +333,20 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
 
   const checkpoint = snapshot.checkpoint;
   const observedCheckpointHash = await input.chain.getBlockHash(input.checkedBlock);
+  const authoritativeEventIdentities = (await input.chain.scanCanonicalEventIdentities({
+    fromBlock: input.context.deploymentStartBlock,
+    toBlock: input.checkedBlock,
+  })).map(eventIdentityKey).sort();
+  const projectedEventIdentities = snapshot.journal
+    .filter((item) => item.blockNumber <= input.checkedBlock)
+    .map(eventIdentityKey)
+    .sort();
+  const journalIdentityMatch = authoritativeEventIdentities.length === projectedEventIdentities.length
+    && authoritativeEventIdentities.every((value, index) => value === projectedEventIdentities[index]);
+  const journalWithinCheckpoint = Boolean(checkpoint) && snapshot.journal.every((item) =>
+    item.blockNumber >= input.context.deploymentStartBlock
+    && item.blockNumber <= input.checkedBlock
+    && item.blockNumber <= (checkpoint?.indexedThroughBlock ?? -1n));
   const checkpointPass = Boolean(
     checkpoint &&
     snapshot.stack &&
@@ -330,7 +354,9 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     snapshot.stack.deploymentStartBlock === input.context.deploymentStartBlock &&
     checkpoint.indexedThroughBlock === input.checkedBlock &&
     checkpoint.indexedThroughBlockHash.toLowerCase() === observedCheckpointHash.toLowerCase() &&
-    checkpoint.status === 'COMMITTED'
+    checkpoint.status === 'COMMITTED' &&
+    journalWithinCheckpoint &&
+    journalIdentityMatch
   );
   checks.push(check(
     'REC-06',
@@ -340,9 +366,14 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       indexedThroughBlock: input.checkedBlock,
       indexedThroughBlockHash: observedCheckpointHash.toLowerCase(),
       status: 'COMMITTED',
+      canonicalEventIdentities: authoritativeEventIdentities,
     },
-    checkpoint ?? 'MISSING_CHECKPOINT',
-    'Checkpoint must cover the reconciliation head contiguously from the selected deployment start and match the authoritative block hash.',
+    {
+      checkpoint: checkpoint ?? 'MISSING_CHECKPOINT',
+      journalWithinCheckpoint,
+      canonicalEventIdentities: projectedEventIdentities,
+    },
+    'Checkpoint must cover the selected stack contiguously, match the authoritative block hash, contain no journal rows beyond the checkpoint, and match the canonical chain event-identity set.',
   ));
 
   return {
