@@ -38,7 +38,7 @@ export {
   type LaunchParams,
   type PreparedBreadTransaction,
   type RetryGraduationResult,
-} from './transactions.js';
+} from './builders.js';
 
 export { decodeBreadError, type DecodedBreadError } from './errors.js';
 
