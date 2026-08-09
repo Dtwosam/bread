@@ -1,7 +1,7 @@
-import { createElement } from 'react';
+import { createElement, type ReactNode } from 'react';
 
 export type CardProps = Readonly<{
-  children?: unknown;
+  children?: ReactNode;
   className?: string;
   ariaLabel?: string;
 }>;
