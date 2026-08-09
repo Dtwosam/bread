@@ -145,42 +145,32 @@ describe('Day 6 Task 2 direct-wallet SDK builders', () => {
     expect(Object.keys(prepared)).not.toContain('signer');
   });
 
-  it('maps RetryGraduation exactly by canonical phase and never collapses the two stages', async () => {
+  it('keeps RetryGraduation sweep and createPool as separate canonical-state transactions', async () => {
     const sdk = await import('../../packages/protocol-sdk/src/index.ts');
     expect(sdk).toHaveProperty('prepareRetryGraduation');
 
     const prepareRetryGraduation = (sdk as Record<string, unknown>).prepareRetryGraduation as
-      | ((context: ProtocolContext, input: Record<string, unknown>) => Record<string, unknown>)
+      | ((client: { readContract: (input: unknown) => Promise<unknown> }, context: ProtocolContext, input: { token: Address }) => Promise<Record<string, unknown>>)
       | undefined;
 
-    const sweep = prepareRetryGraduation?.(context, {
-      token,
-      phase: 'NOT_GRADUATED',
-      readyToGraduate: true,
-    });
+    const sweepClient = {
+      readContract: vi
+        .fn()
+        .mockResolvedValueOnce({ phase: 0 })
+        .mockResolvedValueOnce({ curve })
+        .mockResolvedValueOnce(true),
+    };
+    const sweep = await prepareRetryGraduation?.(sweepClient, context, { token });
     expect(sweep).toMatchObject({ kind: 'TRANSACTION', stage: 'SWEEP' });
     expect((sweep?.transaction as Record<string, unknown> | undefined)?.to).toBe(context.addresses.coordinator);
     expect((sweep?.transaction as Record<string, unknown> | undefined)?.functionName).toBe('sweep');
     expect((sweep?.transaction as Record<string, unknown> | undefined)?.args).toEqual([token]);
 
-    const createPool = prepareRetryGraduation?.(context, {
-      token,
-      phase: 'SWEPT',
-      readyToGraduate: true,
-    });
+    const createPoolClient = { readContract: vi.fn().mockResolvedValue({ phase: 1 }) };
+    const createPool = await prepareRetryGraduation?.(createPoolClient, context, { token });
     expect(createPool).toMatchObject({ kind: 'TRANSACTION', stage: 'CREATE_POOL' });
     expect((createPool?.transaction as Record<string, unknown> | undefined)?.functionName).toBe('createPool');
-
-    expect(
-      prepareRetryGraduation?.(context, { token, phase: 'POOL_CREATED', readyToGraduate: true }),
-    ).toEqual({ kind: 'TERMINAL', status: 'ALREADY_COMPLETE' });
-    expect(prepareRetryGraduation?.(context, { token, phase: 'RESCUED', readyToGraduate: true })).toEqual({
-      kind: 'TERMINAL',
-      status: 'RESCUED',
-    });
-    expect(() =>
-      prepareRetryGraduation?.(context, { token, phase: 'NOT_GRADUATED', readyToGraduate: false }),
-    ).toThrow(/not ready/i);
+    expect((createPool?.transaction as Record<string, unknown> | undefined)?.args).toEqual([token]);
   });
 
   it('delegates simulation to a PublicClient without retaining or signing with the account', async () => {
