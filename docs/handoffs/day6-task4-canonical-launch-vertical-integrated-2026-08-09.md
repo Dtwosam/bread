@@ -2,6 +2,7 @@
 
 Date: 2026-08-09
 Repository: `Dtwosam/bread`
+Handoff PR: #44
 
 ## Integrated baseline
 
