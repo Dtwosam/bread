@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { sha256, stringToHex } from 'viem';
 
 import {
   DAY6_DB_SCHEMA_VERSION,
@@ -224,7 +224,7 @@ export function buildRebuildReport(input: RebuildReportInput): RebuildReport {
     targetMode: input.targetMode,
     targetIdentity: input.targetIdentity,
   } as const;
-  const reportHash = createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
+  const reportHash = sha256(stringToHex(JSON.stringify(canonical)), 'hex').slice(2);
   return { ...canonical, reportHash };
 }
 
