@@ -1,4 +1,4 @@
-schema_version: 1.17
+schema_version: 1.18
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -14,10 +14,11 @@ completed_checkpoints:
   - "Day 5 implementation PR #27: GUARDED_MERGE_PASS"
   - "Day 5 post-merge adversarial security PR #28: PASS and MERGED"
   - "Day 5 hardened-main closeout PR #30: GUARDED_MERGE_PASS"
+  - "Day 5 durable handoff PR #32: PASS and MERGED"
   - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS"
-active_checkpoint: "Day 5 — durable post-closeout handoff"
-active_lane: "Docs-only handoff must pass exact-head CI and guarded merge before Day 6 begins"
-active_gate: DAY5_DURABLE_HANDOFF_EXACT_HEAD_CI_AND_MERGE
+active_checkpoint: "Day 6 — SDK, indexer and API preflight/design"
+active_lane: "Context rollover before Day-6 design-spec write; no Day-6 production code started"
+active_gate: DAY6_DESIGN_SPEC_AND_PLAN_REQUIRED_BEFORE_PRODUCTION_CODE
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -28,36 +29,29 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY5-ACCEPTED-CLOSEOUT-MAIN
+  id: DAY5-DURABLE-CLOSED-MAIN
   branch: main
-  head: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
-  day4_closeout_milestone: 7533b9f243e1c53106188aa662919f6166448f2e
-  day5_start_baseline: ee315b4feb255b6c84c0b1ef51623a1155d77844
-  day5_implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
-  day5_implementation_ci: 31285733919
-  day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
-  day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
-  day5_postmerge_security_ci: 31285860020
-  day5_hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
-  day5_closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
-  day5_closeout_prerequisite_ci: 31285985419
-  day5_closeout_stamped_head: e583204239032e92fe3172137423b58f459aa1c0
-  day5_closeout_stamped_ci: 31286043130
-  day5_closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
-  status: DAY5_INTEGRATED_PASS_DURABLE_HANDOFF_PENDING
+  day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
+  day5_durable_handoff_head: 31c3978580eaecc8f81282abdf86576f444692cc
+  day5_durable_handoff_ci: 31286212890
+  day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
+  day6_verified_start_before_rollover_docs: 4cc1ea7041abaa86402114321bf31e53aff8ea90
+  rollover_docs_direct_commit: 8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d
+  status: DAY5_DURABLY_CLOSED_DAY6_PREFLIGHT_ACTIVE
 working_branches:
-  - checkpoint/day5-durable-handoff
+  - checkpoint/day6-preflight-rollover
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   day5_implementation_pr: 27
   day5_postmerge_security_pr: 28
-  day5_superseded_closeout_pr: 29
   day5_closeout_pr: 30
-  day5_closeout_evidence: docs/evidence/day5-merged-main-closeout.md
-  day5_handoff_snapshot: docs/handoffs/day5-post-closeout-984f80cee88769a9.md
-  day5_production_code_status: INTEGRATED_PASS
+  day5_durable_handoff_pr: 32
+  day5_production_code_status: INTEGRATED_PASS_DURABLE
   day6_production_code_started: false
+project_process_note:
+  rollover_docs_direct_commit: >-
+    During the context-limit rollover, docs/handoffs/day6-preflight-rollover-2026-08-09.md was accidentally written directly to main at 8cd4573d7a67d93c054d9dc68d35e95b2f8aaa4d because the GitHub contents branch field was omitted. This was documentation-only: no contracts, runtime config, economics, addresses, dependencies or Day-6 production code changed. The deviation is explicitly recorded and this checkpoint branch must pass full repository CI before the rollover state is treated as accepted.
 day5_scope:
   production_status: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
   v4_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
@@ -69,24 +63,60 @@ day5_scope:
     - RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS
     - DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS
 verification:
-  implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
-  implementation_ci: 31285733919
-  implementation_jobs: PASS_ALL_FOUR
-  implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
-  postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
-  postmerge_security_ci: 31285860020
-  postmerge_security_jobs: PASS_ALL_FOUR
-  hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
-  closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
-  closeout_prerequisite_ci: 31285985419
-  closeout_prerequisite_jobs: PASS_ALL_FOUR
-  closeout_stamped_head: e583204239032e92fe3172137423b58f459aa1c0
-  closeout_stamped_ci: 31286043130
-  closeout_stamped_jobs: PASS_ALL_FOUR
-  closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
-  main_identity_after_closeout: VERIFIED_IDENTICAL
-  durable_handoff_ci: PENDING_THIS_HANDOFF_HEAD
-  durable_handoff_merge: NOT_STARTED
+  day5_implementation_head: 9dcd038a9ed3563de7999e5332c72a3b37d7312a
+  day5_implementation_ci: 31285733919
+  day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
+  day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
+  day5_postmerge_security_ci: 31285860020
+  day5_hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
+  day5_closeout_prerequisite_head: 1fcc50063e4d37bfb96df3f2b58f858f9c718d0b
+  day5_closeout_prerequisite_ci: 31285985419
+  day5_closeout_stamped_head: e583204239032e92fe3172137423b58f459aa1c0
+  day5_closeout_stamped_ci: 31286043130
+  day5_closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
+  day5_durable_handoff_head: 31c3978580eaecc8f81282abdf86576f444692cc
+  day5_durable_handoff_ci: 31286212890
+  day5_durable_handoff_jobs: PASS_ALL_FOUR
+  day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
+  main_identity_after_day5_handoff: VERIFIED_IDENTICAL_AT_TIME_OF_HANDOFF
+day6_handoff_contract:
+  scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
+  authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
+  approved_architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
+  journal_identity: "canonical event identity derives from chain/log identity; trade identity is chainId + transactionHash + logIndex per 06B"
+  transaction_rule: "journal insert + affected projection updates + finalized checkpoint advancement occur in one PostgreSQL transaction"
+  post_commit_rule: "cache invalidation and realtime fanout happen only after durable DB apply"
+  replay_rule: "overlap replay is idempotent and cannot duplicate canonical event/projection outcomes"
+  realtime_rule: "realtime is convenience only; logical-channel fanout; clients deduplicate and refetch after disconnect"
+  acceptance:
+    - DELETE_DB_REBUILD_PASS
+    - OVERLAP_REPLAY_IDEMPOTENT
+    - API_FRESHNESS_METADATA_PRESENT
+    - RECONCILE_PASS
+    - FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS
+  source_defined_api:
+    - GET /v1/feed
+    - GET /v1/search
+    - GET /v1/tokens/:address
+    - GET /v1/tokens/:address/trades
+    - GET /v1/tokens/:address/holders
+    - GET /v1/portfolio/:address
+    - GET /v1/creators/:address
+    - GET /v1/status
+  source_defined_tables:
+    - protocol_stacks
+    - launches
+    - launch_state
+    - trades
+    - fee_credits
+    - fee_claims
+    - creator_rollups
+    - holder_snapshots
+    - market_candles
+    - token_metrics
+    - indexer_checkpoints
+    - admin_events
+    - metadata
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -99,30 +129,13 @@ blocker_scope:
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
-security_review:
-  coordinator_renounce_hardening: RED_GREEN_VERIFIED
-  deployment_authority_handoff: EXACT_HEAD_CI_VERIFIED_BEFORE_MERGE
-  postmerge_adversarial_suite: MERGED_AND_EXACT_HEAD_CI_VERIFIED
-  external_independent_review: OPEN_PUBLIC_MAINNET_RELEASE_GATE
-day6_handoff_contract:
-  scope: "Protocol SDK + ABI/address/transaction builders/error decoding + transactional indexer/checkpoints/replay + projections/candles/metrics + feed/search/token/trades/status API + DB rebuild/reconciliation"
-  authority: "Chain is authoritative; DB/indexer/cache/API are deterministic read projections and have no financial write authority"
-  continuity: "Consume actual Day-1-Day-5 events/interfaces/manifests through one shared contract; no private duplicate ABI/address/domain/state interpretations"
-  acceptance:
-    - DELETE_DB_REBUILD_PASS
-    - OVERLAP_REPLAY_IDEMPOTENT
-    - API_FRESHNESS_METADATA_PRESENT
-    - RECONCILE_PASS
-    - FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS
 next_action: >-
-  After this docs-only durable handoff passes exact-head CI and is guarded-merged, verify latest main and record that exact SHA as DAY6_START_BASELINE. Then perform Day-6 preflight: read controlling 06B/06C/06D/06E/06F/06I requirements, inspect the actual Day-1-Day-5 contract events/interfaces/manifests on main, freeze the shared event/domain/API contract, and write/self-review the detailed Day-6 implementation plan before production Day-6 code.
+  In a fresh chat, first read the uploaded Project Sources and this repository state, then verify GitHub main and reconcile any commits after 4cc1ea7041abaa86402114321bf31e53aff8ea90. Continue Day-6 brainstorming from the already-approved TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS direction. Freeze exact event normalization/finality-reorg/schema/freshness/cache-fanout/reconciliation/error semantics, write and self-review docs/superpowers/specs/2026-08-09-day6-sdk-indexer-api-design.md, complete the required written-spec review gate, then invoke writing-plans and create the detailed RED->GREEN implementation plan. Do not start production Day-6 code before those gates.
 do_not_do:
-  - "Do not start Day-6 production code before this durable handoff is green and merged."
-  - "Do not reopen accepted Day-1-Day-5 financial semantics without newly ratified source authority."
+  - "Do not start Day-6 production code from chat memory or before the written design/plan gates."
   - "Do not make DB/indexer/API authoritative for financial state."
   - "Do not create private duplicate protocol ABI/address/domain/state interpretations."
   - "Do not route user trades through a centralized Bread trade server."
-  - "Do not claim exact current-live Pons V2 source/runtime parity or audit-clean status."
+  - "Do not postpone first meaningful concurrency/cache/fanout proof to Day 8."
+  - "Do not reopen accepted Day-1-Day-5 financial semantics without newly ratified source authority."
   - "Do not infer or guess production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
-  - "Do not activate V4/V3 on Arc without official deployment evidence and compatibility tests."
-  - "When chat context is roughly 90% full, stop before a new critical slice and write/verify a durable rollover handoff."
