@@ -31,3 +31,7 @@ export {
 } from './repositories/indexer.js';
 
 export { ReadRepository, decimalIntegerToBigInt } from './repositories/read.js';
+export {
+  applyCanonicalTradeProjection,
+  type CanonicalTradeProjection,
+} from './repositories/trades.js';
