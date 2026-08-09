@@ -49,6 +49,8 @@ export type RetryGraduationResult =
     }>
   | Readonly<{ kind: 'TERMINAL'; status: 'ALREADY_COMPLETE' | 'RESCUED' }>;
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address;
+
 function positive(name: string, value: bigint): bigint {
   if (value <= 0n) throw new Error(`${name} must be greater than zero`);
   return value;
@@ -74,6 +76,36 @@ function prepared(
     value: 0n,
     ...(allowance === undefined ? {} : { allowance }),
   };
+}
+
+function graduationPhase(record: unknown): number {
+  const phase =
+    Array.isArray(record)
+      ? record[0]
+      : typeof record === 'object' && record !== null && 'phase' in record
+        ? (record as { phase: unknown }).phase
+        : undefined;
+  if (typeof phase !== 'number' && typeof phase !== 'bigint') {
+    throw new Error('invalid canonical graduation record');
+  }
+  const numeric = Number(phase);
+  if (!Number.isSafeInteger(numeric) || numeric < 0 || numeric > 3) {
+    throw new Error(`unsupported graduation phase: ${String(phase)}`);
+  }
+  return numeric;
+}
+
+function launchCurve(record: unknown): Address {
+  const curve =
+    Array.isArray(record)
+      ? record[1]
+      : typeof record === 'object' && record !== null && 'curve' in record
+        ? (record as { curve: unknown }).curve
+        : undefined;
+  if (typeof curve !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(curve) || curve.toLowerCase() === ZERO_ADDRESS) {
+    throw new Error('canonical launch record has no curve');
+  }
+  return curve as Address;
 }
 
 export function prepareLaunch(context: ProtocolContext, params: LaunchParams): PreparedBreadTransaction {
@@ -151,32 +183,58 @@ export function prepareClaim(
   return prepared(context.addresses.feeEscrow, breadAbiRegistry.feeEscrow, 'claim', [input.amount]);
 }
 
-export function prepareRetryGraduation(
+/**
+ * Reads the authoritative graduation phase before choosing a retry action.
+ * Callers cannot supply or override phase/readiness. For NOT_GRADUATED, the
+ * canonical Factory launch record identifies the curve and the curve itself
+ * must report readyToGraduate() before a sweep transaction is prepared.
+ */
+export async function prepareRetryGraduation(
+  client: PublicClient,
   context: ProtocolContext,
-  input: Readonly<{
-    token: Address;
-    phase: GraduationPhase;
-    readyToGraduate: boolean;
-  }>,
-): RetryGraduationResult {
-  switch (input.phase) {
-    case 'NOT_GRADUATED':
-      if (!input.readyToGraduate) throw new Error('curve is not ready for graduation');
-      return {
-        kind: 'TRANSACTION',
-        stage: 'SWEEP',
-        transaction: prepared(context.addresses.coordinator, breadAbiRegistry.coordinator, 'sweep', [input.token]),
-      };
-    case 'SWEPT':
+  input: Readonly<{ token: Address }>,
+): Promise<RetryGraduationResult> {
+  const record = await client.readContract({
+    address: context.addresses.coordinator,
+    abi: breadAbiRegistry.coordinator,
+    functionName: 'getGraduation',
+    args: [input.token],
+  } as never);
+
+  switch (graduationPhase(record)) {
+    case 1:
       return {
         kind: 'TRANSACTION',
         stage: 'CREATE_POOL',
         transaction: prepared(context.addresses.coordinator, breadAbiRegistry.coordinator, 'createPool', [input.token]),
       };
-    case 'POOL_CREATED':
+    case 2:
       return { kind: 'TERMINAL', status: 'ALREADY_COMPLETE' };
-    case 'RESCUED':
+    case 3:
       return { kind: 'TERMINAL', status: 'RESCUED' };
+    case 0: {
+      const launch = await client.readContract({
+        address: context.addresses.factory,
+        abi: breadAbiRegistry.factory,
+        functionName: 'getLaunch',
+        args: [input.token],
+      } as never);
+      const curve = launchCurve(launch);
+      const ready = await client.readContract({
+        address: curve,
+        abi: breadAbiRegistry.curve,
+        functionName: 'readyToGraduate',
+        args: [],
+      } as never);
+      if (ready !== true) throw new Error('curve is not ready for graduation');
+      return {
+        kind: 'TRANSACTION',
+        stage: 'SWEEP',
+        transaction: prepared(context.addresses.coordinator, breadAbiRegistry.coordinator, 'sweep', [input.token]),
+      };
+    }
+    default:
+      throw new Error('unsupported graduation phase');
   }
 }
 
