@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Address } from '../../packages/types/src/index.js';
+import { breadAbiRegistry } from '../../packages/protocol-sdk/src/abi/generated.js';
 import type { ProtocolContext } from '../../packages/protocol-sdk/src/context.js';
 
 const address = (byte: string) => `0x${byte.repeat(40)}` as Address;
@@ -29,7 +30,24 @@ const context: ProtocolContext = {
 
 type ReadClient = { readContract: ReturnType<typeof vi.fn> };
 
+function functionNames(abi: readonly { type: string; name?: string }[]): Set<string> {
+  return new Set(abi.filter((item) => item.type === 'function').map((item) => item.name).filter((name): name is string => Boolean(name)));
+}
+
 describe('Day 6 Task 2 canonical RetryGraduation reads', () => {
+  it('keeps every Task 2 read/write function in the artifact-derived ABI registry', () => {
+    expect(functionNames(breadAbiRegistry.factory)).toEqual(
+      expect.objectContaining(new Set(['launchToken', 'launchTokenAndBuy', 'getLaunch'])),
+    );
+    expect(functionNames(breadAbiRegistry.curve)).toEqual(
+      expect.objectContaining(new Set(['buy', 'sell', 'readyToGraduate'])),
+    );
+    expect(functionNames(breadAbiRegistry.feeEscrow)).toEqual(expect.objectContaining(new Set(['claim'])));
+    expect(functionNames(breadAbiRegistry.coordinator)).toEqual(
+      expect.objectContaining(new Set(['getGraduation', 'sweep', 'createPool'])),
+    );
+  });
+
   it('reads coordinator phase, factory launch record and curve readiness before preparing sweep', async () => {
     const sdk = await import('../../packages/protocol-sdk/src/index.ts');
     const prepareRetryGraduation = (sdk as Record<string, unknown>).prepareRetryGraduation as
