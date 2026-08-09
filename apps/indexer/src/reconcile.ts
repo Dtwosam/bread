@@ -15,8 +15,15 @@ import { applyRange } from './apply-range.js';
 
 type ApplyRangeInput = Parameters<typeof applyRange>[0];
 
+type LaunchCreatedIdentity = Readonly<{
+  transactionHash: string;
+  logIndex: number;
+  tokenAddress: string;
+}>;
+
 export type ReconciliationChainReader = Readonly<{
   countLaunchCreated: (input: Readonly<{ factoryAddress: string; fromBlock: bigint; toBlock: bigint }>) => Promise<bigint>;
+  scanLaunchCreated: (input: Readonly<{ factoryAddress: string; fromBlock: bigint; toBlock: bigint }>) => Promise<readonly LaunchCreatedIdentity[]>;
   readCurveState: (input: Readonly<{ tokenAddress: string; curveAddress: string; blockNumber: bigint }>) => Promise<Readonly<{
     trackedQuote: bigint;
     trackedTokens: bigint;
@@ -111,23 +118,39 @@ function stateByToken(states: readonly ReconciliationLaunchStateRow[]): Map<stri
   return new Map(states.map((state) => [state.tokenAddress.toLowerCase(), state]));
 }
 
+function launchIdentityKey(value: LaunchCreatedIdentity): string {
+  return `${value.transactionHash.toLowerCase()}:${value.logIndex}:${value.tokenAddress.toLowerCase()}`;
+}
+
 export async function reconcileStack(input: ReconcileStackInput): Promise<ReconciliationReport> {
   if (input.checkedBlock < input.context.deploymentStartBlock) throw new Error('reconciliation block precedes deployment start');
   const repository = new RebuildRepository(input.db);
   const snapshot = await repository.reconciliationSnapshot(protocolContext(input.context));
   const checks: ReconciliationCheck[] = [];
 
-  const authoritativeLaunchCount = await input.chain.countLaunchCreated({
+  const launchRange = {
     factoryAddress: input.context.factoryAddress,
     fromBlock: input.context.deploymentStartBlock,
     toBlock: input.checkedBlock,
-  });
+  } as const;
+  const [authoritativeLaunchCount, authoritativeLaunchEvents] = await Promise.all([
+    input.chain.countLaunchCreated(launchRange),
+    input.chain.scanLaunchCreated(launchRange),
+  ]);
+  const expectedLaunches = [...authoritativeLaunchEvents].map(launchIdentityKey).sort();
+  const actualLaunches = snapshot.launches.map((launch) => launchIdentityKey({
+    transactionHash: launch.launchTransactionHash,
+    logIndex: launch.launchLogIndex,
+    tokenAddress: launch.tokenAddress,
+  })).sort();
+  const launchIdentityMatch = expectedLaunches.length === actualLaunches.length
+    && expectedLaunches.every((value, index) => value === actualLaunches[index]);
   checks.push(check(
     'REC-01',
-    BigInt(snapshot.launches.length) === authoritativeLaunchCount,
-    authoritativeLaunchCount,
-    BigInt(snapshot.launches.length),
-    'Factory LaunchCreated count must equal indexed launch count for the selected stack.',
+    BigInt(snapshot.launches.length) === authoritativeLaunchCount && launchIdentityMatch,
+    { count: authoritativeLaunchCount, launches: expectedLaunches },
+    { count: BigInt(snapshot.launches.length), launches: actualLaunches },
+    'Factory LaunchCreated count and canonical transaction/log/token identities must equal indexed launches for the selected stack.',
   ));
 
   const states = stateByToken(snapshot.states);
