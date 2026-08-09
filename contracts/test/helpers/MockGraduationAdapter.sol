@@ -19,6 +19,11 @@ contract MockGraduationAdapter is IGraduationAdapter {
     bool public failExecution;
     bool public failAfterPull;
     bool public failAfterMint;
+    bool public reentryAttempted;
+    bool public reentrySucceeded;
+    bool private _reentryEnabled;
+    address private _reentryTarget;
+    address private _reentryToken;
     uint256 public executeCalls;
     uint256 public successfulMints;
     MockPositionManagerNFT public positionManager;
@@ -60,6 +65,14 @@ contract MockGraduationAdapter is IGraduationAdapter {
         _nextResult = result;
     }
 
+    function setReentry(address target, address token, bool enabled) external {
+        _reentryTarget = target;
+        _reentryToken = token;
+        _reentryEnabled = enabled;
+        reentryAttempted = false;
+        reentrySucceeded = false;
+    }
+
     function validateSeed(Seed calldata) external view override {
         if (failValidation) revert("MOCK_VALIDATE_REVERT");
     }
@@ -68,6 +81,13 @@ contract MockGraduationAdapter is IGraduationAdapter {
         if (failExecution) revert("MOCK_EXECUTE_REVERT");
         ++executeCalls;
         _lastSeed = seed;
+
+        if (_reentryEnabled) {
+            reentryAttempted = true;
+            (reentrySucceeded,) = _reentryTarget.call(
+                abi.encodeWithSignature("createPool(address)", _reentryToken)
+            );
+        }
 
         MockPositionManagerNFT manager = positionManager;
         if (address(manager) == address(0)) return _nextResult;
