@@ -182,7 +182,7 @@ const { Pool } = requireFromDb('pg') as { Pool: new (config: Record<string, unkn
 async function digestStack(pool: TestPool): Promise<string> {
   const result = await pool.query(`
     SELECT md5(jsonb_build_object(
-      'journal', COALESCE((SELECT jsonb_agg(to_jsonb(j) - 'created_at' ORDER BY block_number, transaction_index, log_index)
+      'journal', COALESCE((SELECT jsonb_agg(to_jsonb(j) - 'inserted_at' ORDER BY block_number, transaction_index, log_index)
         FROM event_journal j WHERE stack_version=$1), '[]'::jsonb),
       'launches', COALESCE((SELECT jsonb_agg(to_jsonb(l) - 'created_at' ORDER BY token_address)
         FROM launches l WHERE stack_version=$1 AND factory_address=$2), '[]'::jsonb),
