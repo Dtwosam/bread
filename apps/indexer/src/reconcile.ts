@@ -153,6 +153,19 @@ function isAddress(value: unknown): value is string {
   return typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value);
 }
 
+function projectedCurveGraduated(phase: string): boolean | null {
+  switch (phase) {
+    case 'NOT_GRADUATED':
+      return false;
+    case 'SWEPT':
+    case 'POOL_CREATED':
+    case 'RESCUED':
+      return true;
+    default:
+      return null;
+  }
+}
+
 export async function reconcileStack(input: ReconcileStackInput): Promise<ReconciliationReport> {
   const startedAt = new Date().toISOString();
   if (input.checkedBlock < input.context.deploymentStartBlock) throw new Error('reconciliation block precedes deployment start');
@@ -196,6 +209,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       blockNumber: input.checkedBlock,
     });
     const projected = states.get(launch.tokenAddress.toLowerCase());
+    const projectedGraduated = projected ? projectedCurveGraduated(projected.graduationPhase) : null;
     const expected = {
       token: launch.tokenAddress,
       trackedQuote: authoritative.trackedQuote,
@@ -207,6 +221,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       reservedTokens: authoritative.reservedTokens,
       remainingSellableTokens: authoritative.remainingSellableTokens,
       readyToGraduate: authoritative.readyToGraduate,
+      graduated: authoritative.graduated,
     };
     const actual = {
       token: launch.tokenAddress,
@@ -219,6 +234,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       reservedTokens: launch.reservedTokensBaseline,
       remainingSellableTokens: projected?.remainingSellableTokens ?? null,
       readyToGraduate: projected?.readyToGraduate ?? null,
+      graduated: projectedGraduated,
     };
     curveExpected.push(expected);
     curveActual.push(actual);
@@ -232,7 +248,8 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       projected.virtualQuoteReserve !== authoritative.virtualQuoteReserve ||
       launch.reservedTokensBaseline !== authoritative.reservedTokens ||
       projected.remainingSellableTokens !== authoritative.remainingSellableTokens ||
-      projected.readyToGraduate !== authoritative.readyToGraduate
+      projected.readyToGraduate !== authoritative.readyToGraduate ||
+      projectedGraduated !== authoritative.graduated
     ) {
       curvesMatch = false;
     }
@@ -242,7 +259,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     curvesMatch,
     curveExpected,
     curveActual,
-    'Projected tracked reserves, fee buckets, reserve components, remaining allocation and readiness must match authoritative curve state.',
+    'Projected tracked reserves, fee buckets, reserve components, remaining allocation, readiness and graduated state must match authoritative curve state.',
   ));
 
   const feeEscrowAddress = input.context.addresses.feeEscrow;
