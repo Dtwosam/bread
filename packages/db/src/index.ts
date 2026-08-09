@@ -35,3 +35,7 @@ export {
   applyCanonicalTradeProjection,
   type CanonicalTradeProjection,
 } from './repositories/trades.js';
+export { applyFeeAdminGraduationProjection } from './repositories/fees-admin-graduation.js';
+export { projectCurveGraduationProgress } from './repositories/graduation-progress.js';
+export { projectCreatorTradeCount } from './repositories/creator-trade-count.js';
+export { CreatorRepository } from './repositories/creators.js';

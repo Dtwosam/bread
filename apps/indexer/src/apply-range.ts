@@ -4,7 +4,11 @@ import type { Hex32 } from '../../../packages/types/src/index.js';
 
 import type { RpcLog } from './discovery.js';
 import { normalizeTransactionLogs, type ChainReadClient } from './normalize.js';
-import { createLaunchReducer, createTradeReducer } from './reducers.js';
+import {
+  createFeeAdminGraduationReducer,
+  createLaunchReducer,
+  createTradeReducer,
+} from './reducers.js';
 
 export type ApplyRangeInput = Readonly<{
   db: BreadDb;
@@ -37,6 +41,7 @@ export async function applyRange(input: ApplyRangeInput) {
   const repository = new IndexerRepository(input.db, [
     createLaunchReducer(normalized.launchSnapshots),
     createTradeReducer(normalized.trades),
+    createFeeAdminGraduationReducer({ context: input.context }),
   ]);
   return repository.applyCanonicalRange({
     context: input.context,

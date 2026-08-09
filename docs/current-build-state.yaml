@@ -1,4 +1,4 @@
-schema_version: 1.28
+schema_version: 1.29
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -27,9 +27,10 @@ completed_checkpoints:
   - "Day 6 Task 4 PR #43: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 4 durable handoff PR #44: EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 5 PR #45: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, DEDICATED_POSTGRES_8_OF_8, GUARDED_MERGE_PASS"
-active_checkpoint: "Day 6 — Task 5 durable integration handoff"
-active_lane: "Task 5 is integrated on main; durable handoff PR #46 must exact-head pass both inherited CI and dedicated Task-5 PostgreSQL/conformance before Task 6 starts"
-active_gate: DAY6_TASK5_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK6
+  - "Day 6 Task 5 durable handoff PR #46: EXACT_HEAD_CI_PASS, DEDICATED_POSTGRES_8_OF_8, GUARDED_MERGE_PASS"
+active_checkpoint: "Day 6 — Task 6 fees, admin, graduation and creator projections"
+active_lane: "Task 6 implementation and source-conformance are GREEN; documentation-bearing exact-head inherited CI, retained Task-5 regression and dedicated Task-6 PostgreSQL CI must pass before guarded merge"
+active_gate: DAY6_TASK6_DOCS_BEARING_EXACT_HEAD_CI_REQUIRED_BEFORE_MERGE
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -40,7 +41,7 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY6-TASK5-INTEGRATED-MAIN
+  id: DAY6-TASK5-DURABLE-MAIN
   branch: main
   day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
@@ -56,9 +57,10 @@ integration_baseline:
   day6_task4_merge: 0ce425e15d72202d82fa8d8b47f017e46202187c
   day6_task4_handoff_merge: ab2f4e600d7f73c44fb4ec67875f2da9ff94d6d9
   day6_task5_merge: 2779dce925c983ade93d1251aa80db57e4138c92
-  status: DAY6_TASK5_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
+  day6_task5_handoff_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
+  status: DAY6_TASK5_DURABLE_PASS_TASK6_IMPLEMENTATION_GREEN_UNMERGED
 working_branches:
-  - docs/day6-task5-handoff
+  - agent/day6-task6-fees-admin-graduation
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -79,6 +81,7 @@ repository:
   day6_task4_handoff_pr: 44
   day6_task5_pr: 45
   day6_task5_handoff_pr: 46
+  day6_task6_pr: 47
   day5_production_code_status: INTEGRATED_PASS_DURABLE
   day6_production_code_started: true
 project_process_note:
@@ -202,6 +205,36 @@ verification:
   day6_task5_final_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_DEDICATED_POSTGRES_8_OF_8
   day6_task5_merge: 2779dce925c983ade93d1251aa80db57e4138c92
   main_identity_after_day6_task5: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task5_handoff_head: b15693dc393be3a9a4b5a270947dd7074ea750dc
+  day6_task5_handoff_ci: 31320232802
+  day6_task5_handoff_dedicated_ci: 31320232783
+  day6_task5_handoff_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_DEDICATED_POSTGRES_8_OF_8
+  day6_task5_handoff_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
+  main_identity_after_day6_task5_handoff: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task6_original_red_head: ef857f5bea40061c8a12670189281602c15d1667
+  day6_task6_original_red_ci: 31320645853
+  day6_task6_original_red_dedicated_ci: 31320645878
+  day6_task6_first_green_head: 8e611464df6c42c6615d0e41905a8a15d4628272
+  day6_task6_first_green_ci: 31321060364
+  day6_task6_first_green_dedicated_ci: 31321060353
+  day6_task6_conformance_red_head: 25157240b5d2fa39967774681ed3374c410e212c
+  day6_task6_conformance_red_ci: 31321168773
+  day6_task6_conformance_red_dedicated_ci: 31321168776
+  day6_task6_conformance_green_head: c60bc9fd3d5363389cb65eb42659038b90b6c4c7
+  day6_task6_conformance_green_ci: 31321561339
+  day6_task6_conformance_green_task5_ci: 31321561378
+  day6_task6_conformance_green_dedicated_ci: 31321561340
+  day6_task6_creator_trade_red_head: 66ce7eeecef779d883a0faabb9e12596bf8bd606
+  day6_task6_creator_trade_red_dedicated_ci: 31321725015
+  day6_task6_creator_trade_initial_green_head: 14f9682389b9958279acd4a91f3084c5ce3ac023
+  day6_task6_creator_trade_initial_green_ci: 31321862939
+  day6_task6_creator_trade_initial_green_dedicated_ci: 31321862979
+  day6_task6_creator_trade_task5_regression_ci: 31321862940
+  day6_task6_implementation_green_head: d21b58d3d3ef63a448921d752c808f9c0c086e32
+  day6_task6_implementation_green_ci: 31322120558
+  day6_task6_implementation_green_task5_ci: 31322120555
+  day6_task6_implementation_green_dedicated_ci: 31322120557
+  day6_task6_implementation_green_jobs: PASS_ALL_FOUR_WITH_RETAINED_TASK5_PASS_AND_DEDICATED_TASK6_8_OF_8
 day6_handoff_contract:
   scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
   authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
@@ -514,10 +547,72 @@ day6_task5:
   durable_handoff:
     branch: docs/day6-task5-handoff
     pr: 46
+    exact_head: b15693dc393be3a9a4b5a270947dd7074ea750dc
+    inherited_ci: 31320232802
+    dedicated_ci: 31320232783
+    jobs: PASS_ALL_FOUR_WITH_REAL_STEPS_AND_DEDICATED_POSTGRES_8_OF_8
+    guarded_merge: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
     evidence: docs/handoffs/day6-task5-canonical-trade-vertical-integrated-2026-08-09.md
-    status: FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_PENDING
-  implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
+    status: INTEGRATED_PASS
+  implementation_status: INTEGRATED_PASS_DURABLE
   pass_status: DAY6_TASK5_CANONICAL_TRADE_VERTICAL_INTEGRATED_PASS
+day6_task6:
+  branch: agent/day6-task6-fees-admin-graduation
+  pr: 47
+  baseline: 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4
+  evidence: docs/evidence/day6-task6-fees-admin-graduation.md
+  original_red:
+    head: ef857f5bea40061c8a12670189281602c15d1667
+    inherited_ci: 31320645853
+    dedicated_ci: 31320645878
+    status: PROVEN
+  first_green:
+    head: 8e611464df6c42c6615d0e41905a8a15d4628272
+    inherited_ci: 31321060364
+    dedicated_ci: 31321060353
+    dedicated_postgres: 4_PASS
+    status: GREEN_BEFORE_SOURCE_CONFORMANCE_REPAIR
+  source_conformance_red:
+    head: 25157240b5d2fa39967774681ed3374c410e212c
+    inherited_ci: 31321168773
+    dedicated_ci: 31321168776
+    valid_product_reds:
+      - TYPED_SCHEMA_PARITY_MISSING
+      - NONTERMINAL_GRADUATION_PROGRESS_MISSING
+    attribution_order_harness_issue: CORRECTED_WITHOUT_PRODUCT_SEMANTIC_CHANGE
+    status: PROVEN
+  source_conformance_green:
+    head: c60bc9fd3d5363389cb65eb42659038b90b6c4c7
+    inherited_ci: 31321561339
+    retained_task5_ci: 31321561378
+    dedicated_ci: 31321561340
+    dedicated_postgres: 7_PASS
+    status: PASS
+  creator_trade_count_red:
+    head: 66ce7eeecef779d883a0faabb9e12596bf8bd606
+    dedicated_ci: 31321725015
+    result: 7_PRIOR_PASS_1_EXPECTED_FAIL
+    status: PROVEN
+  creator_trade_count_initial_green:
+    head: 14f9682389b9958279acd4a91f3084c5ce3ac023
+    inherited_ci: 31321862939
+    dedicated_ci: 31321862979
+    dedicated_postgres: 8_PASS
+    retained_task5_ci: 31321862940
+    retained_task5_status: REAL_COMPATIBILITY_REGRESSION_MISSING_OPTIONAL_CREATOR_ATTRIBUTION_TREATED_FATAL
+  implementation_green:
+    head: d21b58d3d3ef63a448921d752c808f9c0c086e32
+    inherited_ci: 31322120558
+    retained_task5_ci: 31322120555
+    dedicated_ci: 31322120557
+    inherited_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
+    retained_task5: PASS
+    dedicated_postgres: 8_PASS
+    source_design_conformance: PASS
+  final_acceptance:
+    status: PENDING_DOCS_BEARING_EXACT_HEAD_CI_AND_GUARDED_MERGE
+  implementation_status: GREEN_CANDIDATE_UNMERGED
+  pass_status: DAY6_TASK6_PASS_NOT_YET_CLAIMED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -531,13 +626,15 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 next_action: >-
-  Run both exact-head workflows on Task-5 durable handoff PR #46. Require inherited CI all four jobs to pass and dedicated Task-5 PostgreSQL/conformance to pass 8/8. Then guarded-merge with expected-head protection and verify merged main. Only after that durable integration may Day-6 Task 6 start from the new main baseline, RED-first and limited to the accepted fee/admin/graduation/creator projection lane.
+  Freeze the documentation-bearing Task-6 PR #47 head and run all three exact-head workflows. Require inherited CI all four jobs to pass, retained Task-5 PostgreSQL/conformance to pass, and dedicated Task-6 PostgreSQL/conformance to pass 8/8. Then verify main remains exactly 966a5dccdd0c002db51ed1739e4a0bc4ffa28ca4, guarded-merge PR #47 with expected-head protection, verify merged main, and create/integrate a docs-only Task-6 durable handoff before starting Day-6 Task 7.
 do_not_do:
-  - "Do not start Day-6 Task 6 before the Task-5 durable handoff is exact-head green and guarded-merged."
+  - "Do not start Day-6 Task 7 before Task-6 implementation and durable handoff are both exact-head green and guarded-merged."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not trust caller-supplied RetryGraduation phase/readiness instead of canonical contract reads."
   - "Do not bypass exact Foundry ABI generation/drift verification."
   - "Do not make DB/indexer/API authoritative for financial state."
+  - "Do not create FeeEscrow entitlement from upstream fee/dust context events."
+  - "Do not attribute creator revenue or claims to a token when exact attribution is unavailable or ambiguous."
   - "Do not reopen accepted Day-1-Day-5 financial semantics without newly ratified source authority."
   - "Do not infer or guess production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
