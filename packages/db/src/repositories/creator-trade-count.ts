@@ -33,6 +33,9 @@ export async function projectCreatorTradeCount(db: BreadDb, event: CanonicalInde
 
   const launch = launchRows[0]!;
   const token = exactAddress(launch.token_address, 'launch token');
+  if (launch.creator_fee_recipient === null || launch.creator_fee_recipient === undefined) {
+    return;
+  }
   const creator = exactAddress(launch.creator_fee_recipient, 'creator fee recipient');
 
   await db.execute(sql`
