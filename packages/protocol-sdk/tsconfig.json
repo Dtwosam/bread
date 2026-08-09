@@ -11,5 +11,9 @@
     "target": "ES2022",
     "skipLibCheck": true
   },
+  "references": [
+    { "path": "../config" },
+    { "path": "../types" }
+  ],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
