@@ -2,9 +2,9 @@
 
 ## Status
 
-`MERGED_MAIN_CLOSEOUT_PREREQUISITE_PENDING`
+`MERGED_MAIN_CLOSEOUT_STAMPED_PENDING_FINAL_CI`
 
-This is the post-merge closeout record for Bread Day 5. It is intentionally **not** the final Day-5 verdict yet. The implementation and post-merge adversarial security hardening are both present on authoritative `main`, but this documentation-only closeout branch must first pass the repository's full four-job CI gate. The resulting exact prerequisite head/run will then be stamped into this file and the stamped head must pass the same four-job gate before guarded merge.
+This is the post-merge closeout record for Bread Day 5. The implementation and post-merge adversarial security hardening are both present on authoritative `main`, and the documentation-only prerequisite head has now passed the repository's full four-job CI gate. This stamped head must itself pass the same four-job gate before guarded merge. The final Day-5 verdict is therefore still withheld in this record until stamped-head CI and expected-head merge complete.
 
 ## Governing source state
 
@@ -82,33 +82,35 @@ These remain intentionally open and are **not** Day-5 engineering failures:
 
 No Arc V4/V3 deployment address is claimed by this closeout. The checked-in Arc Day-5 deployment manifests remain blocked/unpopulated and fail closed.
 
-## Closeout prerequisite gate
+## Closeout prerequisite gate — PASS
 
 Closeout branch baseline:
 
 `6608222f0716f52392922291288ac94f4b55f84a`
 
-Prerequisite evidence head:
+Exact prerequisite evidence head:
 
-`PENDING_THIS_DOCUMENTATION_COMMIT`
+`da87b83ae7726cf639ad676dde2fc93f69579d90`
 
-Prerequisite CI run:
+Exact prerequisite CI run:
 
-`PENDING_THIS_DOCUMENTATION_COMMIT`
+`31286039724`
 
-Required jobs:
+Required jobs and result:
 
-- `bootstrap-validation`
-- `dependency-build`
-- `infrastructure-health`
-- `foundry-bootstrap`
+- `bootstrap-validation` — PASS
+- `dependency-build` — PASS
+- `infrastructure-health` — PASS
+- `foundry-bootstrap` — PASS
 
-Required result: all four jobs PASS on the **same prerequisite head**.
+All four jobs passed on the same prerequisite head.
 
-After that pass, this file must be updated with the exact prerequisite head/run and status `MERGED_MAIN_CLOSEOUT_STAMPED_PENDING_FINAL_CI`. The stamped documentation head must then pass all four jobs before an expected-head protected closeout merge.
+## Stamped-head final CI gate
+
+This documentation stamp creates a new head and therefore the prerequisite CI above is not sufficient for merge. The exact stamped head produced by this evidence/build-state update must pass all four repository jobs again. Only that stamped green head may be merged with expected-head protection.
 
 ## Final verdict
 
-Not issued in this prerequisite record.
+Not issued yet. Pending stamped-head four-job CI and guarded closeout merge.
 
 Day 6 production work remains blocked until the stamped closeout is green, merged, and followed by the durable final build-state handoff/normalization.
