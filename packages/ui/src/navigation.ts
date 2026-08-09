@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 
-import { desktopNavigation, mobileNavigation } from './theme.js';
+import { desktopNavigation, mobileNavigation } from './theme';
 
 function NavigationLink({ label, href }: Readonly<{ label: string; href: string }>) {
   return createElement('a', { className: 'bread-navigation__link', href }, label);
