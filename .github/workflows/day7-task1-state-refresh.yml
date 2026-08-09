@@ -1,4 +1,5 @@
 name: day7-task1-state-refresh
+# Retrigger after this workflow already exists in branch history.
 
 on:
   push:
