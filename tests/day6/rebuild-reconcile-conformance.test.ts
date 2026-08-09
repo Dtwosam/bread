@@ -48,7 +48,7 @@ function baseChain(overrides: Record<string, unknown> = {}) {
     readCurveState: async () => ({
       trackedQuote: 500n, trackedTokens: 800n, quoteFeeBalance: 20n, creatorTaxBalance: 5n,
       realQuoteReserve: 500n, virtualQuoteReserve: 750n, reservedTokens: 100n,
-      remainingSellableTokens: 700n, readyToGraduate: false, graduated: false,
+      remainingSellableTokens: 700n, readyToGraduate: false, graduated: true,
     }),
     readFeeEscrowState: async () => ({ totalOutstanding: 50n, custody: 55n }),
     readGraduationState: async () => ({
@@ -150,6 +150,18 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     const report = await reconcile(baseChain({
       readCurveState: async () => ({
         trackedQuote: 500n, trackedTokens: 800n, quoteFeeBalance: 999n, creatorTaxBalance: 5n,
+        realQuoteReserve: 500n, virtualQuoteReserve: 750n, reservedTokens: 100n,
+        remainingSellableTokens: 700n, readyToGraduate: false, graduated: true,
+      }),
+    }));
+    expect(report.checks.find((check) => check.id === 'REC-02')?.status).toBe('FAIL');
+  });
+
+  it('REC-02 fails when authoritative graduated state disagrees with the projected graduation phase', async () => {
+    await seedBase();
+    const report = await reconcile(baseChain({
+      readCurveState: async () => ({
+        trackedQuote: 500n, trackedTokens: 800n, quoteFeeBalance: 20n, creatorTaxBalance: 5n,
         realQuoteReserve: 500n, virtualQuoteReserve: 750n, reservedTokens: 100n,
         remainingSellableTokens: 700n, readyToGraduate: false, graduated: false,
       }),
