@@ -1,6 +1,8 @@
 # Bread Day 7 Task 2 — Indexed Read Boundary Durable Handoff
 
-Status: `DAY7_TASK2_INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE_PENDING_HANDOFF_MERGE`
+Status: `DAY7_TASK2_INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE`
+
+This document becomes the controlling durable Task-2 handoff when PR #62 is exact-head green and merged to `main`.
 
 ## Verified predecessor
 
@@ -12,6 +14,7 @@ Status: `DAY7_TASK2_INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE_PENDING_HANDOF
 - Implementation PR: #61
 - Final exact implementation head: `9203af8c9f7f9cafd4a8027b91120af483ea62de`
 - Guarded squash merge: `847f940ee6a451cf76fa15e43955d6a5fa40b19e`
+- Durable handoff PR: #62
 - Implementation branch: `agent/day7-task2-indexed-read-boundary`
 
 Implemented from the accepted Day-6 API/type contract and Day-7 04D/06I constraints:
@@ -73,7 +76,7 @@ These are consumers of the accepted Day-6 read contract, not a new financial aut
 
 ## Next safe action
 
-After this durable handoff is exact-head green and merged, begin **Day 7 Task 3 — Explore and Search** from the freshly verified handoff merge.
+Once PR #62 is present on `main`, begin **Day 7 Task 3 — Explore and Search** from the freshly verified latest `main` descendant.
 
 Task 3 must use the real Task-2 indexed read boundary. Its first RED must prove the frozen Explore/Search behavior against actual Day-6 response shapes: New feed rendering, explicit not-ready handling for unsupported deterministic feed views, exact-address search from one character, text search only from two characters, visible contract identity for ambiguous/duplicate names, cursor preservation and zero per-card RPC.
 
