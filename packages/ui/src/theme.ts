@@ -66,6 +66,7 @@ export const breadTheme = {
     desktopHeader: 64,
     mobileTopBar: 56,
     mobileBottomNav: 64,
+    minimumTouchTarget: 44,
   },
   motion: {
     instant: 80,
