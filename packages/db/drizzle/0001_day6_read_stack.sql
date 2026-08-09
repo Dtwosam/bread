@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS event_journal (
   contract_address text NOT NULL,
   contract_role text NOT NULL,
   stack_version text NOT NULL,
+  token_address text,
+  curve_address text,
+  decoder_schema_version text NOT NULL DEFAULT 'day6-v1',
   event_name text NOT NULL,
   topic0 text NOT NULL,
   topics jsonb NOT NULL,
@@ -21,6 +24,12 @@ CREATE INDEX IF NOT EXISTS event_journal_block_order_idx
   ON event_journal (chain_id, block_number, transaction_index, log_index);
 CREATE INDEX IF NOT EXISTS event_journal_stack_idx
   ON event_journal (chain_id, stack_version, block_number);
+CREATE INDEX IF NOT EXISTS event_journal_contract_block_idx
+  ON event_journal (chain_id, contract_address, block_number);
+CREATE INDEX IF NOT EXISTS event_journal_token_block_idx
+  ON event_journal (chain_id, token_address, block_number);
+CREATE INDEX IF NOT EXISTS event_journal_event_family_idx
+  ON event_journal (chain_id, event_name, block_number);
 
 CREATE TABLE IF NOT EXISTS protocol_stacks (
   chain_id integer NOT NULL,
@@ -35,7 +44,7 @@ CREATE TABLE IF NOT EXISTS protocol_stacks (
   adapter_state jsonb,
   runtime_code_hashes jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (chain_id, stack_version)
+  PRIMARY KEY (chain_id, stack_version, factory_address)
 );
 
 CREATE TABLE IF NOT EXISTS launches (
@@ -56,9 +65,9 @@ CREATE TABLE IF NOT EXISTS launches (
   launch_transaction_hash text NOT NULL,
   launch_log_index integer NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (chain_id, token_address)
+  PRIMARY KEY (chain_id, token_address),
+  UNIQUE (chain_id, curve_address)
 );
-CREATE INDEX IF NOT EXISTS launches_curve_idx ON launches (chain_id, curve_address);
 CREATE INDEX IF NOT EXISTS launches_stack_idx ON launches (chain_id, stack_version, launch_block_number);
 
 CREATE TABLE IF NOT EXISTS launch_state (
@@ -182,10 +191,18 @@ CREATE TABLE IF NOT EXISTS token_metrics (
 CREATE TABLE IF NOT EXISTS indexer_checkpoints (
   chain_id integer NOT NULL,
   stack_version text NOT NULL,
+  factory_address text NOT NULL,
+  deployment_start_block numeric(78,0) NOT NULL,
   indexed_through_block numeric(78,0) NOT NULL,
   indexed_through_block_hash text NOT NULL,
+  indexed_through_block_timestamp numeric(78,0),
+  last_transaction_hash text,
+  last_log_index integer,
+  decoder_schema_version text NOT NULL DEFAULT 'day6-v1',
+  status text NOT NULL DEFAULT 'COMMITTED',
+  applied_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (chain_id, stack_version)
+  PRIMARY KEY (chain_id, stack_version, factory_address)
 );
 
 CREATE TABLE IF NOT EXISTS admin_events (
