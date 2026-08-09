@@ -71,7 +71,7 @@ contract DeployDay5Graduation {
     }
 
     function run() external returns (Deployment memory deployment) {
-        uint256 deploymentKey = VM.envUint("BREAD_DEPLOYER_KEY");
+        uint256 deploymentKey = VM.envUint("BREAD_DEPLOYER_PRIVATE_KEY");
         Inputs memory input = _readInputs();
         if (VM.addr(deploymentKey) != input.deploymentAuthority) revert InvalidDeploymentAuthority();
         if (input.protocolAdmin.code.length == 0) revert ProtocolAdminMustBeContract();
