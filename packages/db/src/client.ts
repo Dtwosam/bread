@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { eventJournal } from './schema/event-journal.js';
 import {
@@ -40,8 +40,10 @@ export type BreadPgPool = Readonly<{
   query: (text: string, values?: readonly unknown[]) => Promise<unknown>;
 }>;
 
-export function createBreadDb(pool: unknown) {
-  return drizzle(pool as never, { schema: breadDbSchema });
+export type BreadDb = NodePgDatabase<typeof breadDbSchema>;
+
+export function createBreadDb(pool: unknown): BreadDb {
+  return drizzle(pool as never, { schema: breadDbSchema }) as BreadDb;
 }
 
 let migrationSqlPromise: Promise<string> | undefined;
@@ -63,5 +65,3 @@ export async function migrateBreadDb(pool: BreadPgPool): Promise<void> {
   const sql = await readMigrationSql();
   await pool.query(sql);
 }
-
-export type BreadDb = ReturnType<typeof createBreadDb>;
