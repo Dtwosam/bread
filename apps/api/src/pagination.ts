@@ -1,8 +1,11 @@
 import { canonicalizeProtocolAddress } from '../../../packages/protocol-sdk/src/index.js';
 
 export const NEW_FEED_CURSOR_VERSION = 1 as const;
+export const TRADE_CURSOR_VERSION = 1 as const;
 export const DEFAULT_FEED_LIMIT = 25 as const;
 export const MAX_FEED_LIMIT = 100 as const;
+export const DEFAULT_TRADE_LIMIT = DEFAULT_FEED_LIMIT;
+export const MAX_TRADE_LIMIT = MAX_FEED_LIMIT;
 export const MAX_CURSOR_LENGTH = 512 as const;
 const MAX_CURSOR_JSON_LENGTH = 384;
 const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -13,6 +16,14 @@ export type NewFeedCursor = Readonly<{
   launchTimestamp: string;
   launchLogIndex: number;
   tokenAddress: string;
+}>;
+
+export type TradeCursor = Readonly<{
+  version: number;
+  blockNumber: string;
+  transactionIndex: number;
+  logIndex: number;
+  transactionHash: string;
 }>;
 
 function encodeAsciiBase64Url(input: string): string {
@@ -60,43 +71,27 @@ function exactDecimal(value: unknown, label: string): string {
   return value;
 }
 
-function exactLogIndex(value: unknown): number {
+function exactIndex(value: unknown, label: string): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
-    throw new Error('cursor launchLogIndex is invalid');
+    throw new Error(`cursor ${label} is invalid`);
   }
   return value;
 }
 
-function normalizeCursor(input: Readonly<Record<string, unknown>>): NewFeedCursor {
-  const version = input.version;
-  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
-    throw new Error('cursor version is invalid');
-  }
-  return {
-    version,
-    launchBlockNumber: exactDecimal(input.launchBlockNumber, 'launchBlockNumber'),
-    launchTimestamp: exactDecimal(input.launchTimestamp, 'launchTimestamp'),
-    launchLogIndex: exactLogIndex(input.launchLogIndex),
-    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
-  };
+function exactHash(value: unknown, label: string): string {
+  if (typeof value !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(value)) throw new Error(`cursor ${label} is invalid`);
+  return value.toLowerCase();
 }
 
-export function encodeNewFeedCursor(input: Readonly<Record<string, unknown>>): string {
-  const cursor = normalizeCursor(input);
-  const json = JSON.stringify({
-    version: cursor.version,
-    launchBlockNumber: cursor.launchBlockNumber,
-    launchTimestamp: cursor.launchTimestamp,
-    launchLogIndex: cursor.launchLogIndex,
-    tokenAddress: cursor.tokenAddress,
-  });
+function encodeCursorJson(value: Readonly<Record<string, unknown>>): string {
+  const json = JSON.stringify(value);
   if (json.length > MAX_CURSOR_JSON_LENGTH) throw new Error('cursor payload is too large');
   const encoded = encodeAsciiBase64Url(json);
   if (encoded.length > MAX_CURSOR_LENGTH) throw new Error('cursor length is invalid');
   return encoded;
 }
 
-export function decodeNewFeedCursor(input: string): NewFeedCursor {
+function parseCursorJson(input: string): Record<string, unknown> {
   const decoded = decodeAsciiBase64Url(input);
   let parsed: unknown;
   try {
@@ -105,7 +100,67 @@ export function decodeNewFeedCursor(input: string): NewFeedCursor {
     throw new Error('cursor payload is invalid');
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('cursor payload is invalid');
-  const cursor = normalizeCursor(parsed as Record<string, unknown>);
+  return parsed as Record<string, unknown>;
+}
+
+function normalizeFeedCursor(input: Readonly<Record<string, unknown>>): NewFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    launchBlockNumber: exactDecimal(input.launchBlockNumber, 'launchBlockNumber'),
+    launchTimestamp: exactDecimal(input.launchTimestamp, 'launchTimestamp'),
+    launchLogIndex: exactIndex(input.launchLogIndex, 'launchLogIndex'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeNewFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    launchBlockNumber: cursor.launchBlockNumber,
+    launchTimestamp: cursor.launchTimestamp,
+    launchLogIndex: cursor.launchLogIndex,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeNewFeedCursor(input: string): NewFeedCursor {
+  const cursor = normalizeFeedCursor(parseCursorJson(input));
   if (cursor.version !== NEW_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeTradeCursor(input: Readonly<Record<string, unknown>>): TradeCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    blockNumber: exactDecimal(input.blockNumber, 'blockNumber'),
+    transactionIndex: exactIndex(input.transactionIndex, 'transactionIndex'),
+    logIndex: exactIndex(input.logIndex, 'logIndex'),
+    transactionHash: exactHash(input.transactionHash, 'transactionHash'),
+  };
+}
+
+export function encodeTradeCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeTradeCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    blockNumber: cursor.blockNumber,
+    transactionIndex: cursor.transactionIndex,
+    logIndex: cursor.logIndex,
+    transactionHash: cursor.transactionHash,
+  });
+}
+
+export function decodeTradeCursor(input: string): TradeCursor {
+  const cursor = normalizeTradeCursor(parseCursorJson(input));
+  if (cursor.version !== TRADE_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
   return cursor;
 }
