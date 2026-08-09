@@ -18,6 +18,7 @@ PR #28 adds tests/helpers only; it does not change production contracts.
 
 - Exact PR #28 security head: `20f95230b15a44503c1cb23ba2d3d61c7f39a58e`.
 - Exact PR #28 CI: `31285860020` — all four repository jobs PASS.
+- Hardened Day-5 `main` / PR #30 base: `6608222f0716f52392922291288ac94f4b55f84a`.
 - Proofs include:
   - two simultaneous `SWEPT` launches sharing coordinator USDC remain isolated;
   - unrelated coordinator USDC donations remain unattributed;
@@ -26,8 +27,6 @@ PR #28 adds tests/helpers only; it does not change production contracts.
   - adapter reentrancy into `createPool` is rejected while the legitimate outer call completes;
   - coordinator-to-adapter allowances clear after failed and successful Stage 2;
   - failed post-pull attempts remain retryable without asset displacement or duplicate mint.
-
-This closeout branch was created directly from `main` after PR #28 merged. The exact current main SHA will be recorded from the closeout PR base identity before the prerequisite CI is stamped.
 
 ## Day-5 verdicts under closeout verification
 
@@ -56,10 +55,9 @@ This closeout branch was created directly from `main` after PR #28 merged. The e
 
 ## Closeout sequence
 
-1. Open a fresh docs-only closeout PR from this branch to current `main` and record its exact base SHA.
-2. Run all four repository jobs on the prerequisite closeout head.
-3. Stamp exact prerequisite head/run into this evidence and build state.
-4. Run all four jobs again on the stamped closeout head.
-5. Merge only the exact stamped green head with expected-head protection.
-6. Verify actual merged `main`.
-7. Create and merge durable post-closeout handoff before Day-6 production work.
+1. Run all four repository jobs on the prerequisite closeout head derived from hardened main `6608222f0716f52392922291288ac94f4b55f84a`.
+2. Stamp exact prerequisite head/run into this evidence and build state.
+3. Run all four jobs again on the stamped closeout head.
+4. Merge only the exact stamped green head with expected-head protection.
+5. Verify actual merged `main`.
+6. Create and merge durable post-closeout handoff before Day-6 production work.
