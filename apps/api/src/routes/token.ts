@@ -5,6 +5,8 @@ import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/s
 import type { BreadReadRouteDeps } from './types.js';
 
 type LaunchRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunch']>>;
+type LaunchStateRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunchState']>>;
+type TokenMetricRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getTokenMetrics']>>;
 
 export function serializeLaunch(row: NonNullable<LaunchRow>) {
   return {
@@ -40,6 +42,51 @@ export function serializeLaunch(row: NonNullable<LaunchRow>) {
   } as const;
 }
 
+export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefined) {
+  if (!row || row.lastPriceNumerator === null || row.lastPriceDenominator === null || row.lastPriceSource === null) {
+    return null;
+  }
+  return {
+    lastPrice: {
+      numerator: row.lastPriceNumerator.toString(10),
+      denominator: row.lastPriceDenominator.toString(10),
+      source: row.lastPriceSource,
+    },
+    quoteVolume: {
+      m5: row.quoteVolume5m?.toString(10) ?? null,
+      h1: row.quoteVolume1h?.toString(10) ?? null,
+      h24: row.quoteVolume24h?.toString(10) ?? null,
+    },
+    tradeCount: {
+      h1: row.tradeCount1h?.toString(10) ?? null,
+      h24: row.tradeCount24h?.toString(10) ?? null,
+    },
+    uniqueTraders: {
+      h1: row.uniqueTraders1h?.toString(10) ?? null,
+      h24: row.uniqueTraders24h?.toString(10) ?? null,
+    },
+  } as const;
+}
+
+export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined) {
+  if (!row) return null;
+  return {
+    mode: row.mode,
+    trackedQuote: row.trackedQuote?.toString(10) ?? null,
+    trackedTokens: row.trackedTokens?.toString(10) ?? null,
+    quoteFeeBalance: row.quoteFeeBalance?.toString(10) ?? null,
+    creatorTaxBalance: row.creatorTaxBalance?.toString(10) ?? null,
+    realQuoteReserve: row.realQuoteReserve?.toString(10) ?? null,
+    virtualQuoteReserve: row.virtualQuoteReserve?.toString(10) ?? null,
+    remainingSellableTokens: row.remainingSellableTokens?.toString(10) ?? null,
+    trackedSoldInventory: row.trackedSoldInventory?.toString(10) ?? null,
+    readyToGraduate: row.readyToGraduate,
+    latestBlockNumber: row.latestBlockNumber?.toString(10) ?? null,
+    latestTransactionHash: row.latestTransactionHash,
+    latestLogIndex: row.latestLogIndex,
+  } as const;
+}
+
 export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
   app.get('/v1/tokens/:address', async (request, reply) => {
     const params = request.params as { address?: string };
@@ -59,7 +106,18 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
       });
     }
 
+    const [state, metrics] = await Promise.all([
+      deps.repository.getLaunchState(deps.context.chainId, tokenAddress),
+      deps.repository.getTokenMetrics(deps.context.chainId, tokenAddress),
+    ]);
     const meta = await deps.freshness();
-    return { data: serializeLaunch(launch), meta };
+    return {
+      data: {
+        ...serializeLaunch(launch),
+        curveState: serializeCurveState(state),
+        metrics: serializeTradeMetrics(metrics),
+      },
+      meta,
+    };
   });
 }
