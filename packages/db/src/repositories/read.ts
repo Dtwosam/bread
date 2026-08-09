@@ -79,6 +79,20 @@ export class ReadRepository {
     return row ? normalizeLaunchRow(row) : undefined;
   }
 
+  async listLaunchIdentities(chainId: number, stackVersion: string, factoryAddress: string) {
+    return this.db
+      .select({ tokenAddress: launches.tokenAddress, curveAddress: launches.curveAddress })
+      .from(launches)
+      .where(
+        and(
+          eq(launches.chainId, chainId),
+          eq(launches.stackVersion, stackVersion),
+          eq(launches.factoryAddress, factoryAddress.toLowerCase()),
+        ),
+      )
+      .orderBy(asc(launches.tokenAddress));
+  }
+
   async listNewLaunches(
     chainId: number,
     stackVersion: string,
