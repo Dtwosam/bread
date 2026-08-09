@@ -1,4 +1,4 @@
-schema_version: 1.19
+schema_version: 1.20
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -19,8 +19,8 @@ completed_checkpoints:
   - "Day 6 written design/spec PR #35: APPROVED, EXACT_HEAD_CI_PASS, MERGED"
   - "Day 6 detailed RED->GREEN implementation plan PR #36: SELF_REVIEWED, EXACT_HEAD_CI_PASS, MERGED"
 active_checkpoint: "Day 6 — Task 1 canonical shared protocol contract"
-active_lane: "Task 1 exact local verification recovered; generated ABI candidate ready for fresh exact-head GitHub CI"
-active_gate: DAY6_TASK1_EXACT_HEAD_GREEN_AND_GUARDED_MERGE_REQUIRED
+active_lane: "Task 1 implementation and source/design conformance green; final documentation-bearing exact-head CI and guarded merge pending"
+active_gate: DAY6_TASK1_FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_REQUIRED
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -137,9 +137,7 @@ day6_task1:
   expanded_red_ci: 31288144341
   red_evidence: docs/evidence/day6-task1-shared-contract-red.md
   candidate_before_continuity_docs: 735c29e5ead12ac5ad557c8fc7109967f2a4735d
-  implementation_status: LOCAL_EXACT_GATES_PASS_CANDIDATE_GITHUB_CI_PENDING
   exact_abi_status: EXACT_FOUNDRY_ARTIFACT_GENERATION_AND_LOCAL_DRIFT_CHECK_PASS
-  auxiliary_local_typescript_check: PASS_WITH_STUBBED_EXTERNAL_MODULES_NON_AUTHORITATIVE
   local_verification:
     starting_head: 4cf874ae05c564c07838e5ee26d2163153f77a51
     verified_at: 2026-08-09
@@ -152,12 +150,29 @@ day6_task1:
     abi_registry_sha256: cbc7593265f813421cf20488c21a7f1f051c40bc5d3ca10ae17055bfb28debe4
     infrastructure: POSTGRES_READY_REDIS_PONG_AND_CLEAN_DOWN_PASS
     evidence: docs/evidence/day6-task1-shared-contract-local-verification.md
-  github_actions_blocker:
-    first_zero_step_run: 31288355378
-    second_zero_step_run: 31288420878
-    symptom: "all four jobs completed failure with zero steps and no job logs; repository commands did not execute"
-    disposition: EXTERNAL_EXECUTION_BLOCKER_DO_NOT_TREAT_AS_CODE_FAILURE_OR_PASS
-  pass_status: NOT_CLAIMED_PENDING_FRESH_EXACT_HEAD_GITHUB_CI_AND_GUARDED_MERGE
+  github_actions_execution_recovery:
+    previous_zero_step_runs:
+      - 31288355378
+      - 31288420878
+      - 31288534837
+    disposition: RESOLVED_EXTERNAL_RUNNER_ENTITLEMENT_EXECUTION_RECOVERED
+    first_recovered_exact_head: 4a77a7f8cfa41f6b25a0bc880095e58c2aef41e7
+    recovered_ci: 31305936831
+    recovered_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
+  source_conformance_repair:
+    evidence: docs/evidence/day6-task1-source-conformance-repair.md
+    stack_version_red_head: da7691ee8da3e292661d225cb2a330013bc795da
+    stack_version_red_ci: 31308285690
+    stack_version_green_head: 20019393fcc13e0c429114d9bb0a3cce083c6838
+    stack_version_green_ci: 31308374528
+    stack_version_status: PASS_FAIL_CLOSED_EXPLICIT_BINDING
+    event_type_red_head: 34fe6a976245b58c693a1d6816f4a40fa273b890
+    event_type_red_ci: 31308522489
+    event_type_green_head: 0745a18d46f493853fd857a7d287391561d655d7
+    event_type_green_ci: 31308563167
+    event_type_status: PASS_DISCRIMINATED_UNION_INTEGER_BIGINT
+  implementation_status: SOURCE_DESIGN_CONFORMANCE_GREEN_FINAL_HEAD_CI_PENDING
+  pass_status: NOT_CLAIMED_PENDING_FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -170,13 +185,10 @@ blocker_scope:
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
-execution_blockers:
-  GITHUB_ACTIONS_ZERO_STEP_FAILURES: >-
-    Exact Task-1 verification cannot currently execute because consecutive PR #37 workflow attempts created failed jobs with zero steps. Do not bypass the exact-head CI/Foundry gate and do not begin Task 2.
 next_action: >-
-  Push the locally verified Task-1 candidate to PR #37 and trigger fresh exact-head GitHub CI. Require all four jobs to execute real steps and pass on the pushed head. Only after exact-head CI, source/design conformance review, guarded Task-1 merge, merged-main verification, and a durable post-merge handoff may Task 2 begin.
+  Run final exact-head CI on the documentation/CI-wiring Task-1 head. Require all four jobs and the Day-6 runtime/type contract gates to pass. Then mark PR #37 ready, guarded-merge with expected-head protection, verify merged main, and write a durable post-merge Task-1 handoff before beginning Task 2.
 do_not_do:
-  - "Do not claim Day-6 Task 1 PASS from the current GREEN candidate."
+  - "Do not claim Day-6 Task 1 integrated PASS before final exact-head CI and guarded merge."
   - "Do not bypass exact Foundry ABI generation/drift verification."
   - "Do not start Day-6 Task 2 before Task 1 is exact-head green and guarded-merged."
   - "Do not make DB/indexer/API authoritative for financial state."
