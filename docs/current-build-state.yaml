@@ -1,4 +1,4 @@
-schema_version: 1.22
+schema_version: 1.23
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-09
@@ -20,9 +20,10 @@ completed_checkpoints:
   - "Day 6 detailed RED->GREEN implementation plan PR #36: SELF_REVIEWED, EXACT_HEAD_CI_PASS, MERGED"
   - "Day 6 Task 1 PR #37: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
   - "Day 6 Task 1 durable handoff PR #38: EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
-active_checkpoint: "Day 6 — Task 2 direct-wallet SDK builders"
-active_lane: "Task 2 implementation and source/design conformance green; final documentation-bearing exact-head CI and guarded merge pending"
-active_gate: DAY6_TASK2_FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_REQUIRED
+  - "Day 6 Task 2 PR #39: SOURCE_DESIGN_CONFORMANCE_PASS, EXACT_HEAD_CI_PASS, GUARDED_MERGE_PASS"
+active_checkpoint: "Day 6 — Task 2 durable integration handoff"
+active_lane: "Task 2 is integrated on main; durable handoff PR #40 must exact-head pass and guarded-merge before Task 3 starts"
+active_gate: DAY6_TASK2_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK3
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
@@ -33,7 +34,7 @@ project_source_state:
   day5_preflight_amendment_ratification: RATIFIED
   current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY6-TASK2-ACTIVE-FROM-TASK1-DURABLE-MAIN
+  id: DAY6-TASK2-INTEGRATED-MAIN
   branch: main
   day5_financial_closeout_main: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
@@ -42,9 +43,10 @@ integration_baseline:
   day6_plan_merge: 81db147ef7be8191981fb10afd425fa4f2f0e280
   day6_task1_merge: bac95f6cb844673d8568add100b1e42a3a363e38
   day6_task1_handoff_merge: 5583ad078515aa24b1f994f710297e47512002b4
-  status: DAY6_TASK2_ACTIVE_FROM_TASK1_DURABLE_BASELINE
+  day6_task2_merge: 15ab27b73b9a3355f95dd7cfc290e6e538d16aff
+  status: DAY6_TASK2_INTEGRATED_PASS_HANDOFF_INTEGRATION_PENDING
 working_branches:
-  - agent/day6-task2-sdk-builders
+  - docs/day6-task2-handoff
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
@@ -58,6 +60,7 @@ repository:
   day6_task1_pr: 37
   day6_task1_handoff_pr: 38
   day6_task2_pr: 39
+  day6_task2_handoff_pr: 40
   day5_production_code_status: INTEGRATED_PASS_DURABLE
   day6_production_code_started: true
 project_process_note:
@@ -103,6 +106,11 @@ verification:
   day6_task1_handoff_ci_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
   day6_task1_handoff_merge: 5583ad078515aa24b1f994f710297e47512002b4
   main_identity_after_day6_task1_handoff: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
+  day6_task2_final_head: 6ceeecf0bb47d5f4db859e5625b563d76135ce0c
+  day6_task2_final_ci: 31310005756
+  day6_task2_final_ci_jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
+  day6_task2_merge: 15ab27b73b9a3355f95dd7cfc290e6e538d16aff
+  main_identity_after_day6_task2: VERIFIED_IDENTICAL_AT_TIME_OF_GUARDED_MERGE
 day6_handoff_contract:
   scope: "Protocol SDK + canonical ABI/address/manifest/type layer + transactional indexer/checkpoints/replay + projections/candles/metrics + read API + DB rebuild/reconciliation + initial concurrency/cache/fanout proof"
   authority: "Chain is authoritative; PostgreSQL/indexer/Redis/API are deterministic rebuildable read projections with no financial write authority"
@@ -228,7 +236,7 @@ day6_task2:
     green_structural_head: 815c679579cb35bf21934b82a0ed5f1ddfec5c7e
     green_ci: 31309759546
     status: PASS_UNKNOWN_BREAD_ERROR_AND_BUILDERS_MODULE_ALIGNMENT
-  current_implementation_conformance:
+  implementation_conformance:
     head: a9c76285d7a5f7d7b6bdd5ea947453a6113ceef1
     ci: 31309866936
     jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
@@ -242,8 +250,19 @@ day6_task2:
     foundry_abi: PASS
     infrastructure: POSTGRES_READY_REDIS_PONG_AND_CLEAN_DOWN_PASS
     abi_task2_function_coverage: PASS_ARTIFACT_DERIVED
-  implementation_status: SOURCE_DESIGN_CONFORMANCE_GREEN_FINAL_DOCS_HEAD_CI_PENDING
-  pass_status: NOT_CLAIMED_PENDING_FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE
+  final_acceptance:
+    exact_head: 6ceeecf0bb47d5f4db859e5625b563d76135ce0c
+    ci: 31310005756
+    jobs: PASS_ALL_FOUR_WITH_REAL_STEPS
+    source_design_conformance: PASS
+    guarded_merge: 15ab27b73b9a3355f95dd7cfc290e6e538d16aff
+  durable_handoff:
+    branch: docs/day6-task2-handoff
+    pr: 40
+    evidence: docs/handoffs/day6-task2-sdk-builders-integrated-2026-08-09.md
+    status: FINAL_EXACT_HEAD_CI_AND_GUARDED_MERGE_PENDING
+  implementation_status: INTEGRATED_PASS_HANDOFF_PENDING
+  pass_status: DAY6_TASK2_DIRECT_WALLET_SDK_BUILDERS_INTEGRATED_PASS
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -257,10 +276,9 @@ blocker_scope:
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 next_action: >-
-  Run final exact-head CI on the Task-2 documentation-bearing head. Require all four jobs, 15 Day-6 runtime tests, compile-time shared-contract assertions, typecheck/build/clean-tree, Foundry/ABI, and infrastructure health to pass. Then mark PR #39 ready, verify main has not drifted from 5583ad078515aa24b1f994f710297e47512002b4, and guarded-merge with expected-head protection. After merged-main verification, integrate a durable Task-2 handoff before Task 3 begins.
+  Run final exact-head CI on Task-2 durable handoff PR #40. Require all four jobs and existing Day-6 gates to pass. Then guarded-merge with expected-head protection and verify merged main. Only after that durable integration may Day-6 Task 3 start from the new main baseline, RED-first, limited to the PostgreSQL event journal/projection schema and atomic journal + projection + checkpoint transaction boundary.
 do_not_do:
-  - "Do not claim Day-6 Task 2 integrated PASS before final exact-head CI and guarded merge."
-  - "Do not start Day-6 Task 3 before Task 2 and its durable handoff are exact-head green and guarded-merged."
+  - "Do not start Day-6 Task 3 before Task-2 durable handoff PR #40 is exact-head green and guarded-merged."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not trust caller-supplied RetryGraduation phase/readiness instead of canonical contract reads."
