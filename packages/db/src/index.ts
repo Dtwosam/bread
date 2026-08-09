@@ -1,1 +1,32 @@
-export const DB_STATUS = 'schema-not-started' as const;
+export const DB_STATUS = 'day6-transaction-boundary' as const;
+
+export { breadDbSchema, createBreadDb, migrateBreadDb, type BreadDb, type BreadPgPool } from './client.js';
+
+export { eventJournal } from './schema/event-journal.js';
+export {
+  adminEvents,
+  creatorRollups,
+  feeClaims,
+  feeCredits,
+  holderSnapshots,
+  indexerCheckpoints,
+  launches,
+  launchState,
+  marketCandles,
+  metadata,
+  protocolStacks,
+  tokenMetrics,
+  trades,
+} from './schema/projections.js';
+
+export {
+  IndexerRepository,
+  type ApplyCanonicalRangeInput,
+  type ApplyCanonicalRangeResult,
+  type CanonicalEventIdentity,
+  type CanonicalIndexedEvent,
+  type IndexerProtocolContext,
+  type ProjectionReducer,
+} from './repositories/indexer.js';
+
+export { ReadRepository, decimalIntegerToBigInt } from './repositories/read.js';
