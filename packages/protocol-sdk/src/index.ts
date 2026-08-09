@@ -10,6 +10,7 @@ export {
 } from './pons-live-reconcile.js';
 
 export {
+  canonicalizeProtocolAddress,
   resolveProtocolContext,
   type ProtocolAddresses,
   type ProtocolContext,

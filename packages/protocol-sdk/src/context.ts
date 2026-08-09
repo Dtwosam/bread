@@ -30,9 +30,13 @@ export type ResolveProtocolContextInput = Readonly<{
   stackVersion: string;
 }>;
 
+export function canonicalizeProtocolAddress(value: string): Address {
+  return getAddress(value).toLowerCase() as Address;
+}
+
 function requiredAddress(name: string, value: string | null): Address {
   if (value === null) throw new Error(`unresolved protocol deployment: ${name}`);
-  return getAddress(value) as Address;
+  return canonicalizeProtocolAddress(value);
 }
 
 export function resolveProtocolContext(input: ResolveProtocolContextInput): ProtocolContext {
@@ -66,7 +70,7 @@ export function resolveProtocolContext(input: ResolveProtocolContextInput): Prot
     coordinator: requiredAddress('coordinator', deployment.core.coordinator),
     ...(deployment.adapter.adapter === null
       ? {}
-      : { graduationAdapter: getAddress(deployment.adapter.adapter) as Address }),
+      : { graduationAdapter: canonicalizeProtocolAddress(deployment.adapter.adapter) }),
   };
 
   return {
@@ -74,7 +78,7 @@ export function resolveProtocolContext(input: ResolveProtocolContextInput): Prot
     chainId: network.chainId,
     stackVersion: input.stackVersion,
     factoryAddress: addresses.factory,
-    quoteAsset: getAddress(network.usdc.address) as Address,
+    quoteAsset: canonicalizeProtocolAddress(network.usdc.address),
     quoteDecimals: 6,
     deploymentStartBlock: BigInt(deployment.deploymentStartBlock),
     addresses,
