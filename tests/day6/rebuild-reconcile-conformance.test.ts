@@ -273,6 +273,10 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
         toBlockHash: hash(100),
         logs: [],
       }),
+      verifyRebuildTarget: async () => ({
+        targetMode: 'LOCAL_TEST',
+        targetIdentity: `${schemaName}:fail-closed`,
+      }),
       chain: baseChain({
         getBlockHash: async (block: bigint) => hash(Number(block)),
       }),
