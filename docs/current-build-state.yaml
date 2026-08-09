@@ -1,7 +1,7 @@
-schema_version: 1.36
+schema_version: 1.37
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
-updated_at: 2026-08-09
+updated_at: 2026-08-10
 
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
@@ -24,10 +24,12 @@ completed_checkpoints:
   - "Day 6 Task 9 PR #53 + handoff #54: INTEGRATED_PASS_DURABLE"
   - "Day 6 Task 10 PR #55 + handoff #56: INTEGRATED_PASS_DURABLE"
   - "Day 6 Task 11 PR #57: VALIDATION_CLOSEOUT_GUARDED_MERGE_PASS"
+  - "Day 6 post-closeout PR #58: DAY6_DURABLE_CLOSEOUT_PASS"
+  - "Day 7 Task 1 PR #59 + durable handoff PR #60: PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE"
 
-active_checkpoint: "Day 6 — post-closeout durable handoff"
-active_lane: "Task-11 validation/closeout PR #57 is merged on main at b87e698f382d2a226c2914a4ddd556b7925ed001. Post-closeout handoff PR #58 from that exact merged main must pass root CI plus retained Task-5/6/7/8/9/10 real-step workflows on one exact docs-bearing head before Day 6 becomes durably closed or Day 7 begins."
-active_gate: DAY6_POST_CLOSEOUT_HANDOFF_INTEGRATION_REQUIRED_BEFORE_DAY7
+active_checkpoint: "Day 7 — Public Web"
+active_lane: "Task 2 — indexed read client/query/freshness/degraded-state boundary. Task 1 is integrated and this PR #60 is the durable handoff; Explore/Search page implementation must wait for the canonical Day-6 API consumer boundary."
+active_gate: DAY7_TASK2_INDEXED_READ_BOUNDARY_RED_GREEN
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -40,13 +42,13 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.35
-  prior_state_blob_sha: f38e50af0b1a8e0e47190fd45c0037b3269f4538
+  prior_state_schema_version: 1.36
+  prior_state_blob_sha: 6f99be145fa57bd941726c8501db3f9d17889f57
   note: >-
-    v1.36 advances the durable pointer through the verified Task-11 exact-head acceptance and guarded merge while preserving prior accepted workflow identities. Day 6 is intentionally not marked durably closed until the post-closeout handoff from actual merged main passes its own exact-head gate and merges. No accepted verdict, source boundary, blocker, invariant or authority rule is revoked.
+    v1.37 reconciles the previously stale post-closeout pointer against actual GitHub history, records Day 6 durably closed at PR #58 merge 9c9012db9f2fe607edc6e668a2fa19d34f925e87, and advances through the exact-head-green guarded Day-7 Task-1 implementation PR #59 plus durable handoff PR #60. No accepted Day-1 through Day-6 verdict, source boundary, blocker, invariant or authority rule is revoked.
 
 integration_baseline:
-  id: DAY6-TASK11-MERGED-MAIN
+  id: DAY7-TASK1-PUBLIC-WEB-FOUNDATION
   branch: main
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
   day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
@@ -64,10 +66,12 @@ integration_baseline:
   day6_task10_merge: 08e38978ebf48d533556b7f57e0a1c1cab10bf17
   day6_task10_handoff_merge: bf16727a51b8b12cc51e638e12512991fd57e3d9
   day6_task11_merge: b87e698f382d2a226c2914a4ddd556b7925ed001
-  status: DAY6_TASK11_MERGED_POST_CLOSEOUT_HANDOFF_PENDING
+  day6_post_closeout_handoff_merge: 9c9012db9f2fe607edc6e668a2fa19d34f925e87
+  day7_task1_implementation_merge: 1e5d3537f22dbdb969e50da009c641b94f35a656
+  day7_task1_handoff_pr: 60
+  status: DAY7_TASK1_PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE
 
-working_branches:
-  - docs/day6-post-closeout-b87e698f
+working_branches: []
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -80,7 +84,10 @@ repository:
   day6_task10_handoff_pr: 56
   day6_task11_pr: 57
   day6_post_closeout_handoff_pr: 58
+  day7_task1_pr: 59
+  day7_task1_handoff_pr: 60
   day6_production_code_started: true
+  day7_public_web_started: true
 
 project_process_note:
   task8_actions_budget_blocker: >-
@@ -91,6 +98,8 @@ project_process_note:
     Task 10 closes deterministic selected-stack delete/rebuild and authoritative REC-01 through REC-06 reconciliation. Rebuild uses the same production applyRange path, requires isolated/local target verification before destructive work, requires PASS authoritative reconciliation before success, and does not create a second financial authority.
   task11_scope_rule: >-
     Task 11 is validation/evidence/CI/durable closeout only. It does not redesign Day 6, add financial authority, invent production values, or authorize Day 7 before the post-closeout handoff from actual merged main is itself exact-head green and merged.
+  day7_task1_scope_rule: >-
+    Task 1 freezes and integrates the 04B design tokens, reusable UI primitives and responsive global shell only. It does not fabricate feed/token data, implement Search/wallet/transaction behavior early, add raw-RPC primary reads, invent routes or change protocol/economic semantics.
 
 verification:
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
@@ -161,6 +170,33 @@ verification:
   day6_task11_source_design_security_closeout: PASS
   day6_task11_merge: b87e698f382d2a226c2914a4ddd556b7925ed001
   day6_task11_main_identity_after_merge: VERIFIED_IDENTICAL
+
+  day6_post_closeout_final_head: 8e2f20bf7ed93b5dc957ae96b08ecc16329cd515
+  day6_post_closeout_ci: 31340398943
+  day6_post_closeout_task5_ci: 31340398903
+  day6_post_closeout_task6_ci: 31340398935
+  day6_post_closeout_task7_ci: 31340398929
+  day6_post_closeout_task8_ci: 31340398919
+  day6_post_closeout_task9_ci: 31340398927
+  day6_post_closeout_task10_ci: 31340398913
+  day6_post_closeout_merge: 9c9012db9f2fe607edc6e668a2fa19d34f925e87
+  day6_durable_closeout: PASS
+
+  day7_task1_initial_red_ci: 31341270239
+  day7_task1_touch_target_red_ci: 31341715167
+  day7_task1_typography_control_red_ci: 31341935378
+  day7_task1_loading_pressed_red_ci: 31342095678
+  day7_task1_final_head: feb5ce08c03d2e51b1813f30e94c5fbb5add3dba
+  day7_task1_final_ci: 31342250098
+  day7_task1_final_dedicated_ci: 31342250101
+  day7_task1_final_task5_ci: 31342250150
+  day7_task1_final_task6_ci: 31342250124
+  day7_task1_final_task7_ci: 31342250123
+  day7_task1_final_task8_ci: 31342250096
+  day7_task1_final_task9_ci: 31342250106
+  day7_task1_final_task10_ci: 31342250120
+  day7_task1_source_design_review: PASS
+  day7_task1_merge: 1e5d3537f22dbdb969e50da009c641b94f35a656
 
 day6_handoff_contract:
   architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
@@ -254,8 +290,40 @@ day6_task11:
     branch: docs/day6-post-closeout-b87e698f
     pr: 58
     path: docs/handoffs/day6-post-closeout-b87e698f.md
-    status: FINAL_EXACT_HEAD_SEVEN_WORKFLOW_CI_AND_GUARDED_MERGE_PENDING
-  status: IMPLEMENTATION_CLOSEOUT_MERGED_POST_CLOSEOUT_HANDOFF_PENDING
+    head: 8e2f20bf7ed93b5dc957ae96b08ecc16329cd515
+    ci: 31340398943
+    retained_task5_ci: 31340398903
+    retained_task6_ci: 31340398935
+    retained_task7_ci: 31340398929
+    retained_task8_ci: 31340398919
+    retained_task9_ci: 31340398927
+    retained_task10_ci: 31340398913
+    merge: 9c9012db9f2fe607edc6e668a2fa19d34f925e87
+    status: INTEGRATED_PASS_DURABLE
+  status: DAY6_DURABLE_CLOSEOUT_PASS
+
+day7_task1:
+  status: PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE
+  implementation_pr: 59
+  implementation_branch: agent/day7-public-web-foundation
+  baseline: 9c9012db9f2fe607edc6e668a2fa19d34f925e87
+  final_head: feb5ce08c03d2e51b1813f30e94c5fbb5add3dba
+  implementation_merge: 1e5d3537f22dbdb969e50da009c641b94f35a656
+  handoff_pr: 60
+  handoff: docs/handoffs/day7-task1-public-web-foundation-handoff.md
+  plan: docs/superpowers/plans/2026-08-10-day7-public-web.md
+  plan_corrections: docs/superpowers/plans/2026-08-10-day7-route-contract-correction.md
+  source_design_review: PASS
+  exact_head_ci:
+    root: 31342250098
+    day7_task1: 31342250101
+    retained_task5: 31342250150
+    retained_task6: 31342250124
+    retained_task7: 31342250123
+    retained_task8: 31342250096
+    retained_task9: 31342250106
+    retained_task10: 31342250120
+  next_lane: DAY7_TASK2_INDEXED_READ_BOUNDARY
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -265,17 +333,19 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not block Day-6 local/test implementation"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not block Day-7 frontend/local/test implementation"
   PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Freeze the final docs-bearing head of Day-6 post-closeout handoff PR #58. Require exact-head root CI plus retained Task-5, Task-6, Task-7, Task-8, Task-9 and Task-10 workflows with real runner steps and full PASS. Then guarded-merge PR #58 with expected-head protection, verify actual merged main, mark Day 6 durably closed from that verified merge, and begin the approved Day-7 Public Web work from that exact durable baseline.
+  From the freshly verified latest main after Day-7 Task-1 durable handoff PR #60, begin Task 2: indexed read client/query/freshness/degraded-state boundary. First write and prove a meaningful RED for the missing canonical browser /v1 read boundary, then implement typed IndexedResponse/FreshnessMeta propagation, typed API errors, bounded query serialization, deduplicated query keys and explicit FRESH/LAGGING/REBUILDING/DEGRADED classification without raw-RPC primary rendering. Integrate and durably hand off Task 2 before Explore/Search page implementation.
 
 do_not_do:
-  - "Do not mark Day 6 durably closed or begin Day 7 before post-closeout handoff PR #58 is exact-head green, guarded-merged and main is verified."
+  - "Do not reopen Day 6 absent a demonstrated regression, genuine source conflict or newly ratified source change."
+  - "Do not begin Explore/Search page implementation before the Task-2 indexed read boundary is integrated and durable."
+  - "Do not invent a /search or /create/review route; preserve the frozen 04A/04C route map."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not make DB/indexer/API/Redis authoritative for financial state."
