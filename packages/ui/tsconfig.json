@@ -6,8 +6,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "target": "ES2022",
     "skipLibCheck": true
   },

@@ -1,0 +1,123 @@
+.bread-shell {
+  min-height: 100dvh;
+  background: var(--bread-bg-primary);
+}
+
+.bread-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 64px;
+  border-bottom: 1px solid var(--bread-border-subtle);
+  background: color-mix(in srgb, var(--bread-bg-primary) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.bread-header__inner,
+.bread-page {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding-inline: 32px;
+}
+
+.bread-header__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.bread-brand {
+  color: var(--bread-text-primary);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 23px;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.bread-header .bread-navigation {
+  flex: 1;
+}
+
+.bread-page {
+  padding-top: 32px;
+  padding-bottom: 48px;
+}
+
+.bread-page__heading {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -0.015em;
+}
+
+.bread-page__supporting {
+  max-width: 640px;
+  margin: 8px 0 0;
+  color: var(--bread-text-secondary);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.bread-mobile-top,
+.bread-mobile-bottom {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .bread-header__inner,
+  .bread-page {
+    padding-inline: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .bread-header {
+    display: none;
+  }
+
+  .bread-mobile-top {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--bread-border-subtle);
+    background: var(--bread-bg-primary);
+  }
+
+  .bread-mobile-bottom {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    min-height: calc(64px + env(safe-area-inset-bottom));
+    display: flex;
+    align-items: flex-start;
+    padding: 6px 8px env(safe-area-inset-bottom);
+    border-top: 1px solid var(--bread-border-subtle);
+    background: var(--bread-bg-secondary);
+  }
+
+  .bread-mobile-bottom .bread-navigation__link {
+    min-width: 64px;
+    justify-content: center;
+    padding-inline: 8px;
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  .bread-page {
+    padding: 24px 16px calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .bread-page__heading {
+    font-size: 22px;
+    line-height: 28px;
+  }
+}

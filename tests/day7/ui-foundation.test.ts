@@ -1,0 +1,126 @@
+import { readFileSync } from 'node:fs';
+
+import { describe, expect, it } from 'vitest';
+
+import * as ui from '../../packages/ui/src/index';
+
+const exports = ui as Record<string, unknown>;
+
+type ElementLike = Readonly<{
+  props?: Record<string, unknown>;
+}>;
+
+describe('Day 7 public web design foundation', () => {
+  it('freezes the controlling 04B semantic tokens and shell geometry', () => {
+    expect(exports).toHaveProperty('breadTheme');
+
+    const theme = exports.breadTheme as
+      | {
+          colors: Record<string, string>;
+          fonts: Record<string, string>;
+          controls: Record<string, number>;
+          spacing: readonly number[];
+          layout: Record<string, number>;
+          breakpoints: Record<string, number>;
+        }
+      | undefined;
+
+    expect(theme).toBeDefined();
+    expect(theme?.colors).toMatchObject({
+      bgPrimary: '#0A0B0D',
+      bgSecondary: '#0F1115',
+      surface1: '#13161B',
+      surface2: '#181C22',
+      surface3: '#20252D',
+      borderSubtle: '#242A33',
+      borderStrong: '#343C48',
+      textPrimary: '#F5F7FA',
+      textSecondary: '#A7B0BD',
+      textTertiary: '#727D8D',
+      textDisabled: '#505966',
+      accent: '#4C8DFF',
+      accentHover: '#68A0FF',
+      accentSoft: '#14233E',
+      positive: '#32D583',
+      positiveSoft: '#102A20',
+      negative: '#F97066',
+      negativeSoft: '#351817',
+      warning: '#FDB022',
+      warningSoft: '#35290D',
+    });
+    expect(theme?.fonts).toEqual({
+      primary: 'Inter',
+      technical: 'Geist Mono',
+    });
+    expect(theme?.controls).toEqual({
+      standardButtonHeight: 40,
+      largeButtonHeight: 48,
+      smallButtonHeight: 32,
+      minimumTouchTarget: 44,
+    });
+    expect(theme?.spacing).toEqual([0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64]);
+    expect(theme?.layout).toMatchObject({
+      mobilePageGutter: 16,
+      tabletPageGutter: 24,
+      desktopPageGutter: 32,
+      maxWidth: 1440,
+      desktopTradePanel: 360,
+      desktopHeader: 64,
+      mobileTopBar: 56,
+      mobileBottomNav: 64,
+      minimumTouchTarget: 44,
+    });
+    expect(theme?.breakpoints.mobileMax).toBe(767);
+    expect(theme?.breakpoints.desktopTradeCollapseBelow).toBe(1024);
+  });
+
+  it('exports the frozen public navigation and accessible loading button behavior', () => {
+    expect(exports).toHaveProperty('desktopNavigation');
+    expect(exports).toHaveProperty('mobileNavigation');
+    expect(exports).toHaveProperty('Button');
+
+    const desktopNavigation = exports.desktopNavigation as readonly { label: string; href: string }[];
+    const mobileNavigation = exports.mobileNavigation as readonly { label: string; href: string }[];
+
+    expect(desktopNavigation.map(({ label }) => label)).toEqual([
+      'Explore',
+      'Graduating',
+      'Portfolio',
+      'Create',
+    ]);
+    expect(mobileNavigation.map(({ label }) => label)).toEqual([
+      'Explore',
+      'Trending',
+      'Create',
+      'Portfolio',
+    ]);
+
+    const Button = exports.Button as ((props: Record<string, unknown>) => unknown) | undefined;
+    expect(typeof Button).toBe('function');
+
+    const element = Button?.({ loading: true, children: 'Confirm' }) as ElementLike | undefined;
+    expect(element?.props?.['aria-busy']).toBe(true);
+  });
+
+  it('preserves button width while loading by retaining both labels in one layout slot', () => {
+    const Button = exports.Button as ((props: Record<string, unknown>) => unknown) | undefined;
+    const element = Button?.({ loading: true, children: 'Confirm' }) as ElementLike | undefined;
+    const content = element?.props?.children as ElementLike | undefined;
+    const labels = content?.props?.children as readonly ElementLike[] | undefined;
+
+    expect(content?.props?.className).toBe('bread-button__content');
+    expect(labels).toHaveLength(2);
+    expect(labels?.[0]?.props?.children).toBe('Confirm');
+    expect(labels?.[0]?.props?.['aria-hidden']).toBe(true);
+    expect(labels?.[1]?.props?.children).toBe('Confirming...');
+    expect(labels?.[1]?.props?.['aria-hidden']).toBe(false);
+  });
+
+  it('defines a visible pressed state and overlapping stable-width button labels', () => {
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+
+    expect(css).toContain('.bread-button:active:not(:disabled)');
+    expect(css).toContain('.bread-button__content');
+    expect(css).toContain('grid-area: 1 / 1');
+  });
+});
