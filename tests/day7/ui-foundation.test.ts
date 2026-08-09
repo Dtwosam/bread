@@ -50,6 +50,7 @@ describe('Day 7 public web design foundation', () => {
       desktopHeader: 64,
       mobileTopBar: 56,
       mobileBottomNav: 64,
+      minimumTouchTarget: 44,
     });
     expect(theme?.breakpoints.mobileMax).toBe(767);
     expect(theme?.breakpoints.desktopTradeCollapseBelow).toBe(1024);
