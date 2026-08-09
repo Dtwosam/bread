@@ -1,6 +1,6 @@
 # Day 5 — Merged-Main Closeout
 
-Status: **CLOSEOUT PREREQUISITE CI PENDING**
+Status: **PREREQUISITE PASS — STAMPED CLOSEOUT CI PENDING**
 
 This is fresh post-merge evidence created from actual merged `main`. It does not rely on the pre-merge PR synthetic merge ref.
 
@@ -13,7 +13,18 @@ This is fresh post-merge evidence created from actual merged `main`. It does not
 - Guarded implementation merge: `a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2`.
 - `main` was verified identical to that merge before this closeout branch was created.
 
-## Candidate verdicts carried into merged-main verification
+## Fresh merged-main prerequisite proof
+
+- Exact closeout prerequisite head: `bfc6058c56ef303d3a67bda49ea5276e9ab95da7`.
+- Exact closeout prerequisite CI: `31285840826`.
+- `bootstrap-validation`: PASS.
+- `dependency-build`: PASS.
+- `infrastructure-health`: PASS.
+- `foundry-bootstrap`: PASS.
+
+This prerequisite run verifies the merged implementation lineage plus the fresh closeout state/evidence. The closeout is not merge-eligible until this stamped document/state head itself passes the same four-job repository CI.
+
+## Candidate verdicts verified on merged-main lineage
 
 - `FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS`
 - `INV_050_056_PASS`
@@ -21,7 +32,7 @@ This is fresh post-merge evidence created from actual merged `main`. It does not
 - `RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS`
 - `ARC_CANONICAL_GRADUATION_DEX_ACTIVATION = INACTIVE_PENDING_OFFICIAL_EVIDENCE`
 
-The implementation candidate includes exact graduation snapshots, permissionless retryable Stage 1/Stage 2, canonical FeeEscrow settlement, permanent principal lock, delayed guarded rescue, donation/dust/wrong-dependency handling, disabled coordinator ownership renunciation, and fail-closed deploy/configure/verify/live-smoke operations.
+The implementation includes exact graduation snapshots, permissionless retryable Stage 1/Stage 2, canonical FeeEscrow settlement, permanent principal lock, delayed guarded rescue, donation/dust/wrong-dependency handling, disabled coordinator ownership renunciation, and fail-closed deploy/configure/verify/live-smoke operations.
 
 ## Deployment authority closeout note
 
@@ -38,10 +49,10 @@ This closeout does not claim:
 - a canonical Arc V4/V3 graduation deployment;
 - completion of Bread's independent external review for unrestricted public/mainnet funds.
 
-## Closeout sequence
+## Remaining closeout sequence
 
-1. Run the full four-job repository CI on this merged-main closeout prerequisite head.
-2. If all four jobs pass, stamp that exact head/run into this document.
-3. Run full CI again on the stamped closeout head.
-4. Merge only the exact stamped green head with expected-head protection.
-5. Create the durable post-closeout handoff before any Day-6 production work.
+1. Run all four repository jobs on the stamped closeout head created by this evidence/state update.
+2. If all four pass, reverify PR #29 exact head, `main`, mergeability and review state.
+3. Mark PR #29 ready and merge only that exact head with expected-head protection.
+4. Verify actual merged `main`.
+5. Create and merge the durable post-closeout handoff before any Day-6 production work.
