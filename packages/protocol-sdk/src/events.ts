@@ -3,6 +3,23 @@ import { decodeEventLog } from 'viem';
 
 import { breadAbiRegistry } from './abi/generated.js';
 
+type BreadAbiRegistry = typeof breadAbiRegistry;
+
+export type BreadStackAbiBinding = Readonly<{
+  stackVersion: string;
+  registry: BreadAbiRegistry;
+}>;
+
+/**
+ * Explicitly binds the current generated ABI registry to one already-verified
+ * protocol stack identity. The SDK intentionally has no default/latest-stack
+ * fallback: callers must carry this binding alongside the stack they decode.
+ */
+export function createBreadStackAbiBinding(stackVersion: string): BreadStackAbiBinding {
+  if (stackVersion.trim().length === 0) throw new Error('stackVersion is required');
+  return Object.freeze({ stackVersion, registry: breadAbiRegistry });
+}
+
 const canonicalEvents: Readonly<Record<BreadContractRole, ReadonlySet<string>>> = {
   FACTORY: new Set([
     'LaunchDeployerSet',
@@ -64,7 +81,7 @@ const registryKeyByRole = {
   GRADUATION_COORDINATOR: 'coordinator',
   LOCKER: 'locker',
   LAUNCH_TOKEN: 'launchToken',
-} as const satisfies Record<BreadContractRole, keyof typeof breadAbiRegistry>;
+} as const satisfies Record<BreadContractRole, keyof BreadAbiRegistry>;
 
 export function classifyBreadLog(role: BreadContractRole, eventName: string): EventDisposition {
   if (canonicalEvents[role].has(eventName)) return 'INDEXED_CANONICAL';
@@ -79,11 +96,17 @@ export type DecodedBreadLog = Readonly<{
 }>;
 
 export function decodeBreadLog(input: Readonly<{
+  binding: BreadStackAbiBinding;
+  stackVersion: string;
   role: BreadContractRole;
   topics: readonly Hex[];
   data: Hex;
 }>): DecodedBreadLog {
-  const abi = breadAbiRegistry[registryKeyByRole[input.role]];
+  if (input.stackVersion !== input.binding.stackVersion) {
+    throw new Error(`unsupported stack version: ${input.stackVersion}`);
+  }
+
+  const abi = input.binding.registry[registryKeyByRole[input.role]];
   const decoded = decodeEventLog({
     abi,
     data: input.data,
