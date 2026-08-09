@@ -100,6 +100,35 @@ describe('Day 6 canonical shared contract RED', () => {
     expect(classifyBreadLog?.('LAUNCH_TOKEN', 'MadeUpEvent')).toBe('UNKNOWN');
   });
 
+  it('requires an explicit matching stack ABI binding before decoding', async () => {
+    const sdk = await import('../../packages/protocol-sdk/src/index.ts');
+    expect(sdk).toHaveProperty('createBreadStackAbiBinding');
+    expect(sdk).toHaveProperty('decodeBreadLog');
+
+    const createBreadStackAbiBinding = (sdk as Record<string, unknown>).createBreadStackAbiBinding as
+      | ((stackVersion: string) => { stackVersion: string })
+      | undefined;
+    const decodeBreadLog = (sdk as Record<string, unknown>).decodeBreadLog as
+      | ((input: Record<string, unknown>) => unknown)
+      | undefined;
+
+    expect(createBreadStackAbiBinding).toBeTypeOf('function');
+    expect(decodeBreadLog).toBeTypeOf('function');
+    expect(() => createBreadStackAbiBinding?.('   ')).toThrow(/stackVersion/i);
+
+    const binding = createBreadStackAbiBinding?.('verified-stack-a');
+    expect(binding?.stackVersion).toBe('verified-stack-a');
+    expect(() =>
+      decodeBreadLog?.({
+        binding,
+        stackVersion: 'unknown-stack-b',
+        role: 'LAUNCH_TOKEN',
+        topics: ['0x'],
+        data: '0x',
+      }),
+    ).toThrow(/unsupported stack version/i);
+  });
+
   it('exports a generated ABI registry with the accepted core roles', async () => {
     const sdk = await import('../../packages/protocol-sdk/src/index.ts');
     expect(sdk).toHaveProperty('breadAbiRegistry');
