@@ -1,4 +1,4 @@
-import type { BreadCanonicalEventName, BreadContractRole, EventDisposition, Hex } from '@bread/types';
+import type { BreadCanonicalEventName, BreadContractRole, EventDisposition, Hex } from '../../types/src/index.js';
 import { decodeEventLog } from 'viem';
 
 import { breadAbiRegistry } from './abi/generated.js';
@@ -91,7 +91,7 @@ export function decodeBreadLog(input: Readonly<{
     strict: true,
   });
   const eventName = decoded.eventName;
-  const args = (decoded.args ?? {}) as Readonly<Record<string, unknown>>;
+  const args = (decoded.args ?? {}) as unknown as Readonly<Record<string, unknown>>;
   return {
     eventName,
     args,
