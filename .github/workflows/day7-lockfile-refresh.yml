@@ -1,0 +1,38 @@
+name: day7-lockfile-refresh
+
+on:
+  push:
+    branches:
+      - 'agent/day7-public-web-foundation'
+    paths:
+      - 'apps/web/package.json'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: agent/day7-public-web-foundation
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - name: Refresh only the pinned workspace lockfile
+        run: pnpm install --lockfile-only
+      - name: Commit deterministic lockfile change
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore(day7): refresh workspace lockfile"
+          git push origin HEAD:agent/day7-public-web-foundation
