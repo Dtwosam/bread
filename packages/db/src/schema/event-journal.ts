@@ -13,6 +13,9 @@ export const eventJournal = pgTable(
     contractAddress: text('contract_address').notNull(),
     contractRole: text('contract_role').notNull(),
     stackVersion: text('stack_version').notNull(),
+    tokenAddress: text('token_address'),
+    curveAddress: text('curve_address'),
+    decoderSchemaVersion: text('decoder_schema_version').notNull().default('day6-v1'),
     eventName: text('event_name').notNull(),
     topic0: text('topic0').notNull(),
     topics: jsonb('topics').$type<readonly string[]>().notNull(),
@@ -29,5 +32,8 @@ export const eventJournal = pgTable(
       table.logIndex,
     ),
     index('event_journal_stack_idx').on(table.chainId, table.stackVersion, table.blockNumber),
+    index('event_journal_contract_block_idx').on(table.chainId, table.contractAddress, table.blockNumber),
+    index('event_journal_token_block_idx').on(table.chainId, table.tokenAddress, table.blockNumber),
+    index('event_journal_event_family_idx').on(table.chainId, table.eventName, table.blockNumber),
   ],
 );
