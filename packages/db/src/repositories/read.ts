@@ -1,7 +1,7 @@
-import { and, asc, desc, eq, gt, isNotNull, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNotNull, lt, or, sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
-import { indexerCheckpoints, launches } from '../schema/projections.js';
+import { indexerCheckpoints, launches, launchState, tokenMetrics } from '../schema/projections.js';
 
 export type NewLaunchCursorKey = Readonly<{
   launchBlockNumber: string;
@@ -77,6 +77,44 @@ function normalizeLaunchRow(row: typeof launches.$inferSelect) {
   } as const;
 }
 
+function normalizeLaunchStateRow(row: typeof launchState.$inferSelect) {
+  return {
+    ...row,
+    quoteReserve: optionalBigInt(row.quoteReserve),
+    tokenReserve: optionalBigInt(row.tokenReserve),
+    remainingSellableTokens: optionalBigInt(row.remainingSellableTokens),
+    trackedSoldInventory: optionalBigInt(row.trackedSoldInventory),
+    trackedQuote: optionalBigInt(row.trackedQuote),
+    trackedTokens: optionalBigInt(row.trackedTokens),
+    quoteFeeBalance: optionalBigInt(row.quoteFeeBalance),
+    creatorTaxBalance: optionalBigInt(row.creatorTaxBalance),
+    realQuoteReserve: optionalBigInt(row.realQuoteReserve),
+    virtualQuoteReserve: optionalBigInt(row.virtualQuoteReserve),
+    latestBlockNumber: optionalBigInt(row.latestBlockNumber),
+  } as const;
+}
+
+function normalizeTokenMetricRow(row: typeof tokenMetrics.$inferSelect) {
+  return {
+    ...row,
+    price: optionalBigInt(row.price),
+    marketCap: optionalBigInt(row.marketCap),
+    holderCount: optionalBigInt(row.holderCount),
+    tradeCount: optionalBigInt(row.tradeCount),
+    quoteVolume: optionalBigInt(row.quoteVolume),
+    latestBlockNumber: optionalBigInt(row.latestBlockNumber),
+    lastPriceNumerator: optionalBigInt(row.lastPriceNumerator),
+    lastPriceDenominator: optionalBigInt(row.lastPriceDenominator),
+    quoteVolume5m: optionalBigInt(row.quoteVolume5m),
+    quoteVolume1h: optionalBigInt(row.quoteVolume1h),
+    quoteVolume24h: optionalBigInt(row.quoteVolume24h),
+    tradeCount1h: optionalBigInt(row.tradeCount1h),
+    tradeCount24h: optionalBigInt(row.tradeCount24h),
+    uniqueTraders1h: optionalBigInt(row.uniqueTraders1h),
+    uniqueTraders24h: optionalBigInt(row.uniqueTraders24h),
+  } as const;
+}
+
 function resultRows<T>(result: unknown): T[] {
   const candidate = result as { rows?: T[] };
   return Array.isArray(candidate?.rows) ? candidate.rows : [];
@@ -125,6 +163,34 @@ export class ReadRepository {
       .where(and(eq(launches.chainId, chainId), eq(launches.tokenAddress, tokenAddress.toLowerCase())))
       .limit(1);
     return row ? normalizeLaunchRow(row) : undefined;
+  }
+
+  async getLaunchState(chainId: number, tokenAddress: string) {
+    const [row] = await this.db
+      .select()
+      .from(launchState)
+      .where(and(eq(launchState.chainId, chainId), eq(launchState.tokenAddress, tokenAddress.toLowerCase())))
+      .limit(1);
+    return row ? normalizeLaunchStateRow(row) : undefined;
+  }
+
+  async getTokenMetrics(chainId: number, tokenAddress: string) {
+    const [row] = await this.db
+      .select()
+      .from(tokenMetrics)
+      .where(and(eq(tokenMetrics.chainId, chainId), eq(tokenMetrics.tokenAddress, tokenAddress.toLowerCase())))
+      .limit(1);
+    return row ? normalizeTokenMetricRow(row) : undefined;
+  }
+
+  async listTokenMetrics(chainId: number, tokenAddresses: readonly string[]) {
+    if (tokenAddresses.length === 0) return [];
+    const canonical = [...new Set(tokenAddresses.map((value) => value.toLowerCase()))];
+    const rows = await this.db
+      .select()
+      .from(tokenMetrics)
+      .where(and(eq(tokenMetrics.chainId, chainId), inArray(tokenMetrics.tokenAddress, canonical)));
+    return rows.map(normalizeTokenMetricRow);
   }
 
   async listLaunchIdentities(chainId: number, stackVersion: string, factoryAddress: string) {
