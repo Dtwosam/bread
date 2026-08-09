@@ -72,7 +72,6 @@ verification:
   day5_implementation_ci: 31285733919
   day5_implementation_merge: a6bc5f7a2e90d9c9af1cd38f8f2ef6f635ceefa2
   day5_postmerge_security_head: 20f95230b15a44503c1cb23ba2d3d61c7f39a58e
-  day5_postmerge_security_ci: 31285860020
   day5_hardened_main: 6608222f0716f52392922291288ac94f4b55f84a
   day5_closeout_merge: 984f80cee88769a9c6e8a3085bdc1bcbc4dd493e
   day5_durable_handoff_head: 31c3978580eaecc8f81282abdf86576f444692cc
