@@ -270,6 +270,11 @@ function authoritativeReader(overrides: Record<string, unknown> = {}) {
       positionLocked: true,
       tokenSupplyLocked: 180n,
     }),
+    readChainConfig: async () => ({
+      chainId: context.chainId,
+      quoteAsset: context.quoteAsset,
+      quoteDecimals: context.quoteDecimals,
+    }),
     getRuntimeCodeHash: async (target: string) => runtimeHashes[target.toLowerCase()] ?? null,
     getBlockHash: async (block: bigint) => block === 105n ? hash('9') : block === 100n ? blockHash : hash('0'),
     ...overrides,
