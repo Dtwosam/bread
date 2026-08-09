@@ -7,6 +7,7 @@ import { buildFreshness } from './freshness.js';
 import { registerFeedRoute } from './routes/feed.js';
 import { registerStatusRoute } from './routes/status.js';
 import { registerTokenRoute } from './routes/token.js';
+import { registerTradesRoute } from './routes/trades.js';
 
 export type CreateBreadApiInput = Readonly<{
   db: BreadDb;
@@ -35,6 +36,7 @@ export function createBreadApi(input: CreateBreadApiInput) {
   registerStatusRoute(app, deps);
   registerFeedRoute(app, deps);
   registerTokenRoute(app, deps);
+  registerTradesRoute(app, deps);
 
   app.setErrorHandler((error, request, reply) => {
     request.log.error({ err: error, requestId: request.id }, 'Bread read API request failed');

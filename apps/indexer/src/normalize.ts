@@ -17,6 +17,7 @@ import {
 } from '../../../packages/protocol-sdk/src/index.js';
 
 import type { RpcLog } from './discovery.js';
+import { correlateCanonicalTrades, type NormalizedTrade } from './trades.js';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const MAX_DISPLAY_TEXT = 4_096;
@@ -68,6 +69,7 @@ export type LaunchSnapshot = Readonly<{
 export type NormalizedRange = Readonly<{
   events: readonly DecodedBreadEvent[];
   launchSnapshots: ReadonlyMap<string, LaunchSnapshot>;
+  trades: readonly NormalizedTrade[];
 }>;
 
 export type NormalizeTransactionLogsInput = Readonly<{
@@ -466,5 +468,18 @@ export async function normalizeTransactionLogs(input: NormalizeTransactionLogsIn
     } as DecodedBreadEvent);
   }
 
-  return { events, launchSnapshots };
+  const tradeLaunches = [
+    ...(input.knownLaunches ?? []),
+    ...[...launchSnapshots.values()].map((snapshot) => ({
+      tokenAddress: snapshot.tokenAddress,
+      curveAddress: snapshot.curveAddress,
+    })),
+  ];
+  const trades = correlateCanonicalTrades({
+    context: input.context,
+    knownLaunches: tradeLaunches,
+    events,
+  });
+
+  return { events, launchSnapshots, trades };
 }

@@ -1,7 +1,12 @@
-import type { ProjectionReducer } from '../../../packages/db/src/index.js';
-import { launches } from '../../../packages/db/src/index.js';
+import {
+  applyCanonicalTradeProjection,
+  launches,
+  type BreadDb,
+  type ProjectionReducer,
+} from '../../../packages/db/src/index.js';
 
 import type { LaunchSnapshot } from './normalize.js';
+import type { NormalizedTrade } from './trades.js';
 
 type ReducerEventIdentity = Readonly<{
   identity: Readonly<{ chainId: number; transactionHash: string; logIndex: number }>;
@@ -54,6 +59,24 @@ export function createLaunchReducer(snapshots: ReadonlyMap<string, LaunchSnapsho
       launchBlockNumber: snapshot.launchBlockNumber.toString(10),
       launchTransactionHash: snapshot.launchTransactionHash,
       launchLogIndex: snapshot.launchLogIndex,
+    });
+  };
+}
+
+export function createTradeReducer(normalizedTrades: readonly NormalizedTrade[]): ProjectionReducer {
+  const byEvent = new Map(normalizedTrades.map((trade) => [
+    `${trade.id.chainId}:${trade.id.transactionHash.toLowerCase()}:${trade.id.logIndex}`,
+    trade,
+  ]));
+
+  return async (transaction, event) => {
+    if (event.eventName !== 'CurveBuy' && event.eventName !== 'CurveSell') return;
+    const trade = byEvent.get(eventKey(event));
+    if (!trade) throw new Error(`missing normalized trade for ${eventKey(event)}`);
+
+    await applyCanonicalTradeProjection(transaction as BreadDb, {
+      ...trade,
+      stackVersion: event.stackVersion,
     });
   };
 }

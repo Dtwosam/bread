@@ -1,13 +1,49 @@
-import { and, asc, desc, eq, gt, isNotNull, lt, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNotNull, lt, or, sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
-import { indexerCheckpoints, launches } from '../schema/projections.js';
+import { indexerCheckpoints, launches, launchState, tokenMetrics } from '../schema/projections.js';
 
 export type NewLaunchCursorKey = Readonly<{
   launchBlockNumber: string;
   launchTimestamp: string;
   launchLogIndex: number;
   tokenAddress: string;
+}>;
+
+export type TradeCursorKey = Readonly<{
+  blockNumber: string;
+  transactionIndex: number;
+  logIndex: number;
+  transactionHash: string;
+}>;
+
+export type TradeReadRow = Readonly<{
+  chainId: number;
+  transactionHash: string;
+  logIndex: number;
+  tokenAddress: string;
+  curveAddress: string;
+  side: string;
+  traderAddress: string;
+  recipientAddress: string;
+  baseAmount: string;
+  quoteAmount: string;
+  feeAmount: string;
+  taxAmount: string;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionIndex: number;
+  stackVersion: string;
+  offeredQuote: string;
+  openingTaxBps: string;
+  openingTaxAmount: string;
+  launchBuyExempt: boolean;
+  refundAmount: string;
+  netCurveInput: string;
+  netQuoteOut: string;
+  grossCurveQuoteOut: string;
+  executionPriceNumerator: string;
+  executionPriceDenominator: string;
 }>;
 
 export function decimalIntegerToBigInt(value: string | number | bigint): bigint {
@@ -39,6 +75,49 @@ function normalizeLaunchRow(row: typeof launches.$inferSelect) {
     reservedTokensBaseline: optionalBigInt(row.reservedTokensBaseline),
     launchBlockNumber: decimalIntegerToBigInt(row.launchBlockNumber),
   } as const;
+}
+
+function normalizeLaunchStateRow(row: typeof launchState.$inferSelect) {
+  return {
+    ...row,
+    quoteReserve: optionalBigInt(row.quoteReserve),
+    tokenReserve: optionalBigInt(row.tokenReserve),
+    remainingSellableTokens: optionalBigInt(row.remainingSellableTokens),
+    trackedSoldInventory: optionalBigInt(row.trackedSoldInventory),
+    trackedQuote: optionalBigInt(row.trackedQuote),
+    trackedTokens: optionalBigInt(row.trackedTokens),
+    quoteFeeBalance: optionalBigInt(row.quoteFeeBalance),
+    creatorTaxBalance: optionalBigInt(row.creatorTaxBalance),
+    realQuoteReserve: optionalBigInt(row.realQuoteReserve),
+    virtualQuoteReserve: optionalBigInt(row.virtualQuoteReserve),
+    latestBlockNumber: optionalBigInt(row.latestBlockNumber),
+  } as const;
+}
+
+function normalizeTokenMetricRow(row: typeof tokenMetrics.$inferSelect) {
+  return {
+    ...row,
+    price: optionalBigInt(row.price),
+    marketCap: optionalBigInt(row.marketCap),
+    holderCount: optionalBigInt(row.holderCount),
+    tradeCount: optionalBigInt(row.tradeCount),
+    quoteVolume: optionalBigInt(row.quoteVolume),
+    latestBlockNumber: optionalBigInt(row.latestBlockNumber),
+    lastPriceNumerator: optionalBigInt(row.lastPriceNumerator),
+    lastPriceDenominator: optionalBigInt(row.lastPriceDenominator),
+    quoteVolume5m: optionalBigInt(row.quoteVolume5m),
+    quoteVolume1h: optionalBigInt(row.quoteVolume1h),
+    quoteVolume24h: optionalBigInt(row.quoteVolume24h),
+    tradeCount1h: optionalBigInt(row.tradeCount1h),
+    tradeCount24h: optionalBigInt(row.tradeCount24h),
+    uniqueTraders1h: optionalBigInt(row.uniqueTraders1h),
+    uniqueTraders24h: optionalBigInt(row.uniqueTraders24h),
+  } as const;
+}
+
+function resultRows<T>(result: unknown): T[] {
+  const candidate = result as { rows?: T[] };
+  return Array.isArray(candidate?.rows) ? candidate.rows : [];
 }
 
 export class ReadRepository {
@@ -84,6 +163,34 @@ export class ReadRepository {
       .where(and(eq(launches.chainId, chainId), eq(launches.tokenAddress, tokenAddress.toLowerCase())))
       .limit(1);
     return row ? normalizeLaunchRow(row) : undefined;
+  }
+
+  async getLaunchState(chainId: number, tokenAddress: string) {
+    const [row] = await this.db
+      .select()
+      .from(launchState)
+      .where(and(eq(launchState.chainId, chainId), eq(launchState.tokenAddress, tokenAddress.toLowerCase())))
+      .limit(1);
+    return row ? normalizeLaunchStateRow(row) : undefined;
+  }
+
+  async getTokenMetrics(chainId: number, tokenAddress: string) {
+    const [row] = await this.db
+      .select()
+      .from(tokenMetrics)
+      .where(and(eq(tokenMetrics.chainId, chainId), eq(tokenMetrics.tokenAddress, tokenAddress.toLowerCase())))
+      .limit(1);
+    return row ? normalizeTokenMetricRow(row) : undefined;
+  }
+
+  async listTokenMetrics(chainId: number, tokenAddresses: readonly string[]) {
+    if (tokenAddresses.length === 0) return [];
+    const canonical = [...new Set(tokenAddresses.map((value) => value.toLowerCase()))];
+    const rows = await this.db
+      .select()
+      .from(tokenMetrics)
+      .where(and(eq(tokenMetrics.chainId, chainId), inArray(tokenMetrics.tokenAddress, canonical)));
+    return rows.map(normalizeTokenMetricRow);
   }
 
   async listLaunchIdentities(chainId: number, stackVersion: string, factoryAddress: string) {
@@ -150,5 +257,52 @@ export class ReadRepository {
       )
       .limit(boundedLimit);
     return rows.map(normalizeLaunchRow);
+  }
+
+  async listTrades(chainId: number, tokenAddress: string, limit: number, cursor?: TradeCursorKey): Promise<TradeReadRow[]> {
+    const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
+    const cursorClause = cursor
+      ? sql`AND (
+          block_number < ${cursor.blockNumber}
+          OR (block_number = ${cursor.blockNumber} AND transaction_index < ${cursor.transactionIndex})
+          OR (block_number = ${cursor.blockNumber} AND transaction_index = ${cursor.transactionIndex} AND log_index < ${cursor.logIndex})
+        )`
+      : sql``;
+    const result = await this.db.execute(sql`
+      SELECT
+        chain_id AS "chainId",
+        transaction_hash AS "transactionHash",
+        log_index AS "logIndex",
+        token_address AS "tokenAddress",
+        curve_address AS "curveAddress",
+        side,
+        trader_address AS "traderAddress",
+        recipient_address AS "recipientAddress",
+        base_amount::text AS "baseAmount",
+        quote_amount::text AS "quoteAmount",
+        fee_amount::text AS "feeAmount",
+        tax_amount::text AS "taxAmount",
+        block_number::text AS "blockNumber",
+        block_timestamp::text AS "blockTimestamp",
+        transaction_index AS "transactionIndex",
+        stack_version AS "stackVersion",
+        offered_quote::text AS "offeredQuote",
+        opening_tax_bps::text AS "openingTaxBps",
+        opening_tax_amount::text AS "openingTaxAmount",
+        launch_buy_exempt AS "launchBuyExempt",
+        refund_amount::text AS "refundAmount",
+        net_curve_input::text AS "netCurveInput",
+        net_quote_out::text AS "netQuoteOut",
+        gross_curve_quote_out::text AS "grossCurveQuoteOut",
+        execution_price_numerator::text AS "executionPriceNumerator",
+        execution_price_denominator::text AS "executionPriceDenominator"
+      FROM trades
+      WHERE chain_id = ${chainId}
+        AND token_address = ${tokenAddress.toLowerCase()}
+        ${cursorClause}
+      ORDER BY block_number DESC, transaction_index DESC, log_index DESC
+      LIMIT ${boundedLimit}
+    `);
+    return resultRows<TradeReadRow>(result);
   }
 }
