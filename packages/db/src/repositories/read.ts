@@ -16,18 +16,35 @@ export function decimalIntegerToBigInt(value: string | number | bigint): bigint 
 export class ReadRepository {
   constructor(private readonly db: BreadDb) {}
 
-  async getCheckpoint(chainId: number, stackVersion: string) {
+  async getCheckpoint(chainId: number, stackVersion: string, factoryAddress: string) {
     const [row] = await this.db
       .select()
       .from(indexerCheckpoints)
-      .where(and(eq(indexerCheckpoints.chainId, chainId), eq(indexerCheckpoints.stackVersion, stackVersion)))
+      .where(
+        and(
+          eq(indexerCheckpoints.chainId, chainId),
+          eq(indexerCheckpoints.stackVersion, stackVersion),
+          eq(indexerCheckpoints.factoryAddress, factoryAddress.toLowerCase()),
+        ),
+      )
       .limit(1);
     if (!row) return undefined;
     return {
       chainId: row.chainId,
       stackVersion: row.stackVersion,
+      factoryAddress: row.factoryAddress,
+      deploymentStartBlock: decimalIntegerToBigInt(row.deploymentStartBlock),
       indexedThroughBlock: decimalIntegerToBigInt(row.indexedThroughBlock),
       indexedThroughBlockHash: row.indexedThroughBlockHash,
+      indexedThroughBlockTimestamp:
+        row.indexedThroughBlockTimestamp === null
+          ? null
+          : decimalIntegerToBigInt(row.indexedThroughBlockTimestamp),
+      lastTransactionHash: row.lastTransactionHash,
+      lastLogIndex: row.lastLogIndex,
+      decoderSchemaVersion: row.decoderSchemaVersion,
+      status: row.status,
+      appliedAt: row.appliedAt,
       updatedAt: row.updatedAt,
     } as const;
   }
