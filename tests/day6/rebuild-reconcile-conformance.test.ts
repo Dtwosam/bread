@@ -174,6 +174,14 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
     expect(report.checks.find((check) => check.id === 'REC-05')?.status).toBe('FAIL');
   });
 
+  it('REC-05 fails when authoritative chain or canonical quote identity disagrees with the registered stack', async () => {
+    await seedBase();
+    const report = await reconcile(baseChain({
+      readChainConfig: async () => ({ chainId: context.chainId + 1, quoteAsset: address(77), quoteDecimals: 18 }),
+    }));
+    expect(report.checks.find((check) => check.id === 'REC-05')?.status).toBe('FAIL');
+  });
+
   it('REC-06 fails for journal rows beyond checkpoint or an independent canonical identity-set mismatch', async () => {
     await seedBase();
     await pool.query(`INSERT INTO event_journal
@@ -184,6 +192,14 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 full source reconciliation contract', ()
       JSON.stringify([hash(901)]),
     ]);
     const report = await reconcile(baseChain({ scanCanonicalEventIdentities: async () => [] }));
+    expect(report.checks.find((check) => check.id === 'REC-06')?.status).toBe('FAIL');
+  });
+
+  it('REC-06 fails when the committed checkpoint decoder schema does not match the active Day-6 schema', async () => {
+    await seedBase();
+    await pool.query(`UPDATE indexer_checkpoints SET decoder_schema_version='wrong-schema'
+      WHERE chain_id=$1 AND stack_version=$2 AND factory_address=$3`, [context.chainId, context.stackVersion, context.factoryAddress]);
+    const report = await reconcile(baseChain());
     expect(report.checks.find((check) => check.id === 'REC-06')?.status).toBe('FAIL');
   });
 
