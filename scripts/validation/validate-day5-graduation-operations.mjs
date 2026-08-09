@@ -65,16 +65,14 @@ for (const marker of [
   "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED",
   "ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED",
   "BREAD_DEPLOYMENT_AUTHORITY",
-  "feePolicy.transferOwnership(input.protocolAdmin)",
-  "feeEscrow.transferOwnership(input.protocolAdmin)",
-  "emergencyController.transferOwnership(input.protocolAdmin)",
-  "factory.transferOwnership(input.protocolAdmin)",
-  "coordinator.transferOwnership(input.protocolAdmin)",
+  "_handoffOwnership(deployment, input.protocolAdmin)",
   "input.protocolAdmin.code.length",
 ]) {
   if (!deploy.includes(marker)) fail(`deploy script missing marker ${marker}`);
 }
-if (deploy.includes("VM.addr(privateKey) != input.protocolAdmin")) {
+const handoffCount = (deploy.match(/\.transferOwnership\(protocolAdmin\)/g) ?? []).length;
+if (handoffCount !== 5) fail(`deployment must hand exactly five Ownable surfaces to Protocol Admin, got ${handoffCount}`);
+if (/VM\.addr\([^)]*\)\s*!=\s*input\.protocolAdmin/.test(deploy)) {
   fail("deployment key must not be forced to equal the Protocol Admin Safe");
 }
 
