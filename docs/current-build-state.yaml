@@ -1,7 +1,7 @@
-schema_version: 1.11
+schema_version: 1.12
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
-updated_at: 2026-08-08T23:31:00+01:00
+updated_at: 2026-08-09
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
   - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
@@ -9,115 +9,79 @@ completed_checkpoints:
   - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
   - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
   - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
-  - "Day 4 source gate: PROJECT_SOURCE_V1_4_DAY4_RATIFICATION_RATIFIED"
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
   - "Day 5 preflight: DAY_5_PREFLIGHT_RECONCILIATION_PASS"
   - "Day 5 source gate: PROJECT_SOURCE_V1_5_DAY5_RATIFICATION_RATIFIED"
   - "Day 5 design: WRITTEN_DESIGN_APPROVED"
   - "Day 5 plan: IMPLEMENTATION_PLAN_V2_SELF_REVIEWED"
-active_checkpoint: "Day 5 — design/plan documentation gate"
-active_lane: "Approved design and self-reviewed v2 implementation plan on PR #26; exact-head documentation CI"
-active_gate: DAY5_DESIGN_PLAN_DOCUMENTATION_CI
+active_checkpoint: "Day 5 — graduation implementation merge/closeout gate"
+active_lane: "PR #27 implementation candidate is audited and green; evidence/state stamp requires exact-head CI before guarded merge"
+active_gate: DAY5_EVIDENCE_BEARING_EXACT_HEAD_CI_AND_GUARDED_MERGE
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
   upload: UPLOADED_AND_READ_BACK
   ratification: RATIFIED
-  existing_day1_day3_baseline_ratification: RATIFIED
-  day4_amendment: RATIFIED
   day4_production_ratification: RATIFIED
   day4_ratified_source:
     pack: v1.4-day4-design
-  current_ratified_pack: v1.5-day5-preflight-consolidated
-  day5_preflight_amendment_required: true
-  day5_preflight_amendment_upload: COMPLETE
   day5_preflight_amendment_ratification: RATIFIED
-  evidence_path: docs/source-reconciliation/day5-preflight-blocker-burndown.md
+  current_ratified_pack: v1.5-day5-preflight-consolidated
 integration_baseline:
-  id: DAY5-RATIFIED-DESIGN-BASELINE
+  id: DAY5-DESIGN-PLAN-MERGED-BASELINE
   branch: main
+  head: ee315b4feb255b6c84c0b1ef51623a1155d77844
   day4_closeout_milestone: 7533b9f243e1c53106188aa662919f6166448f2e
   day4_durable_handoff_main: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
   day5_preflight_evidence_main: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
-  day5_start_baseline: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
-  implementation_pr: 15
-  implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
-  closeout_pr: 23
-  closeout_merge_commit: 7533b9f243e1c53106188aa662919f6166448f2e
-  durable_handoff_pr: 24
-  durable_handoff_merge_commit: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
-  status: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS
+  day5_start_baseline: ee315b4feb255b6c84c0b1ef51623a1155d77844
+  status: DAY5_IMPLEMENTATION_CANDIDATE_GREEN_PENDING_GUARDED_MERGE
 working_branches:
-  - design/day5-graduation-coordinator
+  - agent/day5-graduation-adapter-lock
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  verified_main_for_day5_design: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
-  day5_preflight_branch: checkpoint/day5-preflight-blocker-burndown
-  day5_preflight_evidence: docs/source-reconciliation/day5-preflight-blocker-burndown.md
-  day5_design_branch: design/day5-graduation-coordinator
+  day5_implementation_pr: 27
+  day5_implementation_branch: agent/day5-graduation-adapter-lock
   day5_design_spec: docs/superpowers/specs/2026-08-08-day5-graduation-coordinator-design.md
-  day5_design_initial_commit: dbd272d002f888b2b4138b8b47f38c1b84c01325
   day5_plan: docs/superpowers/plans/2026-08-08-day5-graduation-coordinator-v2.md
-  day5_plan_self_review_commit: 32fd667a705851f9c57e1f5796ef5fde8492b456
-  day5_documentation_pr: 26
-  day5_production_code_started: false
+  day5_candidate_evidence: docs/evidence/day5-graduation-adapter-lock.md
+  day5_production_code_started: true
+  day5_production_code_status: RATIFIED_PENDING_GUARDED_MERGE
+  day6_production_code_started: false
 day5_scope:
-  production_status: NOT_STARTED
-  controlling_work:
+  production_status: GREEN_CANDIDATE_PENDING_GUARDED_MERGE_AND_CLOSEOUT
+  implemented:
     - GraduationCoordinator
     - IGraduationAdapter
-    - V4 guard/executor/hook where supported by verified official environment
-    - V3 fallback behind same interface and inactive unless required
     - permanent liquidity locker
+    - V3 fallback behind the common interface, inactive on Arc manifests
     - failed automatic graduation and retry behavior
-    - dust and wrong-dependency handling
-    - complete deployment/configure/verify/smoke scripts and manifest plumbing
-  end_gate:
+    - explicit dust, donation and wrong-dependency handling
+    - deploy/configure/verify/live-smoke scripts and fail-closed manifests
+  v4_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
+  v3_activation: INACTIVE_PENDING_OFFICIAL_ENVIRONMENT_EVIDENCE
+  end_gate_candidate:
     - FULL_LAUNCH_TRADE_GRADUATE_LOCK_PASS
     - INV_050_056_PASS
     - RETRY_CANNOT_DUPLICATE_LIQUIDITY
     - RETRY_CANNOT_DOUBLE_SPEND_SWEPT_ASSETS
-  emergency_continuity: "graduationPaused is restriction-only; Guardian tighten/pause only; Protocol Admin alone clears; no financial accounting or custody authority"
-  design:
-    state_authority: GraduationCoordinator
-    lifecycle: "NOT_GRADUATED -> SWEPT -> POOL_CREATED; delayed terminal RESCUED from SWEPT only"
-    trigger: "best-effort automatic Stage 1 after crossing buy plus permissionless Stage 1/Stage 2 retry"
-    adapter_snapshot: "immutable per launch"
-    v4: "preferred only when official environment is verified; official-interface fixtures allowed for local/testnet proofs"
-    v3: "implemented behind same interface; inactive unless verified environment requires activation"
-    locker: "non-upgradeable permanent principal lock; one-time coordinator wiring only; no withdrawal/arbitrary-call/admin escape"
-    fee_escrow: "canonical claim ledger preserved; graduation coordinator may credit settled curve fee amounts only through explicit authorized-creditor wiring"
-    rescue: "Protocol Admin only; exact SWEPT/pause/time preconditions; seven-day Bread recovery constant derived from frozen Pons reference"
+  emergency_continuity: "graduationPaused is restriction-only; Guardian may tighten/pause only; Protocol Admin alone clears/recovery-executes under exact state/time gates"
+  recovery_authority: "coordinator ownership is transferable but renunciation is disabled so delayed stuck-graduation recovery authority cannot be accidentally burned"
 verification:
-  day4_final_implementation_head: d08a33c00bb17eb96ef342ee25d48fb696f7ea4d
-  day4_final_implementation_run: 31275557000
-  day4_final_implementation_jobs: PASS_ALL_FOUR
-  day4_implementation_merge_commit: aec8eb1f90693d8883e4849503c8e50a0ed79b80
-  day4_closeout_prerequisite_head: a9f0cf839cda7b67b5e38fe199367c3b7757d2ea
-  day4_closeout_prerequisite_run: 31276781025
-  day4_closeout_prerequisite_jobs: PASS_ALL_FOUR
-  day4_closeout_stamped_head: 8e0eaac8f1ce21f4654286a6e3f9113fd4de7a4b
-  day4_closeout_stamped_run: 31276843224
-  day4_closeout_stamped_jobs: PASS_ALL_FOUR
-  day4_closeout_merge_commit: 7533b9f243e1c53106188aa662919f6166448f2e
-  day4_post_closeout_handoff_run: 31276981183
-  day4_post_closeout_handoff_jobs: PASS_ALL_FOUR
-  day4_durable_main: bc2985c2c79d20aee6a9c2e5fb4c5f92e163e87c
-  day5_preflight_evidence_head: f914534637d3acbde0a65051599144ff69fd18f1
-  day5_preflight_evidence_run: 31278473599
-  day5_preflight_evidence_jobs: PASS_ALL_FOUR
-  day5_preflight_evidence_main: a40cc987a0201119f2ae21eff5a508d5e5cf8fd8
-fresh_external_evidence:
-  checked_at: 2026-08-08
-  pons_public_source_commit: d5491e20be56051a68abf47136f6890c3ce3ff7d
-  pons_repo_v2_factory: "0x7E1EAbd52Ae29598e6483F72dCf1a70b14284dB8"
-  pons_docs_v2_factory: "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e"
-  pons_exact_current_parity: UNPROVEN
-  pons_audits: "SB Security/Dingbats/Pashov Audit Group all still in progress; no audit closed"
-  arc_phase: TESTNET
-  arc_mainnet_contract_addresses: NOT_OFFICIALLY_AVAILABLE
-  arc_mainnet_rpc_parameters: NOT_OFFICIALLY_AVAILABLE
-  uniswap_v4_arc_official_deployment: NOT_LISTED
+  day5_audited_implementation_head: 1f4a8808ce145271f836313e5fd3c73695bc9281
+  day5_audited_implementation_run: 31285422630
+  day5_audited_implementation_jobs: PASS_ALL_FOUR
+  day5_foundry_suites: 34
+  day5_foundry_tests: 196
+  day5_foundry_failures: 0
+  day5_inv_050_056: PASS
+  day5_full_lifecycle: PASS
+  day5_retry_duplicate_liquidity: PASS
+  day5_retry_double_spend: PASS
+  day5_operations_validation: PASS
+  day5_candidate_evidence_commit: 1abda4584ab99c74b09378a13ff291c673203076
+  evidence_bearing_head_ci: PENDING_THIS_STATE_COMMIT
+  merged_main_closeout: NOT_STARTED
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -125,29 +89,26 @@ blockers:
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "OPEN_REFERENCE_GAP_NON_BLOCKING_FOR_BREAD; blocks only exact current-Pons parity claims"
-  PONS_V2_RUNTIME_REFERENCE: "READ_SURFACE_VERIFIED_NUMERIC_STATE_PENDING; reference/parity evidence only"
-  BREAD_PRODUCTION_ECONOMICS_CONFIG: "OPEN_PUBLIC_MAINNET_RELEASE_GATE; actual production launchFeeUsdc, FeePolicy, recipient/admin/Safe, stack/config and deployment-manifest values remain unfrozen; do not guess"
-  PONS_AUDIT_FINDINGS: "NO_PUBLIC_PONS_AUDIT_REPORTS_PUBLISHED_AS_OF_2026-08-08; continuing security watch; Bread independent review remains mandatory"
-  ARC_MAINNET_VALUES: "WAITING_FOR_OFFICIAL_PUBLICATION; mainnet-deployment blocker only; not Day-5 testnet implementation blocker"
-source_amendment:
-  required: true
-  status: RATIFIED
-  reason: "split legacy LIVE_RUNTIME_CONFIG into Pons reference evidence and Bread-owned production configuration approval gate"
-  controlling_effect: "Day-5 design is approved and the implementation plan is self-reviewed. Production Solidity may begin only from a fresh implementation branch after the documentation gate is durably merged."
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; not a Bread Day-5 engineering blocker"
+  PONS_V2_RUNTIME_REFERENCE: "numeric reference state remains pending; do not guess"
+  BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics and authority values remain unfrozen"
+  PONS_AUDIT_FINDINGS: "no public completed Pons audit report verified; continuing watch; Bread independent review remains required before unrestricted public funds"
+  ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet or canonical DEX values may be invented"
 security_review:
+  source_led_manual_review: COMPLETE_FOR_DAY5_CANDIDATE
+  coordinator_renounce_hardening: RED_GREEN_VERIFIED
+  permanent_locker_escape_review: PASS_CANDIDATE
+  retry_replay_custody_review: PASS_CANDIDATE
+  external_independent_review: OPEN_PUBLIC_MAINNET_RELEASE_GATE
   pons_audit_clean_claim: NONE
-  bread_independent_review_requirement: ACTIVE
-  external_dex_rule: "official DEX interfaces and official Arc/DEX deployment evidence are primary; no guessed canonical Arc deployment"
 next_action: >-
-  Obtain exact-head CI PASS for documentation PR #26 and merge only that exact green head. Verify merged main, then create a fresh Day-5 implementation branch from that verified main and begin the self-reviewed v2 RED -> GREEN plan. Re-check official Arc/Uniswap sources before DEX-specific implementation. Do not activate a network adapter or guess production/mainnet values.
+  Run all four repository CI jobs on the evidence-bearing PR #27 head created by this build-state update. If and only if that exact head is green, reverify main, PR head, mergeability and review state; mark PR ready and merge with expected-head protection. Then verify actual merged main and perform a fresh docs-only Day-5 merged-main closeout plus durable handoff. Do not begin Day-6 production work until Day 5 is durably closed.
 do_not_do:
+  - "Do not call Day 5 durably complete before guarded merge plus fresh merged-main closeout/handoff."
+  - "Do not start Day-6 production code from an unmerged Day-5 branch."
   - "Do not reopen closed Day-4 economics/security behavior without a newly ratified source change."
-  - "Do not start Day-5 production Solidity before the approved design/self-reviewed plan documentation gate is durably merged."
   - "Do not claim exact current-live Pons V2 source/runtime parity."
-  - "Do not claim Pons V2 is audit-clean; current official docs say all three reviews remain in progress."
-  - "Do not infer or guess current Pons numeric runtime config when a read cannot be verified."
-  - "Do not invent Bread production economics, recipient/admin/Safe addresses or stack values."
-  - "Do not invent Arc mainnet or canonical Arc Uniswap deployment addresses."
+  - "Do not claim Pons V2 is audit-clean."
+  - "Do not infer or guess Pons runtime numbers, Bread production economics/authority values, Arc mainnet values, or canonical Arc DEX addresses."
   - "Do not activate a V4/V3 Arc network adapter without official deployment evidence and compatibility tests."
-  - "When chat context is roughly 90% full, stop before a new critical graduation slice and write a durable handoff/rollover prompt."
+  - "When chat context is roughly 90% full, stop before a new critical slice and write a durable handoff/rollover prompt."

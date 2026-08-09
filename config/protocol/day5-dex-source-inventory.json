@@ -1,0 +1,179 @@
+{
+  "projectSourcePack": "v1.5-day5-preflight-consolidated",
+  "checkedAt": "2026-08-09",
+  "arc": {
+    "testnet": {
+      "status": "OFFICIAL_TESTNET_VALUES_VERIFIED",
+      "chainId": 5042002,
+      "canonicalUsdc": "0x3600000000000000000000000000000000000000",
+      "usdcDecimals": 6,
+      "contractAddressesSource": "https://docs.arc.network/arc/references/contract-addresses",
+      "rpcSource": "https://docs.arc.network/arc/references/rpc"
+    },
+    "mainnet": {
+      "status": "WAITING_FOR_OFFICIAL_PUBLICATION",
+      "contractAddresses": null,
+      "rpcParameters": null,
+      "graduationDex": null
+    }
+  },
+  "uniswapV4": {
+    "implementationStatus": "INACTIVE_OFFICIAL_INTERFACE_COMPATIBILITY_ONLY",
+    "officialDeploymentRegistry": "https://developers.uniswap.org/docs/protocols/v4/deployments",
+    "arcDeployment": {
+      "status": "NOT_LISTED_IN_OFFICIAL_V4_DEPLOYMENTS",
+      "checkedAt": "2026-08-09",
+      "activationAllowed": false
+    },
+    "officialSource": {
+      "lockedByPeriphery": true,
+      "lockEvidence": {
+        "repository": "https://github.com/Uniswap/v4-periphery",
+        "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+        "path": "foundry.lock"
+      },
+      "periphery": {
+        "repository": "https://github.com/Uniswap/v4-periphery",
+        "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+        "rootLicense": "GPL-2.0-or-later",
+        "usage": "REFERENCE_FOR_ABI_AND_ACTION_ENCODING; NO_NETWORK_ACTIVATION",
+        "files": [
+          {
+            "path": "src/interfaces/IPositionManager.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_MINIMAL_ABI"
+          },
+          {
+            "path": "src/libraries/Actions.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_ACTION_CONSTANTS"
+          },
+          {
+            "path": "src/libraries/LiquidityAmounts.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_SEED_LIQUIDITY_MATH"
+          }
+        ]
+      },
+      "core": {
+        "repository": "https://github.com/Uniswap/v4-core",
+        "commit": "59d3ecf53afa9264a16bba0e38f4c5d2231f80bc",
+        "usage": "REFERENCE_FOR_MINIMAL_ABI_TYPES_AND_BOUNDS; NO_POOLMANAGER_IMPLEMENTATION_COPY",
+        "files": [
+          {
+            "path": "src/interfaces/IPoolManager.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_MINIMAL_INITIALIZE_ABI"
+          },
+          {
+            "path": "src/types/PoolKey.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_POOL_KEY_ABI"
+          },
+          {
+            "path": "src/types/Currency.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_CURRENCY_ABI"
+          },
+          {
+            "path": "src/libraries/TickMath.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_SQRT_PRICE_AND_TICK_BOUNDS"
+          }
+        ],
+        "excludedImplementationSources": [
+          {
+            "path": "src/PoolManager.sol",
+            "reason": "BUSL_IMPLEMENTATION_NOT_REQUIRED_FOR_BREAD_INACTIVE_ADAPTER_SOURCE"
+          },
+          {
+            "path": "src/libraries/Pool.sol",
+            "reason": "BUSL_IMPLEMENTATION_LIBRARY_NOT_COPIED_INTO_BREAD"
+          }
+        ]
+      },
+      "permit2": {
+        "repository": "https://github.com/Uniswap/permit2",
+        "commit": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+        "rootLicense": "MIT",
+        "usage": "REFERENCE_FOR_MINIMAL_ALLOWANCE_ABI; NO_NETWORK_ACTIVATION",
+        "files": [
+          {
+            "path": "src/interfaces/IAllowanceTransfer.sol",
+            "spdx": "MIT",
+            "usage": "REFERENCE_FOR_APPROVE_ABI"
+          }
+        ]
+      }
+    }
+  },
+  "uniswapV3": {
+    "implementationStatus": "INACTIVE_FALLBACK_OFFICIAL_INTERFACE_COMPATIBILITY_ONLY",
+    "activationAllowed": false,
+    "arcDeployment": {
+      "status": "NO_VERIFIED_ARC_V3_ACTIVATION_EVIDENCE",
+      "checkedAt": "2026-08-09"
+    },
+    "officialSource": {
+      "periphery": {
+        "repository": "https://github.com/Uniswap/v3-periphery",
+        "commit": "0682387198a24c7cd63566a2c58398533860a5d1",
+        "rootLicense": "GPL-2.0-or-later",
+        "usage": "REFERENCE_FOR_MINIMAL_V3_ABI; NO_NETWORK_ACTIVATION",
+        "files": [
+          {
+            "path": "contracts/interfaces/INonfungiblePositionManager.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_MINIMAL_MINT_ABI"
+          },
+          {
+            "path": "contracts/interfaces/IPoolInitializer.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_POOL_INITIALIZATION_ABI"
+          },
+          {
+            "path": "contracts/interfaces/IPeripheryImmutableState.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_FACTORY_IDENTITY_ABI"
+          }
+        ]
+      },
+      "core": {
+        "repository": "https://github.com/Uniswap/v3-core",
+        "commit": "d0831dc6b8a318df3872b6d68f6de135c9f3ec29",
+        "rootLicense": "BUSL-1.1_WITH_GPL_INTERFACE_LIBRARY_FILES",
+        "usage": "REFERENCE_FOR_MINIMAL_FACTORY_ABI_AND_PRICE_BOUNDS; NO_IMPLEMENTATION_COPY",
+        "files": [
+          {
+            "path": "contracts/interfaces/IUniswapV3Factory.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_FEE_TIER_AND_POOL_IDENTITY_ABI"
+          },
+          {
+            "path": "contracts/libraries/TickMath.sol",
+            "spdx": "GPL-2.0-or-later",
+            "usage": "REFERENCE_FOR_V3_SQRT_PRICE_AND_TICK_BOUNDS_ONLY"
+          }
+        ]
+      }
+    }
+  },
+  "ponsReference": {
+    "repository": "https://github.com/ponsdotdev/ponsfamily",
+    "commit": "d5491e20be56051a68abf47136f6890c3ce3ff7d",
+    "role": "REFERENCE_ONLY",
+    "graduationFiles": [
+      "contractsV2/src/v2/PonsV2GraduationGuard.sol",
+      "contractsV2/src/v2/PonsV2GraduationExecutor.sol",
+      "contractsV2/src/v2/PonsV2LaunchLocker.sol",
+      "contractsV2/src/v2/PonsV2LaunchFactory.sol"
+    ]
+  },
+  "activationPolicy": {
+    "arcV4": "BLOCKED_UNTIL_OFFICIAL_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
+    "arcV3": "BLOCKED_UNLESS_VERIFIED_ENVIRONMENT_REQUIRES_FALLBACK_AND_COMPATIBILITY_PASS",
+    "productionEconomics": "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED",
+    "mainnet": "ARC_MAINNET_VALUES_REQUIRED",
+    "fixtures": "TEST_ONLY_NEVER_CANONICAL_DEPLOYMENT_CLAIM"
+  }
+}

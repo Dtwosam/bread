@@ -10,6 +10,7 @@ import {BreadFeePolicySnapshot} from "../src/interfaces/IBreadFeePolicy.sol";
 import {MockUSDC6} from "./helpers/MockUSDC6.sol";
 import {ShortTransferUSDC6} from "./helpers/BreadFeeEscrowAdversaries.sol";
 import {BreadAlwaysOpenEmergencyController} from "./helpers/BreadEmergencyTestHelpers.sol";
+import {BreadDay5TestWiring} from "./helpers/BreadDay5TestWiring.sol";
 
 contract BreadLaunchFeeTest {
     uint256 private constant ONE_USDC = 1_000_000;
@@ -171,6 +172,8 @@ contract BreadLaunchFeeTest {
             phantomQuote: PHANTOM_QUOTE,
             graduationThreshold: GRADUATION_THRESHOLD,
             launchFeeUsdc: launchFee,
+            graduationAdapter: address(0),
+            graduationConfigHash: bytes32(0),
             enabled: false
         });
         BreadAlwaysOpenEmergencyController emergencyController = new BreadAlwaysOpenEmergencyController();
@@ -179,8 +182,7 @@ contract BreadLaunchFeeTest {
         );
         BreadLaunchDeployer deployer = new BreadLaunchDeployer(address(factory));
         factory.setLaunchDeployer(deployer);
-        config.enabled = true;
-        factory.setLaunchConfig(config);
+        BreadDay5TestWiring.wire(factory, usdc, escrow, address(emergencyController));
     }
 
     function _policySnapshot() private pure returns (BreadFeePolicySnapshot memory snapshot) {

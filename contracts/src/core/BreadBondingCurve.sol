@@ -11,6 +11,7 @@ import {BreadBondingCurveMath} from "../libraries/BreadBondingCurveMath.sol";
 import {IBreadEmergencyController} from "../interfaces/IBreadEmergencyController.sol";
 import {IBreadFeeEscrow} from "../interfaces/IBreadFeeEscrow.sol";
 import {IBreadFeePolicy, BreadFeePolicySnapshot} from "../interfaces/IBreadFeePolicy.sol";
+import {IGraduationCoordinator} from "../interfaces/IGraduationCoordinator.sol";
 
 /// @title BreadBondingCurve
 /// @notice Canonical-USDC Bread trading layer over the tracked-reserve Day-2 core.
@@ -18,14 +19,17 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 private constant BASIS_POINTS = 10_000;
+    bytes4 private constant GRADUATION_COORDINATOR_SELECTOR = bytes4(keccak256("graduationCoordinator()"));
     uint16 public constant STARTING_SNIPE_TAX_BPS = 9_900;
     uint8 public constant SNIPE_DURATION_SECONDS = 5;
     uint16 public constant TERMINAL_SNIPE_TAX_BPS = 0;
 
     error UnauthorizedFactory();
     error UnauthorizedFeeSweep();
+    error UnauthorizedGraduationCoordinator();
     error NotInitialized();
     error CurveClosed();
+    error NotReadyToGraduate();
     error RecipientZeroAddress();
     error ZeroAmount();
     error NoFeesToSweep();
@@ -92,6 +96,15 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         uint256 tax
     );
     event FeesSwept(uint256 protocolAmount, uint256 creatorAmount, uint256 creatorTaxAmount);
+    event GraduationReady(address indexed token, address indexed curve, address indexed coordinator);
+    event GraduationAutoAttemptFailed(address indexed token, bytes32 reasonHash);
+    event CurveGraduationReleased(
+        address indexed coordinator,
+        uint256 seedUsdc,
+        uint256 tokenOut,
+        uint256 protocolFeeAmount,
+        uint256 creatorFeeAmount
+    );
 
     constructor(
         address pairToken_,
@@ -130,6 +143,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         if (msg.sender != factory) revert UnauthorizedFactory();
         _initializeTrackedCurve(token_);
         launchTimestamp = uint64(block.timestamp);
+    }
+
+    /// @notice Resolves the Factory's one-time-bound canonical graduation coordinator.
+    /// @dev Returns zero for isolated legacy/unit-test factory harnesses that do not expose the Day-5 getter.
+    function graduationCoordinator() public view returns (address coordinator) {
+        (bool ok, bytes memory data) = factory.staticcall(abi.encodeWithSelector(GRADUATION_COORDINATOR_SELECTOR));
+        if (!ok || data.length != 32) return address(0);
+        coordinator = abi.decode(data, (address));
     }
 
     function currentSnipeTaxBps() public view returns (uint16) {
@@ -225,6 +246,7 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             quoted.charges.creatorTax
         );
 
+        _tryAutoGraduation();
         return (quoted.tokensOut, quoted.spent, refund);
     }
 
@@ -312,13 +334,14 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
             revert UnauthorizedFeeSweep();
         }
 
-        uint256 pendingBaseFee = quoteFeeBalance;
-        uint256 pendingTax = creatorTaxBalance;
-        uint256 totalPending = pendingBaseFee + pendingTax;
+        (
+            ,
+            uint256 pendingTax,
+            uint256 totalPending,
+            uint256 protocolAmount,
+            uint256 creatorAmount
+        ) = _pendingFeeAmounts();
         if (totalPending == 0) revert NoFeesToSweep();
-
-        uint256 protocolAmount = pendingBaseFee * protocolFeeShareBps / BASIS_POINTS;
-        uint256 creatorAmount = pendingBaseFee - protocolAmount + pendingTax;
 
         quoteFeeBalance = 0;
         creatorTaxBalance = 0;
@@ -335,5 +358,77 @@ contract BreadBondingCurve is BreadTrackedCurveState, ReentrancyGuard {
         }
 
         emit FeesSwept(protocolAmount, creatorAmount, pendingTax);
+    }
+
+    /// @notice Closes a ready curve and releases only tracked graduation value to its canonical coordinator.
+    /// @dev Deliberately not nonReentrant: the coordinator may call this from the best-effort callback inside buy().
+    function releaseForGraduation()
+        external
+        returns (uint256 seedUsdc, uint256 tokenOut, uint256 protocolFeeAmount, uint256 creatorFeeAmount)
+    {
+        address coordinator = graduationCoordinator();
+        if (coordinator == address(0) || msg.sender != coordinator) revert UnauthorizedGraduationCoordinator();
+        if (!readyToGraduate()) revert NotReadyToGraduate();
+
+        graduated = true;
+
+        (
+            uint256 pendingBaseFee,
+            uint256 pendingTax,
+            uint256 totalPending,
+            uint256 protocolAmount,
+            uint256 creatorAmount
+        ) = _pendingFeeAmounts();
+        protocolFeeAmount = protocolAmount;
+        creatorFeeAmount = creatorAmount;
+
+        quoteFeeBalance = 0;
+        creatorTaxBalance = 0;
+        trackedQuote -= totalPending;
+
+        seedUsdc = trackedQuote;
+        tokenOut = trackedTokens;
+        trackedQuote = 0;
+        trackedTokens = 0;
+
+        uint256 totalUsdcOut = seedUsdc + protocolFeeAmount + creatorFeeAmount;
+        if (totalUsdcOut != 0) IERC20(pairToken).safeTransfer(msg.sender, totalUsdcOut);
+        if (tokenOut != 0) IERC20(token).safeTransfer(msg.sender, tokenOut);
+
+        if (pendingBaseFee != 0 || pendingTax != 0) {
+            emit FeesSwept(protocolFeeAmount, creatorFeeAmount, pendingTax);
+        }
+        emit CurveGraduationReleased(msg.sender, seedUsdc, tokenOut, protocolFeeAmount, creatorFeeAmount);
+    }
+
+    function _tryAutoGraduation() private {
+        if (!readyToGraduate()) return;
+        address coordinator = graduationCoordinator();
+        if (coordinator == address(0)) return;
+
+        emit GraduationReady(token, address(this), coordinator);
+        try IGraduationCoordinator(coordinator).sweep(token) {
+            // Committed Stage-1 state is emitted by the coordinator.
+        } catch (bytes memory reason) {
+            emit GraduationAutoAttemptFailed(token, keccak256(reason));
+        }
+    }
+
+    function _pendingFeeAmounts()
+        private
+        view
+        returns (
+            uint256 pendingBaseFee,
+            uint256 pendingTax,
+            uint256 totalPending,
+            uint256 protocolAmount,
+            uint256 creatorAmount
+        )
+    {
+        pendingBaseFee = quoteFeeBalance;
+        pendingTax = creatorTaxBalance;
+        totalPending = pendingBaseFee + pendingTax;
+        protocolAmount = pendingBaseFee * protocolFeeShareBps / BASIS_POINTS;
+        creatorAmount = pendingBaseFee - protocolAmount + pendingTax;
     }
 }

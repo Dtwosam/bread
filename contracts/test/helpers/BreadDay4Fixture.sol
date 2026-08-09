@@ -5,9 +5,13 @@ import {BreadFeeEscrow} from "../../src/fees/BreadFeeEscrow.sol";
 import {BreadFeePolicy} from "../../src/fees/BreadFeePolicy.sol";
 import {BreadLaunchFactory} from "../../src/factory/BreadLaunchFactory.sol";
 import {BreadLaunchDeployer} from "../../src/factory/BreadLaunchDeployer.sol";
+import {BreadPermanentLiquidityLocker} from "../../src/graduation/BreadPermanentLiquidityLocker.sol";
 import {BreadEmergencyController} from "../../src/security/BreadEmergencyController.sol";
 import {IBreadLaunchFactory} from "../../src/interfaces/IBreadLaunchFactory.sol";
 import {BreadFeePolicySnapshot} from "../../src/interfaces/IBreadFeePolicy.sol";
+import {IGraduationAdapter} from "../../src/interfaces/IGraduationAdapter.sol";
+import {MockGraduationAdapter} from "./MockGraduationAdapter.sol";
+import {MockGraduationCoordinator} from "./MockGraduationCoordinator.sol";
 import {MockUSDC6} from "./MockUSDC6.sol";
 
 abstract contract BreadDay4Fixture {
@@ -21,6 +25,7 @@ abstract contract BreadDay4Fixture {
     uint16 internal constant DAY4_MAX_CREATOR_TAX_BPS = 500;
     uint16 internal constant DAY4_CREATOR_TAX_BPS = 500;
     bytes32 internal constant DAY4_STACK_VERSION = keccak256("BREAD_DAY4_STACK_V1");
+    bytes32 internal constant DAY4_GRADUATION_CONFIG_HASH = keccak256("BREAD_DAY4_TEST_GRADUATION_FIXTURE");
 
     address internal constant DAY4_PROTOCOL_RECIPIENT = address(0xA11CE);
     address internal constant DAY4_GUARDIAN = address(0xBEEF);
@@ -32,6 +37,9 @@ abstract contract BreadDay4Fixture {
         BreadEmergencyController emergencyController;
         BreadLaunchFactory factory;
         BreadLaunchDeployer deployer;
+        BreadPermanentLiquidityLocker locker;
+        MockGraduationCoordinator graduationCoordinator;
+        MockGraduationAdapter graduationAdapter;
     }
 
     function _deployDay4Fixture(uint256 launchFee) internal returns (Day4Fixture memory f) {
@@ -58,6 +66,8 @@ abstract contract BreadDay4Fixture {
             phantomQuote: DAY4_PHANTOM_QUOTE,
             graduationThreshold: DAY4_GRADUATION_THRESHOLD,
             launchFeeUsdc: launchFee,
+            graduationAdapter: address(0),
+            graduationConfigHash: bytes32(0),
             enabled: false
         });
         f.factory = new BreadLaunchFactory(
@@ -71,6 +81,26 @@ abstract contract BreadDay4Fixture {
         );
         f.deployer = new BreadLaunchDeployer(address(f.factory));
         f.factory.setLaunchDeployer(f.deployer);
+
+        f.locker = new BreadPermanentLiquidityLocker(address(this));
+        f.graduationCoordinator = new MockGraduationCoordinator(
+            address(f.factory),
+            address(f.usdc),
+            address(f.escrow),
+            address(f.emergencyController),
+            address(f.locker)
+        );
+        f.locker.setCoordinator(address(f.graduationCoordinator));
+        f.factory.setGraduationCoordinator(f.graduationCoordinator);
+        f.graduationAdapter = new MockGraduationAdapter(
+            IGraduationAdapter.AdapterFamily.UNISWAP_V4,
+            address(f.usdc),
+            address(f.locker),
+            DAY4_GRADUATION_CONFIG_HASH
+        );
+
+        config.graduationAdapter = address(f.graduationAdapter);
+        config.graduationConfigHash = DAY4_GRADUATION_CONFIG_HASH;
         config.enabled = true;
         f.factory.setLaunchConfig(config);
     }

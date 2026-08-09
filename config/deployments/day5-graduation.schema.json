@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bread://schemas/day5-graduation-deployment-v1",
+  "title": "Bread Day 5 Graduation Deployment Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "network",
+    "status",
+    "chainId",
+    "core",
+    "adapter",
+    "authorities",
+    "economicsConfigHash",
+    "dexEvidenceHash",
+    "deploymentStartBlock"
+  ],
+  "properties": {
+    "schema": { "const": "bread://schemas/day5-graduation-deployment-v1" },
+    "network": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 },
+    "chainId": { "type": ["integer", "null"] },
+    "core": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factory", "deployer", "feePolicy", "feeEscrow", "emergencyController", "locker", "coordinator"],
+      "properties": {
+        "factory": { "type": ["string", "null"] },
+        "deployer": { "type": ["string", "null"] },
+        "feePolicy": { "type": ["string", "null"] },
+        "feeEscrow": { "type": ["string", "null"] },
+        "emergencyController": { "type": ["string", "null"] },
+        "locker": { "type": ["string", "null"] },
+        "coordinator": { "type": ["string", "null"] }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active", "family", "adapter", "positionManager", "poolManager", "v3Factory", "configHash"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "family": { "type": ["string", "null"] },
+        "adapter": { "type": ["string", "null"] },
+        "positionManager": { "type": ["string", "null"] },
+        "poolManager": { "type": ["string", "null"] },
+        "v3Factory": { "type": ["string", "null"] },
+        "configHash": { "type": ["string", "null"] }
+      }
+    },
+    "authorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolAdmin", "guardian"],
+      "properties": {
+        "protocolAdmin": { "type": ["string", "null"] },
+        "guardian": { "type": ["string", "null"] }
+      }
+    },
+    "economicsConfigHash": { "type": ["string", "null"] },
+    "dexEvidenceHash": { "type": ["string", "null"] },
+    "deploymentStartBlock": { "type": ["integer", "null"] }
+  }
+}
