@@ -1,9 +1,14 @@
+import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
-import { encodeErrorResult } from 'viem';
 
 import type { Address, Hex } from '../../packages/types/src/index.js';
 import { breadAbiRegistry } from '../../packages/protocol-sdk/src/abi/generated.js';
 import type { ProtocolContext } from '../../packages/protocol-sdk/src/context.js';
+
+const requireFromSdk = createRequire(new URL('../../packages/protocol-sdk/package.json', import.meta.url));
+const { encodeErrorResult } = requireFromSdk('viem') as {
+  encodeErrorResult: (input: { abi: readonly unknown[]; errorName: string }) => Hex;
+};
 
 const address = (byte: string) => `0x${byte.repeat(40)}` as Address;
 
