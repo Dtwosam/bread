@@ -21,6 +21,10 @@ export const breadTheme = {
     warning: '#FDB022',
     warningSoft: '#35290D',
   },
+  fonts: {
+    primary: 'Inter',
+    technical: 'Geist Mono',
+  },
   typography: {
     display: { size: 32, weight: 700, lineHeight: 38 },
     h1: { size: 24, weight: 700, lineHeight: 30 },
@@ -33,6 +37,12 @@ export const breadTheme = {
     label: { size: 13, weight: 500, lineHeight: 18 },
     small: { size: 12, weight: 400, lineHeight: 17 },
     micro: { size: 11, weight: 500, lineHeight: 15 },
+  },
+  controls: {
+    standardButtonHeight: 40,
+    largeButtonHeight: 48,
+    smallButtonHeight: 32,
+    minimumTouchTarget: 44,
   },
   spacing: [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64] as const,
   radii: {
