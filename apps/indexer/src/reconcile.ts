@@ -1,4 +1,5 @@
 import {
+  DAY6_DB_SCHEMA_VERSION,
   RebuildRepository,
   type BreadDb,
   type IndexerProtocolContext,
@@ -54,6 +55,11 @@ export type ReconciliationChainReader = Readonly<{
     positionId: bigint | null;
     positionLocked: boolean;
     tokenSupplyLocked: bigint;
+  }>>;
+  readChainConfig: () => Promise<Readonly<{
+    chainId: number;
+    quoteAsset: string;
+    quoteDecimals: number;
   }>>;
   getRuntimeCodeHash: (address: string) => Promise<string | null>;
   getBlockHash: (blockNumber: bigint) => Promise<string>;
@@ -324,12 +330,34 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       codeHashPass = false;
     }
   }
+
+  const chainConfig = await input.chain.readChainConfig();
+  const expectedConfig = {
+    chainId: input.context.chainId,
+    quoteAsset: input.context.quoteAsset.toLowerCase(),
+    quoteDecimals: input.context.quoteDecimals,
+  };
+  const actualConfig = {
+    chainId: chainConfig.chainId,
+    quoteAsset: chainConfig.quoteAsset.toLowerCase(),
+    quoteDecimals: chainConfig.quoteDecimals,
+    registeredQuoteAsset: snapshot.stack?.quoteAsset.toLowerCase() ?? null,
+    registeredQuoteDecimals: snapshot.stack?.quoteDecimals ?? null,
+  };
+  const configPass = Boolean(
+    snapshot.stack &&
+    chainConfig.chainId === input.context.chainId &&
+    chainConfig.quoteAsset.toLowerCase() === input.context.quoteAsset.toLowerCase() &&
+    chainConfig.quoteDecimals === input.context.quoteDecimals &&
+    snapshot.stack.quoteAsset.toLowerCase() === input.context.quoteAsset.toLowerCase() &&
+    snapshot.stack.quoteDecimals === input.context.quoteDecimals
+  );
   checks.push(check(
     'REC-05',
-    codeHashPass,
-    expectedHashView,
-    observedHashes,
-    'Every registered active-stack deployment must have a frozen expected runtime code hash and matching authoritative runtime code.',
+    codeHashPass && configPass,
+    { runtimeCodeHashes: expectedHashView, chainConfig: expectedConfig },
+    { runtimeCodeHashes: observedHashes, chainConfig: actualConfig },
+    'Every registered active-stack deployment must have matching runtime code, and authoritative chain/canonical quote identity must match the registered stack.',
   ));
 
   const checkpoint = snapshot.checkpoint;
@@ -355,6 +383,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     snapshot.stack.deploymentStartBlock === input.context.deploymentStartBlock &&
     checkpoint.indexedThroughBlock === input.checkedBlock &&
     checkpoint.indexedThroughBlockHash.toLowerCase() === observedCheckpointHash.toLowerCase() &&
+    checkpoint.decoderSchemaVersion === DAY6_DB_SCHEMA_VERSION &&
     checkpoint.status === 'COMMITTED' &&
     journalWithinCheckpoint &&
     journalIdentityMatch
@@ -366,6 +395,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       deploymentStartBlock: input.context.deploymentStartBlock,
       indexedThroughBlock: input.checkedBlock,
       indexedThroughBlockHash: observedCheckpointHash.toLowerCase(),
+      decoderSchemaVersion: DAY6_DB_SCHEMA_VERSION,
       status: 'COMMITTED',
       canonicalEventIdentities: authoritativeEventIdentities,
     },
@@ -374,7 +404,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       journalWithinCheckpoint,
       canonicalEventIdentities: projectedEventIdentities,
     },
-    'Checkpoint must cover the selected stack contiguously, match the authoritative block hash, contain no journal rows beyond the checkpoint, and match the canonical chain event-identity set.',
+    'Checkpoint must match chain, active decoder schema and selected stack continuity, contain no journal rows beyond the checkpoint, and match the canonical chain event-identity set.',
   ));
 
   return {
