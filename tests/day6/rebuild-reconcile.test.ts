@@ -199,6 +199,83 @@ async function digestStack(pool: TestPool): Promise<string> {
   return String(result.rows[0]?.digest);
 }
 
+async function insertJournalEvent(
+  pool: TestPool,
+  input: Readonly<{
+    transactionHash: Hex32;
+    logIndex: number;
+    blockNumber: bigint;
+    contractAddress: Address;
+    contractRole: string;
+    eventName: string;
+    tokenAddress?: Address;
+    curveAddress?: Address;
+  }>,
+): Promise<void> {
+  await pool.query(`INSERT INTO event_journal
+    (chain_id, transaction_hash, log_index, block_number, block_hash, block_timestamp, transaction_index,
+     contract_address, contract_role, stack_version, topic0, topics, data, event_name, payload, token_address, curve_address)
+    VALUES ($1,$2,$3,$4,$5,$6,0,$7,$8,$9,$10,$11::jsonb,'0x',$12,'{}'::jsonb,$13,$14)`, [
+    context.chainId,
+    input.transactionHash,
+    input.logIndex,
+    input.blockNumber.toString(10),
+    hash('9'),
+    (1_786_262_400n + input.blockNumber - 100n).toString(10),
+    input.contractAddress,
+    input.contractRole,
+    context.stackVersion,
+    topic0,
+    JSON.stringify([topic0]),
+    input.eventName,
+    input.tokenAddress ?? null,
+    input.curveAddress ?? null,
+  ]);
+}
+
+function authoritativeReader(overrides: Record<string, unknown> = {}) {
+  const runtimeHashes: Record<string, string> = {
+    [factory.toLowerCase()]: hash('1'),
+    [feeEscrow.toLowerCase()]: hash('2'),
+    [coordinator.toLowerCase()]: hash('3'),
+    [locker.toLowerCase()]: hash('4'),
+  };
+  return {
+    countLaunchCreated: async () => 1n,
+    scanLaunchCreated: async () => [{ transactionHash: txHash, logIndex: 4, tokenAddress: token }],
+    scanCanonicalEventIdentities: async () => [
+      { transactionHash: txHash, logIndex: 4 },
+      { transactionHash: hash('7'), logIndex: 0 },
+      { transactionHash: hash('8'), logIndex: 0 },
+    ],
+    readCurveState: async () => ({
+      trackedQuote: 500n,
+      trackedTokens: 800n,
+      quoteFeeBalance: 0n,
+      creatorTaxBalance: 0n,
+      realQuoteReserve: 500n,
+      virtualQuoteReserve: 250n,
+      reservedTokens: 200n,
+      remainingSellableTokens: 600n,
+      readyToGraduate: false,
+      graduated: false,
+    }),
+    readFeeEscrowState: async () => ({ totalOutstanding: 50n, custody: 55n }),
+    readGraduationState: async () => ({
+      phase: 'POOL_CREATED',
+      sweptTokenAmount: 200n,
+      sweptUsdcAmount: 50n,
+      poolId: hash('5'),
+      positionId: 77n,
+      positionLocked: true,
+      tokenSupplyLocked: 180n,
+    }),
+    getRuntimeCodeHash: async (target: string) => runtimeHashes[target.toLowerCase()] ?? null,
+    getBlockHash: async (block: bigint) => block === 105n ? hash('9') : block === 100n ? blockHash : hash('0'),
+    ...overrides,
+  };
+}
+
 describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation against PostgreSQL', () => {
   const schemaName = `day6_task10_${process.pid}`;
   let adminPool: TestPool;
@@ -272,11 +349,17 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
         toBlockTimestamp: 1_786_262_400n,
         logs: fromBlock <= 100n && toBlock >= 100n ? launchLogs : [],
       }),
-      skipReconciliation: true,
+      chain: authoritativeReader({
+        scanCanonicalEventIdentities: async () => [
+          { transactionHash: txHash, logIndex: 0 },
+          { transactionHash: txHash, logIndex: 4 },
+        ],
+        readFeeEscrowState: async () => ({ totalOutstanding: 0n, custody: 0n }),
+      }),
     });
     const after = await digestStack(pool);
     expect(after).toBe(before);
-    expect(result).toMatchObject({ fromBlock: '100', toBlock: '100' });
+    expect(result).toMatchObject({ fromBlock: '100', toBlock: '100', reconciliation: expect.any(Object) });
 
     const other = await pool.query(`SELECT count(*)::int AS count FROM launches WHERE stack_version=$1 AND factory_address=$2`, [otherStack, otherFactory]);
     expect(other.rows[0]?.count).toBe(1);
@@ -289,49 +372,71 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
     const db = dbModule.createBreadDb(pool);
 
     await pool.query(`INSERT INTO protocol_stacks
-      (chain_id, stack_version, factory_address, deployment_start_block, quote_asset, quote_decimals, addresses, runtime_code_hashes)
-      VALUES ($1,$2,$3,'100',$4,6,$5::jsonb,$6::jsonb)`, [
-        context.chainId, context.stackVersion, factory, quoteAsset,
-        JSON.stringify({ factory, feeEscrow, coordinator, locker }),
-        JSON.stringify({ factory: hash('1'), feeEscrow: hash('2'), coordinator: hash('3'), locker: hash('4') }),
-      ]);
+      (chain_id, stack_version, factory_address, deployment_start_block, quote_asset, quote_decimals, addresses, runtime_code_hashes, manifest_hash, source_hash)
+      VALUES ($1,$2,$3,'100',$4,6,$5::jsonb,$6::jsonb,$7,$8)`, [
+      context.chainId,
+      context.stackVersion,
+      factory,
+      quoteAsset,
+      JSON.stringify({ factory, feeEscrow, coordinator, locker }),
+      JSON.stringify({ factory: hash('1'), feeEscrow: hash('2'), coordinator: hash('3'), locker: hash('4') }),
+      hash('c'),
+      hash('d'),
+    ]);
     await pool.query(`INSERT INTO launches
-      (chain_id, token_address, curve_address, stack_version, factory_address, graduation_coordinator, launch_block_number, launch_transaction_hash, launch_log_index)
-      VALUES ($1,$2,$3,$4,$5,$6,'100',$7,4)`, [context.chainId, token, curve, context.stackVersion, factory, coordinator, txHash]);
+      (chain_id, token_address, curve_address, stack_version, factory_address, graduation_coordinator, reserved_tokens_baseline,
+       launch_block_number, launch_transaction_hash, launch_log_index)
+      VALUES ($1,$2,$3,$4,$5,$6,'200','100',$7,4)`, [context.chainId, token, curve, context.stackVersion, factory, coordinator, txHash]);
     await pool.query(`INSERT INTO launch_state
-      (chain_id, token_address, tracked_quote, tracked_tokens, graduation_phase, pool_id, position_locked, token_supply_locked,
+      (chain_id, token_address, tracked_quote, tracked_tokens, quote_fee_balance, creator_tax_balance,
+       real_quote_reserve, virtual_quote_reserve, remaining_sellable_tokens, ready_to_graduate,
+       graduation_phase, swept_token_amount, swept_usdc_amount, pool_id, position_id, position_locked, token_supply_locked,
        latest_block_number, latest_transaction_hash, latest_log_index)
-      VALUES ($1,$2,'500','800','POOL_CREATED',$3,true,'180','105',$4,2)`, [context.chainId, token, hash('5'), hash('6')]);
+      VALUES ($1,$2,'500','800','0','0','500','250','600',false,'POOL_CREATED','200','50',$3,'77',true,'180','105',$4,2)`, [
+      context.chainId, token, hash('5'), hash('6'),
+    ]);
     await pool.query(`INSERT INTO fee_credits
       (chain_id, transaction_hash, log_index, creditor_address, recipient_address, amount, recipient_balance, total_outstanding, stack_version, block_number)
       VALUES ($1,$2,0,$3,$4,'80','80','80',$5,'101')`, [context.chainId, hash('7'), curve, creator, context.stackVersion]);
     await pool.query(`INSERT INTO fee_claims
       (chain_id, transaction_hash, log_index, recipient_address, amount, remaining_balance, total_outstanding, stack_version, block_number)
       VALUES ($1,$2,0,$3,'30','50','50',$4,'102')`, [context.chainId, hash('8'), creator, context.stackVersion]);
+    await insertJournalEvent(pool, {
+      transactionHash: txHash,
+      logIndex: 4,
+      blockNumber: 100n,
+      contractAddress: factory,
+      contractRole: 'FACTORY',
+      eventName: 'LaunchCreated',
+      tokenAddress: token,
+      curveAddress: curve,
+    });
+    await insertJournalEvent(pool, {
+      transactionHash: hash('7'),
+      logIndex: 0,
+      blockNumber: 101n,
+      contractAddress: feeEscrow,
+      contractRole: 'FEE_ESCROW',
+      eventName: 'FeeCredited',
+    });
+    await insertJournalEvent(pool, {
+      transactionHash: hash('8'),
+      logIndex: 0,
+      blockNumber: 102n,
+      contractAddress: feeEscrow,
+      contractRole: 'FEE_ESCROW',
+      eventName: 'FeeClaimed',
+    });
     await pool.query(`INSERT INTO indexer_checkpoints
       (chain_id, stack_version, factory_address, deployment_start_block, indexed_through_block, indexed_through_block_hash,
        indexed_through_block_timestamp, decoder_schema_version, status)
       VALUES ($1,$2,$3,'100','105',$4,'1786262405','day6-v1','COMMITTED')`, [context.chainId, context.stackVersion, factory, hash('9')]);
 
-    const chain = {
-      countLaunchCreated: async () => 1n,
-      readCurveState: async () => ({ trackedQuote: 500n, trackedTokens: 800n }),
-      readFeeEscrowState: async () => ({ totalOutstanding: 50n, custody: 55n }),
-      readGraduationState: async () => ({ phase: 'POOL_CREATED', poolId: hash('5'), positionLocked: true, tokenSupplyLocked: 180n }),
-      getRuntimeCodeHash: async (target: string) => ({
-        [factory.toLowerCase()]: hash('1'),
-        [feeEscrow.toLowerCase()]: hash('2'),
-        [coordinator.toLowerCase()]: hash('3'),
-        [locker.toLowerCase()]: hash('4'),
-      })[target.toLowerCase()] ?? hash('0'),
-      getBlockHash: async (block: bigint) => block === 105n ? hash('9') : hash('0'),
-    };
-
     const report = await (reconcile.reconcileStack as (input: Record<string, unknown>) => Promise<ReconciliationReport>)({
       db,
       context,
       checkedBlock: 105n,
-      chain,
+      chain: authoritativeReader(),
     });
     expect(report.status).toBe('PASS');
     expect(report.checks.map((check) => check.id)).toEqual(['REC-01', 'REC-02', 'REC-03', 'REC-04', 'REC-05', 'REC-06']);
@@ -353,20 +458,16 @@ describe.skipIf(!RUN_DB)('Day 6 Task 10 deterministic rebuild and reconciliation
        indexed_through_block_timestamp, decoder_schema_version, status)
       VALUES ($1,$2,$3,'100','105',$4,'1786262405','day6-v1','COMMITTED')`, [context.chainId, context.stackVersion, factory, hash('9')]);
 
-    const chain = {
-      countLaunchCreated: async () => 1n,
-      readCurveState: async () => ({ trackedQuote: 1n, trackedTokens: 1n }),
-      readFeeEscrowState: async () => ({ totalOutstanding: 10n, custody: 5n }),
-      readGraduationState: async () => ({ phase: 'NOT_GRADUATED', poolId: null, positionLocked: false, tokenSupplyLocked: 0n }),
-      getRuntimeCodeHash: async () => hash('1'),
-      getBlockHash: async () => hash('0'),
-    };
-
     const report = await (reconcile.reconcileStack as (input: Record<string, unknown>) => Promise<ReconciliationReport>)({
       db,
       context,
       checkedBlock: 105n,
-      chain,
+      chain: authoritativeReader({
+        scanCanonicalEventIdentities: async () => [],
+        readFeeEscrowState: async () => ({ totalOutstanding: 10n, custody: 5n }),
+        getRuntimeCodeHash: async () => hash('1'),
+        getBlockHash: async () => hash('0'),
+      }),
     });
     expect(report.status).toBe('FAIL');
     expect(report.checks).toHaveLength(6);
