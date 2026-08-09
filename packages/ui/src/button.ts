@@ -1,9 +1,9 @@
-import { createElement } from 'react';
+import { createElement, type ReactNode } from 'react';
 
 export type ButtonVariant = 'primary' | 'buy' | 'sell' | 'secondary' | 'small';
 
 export type ButtonProps = Readonly<{
-  children?: unknown;
+  children?: ReactNode;
   variant?: ButtonVariant;
   loading?: boolean;
   loadingLabel?: string;
