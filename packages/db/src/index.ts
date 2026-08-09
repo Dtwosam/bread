@@ -39,3 +39,7 @@ export { applyFeeAdminGraduationProjection } from './repositories/fees-admin-gra
 export { projectCurveGraduationProgress } from './repositories/graduation-progress.js';
 export { projectCreatorTradeCount } from './repositories/creator-trade-count.js';
 export { CreatorRepository } from './repositories/creators.js';
+export {
+  applyHolderTransferProjection,
+  type HolderProjectionContext,
+} from './repositories/holders.js';
