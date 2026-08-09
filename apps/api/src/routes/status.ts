@@ -43,6 +43,8 @@ export function buildStatusData(checkpoint: StatusCheckpoint, meta: FreshnessMet
     ingestionHealth: checkpoint.status,
     decoderSchemaVersion: checkpoint.decoderSchemaVersion,
     rebuildMode: meta.status === 'REBUILDING',
+    backlog: 'UNAVAILABLE',
+    queue: 'UNAVAILABLE',
     health: {
       db: 'HEALTHY',
       indexer: indexerHealth(meta),
