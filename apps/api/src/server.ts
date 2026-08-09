@@ -6,6 +6,8 @@ import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.j
 import { buildFreshness } from './freshness.js';
 import { registerCreatorRoute } from './routes/creators.js';
 import { registerFeedRoute } from './routes/feed.js';
+import { registerHoldersRoute } from './routes/holders.js';
+import { registerPortfolioRoute } from './routes/portfolio.js';
 import { registerStatusRoute } from './routes/status.js';
 import { registerTokenRoute } from './routes/token.js';
 import { registerTradesRoute } from './routes/trades.js';
@@ -39,6 +41,8 @@ export function createBreadApi(input: CreateBreadApiInput) {
   registerFeedRoute(app, deps);
   registerTokenRoute(app, deps);
   registerTradesRoute(app, deps);
+  registerHoldersRoute(app, deps);
+  registerPortfolioRoute(app, deps);
   registerCreatorRoute(app, {
     repository: creatorRepository,
     chainId: input.context.chainId,
