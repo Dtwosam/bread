@@ -25,11 +25,17 @@ jobs:
         run: docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
       - name: Verify Redis
         run: test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
-      - name: Run Day 6 Task 10 rebuild/reconcile and full source-conformance proof
+      - name: Run Day 6 Task 10 rebuild/reconcile, operator CLI, target safety and source-conformance proof
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
-        run: pnpm exec vitest run tests/day6/rebuild-reconcile.test.ts tests/day6/rebuild-reconcile-conformance.test.ts tests/day6/rebuild-reconcile-pregraduation.test.ts
+        run: >-
+          pnpm exec vitest run
+          tests/day6/rebuild-reconcile.test.ts
+          tests/day6/rebuild-reconcile-conformance.test.ts
+          tests/day6/rebuild-reconcile-pregraduation.test.ts
+          tests/day6/rebuild-reconcile-cli.test.ts
+          tests/day6/rebuild-safety-report.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
