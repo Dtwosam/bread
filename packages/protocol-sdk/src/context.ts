@@ -1,5 +1,5 @@
-import type { NetworkManifest, ProtocolDeploymentManifest } from '@bread/config';
-import type { Address } from '@bread/types';
+import type { NetworkManifest, ProtocolDeploymentManifest } from '../../config/src/index.js';
+import type { Address } from '../../types/src/index.js';
 import { getAddress } from 'viem';
 
 export type ProtocolAddresses = Readonly<{
