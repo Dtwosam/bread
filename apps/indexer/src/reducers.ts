@@ -1,10 +1,12 @@
 import {
   applyCanonicalTradeProjection,
   applyFeeAdminGraduationProjection,
+  applyHolderTransferProjection,
   launches,
   projectCreatorTradeCount,
   projectCurveGraduationProgress,
   type BreadDb,
+  type HolderProjectionContext,
   type IndexerProtocolContext,
   type ProjectionReducer,
 } from '../../../packages/db/src/index.js';
@@ -103,3 +105,23 @@ export function createFeeAdminGraduationReducer(input: Readonly<{ context: Proto
     await projectCreatorTradeCount(db, event);
   };
 }
+
+export function createHolderReducer(input: Readonly<{
+  context: ProtocolContext;
+  launchProtocolAddresses?: ReadonlyMap<string, readonly string[]>;
+}>): ProjectionReducer {
+  const baseProtocolAddresses = [
+    input.context.factoryAddress,
+    ...Object.values(input.context.addresses).filter((value): value is AddressLike => typeof value === 'string'),
+  ];
+  const projectionContext: HolderProjectionContext = {
+    chainId: input.context.chainId,
+    baseProtocolAddresses,
+    launchProtocolAddresses: input.launchProtocolAddresses,
+  };
+  return async (transaction, event) => {
+    await applyHolderTransferProjection(transaction as BreadDb, event, projectionContext);
+  };
+}
+
+type AddressLike = `0x${string}`;
