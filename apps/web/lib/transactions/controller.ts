@@ -90,6 +90,16 @@ function isWalletUserRejection(error: unknown): boolean {
   return false;
 }
 
+function allowanceUnknownHash(error: unknown): TransactionHash | null {
+  if (!error || typeof error !== 'object') return null;
+  const candidate = error as { name?: unknown; hash?: unknown };
+  return candidate.name === 'AllowanceConfirmationUnknownError' &&
+    typeof candidate.hash === 'string' &&
+    TRANSACTION_HASH.test(candidate.hash)
+    ? candidate.hash as TransactionHash
+    : null;
+}
+
 function emit(
   state: TransactionState,
   onStateChange: ((state: TransactionState) => void) | undefined,
@@ -316,6 +326,17 @@ export async function executeTradeLifecycle({
     });
     await wallet.ensurePreparedTransactionAllowance(allowanceProbe);
   } catch (error) {
+    const unknownHash = allowanceUnknownHash(error);
+    if (unknownHash) {
+      const unknown: TransactionState = {
+        ...state,
+        status: 'UNKNOWN',
+        chainId: context.chainId,
+        hash: unknownHash,
+        error: errorMessage(error),
+      };
+      return { state: emit(unknown, onStateChange), reviewChanged: false };
+    }
     if (isWalletUserRejection(error)) {
       return rejectedBeforeSignature(action, tokenAddress, errorMessage(error), onStateChange);
     }
