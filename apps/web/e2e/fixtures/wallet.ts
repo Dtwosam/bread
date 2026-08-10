@@ -38,6 +38,7 @@ export async function installInjectedWallet(
       let isConnected = connected;
       let currentChainId = chainIdHex;
       let transactionIndex = 0;
+      let queuedTransactionHashes = [...transactionHashes];
 
       function emit(event: string, ...args: unknown[]) {
         for (const listener of listeners.get(event) ?? []) listener(...args);
@@ -86,7 +87,12 @@ export async function installInjectedWallet(
                 throw error;
               }
               submittedTransactions.push(params[0] ?? null);
-              const hash = transactionHashes[Math.min(transactionIndex, transactionHashes.length - 1)];
+              const hash = queuedTransactionHashes[Math.min(transactionIndex, queuedTransactionHashes.length - 1)];
+              if (!hash) {
+                const error = new Error('No deterministic E2E transaction hash is queued.');
+                Object.assign(error, { code: -32000 });
+                throw error;
+              }
               transactionIndex += 1;
               return hash;
             }
@@ -125,6 +131,10 @@ export async function installInjectedWallet(
         setChainId(nextChainIdHex: string) {
           currentChainId = nextChainIdHex;
           emit('chainChanged', currentChainId);
+        },
+        setTransactionHashes(nextHashes: readonly string[]) {
+          queuedTransactionHashes = [...nextHashes];
+          transactionIndex = 0;
         },
         snapshot(): WalletSnapshot {
           return {
