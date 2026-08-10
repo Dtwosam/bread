@@ -68,6 +68,22 @@ export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefin
   } as const;
 }
 
+export function serializeGraduationProgress(
+  row:
+    | Readonly<{
+        graduationProgressBps: bigint | null;
+        graduationState: string | null;
+      }>
+    | null
+    | undefined,
+) {
+  if (!row) return null;
+  return {
+    progressBps: row.graduationProgressBps?.toString(10) ?? null,
+    state: row.graduationState ?? null,
+  } as const;
+}
+
 export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined) {
   if (!row) return null;
   return {
