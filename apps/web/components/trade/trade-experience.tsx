@@ -23,7 +23,7 @@ import {
   type TransactionState,
 } from '../../lib/transactions/state';
 import { TradePanel } from './trade-panel';
-import { useTradeRuntime } from './trade-runtime';
+import { useTradeRuntime, type TradeConnectionStatus } from './trade-runtime';
 
 type TradeReview = BuyTradeReview | SellTradeReview;
 type Preset = '$25' | '$50' | '$100' | '25%' | '50%' | '75%' | 'MAX';
@@ -50,6 +50,8 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
 
   const transactionBusy = !canSubmitTransactionAction(transactionState);
   const busy = transactionBusy || reviewBusy;
+  const connectionStatus: TradeConnectionStatus = runtime?.connectionStatus ?? 'DISCONNECTED';
+  const walletReady = runtime !== null && connectionStatus === 'READY' && runtime.wallet !== null;
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -67,19 +69,20 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       slippageBps,
       review,
       transactionState,
-      runtimeAvailable: runtime !== null,
+      connectionStatus,
       busy,
       reviewError,
       onActionChange: changeAction,
       onAmountChange: changeAmount,
       onSlippageChange: changeSlippage,
       onPreset: applyPreset,
+      onConnectionAction: handleConnectionAction,
       onReview: reviewTrade,
       onSubmit: submitTrade,
     }),
     // Handler identities are intentionally recreated from the latest state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [action, amount, slippageBps, review, transactionState, runtime, busy, reviewError],
+    [action, amount, slippageBps, review, transactionState, connectionStatus, runtime, busy, reviewError],
   );
 
   function resetReview(nextAction: TradeAction = action) {
@@ -108,8 +111,25 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     resetReview();
   }
 
-  async function applyPreset(preset: Preset) {
+  async function handleConnectionAction() {
     if (!runtime || busy) return;
+    setReviewError(null);
+    setReviewBusy(true);
+    try {
+      if (runtime.connectionStatus === 'WRONG_NETWORK') {
+        await runtime.switchToTargetChain();
+      } else {
+        await runtime.connectWallet();
+      }
+    } catch (error) {
+      setReviewError(message(error));
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function applyPreset(preset: Preset) {
+    if (!runtime || !walletReady || busy) return;
     setReviewError(null);
 
     if (action === 'BUY' && preset !== 'MAX') {
@@ -143,7 +163,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function reviewTrade() {
-    if (!runtime || busy) return;
+    if (!runtime || !runtime.wallet || !walletReady || busy) return;
     setReviewBusy(true);
     setReviewError(null);
     try {
@@ -174,7 +194,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function submitTrade() {
-    if (!runtime || !review || busy) return;
+    if (!runtime || !runtime.wallet || !walletReady || !review || busy) return;
     setReviewError(null);
     const storage = runtime.storage ?? window.localStorage;
     const result = await executeTradeLifecycle({
