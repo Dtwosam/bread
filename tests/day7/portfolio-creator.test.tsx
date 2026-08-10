@@ -10,9 +10,10 @@ const paths = {
   portfolioRoute: 'apps/web/app/portfolio/page.tsx',
   creatorRoute: 'apps/web/app/creator/page.tsx',
   portfolioPosition: 'apps/web/components/portfolio/position.tsx',
+  portfolioValue: 'apps/web/lib/portfolio/value.ts',
   claimPanel: 'apps/web/components/creator/claim-panel.tsx',
   claimController: 'apps/web/lib/transactions/claim-controller.ts',
-  globals: 'apps/web/app/globals.css',
+  responsive: 'apps/web/app/portfolio-creator.css',
 } as const;
 
 describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
@@ -59,13 +60,19 @@ describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
 
   it('renders indexed current value and responsive desktop-to-mobile Portfolio and Creator layouts', () => {
     const position = read(paths.portfolioPosition);
+    const value = read(paths.portfolioValue);
     const portfolio = read(paths.portfolioRoute);
     const creator = read(paths.creatorRoute);
-    const css = read(paths.globals);
+    const css = read(paths.responsive);
 
-    expect(position).toContain('currentValue.numerator');
-    expect(position).toContain('currentValue.denominator');
-    expect(position).toContain('USDC');
+    expect(value).toContain('value.numerator');
+    expect(value).toContain('value.denominator');
+    expect(value).toContain('formatUnits');
+    expect(position).toContain('formatIndexedCurrentValueUsdc');
+    expect(position).toContain('Current value');
+    expect(position).toContain('Movement');
+    expect(position).toContain('Activity');
+    expect(portfolio).toContain('Wallet value');
     expect(portfolio).toContain('bread-portfolio-list');
     expect(creator).toContain('bread-creator-summary');
     expect(creator).toContain('bread-creator-launch-list');
