@@ -11,7 +11,13 @@ function progressPercent(progressBps: string | null | undefined): number | null 
 function displayState(token: IndexedTokenDetail): 'Active' | 'Processing' | 'Pending' | 'Graduated' {
   if (token.curveState?.positionLocked === true) return 'Graduated';
   if (token.curveState?.graduationFailureReasonHash) return 'Pending';
-  if (token.curveState?.readyToGraduate || token.curveState?.graduationPhase) return 'Processing';
+  const graduationPhase = token.curveState?.graduationPhase;
+  if (
+    token.curveState?.readyToGraduate ||
+    (graduationPhase !== null && graduationPhase !== undefined && graduationPhase !== 'NOT_GRADUATED')
+  ) {
+    return 'Processing';
+  }
   return 'Active';
 }
 
