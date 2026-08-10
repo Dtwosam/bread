@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+  loadRecoverableAllowanceTransactions,
+} from '../../apps/web/lib/transactions/allowance-storage.js';
 import { executeTradeLifecycle } from '../../apps/web/lib/transactions/controller.js';
 import { createTradeWalletAdapter } from '../../apps/web/lib/transactions/wallet-adapter.js';
 import { estimateBuyTradeReview } from '../../packages/protocol-sdk/src/trade-review.js';
@@ -59,6 +62,7 @@ function harness({
   let approvalConfirmed = false;
   const order: string[] = [];
   const writes: string[] = [];
+  const storage = memoryStorage();
 
   const publicClient = {
     async readContract(request: { functionName: string }) {
@@ -118,9 +122,10 @@ function harness({
     walletClient,
     account,
     chainId: context.chainId,
+    storage,
   });
 
-  return { publicClient, wallet, order, writes };
+  return { publicClient, wallet, storage, order, writes };
 }
 
 const trade = {
@@ -141,12 +146,13 @@ describe('Day 7 post-Task-5 allowance-before-simulation continuity repair', () =
       ...trade,
       client: test.publicClient,
       wallet: test.wallet,
-      storage: memoryStorage(),
+      storage: test.storage,
     });
 
     expect(result.state.status).toBe('CONFIRMED');
     expect(result.reviewChanged).toBe(false);
     expect(test.writes).toEqual(['approve', 'buy']);
+    expect(loadRecoverableAllowanceTransactions(test.storage)).toEqual([]);
 
     const approvalReceiptIndex = test.order.indexOf('approval-receipt');
     const firstFinanceIndex = test.order.findIndex((entry) => entry.startsWith('finance:'));
@@ -166,30 +172,45 @@ describe('Day 7 post-Task-5 allowance-before-simulation continuity repair', () =
       ...trade,
       client: test.publicClient,
       wallet: test.wallet,
-      storage: memoryStorage(),
+      storage: test.storage,
     });
 
     expect(result.state.status).toBe('REVERTED');
     expect(test.writes).toEqual(['approve']);
+    expect(loadRecoverableAllowanceTransactions(test.storage)).toEqual([]);
     expect(test.order).not.toContain('simulate');
     expect(test.order).not.toContain('trade-write');
   });
 
-  it('does not misclassify approval receipt transport loss as an onchain revert', async () => {
+  it('keeps an uncertain approval hash recoverable and never broadcasts a duplicate approval', async () => {
     const test = harness({ approvalWaitError: new Error('network lost after approval broadcast') });
 
-    const result = await executeTradeLifecycle({
+    const first = await executeTradeLifecycle({
       ...trade,
       client: test.publicClient,
       wallet: test.wallet,
-      storage: memoryStorage(),
+      storage: test.storage,
     });
 
-    expect(result.state.status).toBe('UNKNOWN');
-    expect(result.state.hash).toBe(hash('1'));
+    expect(first.state.status).toBe('UNKNOWN');
+    expect(first.state.hash).toBe(hash('1'));
     expect(test.writes).toEqual(['approve']);
+    expect(loadRecoverableAllowanceTransactions(test.storage)).toEqual([
+      expect.objectContaining({ hash: hash('1'), status: 'UNKNOWN' }),
+    ]);
     expect(test.order).not.toContain('simulate');
     expect(test.order).not.toContain('trade-write');
+
+    const second = await executeTradeLifecycle({
+      ...trade,
+      client: test.publicClient,
+      wallet: test.wallet,
+      storage: test.storage,
+    });
+
+    expect(second.state.status).toBe('UNKNOWN');
+    expect(second.state.hash).toBe(hash('1'));
+    expect(test.writes).toEqual(['approve']);
   });
 
   it('rechecks economics after approval and blocks trade signing when the approved review changed', async () => {
@@ -199,7 +220,7 @@ describe('Day 7 post-Task-5 allowance-before-simulation continuity repair', () =
       ...trade,
       client: test.publicClient,
       wallet: test.wallet,
-      storage: memoryStorage(),
+      storage: test.storage,
     });
 
     expect(result.reviewChanged).toBe(true);
