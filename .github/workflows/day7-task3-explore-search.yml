@@ -16,6 +16,7 @@ on:
       - 'apps/web/app/globals.css'
       - 'tests/day7/explore-feed-progress.test.ts'
       - 'tests/day7/explore-search.test.ts'
+      - 'tests/day7/search-freshness.test.ts'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task3-explore-search-handoff.md'
   push:
@@ -39,4 +40,4 @@ jobs:
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Run Day 7 Explore/Search source-conformance tests
-        run: pnpm exec vitest run tests/day7/explore-feed-progress.test.ts tests/day7/explore-search.test.ts --passWithNoTests
+        run: pnpm exec vitest run tests/day7/explore-feed-progress.test.ts tests/day7/explore-search.test.ts tests/day7/search-freshness.test.ts --passWithNoTests
