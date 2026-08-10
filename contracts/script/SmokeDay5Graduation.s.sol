@@ -72,8 +72,12 @@ contract SmokeDay5Graduation {
         LaunchResult memory launch = _launch(context, input);
         IGraduationCoordinator.GraduationRecord memory graduation = _completeGraduation(context, launch);
         uint256 creatorClaimed = _claimCreatorFees(context);
-        _assertReplayRejected(context.coordinator, launch.token);
         VM.stopBroadcast();
+
+        // Replay rejection is an expected-failure assertion. Keep it outside the
+        // broadcast boundary so Forge does not capture the deliberately reverting
+        // createPool call as a transaction that a live smoke would try to send.
+        _assertReplayRejected(context.coordinator, launch.token);
 
         emit Day5SmokePass(
             launch.token,
