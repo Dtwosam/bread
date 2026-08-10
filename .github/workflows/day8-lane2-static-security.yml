@@ -1,0 +1,73 @@
+name: day8-lane2-static-security
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day8-lane2-static-security.yml'
+      - 'contracts/**'
+      - 'docs/superpowers/plans/2026-08-10-day8-attack-system.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day8-lane2-static-security.yml'
+      - 'contracts/**'
+
+permissions:
+  contents: read
+
+jobs:
+  slither-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Foundry
+        uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e
+        with:
+          version: v1.5.0
+      - name: Verify Python and Foundry
+        run: |
+          python3 --version
+          python3 -m pip --version
+          forge --version
+      - name: Install pinned Slither analyzer
+        run: |
+          python3 -m pip install --user 'slither-analyzer==0.11.6'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Verify Slither version
+        run: "$HOME/.local/bin/slither --version"
+      - name: Compile accepted Bread contracts
+        working-directory: contracts
+        run: forge build
+      - name: Run Slither discovery without converting findings into an unreviewed gate
+        working-directory: contracts
+        run: |
+          set +e
+          "$HOME/.local/bin/slither" . \
+            --filter-paths 'lib|test|script' \
+            --json slither-report.json
+          status=$?
+          set -e
+          python3 - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          path = Path('slither-report.json')
+          if not path.exists():
+              raise SystemExit('slither did not produce slither-report.json')
+          report = json.loads(path.read_text())
+          detectors = report.get('results', {}).get('detectors', [])
+          counts = Counter(str(item.get('impact', 'Unknown')) for item in detectors)
+          print('slither_detector_count:', len(detectors))
+          for impact in sorted(counts):
+              print(f'slither_{impact.lower()}_count:', counts[impact])
+          for item in detectors:
+              check = item.get('check', '<unknown>')
+              impact = item.get('impact', '<unknown>')
+              confidence = item.get('confidence', '<unknown>')
+              description = ' '.join(str(item.get('description', '')).split())
+              print(f'[{impact}/{confidence}] {check}: {description}')
+          PY
+          echo "slither_raw_exit_code=$status"
+          # Probe only: findings are triaged before this becomes a severity gate.
+          exit 0
