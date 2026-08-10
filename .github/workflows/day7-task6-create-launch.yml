@@ -40,3 +40,4 @@ jobs:
         run: >-
           pnpm exec vitest run
           tests/day7/create-review.test.tsx
+          tests/day7/launch-review.test.ts
