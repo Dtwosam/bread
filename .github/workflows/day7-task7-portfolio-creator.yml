@@ -17,6 +17,7 @@ on:
       - 'apps/web/components/trade/**'
       - 'apps/web/lib/wallet/**'
       - 'tests/day7/portfolio-creator.test.tsx'
+      - 'tests/day7/claim-execution.test.ts'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task7-portfolio-creator-handoff.md'
   push:
@@ -40,4 +41,7 @@ jobs:
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Run Day 7 Portfolio, Creator and claim tests
-        run: pnpm exec vitest run tests/day7/portfolio-creator.test.tsx
+        run: >-
+          pnpm exec vitest run
+          tests/day7/portfolio-creator.test.tsx
+          tests/day7/claim-execution.test.ts
