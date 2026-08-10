@@ -8,14 +8,14 @@ export const arcTestnetChain = defineChain({
   id: arcTestnetManifest.chainId,
   name: 'Arc Testnet',
   nativeCurrency: {
-    name: arcTestnetManifest.nativeCurrency.name,
-    symbol: arcTestnetManifest.nativeCurrency.symbol,
-    decimals: arcTestnetManifest.nativeCurrency.decimals,
+    name: arcTestnetManifest.nativeGasAsset,
+    symbol: arcTestnetManifest.nativeGasAsset,
+    decimals: arcTestnetManifest.nativePrecision,
   },
   rpcUrls: {
     default: {
-      http: [arcTestnetManifest.rpc.http],
-      webSocket: [arcTestnetManifest.rpc.ws],
+      http: arcTestnetManifest.rpc,
+      webSocket: arcTestnetManifest.websocket,
     },
   },
   blockExplorers: {
@@ -29,15 +29,15 @@ export const arcTestnetChain = defineChain({
 
 export const arcTradeExecutionContext = {
   chainId: arcTestnetManifest.chainId,
-  quoteAsset: arcTestnetManifest.quoteAsset.address as `0x${string}`,
-  quoteDecimals: arcTestnetManifest.quoteAsset.decimals,
+  quoteAsset: arcTestnetManifest.usdc.address as `0x${string}`,
+  quoteDecimals: arcTestnetManifest.usdc.decimals,
 } as const;
 
 export const breadWagmiConfig = createConfig({
   chains: [arcTestnetChain],
   connectors: [injected()],
   transports: {
-    [arcTestnetChain.id]: http(arcTestnetManifest.rpc.http),
+    [arcTestnetChain.id]: http(arcTestnetManifest.rpc[0]),
   },
   ssr: true,
 });
