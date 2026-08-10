@@ -3,11 +3,11 @@
 import { Button } from '@bread/ui';
 import { formatUnits } from 'viem';
 
-import {
-  BREAD_LAUNCH_TOKEN_DECIMALS,
-  type BuyTradeReview,
-  type SellTradeReview,
-} from '@bread/protocol-sdk';
+import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/src/constants';
+import type {
+  BuyTradeReview,
+  SellTradeReview,
+} from '../../../../packages/protocol-sdk/src/trade-review';
 import type { TradeAction, TransactionState } from '../../lib/transactions/state';
 import { TransactionStatus } from '../transaction-status';
 
