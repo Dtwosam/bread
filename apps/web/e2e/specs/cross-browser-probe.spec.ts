@@ -6,7 +6,9 @@ import {
   walletSnapshot,
 } from '../fixtures/browser';
 
-test('alternate engine browse and wallet Buy smoke', async ({ page, rpcState }) => {
+test('alternate engine browse and wallet Buy smoke', async ({ page, rpcState }, testInfo) => {
+  test.skip(!testInfo.project.name.startsWith('probe-'), 'Temporary alternate-engine probe only.');
+
   await page.goto('/explore');
   await expect(page.getByRole('heading', { name: 'Explore' })).toBeVisible();
   await expect(page.getByText('Bread Twin').first()).toBeVisible();
