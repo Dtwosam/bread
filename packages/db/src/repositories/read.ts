@@ -154,6 +154,7 @@ function normalizeTokenMetricRow(row: typeof tokenMetrics.$inferSelect) {
     tradeCount24h: optionalBigInt(row.tradeCount24h),
     uniqueTraders1h: optionalBigInt(row.uniqueTraders1h),
     uniqueTraders24h: optionalBigInt(row.uniqueTraders24h),
+    graduationProgressBps: optionalBigInt(row.graduationProgressBps),
   } as const;
 }
 

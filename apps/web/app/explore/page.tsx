@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 
 import { Skeleton } from '@bread/ui';
-import { ExploreClient } from '../components/explore/explore-client';
+import { ExploreClient } from '../../components/explore/explore-client';
 
-export default function HomePage() {
+export default function ExplorePage() {
   return (
     <Suspense
       fallback={
