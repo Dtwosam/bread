@@ -1,0 +1,196 @@
+:global(.bread-trade-panel) {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+:global(.bread-trade-actions) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-bg-secondary);
+}
+
+:global(.bread-trade-action) {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--bread-radius-control);
+  background: transparent;
+  color: var(--bread-text-secondary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+:global(.bread-trade-action[aria-selected='true']) {
+  border-color: var(--bread-border-subtle);
+  background: var(--bread-surface-2);
+  color: var(--bread-text-primary);
+}
+
+:global(.bread-trade-field) {
+  display: grid;
+  gap: 6px;
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+:global(.bread-trade-input) {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--bread-border-strong);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-bg-secondary);
+  color: var(--bread-text-primary);
+  font: inherit;
+}
+
+:global(.bread-trade-presets) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+:global(.bread-trade-preset) {
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-bg-secondary);
+  color: var(--bread-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:global(.bread-trade-preset:hover:not(:disabled)),
+:global(.bread-trade-action:hover:not(:disabled)) {
+  border-color: var(--bread-border-strong);
+  color: var(--bread-text-primary);
+}
+
+:global(.bread-trade-preset:disabled),
+:global(.bread-trade-action:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:global(.bread-trade-review) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+
+:global(.bread-trade-review > div) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-bg-secondary);
+}
+
+:global(.bread-trade-review dt) {
+  color: var(--bread-text-tertiary);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+:global(.bread-trade-review dd) {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--bread-text-primary);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+:global(.bread-trade-warning) {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--bread-warning) 45%, var(--bread-border-subtle));
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-warning-soft);
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+:global(.bread-trade-warning strong) {
+  color: var(--bread-text-primary);
+}
+
+:global(.bread-transaction-status) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding-top: 4px;
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+:global(.bread-transaction-status strong) {
+  color: var(--bread-text-primary);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+:global(.bread-transaction-status code) {
+  overflow-wrap: anywhere;
+}
+
+:global(.bread-transaction-status--reverted),
+:global(.bread-transaction-status--rejected) {
+  color: var(--bread-negative);
+}
+
+:global(.bread-transaction-status--unknown) {
+  color: var(--bread-warning);
+}
+
+:global(.bread-trade-sheet__heading) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+:global(.bread-trade-sheet__heading h2) {
+  margin: 0;
+  font-size: 17px;
+  line-height: 23px;
+}
+
+@media (max-width: 767px) {
+  :global(.bread-trade-sheet-backdrop) {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: stretch;
+    padding: 0;
+    background: rgb(0 0 0 / 68%);
+  }
+
+  :global(.bread-trade-sheet) {
+    width: 100%;
+    max-height: calc(100dvh - 56px - env(safe-area-inset-top));
+    overflow-y: auto;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    border: 1px solid var(--bread-border-strong);
+    border-bottom: 0;
+    border-radius: var(--bread-radius-modal) var(--bread-radius-modal) 0 0;
+    background: var(--bread-surface-1);
+  }
+
+  :global(.bread-trade-review) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
