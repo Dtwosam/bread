@@ -35,6 +35,9 @@ run(process.execPath, ["scripts/day5/verify-graduation-deployment.mjs", network]
   env: process.env,
 });
 
+// The smoke contains state-dependent sequential transactions (including
+// graduation sweep -> pool creation). --slow waits for each transaction to be
+// confirmed before the next dependent transaction is sent/estimated.
 run(
   "forge",
   [
@@ -42,6 +45,7 @@ run(
     "script/SmokeDay5Graduation.s.sol:SmokeDay5Graduation",
     "--rpc-url",
     rpcUrl,
+    "--slow",
     "--broadcast",
     "-vvv",
   ],
