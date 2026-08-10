@@ -129,13 +129,15 @@ After this docs-only handoff PR is exact-head green, guarded-merged, and actual 
 
 Task 6 must start from the resulting Task-5 durable merge and consume the accepted `prepareLaunch`, `prepareLaunchAndBuy`, canonical prepared economics/config authority, and Task-5 transaction controller/recovery rather than inventing parallel transaction semantics.
 
+The controlling Day-7 route correction supersedes the stale Task-6 `/create/review` file-list entry in the original plan: Review is a required screen/state inside the canonical `/create` flow and **must not** introduce `/create/review` or another new public Review route.
+
 The first Task-6 RED must prove the source-defined Create/Review contract before implementation:
 
 - only image, name, ticker, description, links, creator tax, buyback and optional initial buy are user-editable;
 - protocol-only values such as phantom reserve/tick-spacing equivalents are not exposed as user inputs;
 - Review shows the actual prepared supply/quote/economics, creator tax, buyback, initial buy, launch fee, graduation target, creator wallet and permanent-lock behavior supported by the accepted canonical preparation data;
 - final action is exactly `Launch` or `Launch & Buy`;
-- Review remains under `/create/review`; do not create a standalone `/review` route;
+- Review remains a screen/state inside `/create`; `/create/review` and standalone `/review` are forbidden by the controlling route correction;
 - Task-5 double-submit protection, wallet/network handling, persistence and recovery must be reused.
 
 ## Durable-closeout rule
