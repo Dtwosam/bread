@@ -8,6 +8,7 @@ import { Button } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
 import { searchIntent } from './explore/model';
+import { FreshnessBanner } from './freshness-banner';
 
 export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
@@ -76,6 +77,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
             </label>
 
             <div className="bread-search-results" aria-live="polite">
+              {query.data?.meta ? <FreshnessBanner meta={query.data.meta} /> : null}
               {intent.kind === 'invalid-address' ? (
                 <p className="bread-inline-error">That contract address is incomplete or malformed.</p>
               ) : null}
