@@ -1,10 +1,14 @@
 import { spawnSync } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { rehearseServiceRollback } from './rehearse-service-rollback.mts';
 
 const repoRoot = path.resolve(new URL('../..', import.meta.url).pathname);
 const contractsRoot = path.join(repoRoot, 'contracts');
+const webRoot = path.join(repoRoot, 'apps/web');
+const deploymentPath = path.join(repoRoot, 'config/deployments/arc-testnet.day5.json');
+const playwrightFixturePath = path.join(webRoot, 'e2e/fixtures/protocol-deployment.json');
 
 export const REQUIRED_RECOVERY_DRILL_IDS = [
   'GUARDIAN_PAUSE_NEW_LAUNCHES',
@@ -146,16 +150,42 @@ function runIndexerReconcile(): RecoveryDrillResult {
   );
 }
 
-function runBrowserTransactionRecovery(): RecoveryDrillResult {
-  return pass(
-    'SUBMITTED_TX_BROWSER_REFRESH_RECOVERY',
-    execute(
-      'apps/web/e2e/specs/transaction-recovery.spec.ts (via canonical Day-7 E2E harness)',
+async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
+  const originalDeployment = await readFile(deploymentPath);
+  const fixtureDeployment = await readFile(playwrightFixturePath);
+  let evidence: CommandEvidence | undefined;
+
+  try {
+    await writeFile(deploymentPath, fixtureDeployment);
+    evidence = execute(
+      'apps/web/e2e/specs/transaction-recovery.spec.ts (desktop Chromium; Day-9 parent-owned fixture restoration)',
       'pnpm',
-      ['--filter', '@bread/web', 'test:e2e'],
-      { timeout: 300_000 },
-    ),
-  );
+      [
+        'exec',
+        'playwright',
+        'test',
+        'e2e/specs/transaction-recovery.spec.ts',
+        '--config',
+        'playwright.config.ts',
+        '--project',
+        'desktop-chromium',
+      ],
+      {
+        cwd: webRoot,
+        env: { ...process.env, BREAD_E2E: '1' },
+        timeout: 240_000,
+      },
+    );
+  } finally {
+    await writeFile(deploymentPath, originalDeployment);
+    const restored = await readFile(deploymentPath);
+    if (!restored.equals(originalDeployment)) {
+      throw new Error('Day 9 recovery drill failed to restore the canonical Arc testnet deployment manifest byte-for-byte');
+    }
+  }
+
+  if (!evidence) throw new Error('browser transaction recovery evidence did not execute');
+  return pass('SUBMITTED_TX_BROWSER_REFRESH_RECOVERY', evidence);
 }
 
 function runGraduationRetry(): RecoveryDrillResult {
@@ -190,7 +220,7 @@ export async function runRecoveryDrills(): Promise<RecoveryDrillSummary> {
   const applicationRollback = await runApplicationRollback();
   const rpcFailover = runRpcFailover();
   const indexerReconcile = runIndexerReconcile();
-  const browserRecovery = runBrowserTransactionRecovery();
+  const browserRecovery = await runBrowserTransactionRecovery();
   const graduationRetry = runGraduationRetry();
   const multisig = multisigEnvironmentBlocker();
 
