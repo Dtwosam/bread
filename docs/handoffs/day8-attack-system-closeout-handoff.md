@@ -98,6 +98,12 @@ At `6ababe6504a6954625b38e80b0c963faaba2de0c`:
 - Day-7 Task 9 `31430772076` — PASS
 - Day-7 Task 10 Playwright desktop/mobile primary journeys + canonical-manifest restoration `31430771996` — PASS
 
+## Durability proof boundary
+
+PR #85 is intentionally documentation-only. Its final head must independently pass root CI, retained Day-6 Tasks 5–10, and Day-7 Tasks 1–10 including Playwright/manifest restoration. A final Git compare against implementation main `ef9b677e883ae7bd2a6969cefc771ad1c83e236c` must show only continuity/evidence documentation changes.
+
+The Day-8 attack/security/recovery/capacity/catch-up proof remains anchored to exact implementation head `6ababe6504a6954625b38e80b0c963faaba2de0c`, already guarded-merged into `ef9b677e883ae7bd2a6969cefc771ad1c83e236c`. Because PR #85 changes no Day-8 executable path, the durability closeout does not manufacture test, workflow, or production changes merely to bypass path filters. Byte-identical executable state plus exact docs-head continuity/browser proof is the durability boundary.
+
 ## Final source/security review
 
 The implementation diff was reviewed against durable Day-7 main before merge.
