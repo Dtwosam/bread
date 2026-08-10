@@ -54,7 +54,8 @@ describe('Day 7 Task 8 wallet/network integration and recovery convergence', () 
     expect(runtime).toMatch(/connectWallet:\s*\(connectorId\?: string\)/);
     expect(button).toContain("dynamic(() => import('./wallet-menu')");
     expect(menu).toContain('walletOptions.map');
-    expect(menu).toContain('connectWallet(option.id)');
+    expect(menu).toContain('chooseWallet(option.id)');
+    expect(menu).toContain('runtime.connectWallet(connectorId)');
 
     // Detection is not a support certification. Wallet brands become first-class
     // only after their full Create/Buy/Sell/Claim/network-switch matrix is proven.
