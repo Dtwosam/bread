@@ -49,9 +49,11 @@ function memoryStorage(): Storage {
 
 function harness({
   approvalReceipt = 'success' as const,
+  approvalWaitError,
   changedAfterApproval = false,
 }: Readonly<{
   approvalReceipt?: 'success' | 'reverted';
+  approvalWaitError?: Error;
   changedAfterApproval?: boolean;
 }> = {}) {
   let approvalConfirmed = false;
@@ -90,6 +92,7 @@ function harness({
     async waitForTransactionReceipt({ hash: transactionHash }: { hash: `0x${string}` }) {
       if (transactionHash === hash('1')) {
         order.push('approval-receipt');
+        if (approvalWaitError) throw approvalWaitError;
         if (approvalReceipt === 'success') approvalConfirmed = true;
         return { status: approvalReceipt };
       }
@@ -167,6 +170,23 @@ describe('Day 7 post-Task-5 allowance-before-simulation continuity repair', () =
     });
 
     expect(result.state.status).toBe('REVERTED');
+    expect(test.writes).toEqual(['approve']);
+    expect(test.order).not.toContain('simulate');
+    expect(test.order).not.toContain('trade-write');
+  });
+
+  it('does not misclassify approval receipt transport loss as an onchain revert', async () => {
+    const test = harness({ approvalWaitError: new Error('network lost after approval broadcast') });
+
+    const result = await executeTradeLifecycle({
+      ...trade,
+      client: test.publicClient,
+      wallet: test.wallet,
+      storage: memoryStorage(),
+    });
+
+    expect(result.state.status).toBe('UNKNOWN');
+    expect(result.state.hash).toBe(hash('1'));
     expect(test.writes).toEqual(['approve']);
     expect(test.order).not.toContain('simulate');
     expect(test.order).not.toContain('trade-write');
