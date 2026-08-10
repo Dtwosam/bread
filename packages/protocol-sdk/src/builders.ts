@@ -2,7 +2,7 @@ import type { Abi, PublicClient } from 'viem';
 
 import type { Address, Hex32 } from '../../types/src/index.js';
 import type { ProtocolContext } from './context.js';
-import { breadAbiRegistry } from './abi/generated.js';
+import { breadAbiRegistry } from './abi/generated.ts';
 
 export type AllowanceRequirement = Readonly<{
   token: Address;
@@ -50,14 +50,15 @@ export type RetryGraduationResult =
   | Readonly<{ kind: 'TERMINAL'; status: 'ALREADY_COMPLETE' | 'RESCUED' }>;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address;
+const ZERO = BigInt(0);
 
 function positive(name: string, value: bigint): bigint {
-  if (value <= 0n) throw new Error(`${name} must be greater than zero`);
+  if (value <= ZERO) throw new Error(`${name} must be greater than zero`);
   return value;
 }
 
 function nonNegative(name: string, value: bigint): bigint {
-  if (value < 0n) throw new Error(`${name} must not be negative`);
+  if (value < ZERO) throw new Error(`${name} must not be negative`);
   return value;
 }
 
@@ -73,9 +74,9 @@ function prepared(
     abi,
     functionName,
     args,
-    value: 0n,
+    value: BigInt(0),
     ...(allowance === undefined ? {} : { allowance }),
-  };
+  } as PreparedBreadTransaction;
 }
 
 function graduationPhase(record: unknown): number {
