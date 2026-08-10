@@ -106,9 +106,9 @@ jobs:
           cat /tmp/token-headers
           cat /tmp/feed-headers
           cat /tmp/status-headers
-          grep -Eiq '^cache-control: public, max-age=0, s-maxage=1, must-revalidate\r?$' /tmp/token-headers
-          grep -Eiq '^cache-control: public, max-age=0, s-maxage=1, must-revalidate\r?$' /tmp/feed-headers
-          grep -Eiq '^cache-control: no-store\r?$' /tmp/status-headers
+          tr -d '\r' </tmp/token-headers | grep -Fqi 'cache-control: public, max-age=0, s-maxage=1, must-revalidate'
+          tr -d '\r' </tmp/feed-headers | grep -Fqi 'cache-control: public, max-age=0, s-maxage=1, must-revalidate'
+          tr -d '\r' </tmp/status-headers | grep -Fqi 'cache-control: no-store'
       - name: Run integrated 10k horizontally scaled hot-launch capacity proof
         env:
           BREAD_DAY8_ORIGINS: http://127.0.0.1:3108,http://127.0.0.1:3109,http://127.0.0.1:3110,http://127.0.0.1:3111
