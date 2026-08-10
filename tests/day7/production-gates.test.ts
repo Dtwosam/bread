@@ -14,6 +14,7 @@ const paths = {
   createForm: 'apps/web/components/create/token-form.tsx',
   searchSurface: 'apps/web/components/search-surface.tsx',
   tradeCss: 'apps/web/components/trade/trade.module.css',
+  routeError: 'apps/web/app/error.tsx',
 } as const;
 
 describe('Day 7 Task 9 frontend production gates', () => {
@@ -57,7 +58,7 @@ describe('Day 7 Task 9 frontend production gates', () => {
 
     expect(search).toContain('dialogRef');
     expect(search).toContain('returnFocusRef');
-    expect(search).toContain("event.key === 'Tab'");
+    expect(search).toMatch(/event\.key\s*(?:===|!==)\s*['"]Tab['"]/);
     expect(search).toContain('querySelectorAll<HTMLElement>');
     expect(search).toMatch(/\.focus\(\)/);
   });
@@ -79,5 +80,14 @@ describe('Day 7 Task 9 frontend production gates', () => {
     expect(css).toMatch(/max-height:\s*min\(90dvh,\s*calc\(100dvh\s*-\s*56px\s*-\s*env\(safe-area-inset-top\)\)\)/);
     expect(css).toContain('overflow-y: auto');
     expect(css).toContain('env(safe-area-inset-bottom)');
+  });
+
+  it('owns a safe retryable route-level error boundary for unexpected frontend failures', () => {
+    const boundary = readIfPresent(paths.routeError);
+
+    expect(boundary).not.toBe('');
+    expect(boundary).toContain('role="alert"');
+    expect(boundary).toContain('reset()');
+    expect(boundary).not.toContain('error.message');
   });
 });
