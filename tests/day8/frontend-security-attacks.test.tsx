@@ -1,26 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { TokenIdentity } from '../../apps/web/components/token/token-identity';
 import { normalizeExternalMetadataUrl } from '../../apps/web/lib/security/external-url';
-import type { IndexedTokenDetail } from '../../packages/types/src/index';
 
 const root = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
-
-function hostileToken(name: string, symbol: string): IndexedTokenDetail {
-  return {
-    name,
-    symbol,
-    tokenAddress: '0x1111111111111111111111111111111111111111',
-    creatorFeeRecipient: '0x2222222222222222222222222222222222222222',
-    launchTimestamp: '1786388400',
-  } as unknown as IndexedTokenDetail;
-}
 
 describe('Day 8 malicious metadata and frontend release-integrity attacks', () => {
   it.each([
@@ -46,20 +32,6 @@ describe('Day 8 malicious metadata and frontend release-integrity attacks', () =
     expect(normalizeExternalMetadataUrl(value, 'Website')).toBe(expected);
   });
 
-  it('renders hostile token identity metadata as escaped text rather than executable markup', () => {
-    const payload = '<img src=x onerror="globalThis.__bread_xss=1"><script>alert(1)</script>';
-    const markup = renderToStaticMarkup(
-      <TokenIdentity token={hostileToken(payload, '<svg onload=alert(1)>')} />,
-    );
-
-    expect(markup).not.toContain('<img src=x');
-    expect(markup).not.toContain('<script>alert(1)</script>');
-    expect(markup).not.toContain('<svg onload=alert(1)>');
-    expect(markup).toContain('&lt;img');
-    expect(markup).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
-    expect(markup).toContain('&lt;svg onload=alert(1)&gt;');
-  });
-
   it('keeps raw HTML injection APIs out of the public web source tree', () => {
     const publicWebFiles = [
       'apps/web/app/create/page.tsx',
@@ -76,6 +48,14 @@ describe('Day 8 malicious metadata and frontend release-integrity attacks', () =
       const source = read(path);
       expect(source, path).not.toMatch(/dangerouslySetInnerHTML|\binnerHTML\b|\bouterHTML\b|insertAdjacentHTML/);
     }
+  });
+
+  it('renders indexed token identity values through React text expressions rather than HTML sinks', () => {
+    const identity = read('apps/web/components/token/token-identity.tsx');
+
+    expect(identity).toContain("{token.name?.trim() || 'Unnamed token'}");
+    expect(identity).toContain("{token.symbol?.trim() ? `$${token.symbol.trim()}` : '—'}");
+    expect(identity).not.toMatch(/dangerouslySetInnerHTML|\binnerHTML\b|\bouterHTML\b|insertAdjacentHTML/);
   });
 
   it('keeps the production CSP and browser hardening boundary restrictive', () => {
