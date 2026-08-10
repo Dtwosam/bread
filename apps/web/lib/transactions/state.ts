@@ -1,4 +1,6 @@
 export type TradeAction = 'BUY' | 'SELL';
+export type LaunchAction = 'LAUNCH' | 'LAUNCH_AND_BUY';
+export type TransactionAction = TradeAction | LaunchAction;
 
 export type TransactionStatus =
   | 'IDLE'
@@ -16,15 +18,17 @@ export type TransactionStatus =
 export type SubmittedTransactionRecord = Readonly<{
   chainId: number;
   hash: `0x${string}`;
-  action: TradeAction;
-  tokenAddress: `0x${string}`;
+  action: TransactionAction;
+  tokenAddress?: `0x${string}`;
+  launchIntentId?: string;
   submittedAt: string;
   status: Extract<TransactionStatus, 'SUBMITTED' | 'CONFIRMING' | 'CONFIRMED' | 'REVERTED' | 'REPLACED' | 'UNKNOWN'>;
 }>;
 
 export type TransactionState = Readonly<{
-  action: TradeAction;
-  tokenAddress: `0x${string}`;
+  action: TransactionAction;
+  tokenAddress?: `0x${string}`;
+  launchIntentId?: string;
   status: TransactionStatus;
   chainId?: number;
   hash?: `0x${string}`;
@@ -52,6 +56,14 @@ export function createTransactionState(
   return { action, tokenAddress, status: 'IDLE' };
 }
 
+export function createLaunchTransactionState(
+  action: LaunchAction,
+  launchIntentId: string,
+): TransactionState {
+  if (launchIntentId.trim().length === 0) throw new Error('launchIntentId is required');
+  return { action, launchIntentId, status: 'IDLE' };
+}
+
 const ACTIVE_LOCKED = new Set<TransactionStatus>([
   'VALIDATING',
   'PREPARING',
@@ -72,15 +84,23 @@ function withRecord(
   status: TransactionStatus,
 ): TransactionState {
   return {
-    ...state,
     action: record.action,
-    tokenAddress: record.tokenAddress,
+    status,
     chainId: record.chainId,
     hash: record.hash,
     submittedAt: record.submittedAt,
-    status,
-    error: undefined,
+    ...(record.tokenAddress === undefined ? {} : { tokenAddress: record.tokenAddress }),
+    ...(record.launchIntentId === undefined ? {} : { launchIntentId: record.launchIntentId }),
   };
+}
+
+function resetState(state: TransactionState): TransactionState {
+  if (state.action === 'BUY' || state.action === 'SELL') {
+    if (!state.tokenAddress) throw new Error('trade transaction state has no token address');
+    return createTransactionState(state.action, state.tokenAddress);
+  }
+  if (!state.launchIntentId) throw new Error('launch transaction state has no intent identity');
+  return createLaunchTransactionState(state.action, state.launchIntentId);
 }
 
 function illegal(state: TransactionState, event: TransactionEvent): never {
@@ -124,6 +144,6 @@ export function transitionTransactionState(
       return { ...state, status: 'UNKNOWN', error: undefined };
     case 'RESET':
       if (ACTIVE_LOCKED.has(state.status)) return illegal(state, event);
-      return createTransactionState(state.action, state.tokenAddress);
+      return resetState(state);
   }
 }

@@ -52,6 +52,15 @@ export {
   type TradeReviewSnapshot,
 } from './trade-review.js';
 
+export {
+  prepareCanonicalLaunchReview,
+  readLaunchReviewSnapshot,
+  type CanonicalLaunchCreatorInput,
+  type CanonicalLaunchReview,
+  type LaunchReviewSnapshot,
+  type PreparedCanonicalLaunchReview,
+} from './launch-review.js';
+
 export { decodeBreadError, type DecodedBreadError } from './errors.js';
 
 export { breadAbiRegistry } from './abi/generated.js';
