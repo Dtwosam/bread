@@ -102,4 +102,12 @@ describe('Day 7 Task 8 wallet/network integration and recovery convergence', () 
     expect(css).toMatch(/\.bread-wallet-menu\s*\{[\s\S]*?z-index:/);
     expect(css).toMatch(/@media\s*\(max-width:\s*767px\)[\s\S]*?env\(safe-area-inset-bottom\)/);
   });
+
+  it('keeps the connector menu reachable after a wallet is connected', () => {
+    const button = read(paths.walletButton);
+
+    expect(button).toContain("const connected = runtime?.connectionStatus === 'READY' && runtime.account");
+    expect(button).toContain('{open ? <WalletMenu');
+    expect(button).not.toMatch(/if \(runtime\?\.connectionStatus === 'READY'[\s\S]*?return \(/);
+  });
 });
