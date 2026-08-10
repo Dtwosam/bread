@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { formatUnits } from 'viem';
 
 import type { IndexedPortfolio } from '../../../../packages/types/src/index';
 import { Button, EmptyState, ErrorState, Skeleton } from '@bread/ui';
@@ -10,6 +11,7 @@ import { FreshnessBanner } from '../../components/freshness-banner';
 import { useTradeRuntime } from '../../components/trade/trade-runtime';
 import { createBreadApiClient } from '../../lib/api/client';
 import { breadQueryKeys } from '../../lib/api/queries';
+import { indexedWalletValueBaseUnits } from '../../lib/portfolio/value';
 
 type Address = `0x${string}`;
 
@@ -39,11 +41,13 @@ export default function PortfolioPage() {
   if (!runtime || runtime.connectionStatus === 'DISCONNECTED') {
     return (
       <main className="bread-page bread-portfolio-page">
-        <EmptyState
-          title="Connect your wallet"
-          detail="Bread needs your connected wallet address to load its indexed holdings and activity."
-          action={<Button onClick={() => void runtime?.connectWallet()}>Connect wallet</Button>}
-        />
+        <div className="bread-wallet-action-state">
+          <EmptyState
+            title="Connect your wallet"
+            detail="Bread needs your connected wallet address to load its indexed holdings and activity."
+          />
+          <Button disabled={!runtime} onClick={() => void runtime?.connectWallet()}>Connect wallet</Button>
+        </div>
       </main>
     );
   }
@@ -51,11 +55,13 @@ export default function PortfolioPage() {
   if (runtime.connectionStatus === 'WRONG_NETWORK') {
     return (
       <main className="bread-page bread-portfolio-page">
-        <EmptyState
-          title="Switch to Arc"
-          detail="Your wallet can stay connected. Switch networks to load this Bread portfolio."
-          action={<Button onClick={() => void runtime.switchToTargetChain()}>Switch to Arc</Button>}
-        />
+        <div className="bread-wallet-action-state">
+          <EmptyState
+            title="Switch to Arc"
+            detail="Your wallet can stay connected. Switch networks to load this Bread portfolio."
+          />
+          <Button onClick={() => void runtime.switchToTargetChain()}>Switch to Arc</Button>
+        </div>
       </main>
     );
   }
@@ -73,6 +79,7 @@ export default function PortfolioPage() {
   }
 
   const portfolio = query.data.data;
+  const walletValue = indexedWalletValueBaseUnits(portfolio.holdings);
 
   return (
     <main className="bread-page bread-portfolio-page">
@@ -83,14 +90,36 @@ export default function PortfolioPage() {
         <p className="bread-muted">{portfolio.walletAddress}</p>
       </header>
 
+      <section className="bread-portfolio-summary" aria-label="Portfolio summary">
+        <div>
+          <span>Wallet value</span>
+          <strong>{walletValue === null ? '—' : `${formatUnits(walletValue, 6)} USDC`}</strong>
+        </div>
+        <div>
+          <span>Indexed holdings</span>
+          <strong>{portfolio.holdings.length}</strong>
+        </div>
+      </section>
+
       {portfolio.holdings.length === 0 ? (
         <EmptyState title="No holdings yet" detail="Tokens held by this wallet will appear here after the indexer confirms them." />
       ) : (
-        <section aria-label="Wallet holdings">
-          {portfolio.holdings.map((holding) => (
-            <PortfolioPosition key={holding.tokenAddress} holding={holding} />
-          ))}
-        </section>
+        <table className="bread-portfolio-list" aria-label="Wallet holdings">
+          <thead>
+            <tr className="bread-portfolio-header">
+              <th scope="col">Token</th>
+              <th scope="col">Balance</th>
+              <th scope="col">Current value</th>
+              <th scope="col">Movement</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {portfolio.holdings.map((holding) => (
+              <PortfolioPosition key={holding.tokenAddress} holding={holding} />
+            ))}
+          </tbody>
+        </table>
       )}
     </main>
   );
