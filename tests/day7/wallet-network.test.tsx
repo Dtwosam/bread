@@ -15,6 +15,7 @@ const paths = {
   tradeProvider: 'apps/web/components/trade/wallet-trade-provider.tsx',
   runtime: 'apps/web/components/trade/trade-runtime.tsx',
   layout: 'apps/web/app/layout.tsx',
+  globals: 'apps/web/app/globals.css',
   config: 'apps/web/lib/wallet/config.ts',
   tradePanel: 'apps/web/components/trade/trade-panel.tsx',
   create: 'apps/web/app/create/page.tsx',
@@ -90,5 +91,15 @@ describe('Day 7 Task 8 wallet/network integration and recovery convergence', () 
     expect(config).toContain('multiInjectedProviderDiscovery: true');
     expect(config).not.toMatch(/projectId:\s*['\"][^'\"]+['\"]/);
     expect(config).not.toMatch(/MetaMask|Rabby|Coinbase Wallet/);
+  });
+
+  it('renders the wallet menu as a desktop popover and a safe-area-aware mobile sheet', () => {
+    const css = read(paths.globals);
+
+    expect(css).toMatch(/\.bread-wallet-control\s*\{[\s\S]*?position:\s*relative/);
+    expect(css).toMatch(/\.bread-wallet-menu\s*\{[\s\S]*?position:\s*absolute/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*767px\)[\s\S]*?\.bread-wallet-menu\s*\{[\s\S]*?position:\s*fixed/);
+    expect(css).toMatch(/\.bread-wallet-menu\s*\{[\s\S]*?z-index:/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*767px\)[\s\S]*?env\(safe-area-inset-bottom\)/);
   });
 });
