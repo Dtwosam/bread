@@ -73,6 +73,11 @@ export function loadRecoverableAllowanceTransactions(
     .sort((left, right) => left.submittedAt.localeCompare(right.submittedAt));
 }
 
+/**
+ * Any unresolved approval on the same account/token/spender lane is a
+ * serialization barrier. A changed UI amount must not leapfrog an earlier
+ * approval whose onchain outcome is still unknown.
+ */
 export function findRecoverableAllowanceTransaction(
   storage: Storage,
   input: Readonly<{
@@ -80,16 +85,13 @@ export function findRecoverableAllowanceTransaction(
     account: Address;
     token: Address;
     spender: Address;
-    amount: bigint;
   }>,
 ): AllowanceTransactionRecord | undefined {
-  const amount = input.amount.toString(10);
   return loadRecoverableAllowanceTransactions(storage, input.chainId).find(
     (record) =>
       record.account.toLowerCase() === input.account.toLowerCase() &&
       record.token.toLowerCase() === input.token.toLowerCase() &&
-      record.spender.toLowerCase() === input.spender.toLowerCase() &&
-      record.amount === amount,
+      record.spender.toLowerCase() === input.spender.toLowerCase(),
   );
 }
 
