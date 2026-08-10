@@ -33,11 +33,11 @@ jobs:
         run: >-
           pnpm exec vitest run
           tests/day7/production-gates.test.ts
-          tests/day7/ui-foundation.test.tsx
+          tests/day7/ui-foundation.test.ts
           tests/day7/read-client.test.ts
           tests/day7/read-provider.test.ts
           tests/day7/token-page.test.tsx
           tests/day7/token-page-behavior.test.tsx
-          tests/day7/create-scope.test.tsx
+          tests/day7/create-review.test.tsx
           tests/day7/create-runtime.test.tsx
           tests/day7/wallet-network.test.tsx
