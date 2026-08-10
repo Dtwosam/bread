@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
+import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
 import {
   decodeNewFeedCursor,
   DEFAULT_FEED_LIMIT,
@@ -14,6 +15,7 @@ const SOURCE_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
 
 export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
   app.get('/v1/feed', async (request, reply) => {
+    markNoStore(reply);
     const query = request.query as { view?: string; limit?: string; cursor?: string };
     const view = query.view ?? 'new';
     if (!SOURCE_VIEWS.has(view)) {
@@ -137,6 +139,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
         })
       : { value: await load(), cache: 'BYPASS' as const };
     const now = (deps.now ?? (() => new Date()))();
+    markPublicProjectionCacheable(reply);
     return {
       ...cacheResult.value,
       meta: {
