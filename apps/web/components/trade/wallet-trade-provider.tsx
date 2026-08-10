@@ -23,7 +23,12 @@ import {
   arcTestnetChain,
   arcTradeExecutionContext,
 } from '../../lib/wallet/config';
-import { TradeRuntimeProvider, type TradeConnectionStatus, type TradeRuntime } from './trade-runtime';
+import {
+  TradeRuntimeProvider,
+  type TradeConnectionStatus,
+  type TradeRuntime,
+  type WalletOption,
+} from './trade-runtime';
 
 export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const queryClient = useQueryClient();
@@ -43,6 +48,17 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
       : walletClient.data
         ? 'READY'
         : 'DISCONNECTED';
+
+  const walletOptions = useMemo<readonly WalletOption[]>(() => {
+    const seen = new Set<string>();
+    const options: WalletOption[] = [];
+    for (const connector of connectors) {
+      if (seen.has(connector.id)) continue;
+      seen.add(connector.id);
+      options.push({ id: connector.id, name: connector.name });
+    }
+    return options;
+  }, [connectors]);
 
   const wallet = useMemo(() => {
     if (
@@ -107,12 +123,22 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
   const runtime: TradeRuntime = {
     client: publicClient,
     wallet,
+    account: connection.address ?? null,
+    walletOptions,
     context: arcTradeExecutionContext,
     protocolContext: arcProtocolContext,
     connectionStatus,
-    async connectWallet() {
-      const connector = connectors[0];
-      if (!connector) throw new Error('No injected EVM wallet was detected.');
+    async connectWallet(connectorId?: string) {
+      const connector = connectorId
+        ? connectors.find((candidate) => candidate.id === connectorId)
+        : connectors.find((candidate) => candidate.id === 'injected');
+      if (!connector) {
+        throw new Error(
+          connectorId
+            ? 'The selected wallet connector is no longer available.'
+            : 'Choose a detected wallet before connecting.',
+        );
+      }
       await connect.mutateAsync({ connector, chainId: arcTestnetChain.id });
     },
     async switchToTargetChain() {

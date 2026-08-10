@@ -1,0 +1,73 @@
+.bread-wallet-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.bread-wallet-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 120;
+  width: min(320px, calc(100vw - 32px));
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--bread-border-strong);
+  border-radius: var(--bread-radius-modal);
+  background: var(--bread-surface-1);
+}
+
+.bread-wallet-menu__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bread-wallet-menu__heading > button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-surface-2);
+  color: var(--bread-text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bread-wallet-menu__heading > button:hover {
+  border-color: var(--bread-border-strong);
+  background: var(--bread-surface-3);
+}
+
+.bread-wallet-menu__options {
+  display: grid;
+  gap: 8px;
+}
+
+.bread-wallet-menu__options > * {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.bread-mobile-top .bread-wallet-control {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .bread-wallet-menu {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
+    left: 16px;
+    width: auto;
+    max-height: min(70dvh, 520px);
+    overflow-y: auto;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}

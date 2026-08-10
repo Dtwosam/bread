@@ -5,8 +5,10 @@ import { MobileNavigation, Navigation } from '@bread/ui';
 import '@bread/ui/theme.css';
 import { Providers } from '../components/providers';
 import { SearchSurface } from '../components/search-surface';
+import { WalletButton } from '../components/wallet/wallet-button';
 import './globals.css';
 import './portfolio-creator.css';
+import './wallet.css';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,6 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 </a>
                 <Navigation />
                 <SearchSurface />
+                <WalletButton />
               </div>
             </header>
 
@@ -42,6 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 Bread
               </a>
               <SearchSurface compact />
+              <WalletButton />
             </div>
 
             {children}
