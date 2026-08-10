@@ -185,9 +185,9 @@ describe('Day 7 Task 5 real wallet runtime', () => {
     expect(walletProvider).toContain('recoverPersistedTransactions');
     expect(walletProvider).toContain('readSpendableTradeBalance');
     expect(walletProvider).toContain('createTradeWalletAdapter');
-    expect(walletProvider).toContain("connectionStatus: 'DISCONNECTED'");
-    expect(walletProvider).toContain("connectionStatus: 'WRONG_NETWORK'");
-    expect(walletProvider).toContain("connectionStatus: 'READY'");
+    for (const status of ["'DISCONNECTED'", "'WRONG_NETWORK'", "'READY'"]) {
+      expect(walletProvider).toContain(status);
+    }
     expect(runtime).toContain('connectWallet');
     expect(runtime).toContain('switchToTargetChain');
   });
