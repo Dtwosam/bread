@@ -1,51 +1,16 @@
+import type {
+  IndexedFeedItem,
+  IndexedGraduationProgressSummary,
+  IndexedPriceSummary,
+} from '../../../../packages/types/src/index';
 import { BreadApiRequestError } from '../../lib/api/client';
 
 export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
-export type IndexedPriceSummary = Readonly<{
-  numerator: string;
-  denominator: string;
-  source: string;
-}>;
-
-export type IndexedTradeMetricsSummary = Readonly<{
-  lastPrice: IndexedPriceSummary;
-  quoteVolume: Readonly<{
-    m5: string | null;
-    h1: string | null;
-    h24: string | null;
-  }>;
-  tradeCount: Readonly<{
-    h1: string | null;
-    h24: string | null;
-  }>;
-  uniqueTraders: Readonly<{
-    h1: string | null;
-    h24: string | null;
-  }>;
-}>;
-
-export type IndexedGraduationProgress = Readonly<{
-  progressBps: string | null;
-  state: string | null;
-}>;
-
-export type IndexedFeedCardFields = Readonly<{
-  tokenAddress: string;
-  name: string | null;
-  symbol: string | null;
-  metrics: IndexedTradeMetricsSummary | null;
-  progress: IndexedGraduationProgress | null;
-}>;
-
-export type IndexedSearchResult = Readonly<{
-  tokenAddress: string;
-  curveAddress: string;
-  creatorFeeRecipient: string;
-  launchTimestamp: string | null;
-  name: string | null;
-  symbol: string | null;
-}>;
+export type IndexedFeedCardFields = Pick<
+  IndexedFeedItem,
+  'tokenAddress' | 'name' | 'symbol' | 'metrics' | 'progress'
+>;
 
 export type SearchIntent =
   | Readonly<{ kind: 'idle' }>
@@ -99,7 +64,7 @@ export function feedErrorPresentation(error: unknown) {
   };
 }
 
-function progressModel(progress: IndexedGraduationProgress | null) {
+function progressModel(progress: IndexedGraduationProgressSummary | null) {
   if (!progress || progress.progressBps === null) return null;
   if (!/^\d+$/.test(progress.progressBps)) return null;
   const value = BigInt(progress.progressBps);
