@@ -35,9 +35,12 @@ run(process.execPath, ["scripts/day5/verify-graduation-deployment.mjs", network]
   env: process.env,
 });
 
-// The smoke contains state-dependent sequential transactions (including
-// graduation sweep -> pool creation). --slow waits for each transaction to be
-// confirmed before the next dependent transaction is sent/estimated.
+// Forge already executes the complete Solidity script locally before it builds
+// the broadcast sequence. This smoke contains state-dependent transactions
+// (notably graduation sweep -> pool creation) whose duplicate on-chain batch
+// simulation cannot observe the prior transaction's yet-unconfirmed state.
+// --skip-simulation skips only that secondary on-chain simulation; --slow then
+// sends each transaction only after the preceding transaction is confirmed.
 run(
   "forge",
   [
@@ -45,6 +48,7 @@ run(
     "script/SmokeDay5Graduation.s.sol:SmokeDay5Graduation",
     "--rpc-url",
     rpcUrl,
+    "--skip-simulation",
     "--slow",
     "--broadcast",
     "-vvv",
