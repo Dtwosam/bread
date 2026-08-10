@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card } from '@bread/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, parseUnits } from 'viem';
 
 import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/src/constants';
@@ -37,6 +37,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   const queryClient = useQueryClient();
   const tokenAddress = token.tokenAddress as `0x${string}`;
   const curveAddress = token.curveAddress as `0x${string}`;
+  const adoptedRecoveryHash = useRef<`0x${string}` | null>(null);
   const [action, setAction] = useState<TradeAction>('BUY');
   const [amount, setAmount] = useState('');
   const [slippageBps, setSlippageBps] = useState(50);
@@ -47,11 +48,36 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   const [transactionState, setTransactionState] = useState<TransactionState>(() =>
     createTransactionState('BUY', tokenAddress),
   );
+  const recoveredTransactionState = useMemo(
+    () =>
+      runtime?.recoveredTradeStates.find(
+        (state) =>
+          (state.action === 'BUY' || state.action === 'SELL') &&
+          state.tokenAddress?.toLowerCase() === tokenAddress.toLowerCase(),
+      ) ?? null,
+    [runtime?.recoveredTradeStates, tokenAddress],
+  );
 
   const transactionBusy = !canSubmitTransactionAction(transactionState);
   const busy = transactionBusy || reviewBusy;
   const connectionStatus: TradeConnectionStatus = runtime?.connectionStatus ?? 'DISCONNECTED';
   const walletReady = runtime !== null && connectionStatus === 'READY' && runtime.wallet !== null;
+
+  useEffect(() => {
+    if (!recoveredTransactionState?.hash) return;
+    const recoveredHash = recoveredTransactionState.hash;
+    const sameRecoveredTransaction =
+      transactionState.hash !== undefined && transactionState.hash === recoveredHash;
+    const firstAdoptionFromIdle =
+      transactionState.status === 'IDLE' && adoptedRecoveryHash.current !== recoveredHash;
+    if (!sameRecoveredTransaction && !firstAdoptionFromIdle) return;
+
+    adoptedRecoveryHash.current = recoveredHash;
+    setAction(recoveredTransactionState.action as TradeAction);
+    setReview(null);
+    setReviewError(null);
+    setTransactionState(recoveredTransactionState);
+  }, [recoveredTransactionState, transactionState.hash, transactionState.status]);
 
   useEffect(() => {
     if (!sheetOpen) return;

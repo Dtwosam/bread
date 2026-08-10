@@ -84,6 +84,13 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(graduation).not.toMatch(/guaranteed safe|risk[- ]free/i);
   });
 
+  it('keeps canonical NOT_GRADUATED launches Active until the curve is actually ready', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain("graduationPhase !== 'NOT_GRADUATED'");
+    expect(graduation).toContain('readyToGraduate');
+  });
+
   it('preserves source-defined responsive Token composition through the Task-5 trade owner', () => {
     const client = read(paths.client);
     const trade = read(paths.trade);

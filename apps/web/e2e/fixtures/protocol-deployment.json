@@ -1,0 +1,32 @@
+{
+  "schema": "bread://schemas/day5-graduation-deployment-v1",
+  "network": "arc-testnet",
+  "status": "TEST_ONLY_PLAYWRIGHT_FIXTURE",
+  "stackVersion": "e2e-test-only",
+  "chainId": 5042002,
+  "core": {
+    "factory": "0x1000000000000000000000000000000000000001",
+    "deployer": "0x1000000000000000000000000000000000000002",
+    "feePolicy": "0x1000000000000000000000000000000000000003",
+    "feeEscrow": "0x1000000000000000000000000000000000000004",
+    "emergencyController": "0x1000000000000000000000000000000000000005",
+    "locker": "0x1000000000000000000000000000000000000006",
+    "coordinator": "0x1000000000000000000000000000000000000007"
+  },
+  "adapter": {
+    "active": true,
+    "family": "PLAYWRIGHT_TEST_ONLY",
+    "adapter": "0x1000000000000000000000000000000000000008",
+    "positionManager": null,
+    "poolManager": null,
+    "v3Factory": null,
+    "configHash": "0x2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "authorities": {
+    "protocolAdmin": "0x1000000000000000000000000000000000000009",
+    "guardian": "0x100000000000000000000000000000000000000a"
+  },
+  "economicsConfigHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+  "dexEvidenceHash": null,
+  "deploymentStartBlock": 1
+}

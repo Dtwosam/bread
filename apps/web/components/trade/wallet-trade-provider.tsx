@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   useConnect,
   useConnection,
@@ -13,6 +13,7 @@ import {
 
 import { breadQueryKeys } from '../../lib/api/queries';
 import { recoverPersistedTransactions } from '../../lib/transactions/controller';
+import type { TransactionState } from '../../lib/transactions/state';
 import {
   createTradeWalletAdapter,
   readSpendableTradeBalance,
@@ -30,6 +31,11 @@ import {
   type WalletOption,
 } from './trade-runtime';
 
+function recoveredTradeKey(state: TransactionState): string | null {
+  if ((state.action !== 'BUY' && state.action !== 'SELL') || !state.tokenAddress) return null;
+  return `${state.action}:${state.tokenAddress.toLowerCase()}`;
+}
+
 export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const queryClient = useQueryClient();
   const connection = useConnection();
@@ -39,6 +45,7 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
   const publicClient = usePublicClient({ chainId: arcTestnetChain.id });
   const walletClient = useWalletClient();
   const recoveryStarted = useRef(false);
+  const [recoveredTradeStates, setRecoveredTradeStates] = useState<readonly TransactionState[]>([]);
   const browserStorage = typeof window === 'undefined' ? undefined : window.localStorage;
 
   const connectionStatus: TradeConnectionStatus = !connection.isConnected
@@ -101,6 +108,14 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
         client: publicClient,
         storage: browserStorage,
         chainId: arcTestnetChain.id,
+        onStateChange: (state) => {
+          const key = recoveredTradeKey(state);
+          if (!key) return;
+          setRecoveredTradeStates((current) => {
+            const next = current.filter((candidate) => recoveredTradeKey(candidate) !== key);
+            return [...next, state];
+          });
+        },
         onConfirmed: async (record) => {
           const tokenAddress = record.tokenAddress;
           if (!tokenAddress || (record.action !== 'BUY' && record.action !== 'SELL')) return;
@@ -128,6 +143,7 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
     context: arcTradeExecutionContext,
     protocolContext: arcProtocolContext,
     connectionStatus,
+    recoveredTradeStates,
     async connectWallet(connectorId?: string) {
       const connector = connectorId
         ? connectors.find((candidate) => candidate.id === connectorId)

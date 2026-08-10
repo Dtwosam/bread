@@ -1,0 +1,38 @@
+name: day7-task10-cross-browser-probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day7-task10-cross-browser-probe.yml'
+      - 'apps/web/e2e/run-cross-browser-probe.mjs'
+      - 'apps/web/e2e/specs/cross-browser-probe.spec.ts'
+      - 'apps/web/playwright.cross-browser-probe.config.ts'
+      - 'apps/web/e2e/fixtures/**'
+  push:
+    branches:
+      - 'agent/day7-task10-playwright-closeout'
+
+permissions:
+  contents: read
+
+jobs:
+  alternate-browser-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned Firefox and WebKit runtimes
+        run: pnpm --filter @bread/web exec playwright install --with-deps firefox webkit
+      - name: Run Firefox and WebKit browse plus wallet-Buy probe
+        working-directory: apps/web
+        run: node e2e/run-cross-browser-probe.mjs
+      - name: Verify probe restored canonical manifests
+        if: always()
+        run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json
