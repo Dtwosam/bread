@@ -14,7 +14,7 @@ import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
 import { breadQueryKeys } from '../../lib/api/queries';
 import {
   executeTradeLifecycle,
-  prepareTradeForSignature,
+  prepareTradeReview,
 } from '../../lib/transactions/controller';
 import {
   canSubmitTransactionAction,
@@ -172,7 +172,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
         runtime.wallet.getChainId(),
       ]);
       if (!account) throw new Error('Connect a wallet before reviewing this trade.');
-      const prepared = await prepareTradeForSignature({
+      const prepared = await prepareTradeReview({
         client: runtime.client,
         context: runtime.context,
         walletChainId,
