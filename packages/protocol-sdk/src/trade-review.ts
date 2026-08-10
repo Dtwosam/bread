@@ -1,7 +1,7 @@
 import type { PublicClient } from 'viem';
 
 import type { Address } from '../../types/src/index.js';
-import { breadAbiRegistry } from './abi/generated.js';
+import { breadAbiRegistry } from './abi/generated.ts';
 
 const BPS_NUMBER = 10_000;
 const BPS = BigInt(BPS_NUMBER);
