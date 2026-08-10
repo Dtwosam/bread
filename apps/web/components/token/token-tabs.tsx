@@ -93,7 +93,9 @@ function TradesPanel({
               <strong role="cell">{trade.side}</strong>
               <span role="cell">{formatUsdcBaseUnits(trade.quoteAmount)}</span>
               <span role="cell">{trade.tokenAmount}</span>
-              <code role="cell" className="bread-technical">{trade.actor}</code>
+              <code role="cell" className="bread-technical">
+                {trade.actor}
+              </code>
             </div>
           ))}
         </div>
@@ -130,8 +132,14 @@ function HoldersPanel({
             <span role="columnheader">Protocol</span>
           </div>
           {response.data.holders.map((holder) => (
-            <div className="bread-token-table__row bread-token-table__row--holders" role="row" key={holder.walletAddress}>
-              <code role="cell" className="bread-technical">{holder.walletAddress}</code>
+            <div
+              className="bread-token-table__row bread-token-table__row--holders"
+              role="row"
+              key={holder.walletAddress}
+            >
+              <code role="cell" className="bread-technical">
+                {holder.walletAddress}
+              </code>
               <span role="cell">{holder.balance}</span>
               <span role="cell">{holder.isProtocolAddress ? 'Yes' : 'No'}</span>
             </div>
@@ -148,6 +156,7 @@ function InfoPanel({ token }: Readonly<{ token: IndexedTokenDetail }>) {
     ['Quote asset', token.quoteAsset ?? '—'],
     ['Creator', token.creatorFeeRecipient ?? '—'],
     ['Creator tax', token.creatorTaxBps === null ? '—' : `${token.creatorTaxBps} bps`],
+    ['Buyback', '—'],
     ['Protocol version', token.stackVersion],
     ['Graduation adapter', token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'],
   ] as const;
@@ -165,7 +174,7 @@ function InfoPanel({ token }: Readonly<{ token: IndexedTokenDetail }>) {
         <dd>—</dd>
       </div>
       <div>
-        <dt>Links</dt>
+        <dt>Social links</dt>
         <dd>—</dd>
       </div>
     </dl>
