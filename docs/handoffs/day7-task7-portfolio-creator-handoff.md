@@ -6,7 +6,7 @@ Date: 2026-08-10
 
 `DAY7_TASK7_PORTFOLIO_CREATOR_CLAIMS_INTEGRATED_PASS_DURABLE`
 
-This docs-only candidate records the durable Task-7 verdict. It becomes authoritative only after this exact handoff head passes the required repository/retained gates, is guarded-merged, and the resulting `main` plus `docs/current-build-state.yaml` are freshly read back.
+This PR #77 candidate records the durable Task-7 verdict. It becomes authoritative only after this exact handoff head passes the required repository/retained gates, is guarded-merged, and the resulting `main` plus `docs/current-build-state.yaml` are freshly read back.
 
 ## Accepted implementation baseline
 
