@@ -116,6 +116,13 @@ async function handleProxy(req: IncomingMessage, res: ServerResponse): Promise<v
   }
 
   const path = req.url ?? '/';
+  if (path === '/__bread_edge_connect') {
+    // Test-only endpoint used to establish the 10,000 client sockets before
+    // timed traffic without warming a production cache key.
+    res.writeHead(204, { 'cache-control': 'no-store' });
+    res.end();
+    return;
+  }
   if (path === '/__bread_edge_stats') {
     const body = Buffer.from(JSON.stringify({
       ...stats,
