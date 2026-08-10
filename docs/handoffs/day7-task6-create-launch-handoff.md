@@ -4,9 +4,9 @@ Date: 2026-08-10
 
 ## Verdict
 
-`DAY7_TASK6_CREATE_REVIEW_LAUNCH_INTEGRATED_PASS_PENDING_DURABLE_HANDOFF_MERGE`
+`DAY7_TASK6_CREATE_REVIEW_LAUNCH_INTEGRATED_PASS_DURABLE`
 
-Task 6 implementation is merged into `main`; this handoff becomes durable only after this docs-only handoff branch passes its exact-head gates, is guarded-merged, and the resulting `main` plus `docs/current-build-state.yaml` are freshly read back.
+This PR #75 candidate records the durable Task-6 verdict. It becomes authoritative only after this exact docs-only head passes its gates, is guarded-merged, and the resulting `main` plus `docs/current-build-state.yaml` are freshly read back.
 
 ## Accepted implementation baseline
 
