@@ -32,13 +32,15 @@ describe('Day 7 Task 5 real wallet runtime', () => {
   it('sends an exact approval and waits for it before a separately requested trade broadcast', async () => {
     const writes: Array<{ functionName: string; args?: readonly unknown[] }> = [];
     const waits: `0x${string}`[] = [];
+    let approvalConfirmed = false;
     const publicClient = {
       async readContract(request: { functionName: string }) {
-        if (request.functionName === 'allowance') return 0n;
+        if (request.functionName === 'allowance') return approvalConfirmed ? 10_000n : 0n;
         throw new Error(`unexpected read ${request.functionName}`);
       },
       async waitForTransactionReceipt({ hash: transactionHash }: { hash: `0x${string}` }) {
         waits.push(transactionHash);
+        approvalConfirmed = true;
         return { status: 'success' as const };
       },
     } as never;
@@ -185,8 +187,10 @@ describe('Day 7 Task 5 real wallet runtime', () => {
     }
     expect(walletProvider).toContain('TradeRuntimeProvider');
     expect(walletProvider).toContain('recoverPersistedTransactions');
+    expect(walletProvider).toContain('recoverPersistedAllowanceTransactions');
     expect(walletProvider).toContain('readSpendableTradeBalance');
     expect(walletProvider).toContain('createTradeWalletAdapter');
+    expect(walletProvider).toContain('storage: browserStorage');
     for (const status of ["'DISCONNECTED'", "'WRONG_NETWORK'", "'READY'"]) {
       expect(walletProvider).toContain(status);
     }
