@@ -50,7 +50,7 @@ export function ClaimPanel({
         </Button>
         <Button
           type="button"
-          disabled={busy || locked || !review || review.claimableUsdc === 0n || !review.transaction}
+          disabled={busy || locked || !review || review.claimableUsdc === BigInt(0) || !review.transaction}
           onClick={onClaim}
         >
           Claim USDC
