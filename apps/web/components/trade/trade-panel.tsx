@@ -12,6 +12,7 @@ import type {
 } from '../../../../packages/protocol-sdk/src/trade-review';
 import type { TradeAction, TransactionState } from '../../lib/transactions/state';
 import { TransactionStatus } from '../transaction-status';
+import type { TradeConnectionStatus } from './trade-runtime';
 
 void styles;
 
@@ -32,13 +33,14 @@ export function TradePanel({
   slippageBps,
   review,
   transactionState,
-  runtimeAvailable,
+  connectionStatus,
   busy,
   reviewError,
   onActionChange,
   onAmountChange,
   onSlippageChange,
   onPreset,
+  onConnectionAction,
   onReview,
   onSubmit,
 }: Readonly<{
@@ -47,19 +49,35 @@ export function TradePanel({
   slippageBps: number;
   review: TradeReview | null;
   transactionState: TransactionState;
-  runtimeAvailable: boolean;
+  connectionStatus: TradeConnectionStatus;
   busy: boolean;
   reviewError: string | null;
   onActionChange: (action: TradeAction) => void;
   onAmountChange: (amount: string) => void;
   onSlippageChange: (slippageBps: number) => void;
   onPreset: (preset: Preset) => void;
+  onConnectionAction: () => void;
   onReview: () => void;
   onSubmit: () => void;
 }>) {
   const presets: readonly Preset[] = action === 'BUY' ? ['$25', '$50', '$100', 'MAX'] : ['25%', '50%', '75%', 'MAX'];
   const outputDecimals = action === 'BUY' ? BREAD_LAUNCH_TOKEN_DECIMALS : 6;
   const quoteDecimals = 6;
+  const walletReady = connectionStatus === 'READY';
+  const primaryLabel = connectionStatus === 'DISCONNECTED'
+    ? 'Connect wallet'
+    : connectionStatus === 'WRONG_NETWORK'
+      ? 'Switch to Arc'
+      : review
+        ? action === 'BUY' ? 'Buy' : 'Sell'
+        : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
+  const primaryAriaLabel = connectionStatus === 'DISCONNECTED'
+    ? 'Connect wallet'
+    : connectionStatus === 'WRONG_NETWORK'
+      ? 'Switch wallet to Arc Testnet'
+      : review
+        ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
+        : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
 
   return (
     <div className="bread-trade-panel">
@@ -99,7 +117,7 @@ export function TradePanel({
             className="bread-trade-preset"
             type="button"
             key={preset}
-            disabled={busy || !runtimeAvailable}
+            disabled={busy || !walletReady}
             onClick={() => onPreset(preset)}
           >
             {preset}
@@ -145,11 +163,11 @@ export function TradePanel({
 
       <Button
         variant={action === 'BUY' ? 'buy' : 'sell'}
-        disabled={busy || !runtimeAvailable || amount.trim() === ''}
-        ariaLabel={review ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values` : `Review ${action === 'BUY' ? 'buy' : 'sell'}`}
-        onClick={review ? onSubmit : onReview}
+        disabled={busy || (walletReady && amount.trim() === '')}
+        ariaLabel={primaryAriaLabel}
+        onClick={walletReady ? (review ? onSubmit : onReview) : onConnectionAction}
       >
-        {!runtimeAvailable ? 'Connect wallet' : review ? (action === 'BUY' ? 'Buy' : 'Sell') : `Review ${action === 'BUY' ? 'buy' : 'sell'}`}
+        {primaryLabel}
       </Button>
 
       <TransactionStatus state={transactionState} />
