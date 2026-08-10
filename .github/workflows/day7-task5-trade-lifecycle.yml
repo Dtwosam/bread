@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/day7-task5-trade-lifecycle.yml'
-      - 'contracts/src/core/BreadLaunchToken.sol'
+      - 'contracts/src/BreadLaunchToken.sol'
       - 'packages/protocol-sdk/src/**'
       - 'apps/web/lib/transactions/**'
       - 'apps/web/components/trade/**'
