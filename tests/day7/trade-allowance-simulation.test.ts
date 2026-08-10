@@ -203,6 +203,7 @@ describe('Day 7 post-Task-5 allowance-before-simulation continuity repair', () =
 
     const second = await executeTradeLifecycle({
       ...trade,
+      inputAmount: 5_000n,
       client: test.publicClient,
       wallet: test.wallet,
       storage: test.storage,
