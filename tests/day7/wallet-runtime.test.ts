@@ -29,7 +29,7 @@ function preparedTrade() {
 }
 
 describe('Day 7 Task 5 real wallet runtime', () => {
-  it('sends an exact approval and waits for it before sending a trade when allowance is insufficient', async () => {
+  it('sends an exact approval and waits for it before a separately requested trade broadcast', async () => {
     const writes: Array<{ functionName: string; args?: readonly unknown[] }> = [];
     const waits: `0x${string}`[] = [];
     const publicClient = {
@@ -55,6 +55,7 @@ describe('Day 7 Task 5 real wallet runtime', () => {
       account: address('b'),
       chainId: 5_042_002,
     });
+    await adapter.ensurePreparedTransactionAllowance(preparedTrade());
     const result = await adapter.sendPreparedTransaction(preparedTrade());
 
     expect(writes.map((write) => write.functionName)).toEqual(['approve', 'buy']);
@@ -86,6 +87,7 @@ describe('Day 7 Task 5 real wallet runtime', () => {
       account: address('b'),
       chainId: 5_042_002,
     });
+    await adapter.ensurePreparedTransactionAllowance(preparedTrade());
     await adapter.sendPreparedTransaction(preparedTrade());
 
     expect(writes).toEqual(['buy']);
@@ -115,7 +117,7 @@ describe('Day 7 Task 5 real wallet runtime', () => {
       chainId: 5_042_002,
     });
 
-    await expect(adapter.sendPreparedTransaction(preparedTrade())).rejects.toThrow(/approval.*revert/i);
+    await expect(adapter.ensurePreparedTransactionAllowance(preparedTrade())).rejects.toThrow(/approval.*revert/i);
     expect(writes).toEqual(['approve']);
   });
 
