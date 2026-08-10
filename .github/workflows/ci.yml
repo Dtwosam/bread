@@ -6,37 +6,9 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  playwright-lockfile-bootstrap:
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 82
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 24.18.0
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
-        with:
-          version: 11.15.1
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - name: Commit runner-generated Playwright package and lockfile
-        run: |
-          pnpm --filter @bread/web add -D @playwright/test@1.62.0 --lockfile-only
-          git add apps/web/package.json pnpm-lock.yaml
-          if git diff --cached --quiet; then
-            echo 'Playwright package/lockfile already generated.'
-            exit 0
-          fi
-          git config user.name 'bread-ci-lockfile-bootstrap'
-          git config user.email 'bread-ci-lockfile-bootstrap@users.noreply.github.com'
-          git commit -m 'test(day7): pin Playwright 1.62.0'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
   bootstrap-validation:
     runs-on: ubuntu-latest
     steps:
