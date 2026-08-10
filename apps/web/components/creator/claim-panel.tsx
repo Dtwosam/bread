@@ -10,6 +10,7 @@ export function ClaimPanel({
   indexedClaimable,
   review,
   busy,
+  locked,
   error,
   onReview,
   onClaim,
@@ -18,6 +19,7 @@ export function ClaimPanel({
   indexedClaimable: string;
   review: ClaimReview | null;
   busy: boolean;
+  locked: boolean;
   error: string | null;
   onReview: () => void;
   onClaim: () => void;
@@ -43,12 +45,12 @@ export function ClaimPanel({
 
       {error ? <p role="alert">{error}</p> : null}
       <div className="bread-inline-actions">
-        <Button type="button" disabled={busy} onClick={onReview}>
+        <Button type="button" disabled={busy || locked} onClick={onReview}>
           {busy ? 'Reviewing claim…' : 'Review claim'}
         </Button>
         <Button
           type="button"
-          disabled={busy || !review || review.claimableUsdc === 0n || !review.transaction}
+          disabled={busy || locked || !review || review.claimableUsdc === 0n || !review.transaction}
           onClick={onClaim}
         >
           Claim USDC
