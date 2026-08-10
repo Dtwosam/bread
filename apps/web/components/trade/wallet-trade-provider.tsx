@@ -19,6 +19,7 @@ import {
   recoverPersistedAllowanceTransactions,
 } from '../../lib/transactions/wallet-adapter';
 import {
+  arcProtocolContext,
   arcTestnetChain,
   arcTradeExecutionContext,
 } from '../../lib/wallet/config';
@@ -107,6 +108,7 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
     client: publicClient,
     wallet,
     context: arcTradeExecutionContext,
+    protocolContext: arcProtocolContext,
     connectionStatus,
     async connectWallet() {
       const connector = connectors[0];
