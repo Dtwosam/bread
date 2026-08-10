@@ -29,8 +29,8 @@ completed_checkpoints:
   - "Day 7 Task 2 PR #61 + durable handoff PR #62: INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 7 — Public Web"
-active_lane: "Task 3 — Explore and Search. Task 2 implementation is merged; this PR #62 is its durable handoff and Task 3 may start only from the freshly verified PR #62 merge."
-active_gate: DAY7_TASK2_DURABLE_HANDOFF_INTEGRATION_REQUIRED_BEFORE_TASK3
+active_lane: "Task 3 — Explore and Search. Task 2 is durably integrated when PR #62 reaches main; begin Task 3 only from the freshly verified PR #62 merge."
+active_gate: DAY7_TASK3_EXPLORE_SEARCH_RED_GREEN
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -74,8 +74,7 @@ integration_baseline:
   day7_task2_handoff_pr: 62
   status: DAY7_TASK2_INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE
 
-working_branches:
-  - docs/day7-task2-durable-handoff
+working_branches: []
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -387,7 +386,7 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Freeze the final docs-bearing head of Day-7 Task-2 durable handoff PR #62. Require exact-head root CI plus Day-7 Task-1, Day-7 Task-2 and retained Day-6 Task-5/6/7/8/9/10 workflows with real runner steps and full PASS. Then guarded-merge PR #62 with expected-head protection, verify actual merged main, and begin Day-7 Task 3 Explore/Search from that exact durable baseline. Task 3 first writes and proves a meaningful RED for real New-feed rendering, explicit unsupported-feed-view not-ready UX, exact-address/text-search thresholds, visible contract identity, cursor preservation and zero per-card RPC.
+  After PR #62 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 3 Explore/Search from that exact durable baseline. First write and prove a meaningful RED against the actual accepted Day-6 response shapes for real New-feed rendering, explicit unsupported-feed-view not-ready UX, exact-address/text-search thresholds, visible contract identity, cursor preservation and zero per-card RPC. Use only the Task-2 indexed read/query boundary; do not create a second client or frontend financial/domain authority.
 
 do_not_do:
   - "Do not reopen Day 6 or accepted Day-7 Tasks 1-2 absent a demonstrated regression, genuine source conflict or newly ratified source change."
