@@ -305,6 +305,7 @@ export default function CreatePage() {
           <TokenForm
             draft={draft}
             disabled={busy}
+            error={error}
             onChange={changeDraft}
             onReview={() => void prepareReview()}
           />
@@ -325,7 +326,6 @@ export default function CreatePage() {
               Switch to Arc
             </button>
           ) : null}
-          {error ? <p className="bread-create-error" role="alert">{error}</p> : null}
         </div>
       ) : step === 'REVIEW' ? (
         <div className={`${styles.reviewRegion} bread-launch-review-region`}>
