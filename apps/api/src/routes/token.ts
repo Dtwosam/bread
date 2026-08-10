@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/src/index.js';
 
+import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
 import type { BreadReadRouteDeps } from './types.js';
 
 type LaunchRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunch']>>;
@@ -121,6 +122,7 @@ export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined
 
 export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
   app.get('/v1/tokens/:address', async (request, reply) => {
+    markNoStore(reply);
     const params = request.params as { address?: string };
     let tokenAddress: string;
     try {
@@ -167,6 +169,7 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
     }
 
     const now = (deps.now ?? (() => new Date()))();
+    markPublicProjectionCacheable(reply);
     return {
       data: cacheResult.value.data,
       meta: {
