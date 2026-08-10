@@ -9,7 +9,7 @@ const root = resolve(import.meta.dirname, '../..');
 
 describe('Day 7 Task 5 launch token decimals authority', () => {
   it('keeps the SDK consumer constant tied to the canonical LaunchToken ERC20 implementation', () => {
-    const source = readFileSync(resolve(root, 'contracts/src/core/BreadLaunchToken.sol'), 'utf8');
+    const source = readFileSync(resolve(root, 'contracts/src/BreadLaunchToken.sol'), 'utf8');
 
     expect(source).toContain('is ERC20');
     expect(source).not.toMatch(/function\s+decimals\s*\(/);
