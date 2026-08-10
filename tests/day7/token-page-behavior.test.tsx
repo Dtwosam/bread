@@ -95,4 +95,25 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(css).toContain('.bread-token-mobile-actions');
     expect(css).toContain('@media (max-width: 767px)');
   });
+
+  it('provides the frozen tablet trade-sheet trigger without enabling transactions early', () => {
+    const client = read(paths.client);
+    const css = read(paths.css);
+
+    expect(client).toContain('bread-token-tablet-trade-trigger');
+    expect(client).toContain('tabletTradeOpen');
+    expect(client).toContain('role="dialog"');
+    expect(client).toContain('aria-modal="true"');
+    expect(css).toContain('.bread-token-tablet-trade-trigger');
+    expect(css).toContain('.bread-token-tablet-trade-sheet');
+    expect(css).toContain('@media (min-width: 768px) and (max-width: 1023px)');
+  });
+
+  it('keeps source-defined Info facts explicit when no canonical value is projected', () => {
+    const tabs = read(paths.tabs);
+
+    expect(tabs).toContain('Buyback');
+    expect(tabs).toContain('Social links');
+    expect(tabs).toContain('Description');
+  });
 });
