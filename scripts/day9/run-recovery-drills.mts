@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { rehearseServiceRollback } from './rehearse-service-rollback.mts';
@@ -7,6 +7,7 @@ import { rehearseServiceRollback } from './rehearse-service-rollback.mts';
 const repoRoot = path.resolve(new URL('../..', import.meta.url).pathname);
 const contractsRoot = path.join(repoRoot, 'contracts');
 const deploymentPath = path.join(repoRoot, 'config/deployments/arc-testnet.day5.json');
+const webBuildPath = path.join(repoRoot, 'apps/web/.next');
 
 export const REQUIRED_RECOVERY_DRILL_IDS = [
   'GUARDIAN_PAUSE_NEW_LAUNCHES',
@@ -153,13 +154,13 @@ async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
   let evidence: CommandEvidence | undefined;
 
   try {
-    // Consume the canonical Day-7 browser harness rather than inventing a
-    // filtered execution shape. That harness owns the deterministic API/RPC/
-    // wallet fixtures and includes transaction-recovery.spec.ts. Day 9 adds a
-    // parent byte snapshot so canonical deployment state is restored even if a
-    // nested browser runner leaves its fixture behind.
+    // Task 4 intentionally builds the current web release in production mode.
+    // Bread's CSP is mode-dependent, so a subsequent `next dev` must not reuse
+    // that generated `.next` tree. Reset only the generated build artifact,
+    // then consume the canonical Day-7 browser harness unchanged.
+    await rm(webBuildPath, { recursive: true, force: true });
     evidence = execute(
-      'canonical Day-7 Playwright harness including apps/web/e2e/specs/transaction-recovery.spec.ts; Day-9 parent-owned manifest restoration',
+      'canonical Day-7 Playwright harness including apps/web/e2e/specs/transaction-recovery.spec.ts after generated .next reset; Day-9 parent-owned manifest restoration',
       'pnpm',
       ['--filter', '@bread/web', 'test:e2e'],
       { cwd: repoRoot, timeout: 600_000 },
