@@ -3,7 +3,7 @@ import type { TransactionState } from '../lib/transactions/state';
 const STATUS_COPY = {
   IDLE: 'Ready to review.',
   VALIDATING: 'Validating wallet and network…',
-  PREPARING: 'Refreshing current trade state and simulating…',
+  PREPARING: 'Refreshing current onchain state and simulating…',
   AWAITING_SIGNATURE: 'Awaiting wallet signature…',
   SUBMITTED: 'Submitted. Transaction hash saved for recovery.',
   CONFIRMING: 'Waiting for onchain confirmation…',
