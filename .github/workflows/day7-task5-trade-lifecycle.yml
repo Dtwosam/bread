@@ -22,11 +22,13 @@ on:
       - 'tests/day7/token-decimals.test.ts'
       - 'tests/day7/transaction-recovery.test.ts'
       - 'tests/day7/wallet-runtime.test.ts'
+      - 'tests/day7/trade-allowance-simulation.test.ts'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task5-trade-lifecycle-handoff.md'
   push:
     branches:
       - 'agent/day7-task5-trade-lifecycle'
+      - 'agent/day7-post-task5-allowance-simulation-repair'
 
 permissions:
   contents: read
@@ -56,3 +58,4 @@ jobs:
           tests/day7/token-decimals.test.ts
           tests/day7/transaction-recovery.test.ts
           tests/day7/wallet-runtime.test.ts
+          tests/day7/trade-allowance-simulation.test.ts
