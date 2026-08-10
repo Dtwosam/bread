@@ -1,3 +1,8 @@
+import type { PublicClient } from 'viem';
+
+import type { Address } from '../../types/src/index.js';
+import { breadAbiRegistry } from './abi/generated.js';
+
 const BPS_NUMBER = 10_000;
 const BPS = BigInt(BPS_NUMBER);
 
@@ -122,6 +127,69 @@ function buyCharges(spent: bigint, snapshot: TradeReviewSnapshot) {
   const openingTax = floorBps(quoteAfterStandardCharges, snapshot.openingTaxBps);
   const netCurveInput = quoteAfterStandardCharges - openingTax;
   return { baseFee, creatorTax, openingTax, netCurveInput } as const;
+}
+
+function canonicalBigInt(label: string, value: unknown): bigint {
+  if (typeof value === 'bigint') return value;
+  if (typeof value === 'number' && Number.isSafeInteger(value)) return BigInt(value);
+  throw new Error(`Invalid canonical ${label} value.`);
+}
+
+function canonicalBps(label: string, value: unknown): number {
+  const numeric = Number(canonicalBigInt(label, value));
+  requireBps(label, numeric);
+  return numeric;
+}
+
+/**
+ * Reads transaction-critical trade inputs from the canonical curve immediately
+ * before review/signing. The browser may display indexed data for the page,
+ * but it never treats that projection as financial transaction authority.
+ */
+export async function readTradeReviewSnapshot(
+  client: PublicClient,
+  curve: Address,
+): Promise<TradeReviewSnapshot> {
+  const [reserves, reservedTokens, tradeFeeBps, creatorTaxBps, openingTaxBps] = await Promise.all([
+    client.readContract({
+      address: curve,
+      abi: breadAbiRegistry.curve,
+      functionName: 'getReserves',
+    } as never),
+    client.readContract({
+      address: curve,
+      abi: breadAbiRegistry.curve,
+      functionName: 'reservedTokens',
+    } as never),
+    client.readContract({
+      address: curve,
+      abi: breadAbiRegistry.curve,
+      functionName: 'tradeFeeBps',
+    } as never),
+    client.readContract({
+      address: curve,
+      abi: breadAbiRegistry.curve,
+      functionName: 'creatorTaxBps',
+    } as never),
+    client.readContract({
+      address: curve,
+      abi: breadAbiRegistry.curve,
+      functionName: 'currentSnipeTaxBps',
+    } as never),
+  ]);
+
+  if (!Array.isArray(reserves) || reserves.length < 2) {
+    throw new Error('Invalid canonical curve reserve snapshot.');
+  }
+
+  return {
+    quoteReserve: canonicalBigInt('quote reserve', reserves[0]),
+    tokenReserve: canonicalBigInt('token reserve', reserves[1]),
+    reservedTokens: canonicalBigInt('reserved tokens', reservedTokens),
+    tradeFeeBps: canonicalBps('Trade fee', tradeFeeBps),
+    creatorTaxBps: canonicalBps('Creator tax', creatorTaxBps),
+    openingTaxBps: canonicalBps('Opening tax', openingTaxBps),
+  };
 }
 
 export function estimateBuyTradeReview({
