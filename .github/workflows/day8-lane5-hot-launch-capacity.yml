@@ -43,58 +43,86 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Start exact Bread development infrastructure
         run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
-      - name: Verify PostgreSQL and Redis
+      - name: Verify PostgreSQL, Redis and runner capacity envelope
         run: |
           docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
           test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
           echo "open_file_limit=$(ulimit -n)"
-      - name: Start isolated Bread API capacity server
+          echo "logical_cpus=$(nproc)"
+      - name: Start four stateless Bread API workers
         env:
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
           BREAD_REDIS_URL: redis://127.0.0.1:6379
-          BREAD_DAY8_SERVER_PORT: '3108'
-          BREAD_DAY8_HEAD_READS_FILE: /tmp/bread-day8-head-reads
+          BREAD_DAY8_SCHEMA: day8_load_cluster
         run: |
-          rm -f /tmp/day8-load-server.log /tmp/day8-load-server.pid /tmp/bread-day8-head-reads
-          pnpm exec tsx scripts/load/day8-hot-launch-server.mts >/tmp/day8-load-server.log 2>&1 &
-          echo "$!" >/tmp/day8-load-server.pid
+          rm -f /tmp/day8-load-server-*.log /tmp/day8-load-server-*.pid /tmp/bread-day8-head-reads-*
+
+          BREAD_DAY8_SERVER_PORT=3108 \
+          BREAD_DAY8_SEED_OWNER=1 \
+          BREAD_DAY8_HEAD_READS_FILE=/tmp/bread-day8-head-reads-3108 \
+          pnpm exec tsx scripts/load/day8-hot-launch-server.mts >/tmp/day8-load-server-3108.log 2>&1 &
+          echo "$!" >/tmp/day8-load-server-3108.pid
+
           for _ in $(seq 1 60); do
-            if grep -q 'DAY8_LOAD_SERVER_READY' /tmp/day8-load-server.log; then
-              cat /tmp/day8-load-server.log
-              exit 0
-            fi
-            if ! kill -0 "$(cat /tmp/day8-load-server.pid)" 2>/dev/null; then
-              cat /tmp/day8-load-server.log
+            if grep -q 'DAY8_LOAD_SERVER_READY' /tmp/day8-load-server-3108.log; then break; fi
+            if ! kill -0 "$(cat /tmp/day8-load-server-3108.pid)" 2>/dev/null; then
+              cat /tmp/day8-load-server-3108.log
               exit 1
             fi
             sleep 1
           done
-          cat /tmp/day8-load-server.log
-          exit 1
-      - name: Run integrated 10k preconnected hot-launch capacity proof
+          grep -q 'DAY8_LOAD_SERVER_READY' /tmp/day8-load-server-3108.log || { cat /tmp/day8-load-server-3108.log; exit 1; }
+
+          for port in 3109 3110 3111; do
+            BREAD_DAY8_SERVER_PORT="$port" \
+            BREAD_DAY8_SEED_OWNER=0 \
+            BREAD_DAY8_HEAD_READS_FILE="/tmp/bread-day8-head-reads-$port" \
+            pnpm exec tsx scripts/load/day8-hot-launch-server.mts >"/tmp/day8-load-server-$port.log" 2>&1 &
+            echo "$!" >"/tmp/day8-load-server-$port.pid"
+          done
+
+          for port in 3109 3110 3111; do
+            for _ in $(seq 1 60); do
+              if grep -q 'DAY8_LOAD_SERVER_READY' "/tmp/day8-load-server-$port.log"; then break; fi
+              if ! kill -0 "$(cat /tmp/day8-load-server-$port.pid)" 2>/dev/null; then
+                cat "/tmp/day8-load-server-$port.log"
+                exit 1
+              fi
+              sleep 1
+            done
+            grep -q 'DAY8_LOAD_SERVER_READY' "/tmp/day8-load-server-$port.log" || { cat "/tmp/day8-load-server-$port.log"; exit 1; }
+          done
+
+          cat /tmp/day8-load-server-3108.log
+          cat /tmp/day8-load-server-3109.log
+          cat /tmp/day8-load-server-3110.log
+          cat /tmp/day8-load-server-3111.log
+      - name: Run integrated 10k horizontally scaled hot-launch capacity proof
         env:
-          BREAD_DAY8_ORIGIN: http://127.0.0.1:3108
-          BREAD_DAY8_HEAD_READS_FILE: /tmp/bread-day8-head-reads
+          BREAD_DAY8_ORIGINS: http://127.0.0.1:3108,http://127.0.0.1:3109,http://127.0.0.1:3110,http://127.0.0.1:3111
+          BREAD_DAY8_HEAD_READS_FILES: /tmp/bread-day8-head-reads-3108,/tmp/bread-day8-head-reads-3109,/tmp/bread-day8-head-reads-3110,/tmp/bread-day8-head-reads-3111
           BREAD_DAY8_TOKEN_CONCURRENCY: '10000'
           BREAD_DAY8_TOKEN_REQUESTS: '10000'
           BREAD_DAY8_FEED_CONCURRENCY: '1000'
           BREAD_DAY8_FEED_REQUESTS: '5000'
           BREAD_DAY8_CONNECT_CONCURRENCY: '500'
         run: pnpm exec tsx scripts/load/day8-hot-launch.mts
-      - name: Stop isolated capacity server
+      - name: Stop stateless capacity workers
         if: always()
         run: |
-          if test -f /tmp/day8-load-server.pid; then
-            pid="$(cat /tmp/day8-load-server.pid)"
-            if kill -0 "$pid" 2>/dev/null; then
-              kill -TERM "$pid"
-              for _ in $(seq 1 30); do
-                if ! kill -0 "$pid" 2>/dev/null; then break; fi
-                sleep 1
-              done
+          for port in 3111 3110 3109 3108; do
+            if test -f "/tmp/day8-load-server-$port.pid"; then
+              pid="$(cat /tmp/day8-load-server-$port.pid)"
+              if kill -0 "$pid" 2>/dev/null; then
+                kill -TERM "$pid"
+                for _ in $(seq 1 30); do
+                  if ! kill -0 "$pid" 2>/dev/null; then break; fi
+                  sleep 1
+                done
+              fi
             fi
-          fi
-          cat /tmp/day8-load-server.log 2>/dev/null || true
+            cat "/tmp/day8-load-server-$port.log" 2>/dev/null || true
+          done
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
