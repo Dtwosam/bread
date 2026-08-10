@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import type {
+  IndexedResponse,
   IndexedTokenDetail,
   IndexedTokenHolders,
   IndexedTokenTrade,
@@ -68,17 +69,16 @@ export function TokenTabs({ token }: Readonly<{ token: IndexedTokenDetail }>) {
 function TradesPanel({
   query,
 }: Readonly<{
-  query: ReturnType<typeof useQuery<Awaited<ReturnType<ReturnType<typeof createBreadApiClient>['getTrades']>>>>;
+  query: UseQueryResult<IndexedResponse<readonly IndexedTokenTrade[]>, Error>;
 }>) {
   if (query.isPending) return <p className="bread-token-note">Loading trades…</p>;
   if (query.isError) return <p className="bread-inline-error">Trades are unavailable right now.</p>;
 
-  const response = query.data as Awaited<ReturnType<ReturnType<typeof createBreadApiClient>['getTrades']>>;
-  const rows = response.data as readonly IndexedTokenTrade[];
+  const response = query.data;
   return (
     <>
       <FreshnessBanner meta={response.meta} />
-      {rows.length === 0 ? (
+      {response.data.length === 0 ? (
         <p className="bread-token-note">No indexed trades yet.</p>
       ) : (
         <div className="bread-token-table" role="table" aria-label="Recent token trades">
@@ -88,7 +88,7 @@ function TradesPanel({
             <span role="columnheader">Tokens</span>
             <span role="columnheader">Trader</span>
           </div>
-          {rows.map((trade) => (
+          {response.data.map((trade) => (
             <div className="bread-token-table__row" role="row" key={`${trade.transactionHash}:${trade.logIndex}`}>
               <strong role="cell">{trade.side}</strong>
               <span role="cell">{formatUsdcBaseUnits(trade.quoteAmount)}</span>
@@ -105,23 +105,22 @@ function TradesPanel({
 function HoldersPanel({
   query,
 }: Readonly<{
-  query: ReturnType<typeof useQuery<Awaited<ReturnType<ReturnType<typeof createBreadApiClient>['getHolders']>>>>;
+  query: UseQueryResult<IndexedResponse<IndexedTokenHolders>, Error>;
 }>) {
   if (query.isPending) return <p className="bread-token-note">Loading holders…</p>;
   if (query.isError) return <p className="bread-inline-error">Holders are unavailable right now.</p>;
 
-  const response = query.data as Awaited<ReturnType<ReturnType<typeof createBreadApiClient>['getHolders']>>;
-  const data = response.data as IndexedTokenHolders;
+  const response = query.data;
   return (
     <>
       <FreshnessBanner meta={response.meta} />
       <div className="bread-token-holder-summary">
         <span>Indexed holders</span>
-        <strong>{data.concentration.holderCount}</strong>
+        <strong>{response.data.concentration.holderCount}</strong>
         <span>Top 10 non-protocol balance</span>
-        <strong>{data.concentration.top10NonProtocolBalance}</strong>
+        <strong>{response.data.concentration.top10NonProtocolBalance}</strong>
       </div>
-      {data.holders.length === 0 ? (
+      {response.data.holders.length === 0 ? (
         <p className="bread-token-note">No indexed holders yet.</p>
       ) : (
         <div className="bread-token-table" role="table" aria-label="Token holders">
@@ -130,7 +129,7 @@ function HoldersPanel({
             <span role="columnheader">Holding</span>
             <span role="columnheader">Protocol</span>
           </div>
-          {data.holders.map((holder) => (
+          {response.data.holders.map((holder) => (
             <div className="bread-token-table__row bread-token-table__row--holders" role="row" key={holder.walletAddress}>
               <code role="cell" className="bread-technical">{holder.walletAddress}</code>
               <span role="cell">{holder.balance}</span>
