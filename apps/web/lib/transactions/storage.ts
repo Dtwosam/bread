@@ -1,10 +1,28 @@
-import type { SubmittedTransactionRecord } from './state.js';
+import type { SubmittedTransactionRecord, TransactionAction } from './state.js';
 
 const STORAGE_KEY = 'bread:submitted-transactions:v1';
 const MAX_RECORDS = 20;
 const RECOVERABLE = new Set<SubmittedTransactionRecord['status']>(['SUBMITTED', 'CONFIRMING', 'UNKNOWN']);
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+
+function isTradeAction(action: unknown): action is Extract<TransactionAction, 'BUY' | 'SELL'> {
+  return action === 'BUY' || action === 'SELL';
+}
+
+function isLaunchAction(action: unknown): action is Extract<TransactionAction, 'LAUNCH' | 'LAUNCH_AND_BUY'> {
+  return action === 'LAUNCH' || action === 'LAUNCH_AND_BUY';
+}
+
+function hasValidSubject(record: Record<string, unknown>): boolean {
+  if (isTradeAction(record.action)) {
+    return typeof record.tokenAddress === 'string' && ADDRESS.test(record.tokenAddress);
+  }
+  if (isLaunchAction(record.action)) {
+    return typeof record.launchIntentId === 'string' && record.launchIntentId.trim().length > 0;
+  }
+  return false;
+}
 
 function isRecord(value: unknown): value is SubmittedTransactionRecord {
   if (!value || typeof value !== 'object') return false;
@@ -13,9 +31,8 @@ function isRecord(value: unknown): value is SubmittedTransactionRecord {
     Number.isInteger(record.chainId) &&
     typeof record.hash === 'string' &&
     HASH.test(record.hash) &&
-    (record.action === 'BUY' || record.action === 'SELL') &&
-    typeof record.tokenAddress === 'string' &&
-    ADDRESS.test(record.tokenAddress) &&
+    (isTradeAction(record.action) || isLaunchAction(record.action)) &&
+    hasValidSubject(record) &&
     typeof record.submittedAt === 'string' &&
     !Number.isNaN(Date.parse(record.submittedAt)) &&
     typeof record.status === 'string'
@@ -46,9 +63,14 @@ export function persistSubmittedTransaction(
   writeAll(storage, [...existing, record]);
 }
 
-export function loadRecoverableTransactions(storage: Storage): SubmittedTransactionRecord[] {
+export function loadRecoverableTransactions(
+  storage: Storage,
+  options?: Readonly<{ actions?: readonly TransactionAction[] }>,
+): SubmittedTransactionRecord[] {
+  const actions = options?.actions === undefined ? null : new Set(options.actions);
   return readAll(storage)
     .filter((record) => RECOVERABLE.has(record.status))
+    .filter((record) => actions === null || actions.has(record.action))
     .sort((left, right) => left.submittedAt.localeCompare(right.submittedAt));
 }
 
