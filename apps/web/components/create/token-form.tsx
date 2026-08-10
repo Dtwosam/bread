@@ -1,6 +1,6 @@
 'use client';
 
-import type { FormEvent } from 'react';
+import { useId, type FormEvent } from 'react';
 
 export type CreateTokenDraft = Readonly<{
   image: string;
@@ -31,14 +31,18 @@ export const EMPTY_CREATE_TOKEN_DRAFT: CreateTokenDraft = {
 export function TokenForm({
   draft,
   disabled = false,
+  error = null,
   onChange,
   onReview,
 }: Readonly<{
   draft: CreateTokenDraft;
   disabled?: boolean;
+  error?: string | null;
   onChange: (draft: CreateTokenDraft) => void;
   onReview: () => void;
 }>) {
+  const errorId = useId();
+
   function update<K extends keyof CreateTokenDraft>(key: K, value: CreateTokenDraft[K]) {
     onChange({ ...draft, [key]: value });
   }
@@ -49,7 +53,11 @@ export function TokenForm({
   }
 
   return (
-    <form className="bread-create-form" onSubmit={submit}>
+    <form
+      className="bread-create-form"
+      aria-describedby={error ? errorId : undefined}
+      onSubmit={submit}
+    >
       <header className="bread-create-form__heading">
         <p className="bread-create-eyebrow">Create</p>
         <h1>Create a token</h1>
@@ -152,6 +160,8 @@ export function TokenForm({
           onChange={(event) => update('initialBuyUsdc', event.target.value)}
         />
       </label>
+
+      {error ? <p id={errorId} className="bread-create-error" role="alert">{error}</p> : null}
 
       <button className="bread-create-primary-action" type="submit" disabled={disabled}>
         Review
