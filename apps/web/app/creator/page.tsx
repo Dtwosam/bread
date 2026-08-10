@@ -1,32 +1,44 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
 
 import type { IndexedCreatorOverview } from '../../../../packages/types/src/index';
 import { Button, EmptyState, ErrorState, Skeleton } from '@bread/ui';
 import { ClaimPanel } from '../../components/creator/claim-panel';
 import { FreshnessBanner } from '../../components/freshness-banner';
+import { TransactionStatus } from '../../components/transaction-status';
 import { useTradeRuntime } from '../../components/trade/trade-runtime';
 import { createBreadApiClient } from '../../lib/api/client';
 import { breadQueryKeys } from '../../lib/api/queries';
-import { readClaimReview, type ClaimReview } from '../../lib/transactions/claim-controller';
+import {
+  executeClaimLifecycle,
+  readClaimReview,
+  recoverClaimTransactions,
+  type ClaimReview,
+} from '../../lib/transactions/claim-controller';
+import { canSubmitTransactionAction, type TransactionState } from '../../lib/transactions/state';
 
 type Address = `0x${string}`;
 
 export default function CreatorPage() {
   const runtime = useTradeRuntime();
   const api = useMemo(() => createBreadApiClient(), []);
+  const queryClient = useQueryClient();
   const [account, setAccount] = useState<Address | null>(null);
   const [claimReview, setClaimReview] = useState<ClaimReview | null>(null);
+  const [claimState, setClaimState] = useState<TransactionState | null>(null);
   const [claimBusy, setClaimBusy] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const recoveryKey = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
     setClaimReview(null);
+    setClaimState(null);
+    recoveryKey.current = null;
     if (runtime?.connectionStatus !== 'READY' || !runtime.wallet) {
       setAccount(null);
       return () => { active = false; };
@@ -42,6 +54,42 @@ export default function CreatorPage() {
     queryFn: () => api.getCreator<IndexedCreatorOverview>(account as Address),
     enabled: account !== null && runtime?.connectionStatus === 'READY',
   });
+
+  useEffect(() => {
+    if (
+      !runtime ||
+      runtime.connectionStatus !== 'READY' ||
+      !runtime.protocolContext ||
+      !runtime.storage ||
+      !account
+    ) return;
+
+    const key = `${runtime.protocolContext.chainId}:${account.toLowerCase()}`;
+    if (recoveryKey.current === key) return;
+    recoveryKey.current = key;
+    let active = true;
+
+    void recoverClaimTransactions({
+      client: runtime.client,
+      storage: runtime.storage,
+      chainId: runtime.protocolContext.chainId,
+      recipient: account,
+      onStateChange: (state) => {
+        if (active) setClaimState(state);
+      },
+      onConfirmed: async () => {
+        if (!active) return;
+        setClaimReview(null);
+        await queryClient.invalidateQueries({ queryKey: breadQueryKeys.creator(account) });
+      },
+    }).catch((error) => {
+      if (!active) return;
+      recoveryKey.current = null;
+      setClaimError(error instanceof Error ? error.message : 'Claim recovery failed.');
+    });
+
+    return () => { active = false; };
+  }, [account, queryClient, runtime]);
 
   if (!runtime || runtime.connectionStatus === 'DISCONNECTED') {
     return (
@@ -80,10 +128,15 @@ export default function CreatorPage() {
   }
 
   const creator = query.data.data;
+  const claimUnlocked = claimState === null || canSubmitTransactionAction(claimState);
 
   async function reviewClaim() {
     if (!runtime?.protocolContext || !account) {
       setClaimError('The canonical FeeEscrow deployment is unavailable in the current network manifest.');
+      return;
+    }
+    if (!claimUnlocked) {
+      setClaimError('The previous claim is still unresolved. Bread will not prepare a duplicate claim.');
       return;
     }
     setClaimBusy(true);
@@ -92,6 +145,46 @@ export default function CreatorPage() {
       setClaimReview(await readClaimReview(runtime.client, runtime.protocolContext, account));
     } catch (error) {
       setClaimError(error instanceof Error ? error.message : 'Claim review failed.');
+    } finally {
+      setClaimBusy(false);
+    }
+  }
+
+  async function claimUsdc() {
+    if (!runtime.protocolContext || !runtime.storage || !runtime.wallet || !account || !claimReview) {
+      setClaimError('Review the current onchain claim before signing.');
+      return;
+    }
+    if (!claimUnlocked) {
+      setClaimError('The previous claim is still unresolved. Bread will not submit a duplicate claim.');
+      return;
+    }
+
+    setClaimBusy(true);
+    setClaimError(null);
+    try {
+      const result = await executeClaimLifecycle({
+        client: runtime.client,
+        wallet: runtime.wallet,
+        storage: runtime.storage,
+        context: runtime.protocolContext,
+        approved: claimReview,
+        onStateChange: setClaimState,
+        onConfirmed: async () => {
+          await queryClient.invalidateQueries({ queryKey: breadQueryKeys.creator(account) });
+        },
+      });
+      setClaimState(result.state);
+      if (result.reviewChanged) {
+        setClaimReview(result.review);
+        setClaimError('Claimable USDC changed onchain. Review the updated amount before signing.');
+      } else if (result.state.status === 'CONFIRMED') {
+        setClaimReview(null);
+      } else {
+        setClaimReview(result.review);
+      }
+    } catch (error) {
+      setClaimError(error instanceof Error ? error.message : 'Claim request failed.');
     } finally {
       setClaimBusy(false);
     }
@@ -130,9 +223,13 @@ export default function CreatorPage() {
         indexedClaimable={creator.fees.indexedClaimable}
         review={claimReview}
         busy={claimBusy}
+        locked={!claimUnlocked}
         error={claimError}
         onReview={() => void reviewClaim()}
+        onClaim={() => void claimUsdc()}
       />
+
+      {claimState ? <TransactionStatus state={claimState} /> : null}
 
       <section aria-label="Created launches">
         <h2>Created launches</h2>
