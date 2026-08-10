@@ -2,6 +2,10 @@ import {
   simulatePreparedTransaction,
 } from '../../../../packages/protocol-sdk/src/builders';
 import {
+  createBreadStackAbiBinding,
+  decodeBreadLog,
+} from '../../../../packages/protocol-sdk/src/events';
+import {
   prepareCanonicalLaunchReview,
   readLaunchReviewSnapshot,
   type CanonicalLaunchCreatorInput,
@@ -20,20 +24,29 @@ import {
   type TransactionState,
 } from './state';
 import {
+  loadRecoverableTransactions,
   persistSubmittedTransaction,
   updatePersistedTransactionStatus,
 } from './storage';
 
 type Address = `0x${string}`;
 type TransactionHash = `0x${string}`;
+type Hex = `0x${string}`;
 type LaunchPublicClient = Parameters<typeof readLaunchReviewSnapshot>[0];
 
 const TRANSACTION_HASH = /^0x[0-9a-fA-F]{64}$/;
+const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
 export type LaunchLifecycleResult = Readonly<{
   state: TransactionState;
   prepared?: PreparedCanonicalLaunchReview;
   reviewChanged: boolean;
+  tokenAddress?: Address;
+}>;
+
+export type LaunchRecoveryResult = Readonly<{
+  state: TransactionState;
+  tokenAddress?: Address;
 }>;
 
 function emit(
@@ -208,6 +221,65 @@ function reviewChangedResult(
   };
 }
 
+function canonicalAddress(value: unknown): Address | null {
+  return typeof value === 'string' && ADDRESS.test(value) ? value as Address : null;
+}
+
+function decodedLaunchCreatedToken(log: unknown, context: ProtocolContext): Address | null {
+  if (!log || typeof log !== 'object') return null;
+  const candidate = log as Record<string, unknown>;
+  const logAddress = canonicalAddress(candidate.address);
+  if (!logAddress || logAddress.toLowerCase() !== context.addresses.factory.toLowerCase()) return null;
+
+  if (candidate.eventName === 'LaunchCreated' && candidate.args && typeof candidate.args === 'object') {
+    return canonicalAddress((candidate.args as Record<string, unknown>).token);
+  }
+
+  const topics = candidate.topics;
+  const data = candidate.data;
+  if (!Array.isArray(topics) || topics.length === 0 || !topics.every((topic) => typeof topic === 'string')) return null;
+  if (typeof data !== 'string' || !data.startsWith('0x')) return null;
+
+  try {
+    const decoded = decodeBreadLog({
+      binding: createBreadStackAbiBinding(context.stackVersion),
+      stackVersion: context.stackVersion,
+      role: 'FACTORY',
+      topics: topics as Hex[],
+      data: data as Hex,
+    });
+    if (decoded.eventName !== 'LaunchCreated' || decoded.disposition !== 'INDEXED_CANONICAL') return null;
+    return canonicalAddress(decoded.args.token);
+  } catch {
+    return null;
+  }
+}
+
+export function extractLaunchCreatedToken(
+  receipt: Readonly<{ logs?: readonly unknown[] }>,
+  context: ProtocolContext,
+): Address {
+  for (const log of receipt.logs ?? []) {
+    const token = decodedLaunchCreatedToken(log, context);
+    if (token) return token;
+  }
+  throw new Error('Canonical Factory LaunchCreated log is missing from the confirmed launch receipt.');
+}
+
+function confirmedRecord(record: SubmittedTransactionRecord, tokenAddress: Address): SubmittedTransactionRecord {
+  return { ...record, tokenAddress, status: 'CONFIRMED' };
+}
+
+function identityUnknownState(
+  record: SubmittedTransactionRecord,
+  error: unknown,
+): TransactionState {
+  return {
+    ...stateFromRecord(record, 'UNKNOWN'),
+    error: errorMessage(error),
+  };
+}
+
 export async function executeLaunchLifecycle({
   client,
   wallet,
@@ -300,13 +372,6 @@ export async function executeLaunchLifecycle({
   try {
     transactionHash = await wallet.sendPreparedTransaction(prepared.transaction);
   } catch (error) {
-    if (isWalletUserRejection(error)) {
-      state = emit(
-        transitionTransactionState(state, { type: 'REJECT', error: errorMessage(error) }),
-        onStateChange,
-      );
-      return { state, prepared, reviewChanged: false };
-    }
     state = emit(
       transitionTransactionState(state, { type: 'REJECT', error: errorMessage(error) }),
       onStateChange,
@@ -360,8 +425,90 @@ export async function executeLaunchLifecycle({
     return { state, prepared, reviewChanged: false };
   }
 
+  let tokenAddress: Address;
+  try {
+    tokenAddress = extractLaunchCreatedToken(receipt as unknown as { logs?: readonly unknown[] }, context);
+  } catch (error) {
+    updatePersistedTransactionStatus(storage, currentRecord.hash, 'UNKNOWN');
+    state = emit(identityUnknownState(currentRecord, error), onStateChange);
+    return { state, prepared, reviewChanged: false };
+  }
+
+  const completed = confirmedRecord(currentRecord, tokenAddress);
   updatePersistedTransactionStatus(storage, currentRecord.hash, 'CONFIRMED');
-  state = emit(stateFromRecord(currentRecord, 'CONFIRMED'), onStateChange);
-  await onConfirmed?.({ ...currentRecord, status: 'CONFIRMED' });
-  return { state, prepared, reviewChanged: false };
+  state = emit(stateFromRecord(completed, 'CONFIRMED'), onStateChange);
+  await onConfirmed?.(completed);
+  return { state, prepared, reviewChanged: false, tokenAddress };
+}
+
+export async function recoverLaunchTransactions({
+  client,
+  storage,
+  context,
+  onStateChange,
+  onConfirmed,
+}: Readonly<{
+  client: Pick<LaunchPublicClient, 'waitForTransactionReceipt'>;
+  storage: Storage;
+  context: ProtocolContext;
+  onStateChange?: (state: TransactionState) => void;
+  onConfirmed?: (record: SubmittedTransactionRecord) => Promise<void> | void;
+}>): Promise<LaunchRecoveryResult[]> {
+  const records = loadRecoverableTransactions(storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] })
+    .filter((record) => record.chainId === context.chainId);
+  const recovered: LaunchRecoveryResult[] = [];
+
+  for (const originalRecord of records) {
+    let currentRecord: SubmittedTransactionRecord = { ...originalRecord, status: 'CONFIRMING' };
+    updatePersistedTransactionStatus(storage, originalRecord.hash, 'CONFIRMING');
+    let state = emit(stateFromRecord(currentRecord, 'CONFIRMING'), onStateChange);
+
+    let receipt: Awaited<ReturnType<LaunchPublicClient['waitForTransactionReceipt']>>;
+    try {
+      receipt = await client.waitForTransactionReceipt({
+        hash: currentRecord.hash,
+        onReplaced: (replacement) => {
+          const nextHash = replacementHash(replacement);
+          if (!nextHash || nextHash === currentRecord.hash) return;
+          updatePersistedTransactionStatus(storage, currentRecord.hash, 'REPLACED');
+          currentRecord = { ...currentRecord, hash: nextHash, status: 'CONFIRMING' };
+          persistSubmittedTransaction(storage, currentRecord);
+          state = emit(stateFromRecord(currentRecord, 'REPLACED'), onStateChange);
+        },
+      } as never);
+    } catch {
+      updatePersistedTransactionStatus(storage, currentRecord.hash, 'UNKNOWN');
+      state = emit(stateFromRecord(currentRecord, 'UNKNOWN'), onStateChange);
+      recovered.push({ state });
+      continue;
+    }
+
+    if (receipt.status === 'reverted') {
+      updatePersistedTransactionStatus(storage, currentRecord.hash, 'REVERTED');
+      state = emit(
+        { ...stateFromRecord(currentRecord, 'REVERTED'), error: 'Launch transaction reverted onchain.' },
+        onStateChange,
+      );
+      recovered.push({ state });
+      continue;
+    }
+
+    let tokenAddress: Address;
+    try {
+      tokenAddress = extractLaunchCreatedToken(receipt as unknown as { logs?: readonly unknown[] }, context);
+    } catch (error) {
+      updatePersistedTransactionStatus(storage, currentRecord.hash, 'UNKNOWN');
+      state = emit(identityUnknownState(currentRecord, error), onStateChange);
+      recovered.push({ state });
+      continue;
+    }
+
+    const completed = confirmedRecord(currentRecord, tokenAddress);
+    updatePersistedTransactionStatus(storage, currentRecord.hash, 'CONFIRMED');
+    state = emit(stateFromRecord(completed, 'CONFIRMED'), onStateChange);
+    await onConfirmed?.(completed);
+    recovered.push({ state, tokenAddress });
+  }
+
+  return recovered;
 }
