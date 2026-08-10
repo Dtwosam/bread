@@ -53,9 +53,7 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
         </div>
         <div>
           <dt>Adapter</dt>
-          <dd>
-            {token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'}
-          </dd>
+          <dd>{token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'}</dd>
         </div>
         <div>
           <dt>Pool</dt>
@@ -67,7 +65,7 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
         </div>
       </dl>
       <p className="bread-token-note">
-        Graduation and lock labels reflect indexed protocol events. They are status evidence, not a claim that trading is risk-free.
+        Graduation and lock labels reflect indexed protocol events. They are status evidence, not a protocol security assessment.
       </p>
     </section>
   );
