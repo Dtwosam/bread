@@ -47,11 +47,34 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   const [transactionState, setTransactionState] = useState<TransactionState>(() =>
     createTransactionState('BUY', tokenAddress),
   );
+  const recoveredTransactionState = useMemo(
+    () =>
+      runtime?.recoveredTradeStates.find(
+        (state) =>
+          (state.action === 'BUY' || state.action === 'SELL') &&
+          state.tokenAddress?.toLowerCase() === tokenAddress.toLowerCase(),
+      ) ?? null,
+    [runtime?.recoveredTradeStates, tokenAddress],
+  );
 
   const transactionBusy = !canSubmitTransactionAction(transactionState);
   const busy = transactionBusy || reviewBusy;
   const connectionStatus: TradeConnectionStatus = runtime?.connectionStatus ?? 'DISCONNECTED';
   const walletReady = runtime !== null && connectionStatus === 'READY' && runtime.wallet !== null;
+
+  useEffect(() => {
+    if (!recoveredTransactionState) return;
+    const sameRecoveredTransaction =
+      transactionState.hash !== undefined && transactionState.hash === recoveredTransactionState.hash;
+    const adoptLockedRecoveryFromIdle =
+      transactionState.status === 'IDLE' && !canSubmitTransactionAction(recoveredTransactionState);
+    if (!sameRecoveredTransaction && !adoptLockedRecoveryFromIdle) return;
+
+    setAction(recoveredTransactionState.action as TradeAction);
+    setReview(null);
+    setReviewError(null);
+    setTransactionState(recoveredTransactionState);
+  }, [recoveredTransactionState, transactionState.hash, transactionState.status]);
 
   useEffect(() => {
     if (!sheetOpen) return;
