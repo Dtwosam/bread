@@ -32,6 +32,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24.18.0
@@ -40,5 +42,19 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Run service rollback RED/GREEN regression
-        run: pnpm exec vitest run tests/day9/service-rollback-rehearsal.test.ts
+      - name: Start exact Bread development infrastructure
+        run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
+      - name: Verify PostgreSQL and Redis
+        run: |
+          docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
+          test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
+      - name: Run service rollback rehearsal
+        env:
+          BREAD_DB_INTEGRATION: "1"
+          BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
+        run: pnpm exec vitest run tests/day9/service-rollback-rehearsal.test.ts --testTimeout=300000
+      - name: Run root build after rollback
+        run: pnpm build
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose -f infra/docker/compose.yaml down -v
