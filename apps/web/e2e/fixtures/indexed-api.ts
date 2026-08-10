@@ -162,7 +162,7 @@ function curveState(kind: 'ACTIVE' | 'PENDING' | 'GRADUATED'): IndexedTokenDetai
     remainingSellableTokens: graduated ? '0' : '580000000000000000000000000',
     trackedSoldInventory: graduated ? '900000000000000000000000000' : '320000000000000000000000000',
     readyToGraduate: pending || graduated,
-    graduationPhase: graduated ? 'COMPLETED' : pending ? 'RETRYABLE' : 'NOT_READY',
+    graduationPhase: graduated ? 'POOL_CREATED' : 'NOT_GRADUATED',
     poolId: graduated ? `0x${'88'.repeat(32)}` : null,
     graduationAdapter: E2E_GRADUATION_ADAPTER,
     sweptUsdcAmount: graduated ? '1000000000' : null,
@@ -222,7 +222,7 @@ function holders(tokenAddress: string): IndexedTokenHolders {
         balance: '2500000000000000000000000',
         isProtocolAddress: false,
         asOfBlockNumber: '1000',
-        lastEvent: { transactionHash: LAUNCH_TX_HASH, logIndex: 3 },
+        lastEvent: null,
       },
     ],
     concentration: {
@@ -235,119 +235,107 @@ function holders(tokenAddress: string): IndexedTokenHolders {
   };
 }
 
-const portfolio: IndexedPortfolio = {
-  walletAddress: E2E_WALLET,
-  holdings: [
-    {
-      tokenAddress: ACTIVE_TOKEN,
-      name: activeFeed.name,
-      symbol: activeFeed.symbol,
-      balance: '2500000000000000000000000',
-      isProtocolAddress: false,
-      graduationState: 'ACTIVE',
-      price: { status: 'AVAILABLE', source: 'TRACKED_CURVE', numerator: '2500000', denominator: '1000000000000000000' },
-      currentValue: { status: 'AVAILABLE', source: 'TRACKED_CURVE', numerator: '6250000', denominator: '1' },
-      activity: { asOfBlockNumber: '1000', lastEvent: { transactionHash: LAUNCH_TX_HASH, logIndex: 3 } },
+function portfolio(): IndexedPortfolio {
+  return {
+    walletAddress: E2E_WALLET,
+    holdings: [
+      {
+        tokenAddress: ACTIVE_TOKEN,
+        name: 'Bread Twin',
+        symbol: 'TWIN',
+        balance: '2500000000000000000000000',
+        isProtocolAddress: false,
+        graduationState: 'ACTIVE',
+        price: {
+          status: 'AVAILABLE',
+          source: 'TRACKED_CURVE',
+          numerator: '2500000',
+          denominator: '1000000000000000000',
+        },
+        currentValue: {
+          status: 'AVAILABLE',
+          source: 'TRACKED_CURVE',
+          numerator: '6250000000',
+          denominator: '1000000000000000000',
+        },
+        activity: { asOfBlockNumber: '1000', lastEvent: null },
+      },
+    ],
+  };
+}
+
+function creator(): IndexedCreatorOverview {
+  return {
+    address: E2E_WALLET,
+    createdLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
+    feeRecipientLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
+    fees: {
+      credited: '25000000',
+      claimed: '15000000',
+      indexedClaimable: '10000000',
+      onchainAuthoritative: false,
     },
-  ],
-};
+    perLaunchEarnedRevenue: [{ tokenAddress: ACTIVE_TOKEN, credited: '25000000', tradeCount: '140' }],
+    unavailable: { buyback: true, vesting: true },
+  };
+}
 
-const creator: IndexedCreatorOverview = {
-  address: E2E_WALLET,
-  createdLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
-  feeRecipientLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
-  fees: {
-    credited: '25000000',
-    claimed: '15000000',
-    indexedClaimable: '10000000',
-    onchainAuthoritative: false,
-  },
-  perLaunchEarnedRevenue: [{ tokenAddress: ACTIVE_TOKEN, credited: '25000000', tradeCount: '140' }],
-  unavailable: { buyback: true, vesting: true },
-};
+function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknown {
+  const url = new URL(requestUrl);
+  if (url.pathname === '/v1/feed') return envelope(state, [activeFeed, pendingFeed, graduatedFeed]);
+  if (url.pathname === '/v1/search') return envelope(state, searchResults);
+  if (url.pathname === `/v1/portfolio/${E2E_WALLET}`) return envelope(state, portfolio());
+  if (url.pathname === `/v1/creators/${E2E_WALLET}`) return envelope(state, creator());
 
-async function fulfillJson(route: Route, body: unknown, status = 200) {
-  await route.fulfill({
-    status,
-    contentType: 'application/json',
-    body: JSON.stringify(body),
-  });
+  const token = url.pathname.match(/^\/v1\/tokens\/(0x[0-9a-fA-F]{40})(?:\/(trades|holders))?$/);
+  if (!token) return null;
+  const tokenAddress = token[1]?.toLowerCase();
+  const suffix = token[2];
+  if (!tokenAddress) return null;
+  if (suffix === 'trades') return envelope(state, trades);
+  if (suffix === 'holders') return envelope(state, holders(tokenAddress));
+  return tokenDetails.has(tokenAddress) ? envelope(state, tokenDetails.get(tokenAddress)) : null;
 }
 
 export async function installIndexedApiRoutes(page: Page, state: IndexedApiFixtureState): Promise<void> {
-  await page.route('**/v1/**', async (route) => {
+  await page.route('**/v1/**', async (route: Route) => {
     const requestUrl = route.request().url();
     state.requests.push(requestUrl);
-    const url = new URL(requestUrl);
-    const path = url.pathname;
-
     if (state.failReads) {
-      await fulfillJson(route, {
-        error: { code: 'E2E_INDEXER_UNAVAILABLE', message: 'Deterministic indexer failure.', requestId: 'e2e-request' },
-      }, 503);
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'E2E_INDEXER_UNAVAILABLE',
+            message: 'Deterministic Playwright indexer outage.',
+            requestId: 'e2e-indexer-outage',
+          },
+        }),
+      });
       return;
     }
 
-    if (path === '/v1/feed') {
-      const view = url.searchParams.get('view');
-      const data = view === 'graduated'
-        ? [graduatedFeed]
-        : view === 'near-graduation'
-          ? [pendingFeed]
-          : [activeFeed, pendingFeed, graduatedFeed];
-      await fulfillJson(route, envelope(state, data));
+    const body = routePayload(state, requestUrl);
+    if (body === null) {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'TOKEN_NOT_FOUND',
+            message: 'Token is not indexed by the deterministic Playwright fixture.',
+            requestId: 'e2e-token-not-found',
+          },
+        }),
+      });
       return;
     }
 
-    if (path === '/v1/search') {
-      const query = (url.searchParams.get('q') ?? '').toLowerCase();
-      const data = query.includes('twin')
-        ? searchResults
-        : searchResults.filter((result) => result.tokenAddress.toLowerCase() === query);
-      await fulfillJson(route, envelope(state, data));
-      return;
-    }
-
-    const tradeMatch = /^\/v1\/tokens\/(0x[0-9a-fA-F]{40})\/trades$/.exec(path);
-    if (tradeMatch) {
-      await fulfillJson(route, envelope(state, trades));
-      return;
-    }
-
-    const holderMatch = /^\/v1\/tokens\/(0x[0-9a-fA-F]{40})\/holders$/.exec(path);
-    if (holderMatch) {
-      await fulfillJson(route, envelope(state, holders(holderMatch[1].toLowerCase())));
-      return;
-    }
-
-    const tokenMatch = /^\/v1\/tokens\/(0x[0-9a-fA-F]{40})$/.exec(path);
-    if (tokenMatch) {
-      const token = tokenDetails.get(tokenMatch[1].toLowerCase());
-      if (token) {
-        await fulfillJson(route, envelope(state, token));
-      } else {
-        await fulfillJson(route, { error: { code: 'TOKEN_NOT_FOUND', message: 'Token not found.', requestId: 'e2e-request' } }, 404);
-      }
-      return;
-    }
-
-    if (/^\/v1\/portfolio\/0x[0-9a-fA-F]{40}$/.test(path)) {
-      await fulfillJson(route, envelope(state, portfolio));
-      return;
-    }
-
-    if (/^\/v1\/creators\/0x[0-9a-fA-F]{40}$/.test(path)) {
-      await fulfillJson(route, envelope(state, creator));
-      return;
-    }
-
-    if (path === '/v1/status') {
-      await fulfillJson(route, envelope(state, { ok: true, indexedThroughBlock: '1000' }));
-      return;
-    }
-
-    await fulfillJson(route, {
-      error: { code: 'E2E_UNHANDLED_API_ROUTE', message: path, requestId: 'e2e-request' },
-    }, 500);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
   });
 }
