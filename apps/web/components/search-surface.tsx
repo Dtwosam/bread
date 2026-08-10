@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import type { IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button } from '@bread/ui';
@@ -14,6 +14,8 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const inputId = useId();
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const api = useMemo(() => createBreadApiClient(), []);
   const intent = searchIntent(value);
 
@@ -29,10 +31,59 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     enabled: open && intent.kind === 'search',
   });
 
+  function openSearch() {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    setOpen(true);
+  }
+
+  function closeSearch() {
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    if (open) return;
+    const returnTarget = returnFocusRef.current;
+    if (!returnTarget) return;
+    returnFocusRef.current = null;
+    returnTarget.focus();
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true');
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      const focusOutside = !(active instanceof Node) || !dialog.contains(active);
+
+      if (event.shiftKey && (active === first || focusOutside)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || focusOutside)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -40,13 +91,15 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
 
   return (
     <>
-      <Button variant="secondary" className={compact ? 'bread-search-trigger--compact' : undefined} onClick={() => setOpen(true)}>
+      <Button variant="secondary" className={compact ? 'bread-search-trigger--compact' : undefined} onClick={openSearch}>
         Search
       </Button>
 
       {open ? (
-        <div className="bread-search-backdrop" role="presentation" onMouseDown={() => setOpen(false)}>
+        <div className="bread-search-backdrop" role="presentation" onMouseDown={closeSearch}>
           <section
+            ref={dialogRef}
+            tabIndex={-1}
             className="bread-search-dialog"
             role="dialog"
             aria-modal="true"
@@ -58,7 +111,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
                 <h2 id={`${inputId}-title`}>Search Bread</h2>
                 <p>Name, ticker, contract or creator wallet.</p>
               </div>
-              <Button variant="small" ariaLabel="Close search" onClick={() => setOpen(false)}>
+              <Button variant="small" ariaLabel="Close search" onClick={closeSearch}>
                 Close
               </Button>
             </div>
