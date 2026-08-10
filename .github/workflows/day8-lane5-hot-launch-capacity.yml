@@ -97,6 +97,18 @@ jobs:
           cat /tmp/day8-load-server-3109.log
           cat /tmp/day8-load-server-3110.log
           cat /tmp/day8-load-server-3111.log
+      - name: Verify source-defined edge cache eligibility and safety policy
+        run: |
+          hot_token='0x000000000000000000000000000000000000000a'
+          curl -sS -D /tmp/token-headers -o /dev/null "http://127.0.0.1:3108/v1/tokens/$hot_token"
+          curl -sS -D /tmp/feed-headers -o /dev/null 'http://127.0.0.1:3108/v1/feed?view=new&limit=1'
+          curl -sS -D /tmp/status-headers -o /dev/null 'http://127.0.0.1:3108/v1/status'
+          cat /tmp/token-headers
+          cat /tmp/feed-headers
+          cat /tmp/status-headers
+          grep -Eiq '^cache-control: public, max-age=0, s-maxage=1, must-revalidate\r?$' /tmp/token-headers
+          grep -Eiq '^cache-control: public, max-age=0, s-maxage=1, must-revalidate\r?$' /tmp/feed-headers
+          grep -Eiq '^cache-control: no-store\r?$' /tmp/status-headers
       - name: Run integrated 10k horizontally scaled hot-launch capacity proof
         env:
           BREAD_DAY8_ORIGINS: http://127.0.0.1:3108,http://127.0.0.1:3109,http://127.0.0.1:3110,http://127.0.0.1:3111
