@@ -18,8 +18,10 @@ test('deterministic browser fixtures exercise the real app boundaries', async ({
 
   await page.goto('/create');
   await expect(page.getByText('Canonical launch deployment loaded.')).toBeVisible();
-  await page.getByRole('button', { name: 'Connect wallet' }).click();
-  await expect(page.getByRole('button', { name: 'Connect wallet' })).toHaveCount(0);
+  const createMain = page.getByRole('main');
+  const connectWallet = createMain.getByRole('button', { name: 'Connect wallet' });
+  await connectWallet.click();
+  await expect(connectWallet).toHaveCount(0);
 
   const connectedWallet = await walletSnapshot(page);
   expect(connectedWallet.connected).toBe(true);
