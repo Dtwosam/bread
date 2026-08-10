@@ -38,6 +38,7 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
   await trade.getByLabel('Trade amount').fill('10');
   await trade.getByRole('button', { name: 'Review buy' }).click();
 
+  const buyReview = trade.locator('dl.bread-trade-review');
   for (const label of [
     'Expected output',
     'Minimum output',
@@ -47,7 +48,7 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
     'Price impact',
     'Slippage',
   ]) {
-    await expect(trade.getByText(label, { exact: true })).toBeVisible();
+    await expect(buyReview.getByText(label, { exact: true })).toBeVisible();
   }
   await trade.getByRole('button', { name: 'Buy after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
@@ -57,7 +58,8 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
   await setWalletTransactionHashes(page, [SELL_TX_HASH]);
   await trade.getByLabel('Trade amount').fill('1');
   await trade.getByRole('button', { name: 'Review sell' }).click();
-  await expect(trade.getByText('0.00% (sell unaffected)')).toBeVisible();
+  const sellReview = trade.locator('dl.bread-trade-review');
+  await expect(sellReview.getByText('0.00% (sell unaffected)')).toBeVisible();
   await trade.getByRole('button', { name: 'Sell after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
 
