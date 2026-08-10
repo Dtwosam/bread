@@ -32,6 +32,6 @@ export const SELL_TX_HASH = `0x${'33'.repeat(32)}` as `0x${string}`;
 export const CLAIM_TX_HASH = `0x${'44'.repeat(32)}` as `0x${string}`;
 export const APPROVAL_TX_HASH = `0x${'55'.repeat(32)}` as `0x${string}`;
 
-export const FIXTURE_BLOCK_NUMBER = 1_000n;
+export const FIXTURE_BLOCK_NUMBER = BigInt(1_000);
 export const FIXTURE_BLOCK_NUMBER_HEX = '0x3e8';
 export const FIXTURE_TIMESTAMP = '2026-08-10T15:00:00.000Z';
