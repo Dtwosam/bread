@@ -15,7 +15,15 @@ test('deterministic browser fixtures exercise the real app boundaries', async ({
   const initialWallet = await walletSnapshot(page);
   expect(initialWallet.connected).toBe(false);
   expect(initialWallet.chainIdHex).toBe(ARC_TESTNET_CHAIN_ID_HEX);
-  expect(initialWallet.requests.some((request) => request.method === 'eth_accounts')).toBe(true);
+
+  await page.goto('/create');
+  await expect(page.getByText('Canonical launch deployment loaded.')).toBeVisible();
+  await page.getByRole('button', { name: 'Connect wallet' }).click();
+  await expect(page.getByRole('button', { name: 'Connect wallet' })).toHaveCount(0);
+
+  const connectedWallet = await walletSnapshot(page);
+  expect(connectedWallet.connected).toBe(true);
+  expect(connectedWallet.requests.some((request) => request.method === 'eth_requestAccounts')).toBe(true);
 
   const chainId = await page.evaluate(async () => {
     const provider = (window as typeof window & {
