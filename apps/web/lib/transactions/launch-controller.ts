@@ -1,6 +1,4 @@
-import {
-  simulatePreparedTransaction,
-} from '../../../../packages/protocol-sdk/src/builders';
+import { simulatePreparedTransaction } from '../../../../packages/protocol-sdk/src/builders';
 import {
   createBreadStackAbiBinding,
   decodeBreadLog,
@@ -69,9 +67,7 @@ function isWalletUserRejection(error: unknown): boolean {
       candidate.code === 4001 ||
       candidate.code === 'ACTION_REJECTED' ||
       candidate.name === 'UserRejectedRequestError'
-    ) {
-      return true;
-    }
+    ) return true;
     current = candidate.cause;
   }
   return false;
@@ -98,13 +94,6 @@ function preparedFingerprint(prepared: PreparedCanonicalLaunchReview): string {
   }));
 }
 
-function preparedMatches(
-  approved: PreparedCanonicalLaunchReview,
-  current: PreparedCanonicalLaunchReview,
-): boolean {
-  return preparedFingerprint(approved) === preparedFingerprint(current);
-}
-
 function creatorFromApproved(approved: PreparedCanonicalLaunchReview): CanonicalLaunchCreatorInput {
   return {
     name: approved.params.name,
@@ -123,10 +112,6 @@ function actionFor(approved: PreparedCanonicalLaunchReview): LaunchAction {
   return approved.review.initialBuyQuoteIn > BigInt(0) ? 'LAUNCH_AND_BUY' : 'LAUNCH';
 }
 
-function slippageFor(approved: PreparedCanonicalLaunchReview): number {
-  return approved.initialBuyReview?.slippageBps ?? 0;
-}
-
 async function freshPrepared(
   client: LaunchPublicClient,
   context: ProtocolContext,
@@ -138,60 +123,15 @@ async function freshPrepared(
     snapshot,
     creator: creatorFromApproved(approved),
     initialBuyQuoteIn: approved.review.initialBuyQuoteIn,
-    slippageBps: slippageFor(approved),
+    slippageBps: approved.initialBuyReview?.slippageBps ?? 0,
   });
 }
 
-function rejected(
-  action: LaunchAction,
-  launchIntentId: string,
-  error: unknown,
-  onStateChange: ((state: TransactionState) => void) | undefined,
-): LaunchLifecycleResult {
-  const state: TransactionState = {
-    action,
-    launchIntentId,
-    status: 'REJECTED',
-    error: errorMessage(error),
-  };
-  return { state: emit(state, onStateChange), reviewChanged: false };
-}
-
-function reverted(
-  state: TransactionState,
-  error: unknown,
-  onStateChange: ((state: TransactionState) => void) | undefined,
-): LaunchLifecycleResult {
-  const failed: TransactionState = {
-    ...state,
-    status: 'REVERTED',
-    error: errorMessage(error),
-  };
-  return { state: emit(failed, onStateChange), reviewChanged: false };
-}
-
-function unknownAllowance(
-  state: TransactionState,
-  context: ProtocolContext,
-  error: AllowanceConfirmationUnknownError,
-  onStateChange: ((state: TransactionState) => void) | undefined,
-): LaunchLifecycleResult {
-  const unknown: TransactionState = {
-    ...state,
-    status: 'UNKNOWN',
-    chainId: context.chainId,
-    hash: error.hash,
-    error: error.message,
-  };
-  return { state: emit(unknown, onStateChange), reviewChanged: false };
-}
-
-function replacementHash(value: unknown): TransactionHash | null {
-  if (!value || typeof value !== 'object') return null;
-  const transaction = (value as { transaction?: unknown }).transaction;
-  if (!transaction || typeof transaction !== 'object') return null;
-  const hash = (transaction as { hash?: unknown }).hash;
-  return typeof hash === 'string' && TRANSACTION_HASH.test(hash) ? hash as TransactionHash : null;
+function preparedMatches(
+  approved: PreparedCanonicalLaunchReview,
+  current: PreparedCanonicalLaunchReview,
+): boolean {
+  return preparedFingerprint(approved) === preparedFingerprint(current);
 }
 
 function stateFromRecord(
@@ -209,7 +149,31 @@ function stateFromRecord(
   };
 }
 
-function reviewChangedResult(
+function rejected(
+  action: LaunchAction,
+  launchIntentId: string,
+  error: unknown,
+  onStateChange?: (state: TransactionState) => void,
+): LaunchLifecycleResult {
+  const state: TransactionState = {
+    action,
+    launchIntentId,
+    status: 'REJECTED',
+    error: errorMessage(error),
+  };
+  return { state: emit(state, onStateChange), reviewChanged: false };
+}
+
+function reverted(
+  state: TransactionState,
+  error: unknown,
+  onStateChange?: (state: TransactionState) => void,
+): LaunchLifecycleResult {
+  const failed: TransactionState = { ...state, status: 'REVERTED', error: errorMessage(error) };
+  return { state: emit(failed, onStateChange), reviewChanged: false };
+}
+
+function reviewChanged(
   action: LaunchAction,
   launchIntentId: string,
   prepared: PreparedCanonicalLaunchReview,
@@ -219,6 +183,14 @@ function reviewChangedResult(
     prepared,
     reviewChanged: true,
   };
+}
+
+function replacementHash(value: unknown): TransactionHash | null {
+  if (!value || typeof value !== 'object') return null;
+  const transaction = (value as { transaction?: unknown }).transaction;
+  if (!transaction || typeof transaction !== 'object') return null;
+  const hash = (transaction as { hash?: unknown }).hash;
+  return typeof hash === 'string' && TRANSACTION_HASH.test(hash) ? hash as TransactionHash : null;
 }
 
 function canonicalAddress(value: unknown): Address | null {
@@ -235,18 +207,21 @@ function decodedLaunchCreatedToken(log: unknown, context: ProtocolContext): Addr
     return canonicalAddress((candidate.args as Record<string, unknown>).token);
   }
 
-  const topics = candidate.topics;
-  const data = candidate.data;
-  if (!Array.isArray(topics) || topics.length === 0 || !topics.every((topic) => typeof topic === 'string')) return null;
-  if (typeof data !== 'string' || !data.startsWith('0x')) return null;
+  if (
+    !Array.isArray(candidate.topics) ||
+    candidate.topics.length === 0 ||
+    !candidate.topics.every((topic) => typeof topic === 'string') ||
+    typeof candidate.data !== 'string' ||
+    !candidate.data.startsWith('0x')
+  ) return null;
 
   try {
     const decoded = decodeBreadLog({
       binding: createBreadStackAbiBinding(context.stackVersion),
       stackVersion: context.stackVersion,
       role: 'FACTORY',
-      topics: topics as Hex[],
-      data: data as Hex,
+      topics: candidate.topics as [Hex, ...Hex[]],
+      data: candidate.data as Hex,
     });
     if (decoded.eventName !== 'LaunchCreated' || decoded.disposition !== 'INDEXED_CANONICAL') return null;
     return canonicalAddress(decoded.args.token);
@@ -266,18 +241,18 @@ export function extractLaunchCreatedToken(
   throw new Error('Canonical Factory LaunchCreated log is missing from the confirmed launch receipt.');
 }
 
-function confirmedRecord(record: SubmittedTransactionRecord, tokenAddress: Address): SubmittedTransactionRecord {
+function confirmedRecord(
+  record: SubmittedTransactionRecord,
+  tokenAddress: Address,
+): SubmittedTransactionRecord {
   return { ...record, tokenAddress, status: 'CONFIRMED' };
 }
 
-function identityUnknownState(
+function identityUnknown(
   record: SubmittedTransactionRecord,
   error: unknown,
 ): TransactionState {
-  return {
-    ...stateFromRecord(record, 'UNKNOWN'),
-    error: errorMessage(error),
-  };
+  return { ...stateFromRecord(record, 'UNKNOWN'), error: errorMessage(error) };
 }
 
 export async function executeLaunchLifecycle({
@@ -306,11 +281,7 @@ export async function executeLaunchLifecycle({
   if (!canSubmitTransactionAction(state)) return { state, reviewChanged: false };
 
   state = emit(transitionTransactionState(state, { type: 'VALIDATE' }), onStateChange);
-
-  const [account, walletChainId] = await Promise.all([
-    wallet.getAccount(),
-    wallet.getChainId(),
-  ]);
+  const [account, walletChainId] = await Promise.all([wallet.getAccount(), wallet.getChainId()]);
   if (!account) return rejected(action, launchIntentId, new Error('Wallet is not connected.'), onStateChange);
   if (walletChainId !== context.chainId) {
     return rejected(
@@ -337,15 +308,20 @@ export async function executeLaunchLifecycle({
   } catch (error) {
     return reverted(state, error, onStateChange);
   }
-  if (!preparedMatches(approved, prepared)) {
-    return reviewChangedResult(action, launchIntentId, prepared);
-  }
+  if (!preparedMatches(approved, prepared)) return reviewChanged(action, launchIntentId, prepared);
 
   try {
     await wallet.ensurePreparedTransactionAllowance(prepared.transaction);
   } catch (error) {
     if (error instanceof AllowanceConfirmationUnknownError) {
-      return unknownAllowance(state, context, error, onStateChange);
+      const unknown: TransactionState = {
+        ...state,
+        status: 'UNKNOWN',
+        chainId: context.chainId,
+        hash: error.hash,
+        error: error.message,
+      };
+      return { state: emit(unknown, onStateChange), reviewChanged: false };
     }
     if (isWalletUserRejection(error)) return rejected(action, launchIntentId, error, onStateChange);
     return reverted(state, error, onStateChange);
@@ -356,18 +332,15 @@ export async function executeLaunchLifecycle({
   } catch (error) {
     return reverted(state, error, onStateChange);
   }
-  if (!preparedMatches(approved, prepared)) {
-    return reviewChangedResult(action, launchIntentId, prepared);
-  }
+  if (!preparedMatches(approved, prepared)) return reviewChanged(action, launchIntentId, prepared);
 
   try {
-    await simulatePreparedTransaction(client, prepared.transaction, account as Address);
+    await simulatePreparedTransaction(client, prepared.transaction, account);
   } catch (error) {
     return reverted(state, error, onStateChange);
   }
 
   state = emit(transitionTransactionState(state, { type: 'AWAIT_SIGNATURE' }), onStateChange);
-
   let transactionHash: TransactionHash;
   try {
     transactionHash = await wallet.sendPreparedTransaction(prepared.transaction);
@@ -387,12 +360,8 @@ export async function executeLaunchLifecycle({
     submittedAt: now().toISOString(),
     status: 'SUBMITTED',
   };
-
   persistSubmittedTransaction(storage, currentRecord);
-  state = emit(
-    transitionTransactionState(state, { type: 'SUBMIT', record: currentRecord }),
-    onStateChange,
-  );
+  state = emit(transitionTransactionState(state, { type: 'SUBMIT', record: currentRecord }), onStateChange);
   state = emit(transitionTransactionState(state, { type: 'CONFIRM' }), onStateChange);
   updatePersistedTransactionStatus(storage, currentRecord.hash, 'CONFIRMING');
   currentRecord = { ...currentRecord, status: 'CONFIRMING' };
@@ -430,7 +399,7 @@ export async function executeLaunchLifecycle({
     tokenAddress = extractLaunchCreatedToken(receipt as unknown as { logs?: readonly unknown[] }, context);
   } catch (error) {
     updatePersistedTransactionStatus(storage, currentRecord.hash, 'UNKNOWN');
-    state = emit(identityUnknownState(currentRecord, error), onStateChange);
+    state = emit(identityUnknown(currentRecord, error), onStateChange);
     return { state, prepared, reviewChanged: false };
   }
 
@@ -463,19 +432,18 @@ export async function recoverLaunchTransactions({
     updatePersistedTransactionStatus(storage, originalRecord.hash, 'CONFIRMING');
     let state = emit(stateFromRecord(currentRecord, 'CONFIRMING'), onStateChange);
 
+    const onReplaced = (replacement: unknown) => {
+      const nextHash = replacementHash(replacement);
+      if (!nextHash || nextHash === currentRecord.hash) return;
+      updatePersistedTransactionStatus(storage, currentRecord.hash, 'REPLACED');
+      currentRecord = { ...currentRecord, hash: nextHash, status: 'CONFIRMING' };
+      persistSubmittedTransaction(storage, currentRecord);
+      state = emit(stateFromRecord(currentRecord, 'REPLACED'), onStateChange);
+    };
+
     let receipt: Awaited<ReturnType<LaunchPublicClient['waitForTransactionReceipt']>>;
     try {
-      receipt = await client.waitForTransactionReceipt({
-        hash: currentRecord.hash,
-        onReplaced: (replacement) => {
-          const nextHash = replacementHash(replacement);
-          if (!nextHash || nextHash === currentRecord.hash) return;
-          updatePersistedTransactionStatus(storage, currentRecord.hash, 'REPLACED');
-          currentRecord = { ...currentRecord, hash: nextHash, status: 'CONFIRMING' };
-          persistSubmittedTransaction(storage, currentRecord);
-          state = emit(stateFromRecord(currentRecord, 'REPLACED'), onStateChange);
-        },
-      } as never);
+      receipt = await client.waitForTransactionReceipt({ hash: currentRecord.hash, onReplaced } as never);
     } catch {
       updatePersistedTransactionStatus(storage, currentRecord.hash, 'UNKNOWN');
       state = emit(stateFromRecord(currentRecord, 'UNKNOWN'), onStateChange);
@@ -498,7 +466,7 @@ export async function recoverLaunchTransactions({
       tokenAddress = extractLaunchCreatedToken(receipt as unknown as { logs?: readonly unknown[] }, context);
     } catch (error) {
       updatePersistedTransactionStatus(storage, currentRecord.hash, 'UNKNOWN');
-      state = emit(identityUnknownState(currentRecord, error), onStateChange);
+      state = emit(identityUnknown(currentRecord, error), onStateChange);
       recovered.push({ state });
       continue;
     }
