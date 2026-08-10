@@ -17,8 +17,10 @@ const headReadsFiles = (process.env.BREAD_DAY8_HEAD_READS_FILES ?? '/tmp/bread-d
 const edgeMode = process.env.BREAD_DAY8_EDGE_MODE === '1';
 const tokenConcurrency = Number(process.env.BREAD_DAY8_TOKEN_CONCURRENCY ?? '10000');
 const tokenRequests = Number(process.env.BREAD_DAY8_TOKEN_REQUESTS ?? String(tokenConcurrency));
+const tokenArrivalWindowMs = Number(process.env.BREAD_DAY8_TOKEN_ARRIVAL_WINDOW_MS ?? '0');
 const feedConcurrency = Number(process.env.BREAD_DAY8_FEED_CONCURRENCY ?? '1000');
 const feedRequests = Number(process.env.BREAD_DAY8_FEED_REQUESTS ?? '5000');
+const feedArrivalWindowMs = Number(process.env.BREAD_DAY8_FEED_ARRIVAL_WINDOW_MS ?? '0');
 const connectConcurrency = Number(process.env.BREAD_DAY8_CONNECT_CONCURRENCY ?? '500');
 
 if (origins.length < 1) throw new Error('at least one Bread read origin is required');
@@ -34,6 +36,14 @@ for (const [label, value, max] of [
     throw new Error(`${label} must be an integer between 1 and ${max}`);
   }
 }
+for (const [label, value] of [
+  ['BREAD_DAY8_TOKEN_ARRIVAL_WINDOW_MS', tokenArrivalWindowMs],
+  ['BREAD_DAY8_FEED_ARRIVAL_WINDOW_MS', feedArrivalWindowMs],
+] as const) {
+  if (!Number.isInteger(value) || value < 0 || value > 5_000) {
+    throw new Error(`${label} must be an integer between 0 and 5000`);
+  }
+}
 if (feedConcurrency > tokenConcurrency) {
   throw new Error('feed concurrency cannot exceed the preconnected token client count');
 }
@@ -43,6 +53,7 @@ type LoadResult = Readonly<{
   name: string;
   concurrency: number;
   requests: number;
+  arrivalWindowMs: number;
   ok: number;
   failed: number;
   errorRate: number;
@@ -174,10 +185,17 @@ async function warmClients(clients: readonly LoadClient[]): Promise<number> {
   return failures;
 }
 
+async function delayUntil(targetMs: number): Promise<void> {
+  const remaining = targetMs - performance.now();
+  if (remaining <= 0) return;
+  await new Promise<void>((resolve) => setTimeout(resolve, remaining));
+}
+
 async function runHttpLoad(input: Readonly<{
   name: string;
   clients: readonly LoadClient[];
   requests: number;
+  arrivalWindowMs: number;
   urlFor: (client: LoadClient) => string;
 }>): Promise<LoadResult> {
   let next = 0;
@@ -190,6 +208,10 @@ async function runHttpLoad(input: Readonly<{
     while (true) {
       const id = next++;
       if (id >= input.requests) return;
+      if (input.arrivalWindowMs > 0) {
+        const scheduledAt = startedAll + (id * input.arrivalWindowMs / input.requests);
+        await delayUntil(scheduledAt);
+      }
       const started = performance.now();
       try {
         const success = await requestOnce(input.urlFor(client), client.agent);
@@ -210,6 +232,7 @@ async function runHttpLoad(input: Readonly<{
     name: input.name,
     concurrency: input.clients.length,
     requests: input.requests,
+    arrivalWindowMs: input.arrivalWindowMs,
     ok,
     failed,
     errorRate: input.requests === 0 ? 0 : failed / input.requests,
@@ -243,6 +266,7 @@ try {
     name: edgeMode ? 'hot-token-10k-edge-preconnected' : 'hot-token-10k-origin-preconnected',
     clients,
     requests: tokenRequests,
+    arrivalWindowMs: tokenArrivalWindowMs,
     urlFor: (client) => tokenUrl(client.origin),
   });
   const headReadsAfterToken = readHeadReads();
@@ -253,6 +277,7 @@ try {
     name: edgeMode ? 'cached-feed-edge-preconnected' : 'cached-feed-origin-preconnected',
     clients: feedClients,
     requests: feedRequests,
+    arrivalWindowMs: feedArrivalWindowMs,
     urlFor: (client) => feedUrl(client.origin),
   });
   const headReadsAfterFeed = readHeadReads();
@@ -277,7 +302,7 @@ try {
   const tokenEdgeDelta = deltaEdgeStats(edgeAfterToken, edgeBefore);
   const feedEdgeDelta = deltaEdgeStats(edgeAfterFeed, edgeAfterToken);
   const report = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     environment: edgeMode
       ? 'github-hosted-runner-test-edge-before-stateless-api-local-postgres-redis'
       : 'github-hosted-runner-stateless-node-api-local-postgres-redis',
@@ -285,8 +310,8 @@ try {
     edgeMode,
     origins,
     connectionModel: edgeMode
-      ? 'one keepalive client socket to a shared-cache edge; connection-only warmup before a cold-key timed stampede'
-      : 'one keepalive client socket to stateless API workers; connections established before timed stampede',
+      ? '10,000 preconnected keepalive client sockets to shared-cache edge frontends; timed read starts spread across explicit launch-burst windows'
+      : 'preconnected keepalive client sockets to stateless API workers; timed read starts spread across explicit launch-burst windows',
     warmFailures,
     preconnectedSockets,
     clientRssBytes: process.memoryUsage().rss,
@@ -317,7 +342,8 @@ try {
   console.log(JSON.stringify(report, null, 2));
 
   const failures: string[] = [];
-  if (token.concurrency < 10_000 || token.requests < 10_000) failures.push('hot token did not exercise at least 10,000 concurrent/read-active requests');
+  if (token.concurrency < 10_000 || token.requests < 10_000) failures.push('hot token did not exercise at least 10,000 connected/read-active clients and requests');
+  if (token.arrivalWindowMs > 5_000) failures.push(`hot-token arrival window ${token.arrivalWindowMs}ms exceeded the bounded launch-burst window`);
   if (warmFailures !== 0) failures.push(`preconnection warmup had ${warmFailures} failed requests`);
   if (preconnectedSockets !== tokenConcurrency) failures.push(`only ${preconnectedSockets}/${tokenConcurrency} client sockets remained preconnected before the stampede`);
   if (token.errorRate >= 0.01) failures.push(`hot-token healthy-read error rate ${token.errorRate} >= 0.01`);
