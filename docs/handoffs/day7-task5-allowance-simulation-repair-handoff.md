@@ -4,9 +4,9 @@ Date: 2026-08-10
 
 ## Status
 
-`TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE_PENDING_HANDOFF_MERGE`
+`TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE`
 
-This document becomes the controlling durable post-Task-5 repair handoff only after this docs-only handoff PR is exact-head green, guarded-merged to `main`, and actual `main` is freshly reverified.
+This document became the controlling durable post-Task-5 repair handoff after docs-only handoff PR #70 passed exact-head CI, was guarded-merged to `main`, and actual `main` was freshly reverified at `e1a5f0d7959e601f08b490df7702cccc9ac8111e`.
 
 ## Durable start baseline
 
@@ -16,6 +16,7 @@ This document becomes the controlling durable post-Task-5 repair handoff only af
 - Exact reviewed repair head: `606223eb70a5333acded9e40f8ba906e42d56b19`
 - Guarded repair merge: `acfcbab75338086ff1f3b151af4b05f5934e6a98`
 - Durable repair handoff PR: #70
+- Durable repair handoff merge/readback: `e1a5f0d7959e601f08b490df7702cccc9ac8111e`
 
 ## Why the repair was required
 
@@ -83,6 +84,23 @@ Exact reviewed repair head: `606223eb70a5333acded9e40f8ba906e42d56b19`
 
 Day-7 Task 2, Task 3 and Task 4 workflows are path-filtered and did not run on the final repair head. No fresh exact-head PASS is invented for them.
 
+## Durable-handoff evidence
+
+Exact handoff head: `ce5430b0a4fc4782388b8d901ba20b2e8bcfd9f8`
+
+- Root CI `31377956995`: PASS.
+- Day-7 Task 1 `31377956950`: PASS.
+- Day-7 Task 2 `31377956951`: PASS.
+- Day-7 Task 3 Explore/Search `31377957004`: PASS.
+- Day-7 Task 4 Token page `31377956946`: PASS.
+- Day-7 Task 5 trade lifecycle `31377956954`: PASS.
+- Retained Day-6 Task 5 `31377956872`: PASS.
+- Retained Day-6 Task 6 `31377956919`: PASS.
+- Retained Day-6 Task 7 `31377956888`: PASS.
+- Retained Day-6 Task 8 `31377956889`: PASS.
+- Retained Day-6 Task 9 `31377956934`: PASS.
+- Retained Day-6 Task 10 `31377956949`: PASS.
+
 ## Source / design / security review
 
 `DAY7_TASK5_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_SOURCE_DESIGN_SECURITY_REVIEW = PASS`
@@ -109,7 +127,7 @@ The next implementation lane remains:
 
 `DAY7_TASK6_CREATE_REVIEW_LAUNCH`
 
-Task 6 must begin only after this handoff PR is exact-head green, guarded-merged and actual `main` is freshly verified.
+Task 6 may begin only from the freshly verified durable baseline containing PR #70 and this status-closeout correction.
 
 ## Task-6 route and authority boundary
 
