@@ -5,11 +5,11 @@ import { Button, Card } from '@bread/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { formatUnits, parseUnits } from 'viem';
 
-import {
-  BREAD_LAUNCH_TOKEN_DECIMALS,
-  type BuyTradeReview,
-  type SellTradeReview,
-} from '@bread/protocol-sdk';
+import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/src/constants';
+import type {
+  BuyTradeReview,
+  SellTradeReview,
+} from '../../../../packages/protocol-sdk/src/trade-review';
 import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
 import { breadQueryKeys } from '../../lib/api/queries';
 import {
@@ -123,8 +123,8 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       if (action === 'BUY') {
         setAmount(formatUnits(balance, runtime.context.quoteDecimals));
       } else {
-        const percent = preset === 'MAX' ? 100n : BigInt(Number.parseInt(preset, 10));
-        const selected = (balance * percent) / 100n;
+        const percent = preset === 'MAX' ? BigInt(100) : BigInt(Number.parseInt(preset, 10));
+        const selected = (balance * percent) / BigInt(100);
         setAmount(formatUnits(selected, BREAD_LAUNCH_TOKEN_DECIMALS));
       }
       resetReview();
@@ -138,7 +138,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     if (amount.trim() === '') throw new Error('Enter an amount before reviewing the trade.');
     const decimals = action === 'BUY' ? runtime.context.quoteDecimals : BREAD_LAUNCH_TOKEN_DECIMALS;
     const parsed = parseUnits(amount, decimals);
-    if (parsed <= 0n) throw new Error('Trade amount must be greater than zero.');
+    if (parsed <= BigInt(0)) throw new Error('Trade amount must be greater than zero.');
     return parsed;
   }
 
