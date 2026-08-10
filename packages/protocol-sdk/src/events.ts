@@ -28,6 +28,7 @@ const canonicalEvents: Readonly<Record<BreadContractRole, ReadonlySet<string>>> 
     'LaunchFeeCredited',
     'LaunchCreated',
     'LaunchAndBuyExecuted',
+    'OwnershipTransferred',
   ]),
   CURVE: new Set([
     'CreatorFeeRecipientUpdated',
@@ -40,39 +41,55 @@ const canonicalEvents: Readonly<Record<BreadContractRole, ReadonlySet<string>>> 
     'GraduationAutoAttemptFailed',
     'CurveGraduationReleased',
   ]),
-  FEE_ESCROW: new Set(['FeeCredited', 'FeeClaimed', 'CreditorUpdated']),
-  FEE_POLICY: new Set(['FeePolicyUpdated', 'FeeSweepOperatorUpdated']),
+  FEE_ESCROW: new Set(['AuthorizedCreditorUpdated', 'FeeCredited', 'FeeClaimed', 'OwnershipTransferred']),
+  FEE_POLICY: new Set(['FeePolicyUpdated', 'FeeSweepOperatorUpdated', 'OwnershipTransferred']),
   EMERGENCY_CONTROLLER: new Set([
     'GuardianUpdated',
     'RestrictionModeUpdated',
     'GraduationPauseUpdated',
+    'OwnershipTransferred',
   ]),
   GRADUATION_COORDINATOR: new Set([
     'GraduationSwept',
-    'GraduationPoolCreated',
+    'GraduationCompleted',
     'GraduationRescued',
+    'GraduationTokenResidueLocked',
+    'GraduationUsdcDustCredited',
+    'OwnershipTransferred',
   ]),
-  PERMANENT_LOCKER: new Set(['PositionPermanentlyLocked', 'TokenSupplyPermanentlyLocked']),
-  LAUNCH_TOKEN: new Set(['Transfer', 'Approval']),
+  LOCKER: new Set(['CoordinatorSet', 'PositionLocked', 'TokenSupplyLocked']),
+  LAUNCH_TOKEN: new Set(['Transfer']),
 };
 
-export function isCanonicalBreadEventName(
-  role: BreadContractRole,
-  eventName: string,
-): eventName is BreadCanonicalEventName {
-  return canonicalEvents[role].has(eventName);
-}
+const knownIgnoredEvents: Readonly<Record<BreadContractRole, ReadonlySet<string>>> = {
+  FACTORY: new Set(),
+  CURVE: new Set(),
+  FEE_ESCROW: new Set(),
+  FEE_POLICY: new Set(),
+  EMERGENCY_CONTROLLER: new Set(),
+  GRADUATION_COORDINATOR: new Set(),
+  LOCKER: new Set(),
+  LAUNCH_TOKEN: new Set(['Approval']),
+};
 
-function eventDisposition(
-  role: BreadContractRole,
-  eventName: string,
-): EventDisposition {
-  return isCanonicalBreadEventName(role, eventName) ? 'INDEXED_CANONICAL' : 'IGNORED_UNREGISTERED';
+const registryKeyByRole = {
+  FACTORY: 'factory',
+  CURVE: 'curve',
+  FEE_ESCROW: 'feeEscrow',
+  FEE_POLICY: 'feePolicy',
+  EMERGENCY_CONTROLLER: 'emergencyController',
+  GRADUATION_COORDINATOR: 'coordinator',
+  LOCKER: 'locker',
+  LAUNCH_TOKEN: 'launchToken',
+} as const satisfies Record<BreadContractRole, keyof BreadAbiRegistry>;
+
+export function classifyBreadLog(role: BreadContractRole, eventName: string): EventDisposition {
+  if (canonicalEvents[role].has(eventName)) return 'INDEXED_CANONICAL';
+  if (knownIgnoredEvents[role].has(eventName)) return 'KNOWN_IGNORED';
+  return 'UNKNOWN';
 }
 
 export type DecodedBreadLog = Readonly<{
-  stackVersion: string;
-  role: BreadContractRole;
   eventName: string;
   args: Readonly<Record<string, unknown>>;
   disposition: EventDisposition;
@@ -85,28 +102,11 @@ export function decodeBreadLog(input: Readonly<{
   topics: readonly Hex[];
   data: Hex;
 }>): DecodedBreadLog {
-  if (input.binding.stackVersion !== input.stackVersion) {
-    throw new Error(
-      `ABI stackVersion mismatch: binding=${input.binding.stackVersion} event=${input.stackVersion}`,
-    );
+  if (input.stackVersion !== input.binding.stackVersion) {
+    throw new Error(`unsupported stack version: ${input.stackVersion}`);
   }
 
-  const abi = input.binding.registry[input.role === 'FACTORY'
-    ? 'factory'
-    : input.role === 'CURVE'
-      ? 'curve'
-      : input.role === 'FEE_ESCROW'
-        ? 'feeEscrow'
-        : input.role === 'FEE_POLICY'
-          ? 'feePolicy'
-          : input.role === 'EMERGENCY_CONTROLLER'
-            ? 'emergencyController'
-            : input.role === 'GRADUATION_COORDINATOR'
-              ? 'coordinator'
-              : input.role === 'PERMANENT_LOCKER'
-                ? 'locker'
-                : 'launchToken'];
-
+  const abi = input.binding.registry[registryKeyByRole[input.role]];
   const decoded = decodeEventLog({
     abi,
     data: input.data,
@@ -114,22 +114,14 @@ export function decodeBreadLog(input: Readonly<{
     strict: true,
   });
   const eventName = decoded.eventName;
-  const args = decoded.args && typeof decoded.args === 'object'
-    ? decoded.args as Readonly<Record<string, unknown>>
-    : {};
-
+  const args = (decoded.args ?? {}) as unknown as Readonly<Record<string, unknown>>;
   return {
-    stackVersion: input.stackVersion,
-    role: input.role,
     eventName,
     args,
-    disposition: eventDisposition(input.role, eventName),
+    disposition: classifyBreadLog(input.role, eventName),
   };
 }
 
-export function classifyBreadLog(
-  role: BreadContractRole,
-  eventName: string,
-): EventDisposition {
-  return eventDisposition(role, eventName);
+export function isCanonicalBreadEventName(eventName: string): eventName is BreadCanonicalEventName {
+  return Object.values(canonicalEvents).some((events) => events.has(eventName));
 }
