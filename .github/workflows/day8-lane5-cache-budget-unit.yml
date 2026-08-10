@@ -1,0 +1,37 @@
+name: day8-lane5-cache-budget-unit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day8-lane5-cache-budget-unit.yml'
+      - 'scripts/load/day8-cache-budget.ts'
+      - 'scripts/load/day8-hot-launch.mts'
+      - 'apps/api/src/http-cache.ts'
+      - 'tests/day8/hot-launch-cache-budget.test.ts'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day8-lane5-cache-budget-unit.yml'
+      - 'scripts/load/day8-cache-budget.ts'
+      - 'scripts/load/day8-hot-launch.mts'
+      - 'apps/api/src/http-cache.ts'
+      - 'tests/day8/hot-launch-cache-budget.test.ts'
+
+permissions:
+  contents: read
+
+jobs:
+  cache-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Run cache-epoch origin budget regression
+        run: pnpm exec vitest run tests/day8/hot-launch-cache-budget.test.ts
