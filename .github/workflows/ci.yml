@@ -35,6 +35,13 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
+      - name: Emit exact Playwright package and lockfile patch
+        run: |
+          pnpm --filter @bread/web add -D @playwright/test@1.62.0 --lockfile-only
+          echo '--- PLAYWRIGHT LOCKFILE PATCH START ---'
+          git diff -- apps/web/package.json pnpm-lock.yaml
+          echo '--- PLAYWRIGHT LOCKFILE PATCH END ---'
+          exit 1
       - run: pnpm validate
       - run: pnpm test
       - name: Run full Day 6 test suite
