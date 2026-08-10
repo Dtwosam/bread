@@ -1,0 +1,60 @@
+name: day8-lane2-static-security
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day8-lane2-static-security.yml'
+      - 'contracts/**'
+      - 'config/security/slither-triage-v1.json'
+      - 'scripts/security/check-slither-triage.py'
+      - 'docs/superpowers/plans/2026-08-10-day8-attack-system.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day8-lane2-static-security.yml'
+      - 'contracts/**'
+      - 'config/security/slither-triage-v1.json'
+      - 'scripts/security/check-slither-triage.py'
+
+permissions:
+  contents: read
+
+jobs:
+  slither-reviewed-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Foundry
+        uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e
+        with:
+          version: v1.5.0
+      - name: Verify Python and Foundry
+        run: |
+          python3 --version
+          python3 -m pip --version
+          forge --version
+      - name: Install pinned Slither analyzer
+        run: |
+          python3 -m pip install --user 'slither-analyzer==0.11.6'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Verify Slither version
+        run: "$HOME/.local/bin/slither --version"
+      - name: Compile accepted Bread contracts
+        working-directory: contracts
+        run: forge build
+      - name: Run Slither and capture reviewed report
+        working-directory: contracts
+        run: |
+          set +e
+          "$HOME/.local/bin/slither" . \
+            --filter-paths 'lib|test|script' \
+            --json slither-report.json
+          status=$?
+          set -e
+          echo "slither_raw_exit_code=$status"
+          test -f slither-report.json
+      - name: Enforce reviewed High/Medium fingerprint
+        run: |
+          python3 scripts/security/check-slither-triage.py \
+            contracts/slither-report.json \
+            config/security/slither-triage-v1.json

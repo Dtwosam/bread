@@ -1,4 +1,5 @@
 import {
+  ACTIVE_CURVE,
   ACTIVE_TOKEN,
   ARC_TESTNET_CHAIN_ID_HEX,
   BUY_TX_HASH,
@@ -11,6 +12,15 @@ import {
   test,
   walletSnapshot,
 } from '../fixtures/browser';
+
+type SubmittedTransaction = Readonly<{ to?: unknown; value?: unknown }>;
+
+function expectCanonicalCurveTarget(transaction: unknown) {
+  const submitted = transaction as SubmittedTransaction;
+  expect(typeof submitted.to).toBe('string');
+  expect((submitted.to as string).toLowerCase()).toBe(ACTIVE_CURVE.toLowerCase());
+  expect(submitted.value === undefined || submitted.value === '0x0' || submitted.value === '0x00').toBe(true);
+}
 
 test('wallet connect, wrong-network recovery, Buy and Sell use the canonical browser transaction path', async ({
   page,
@@ -52,7 +62,9 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
   }
   await trade.getByRole('button', { name: 'Buy after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
-  expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(1);
+  const afterBuy = await walletSnapshot(page);
+  expect(afterBuy.submittedTransactions).toHaveLength(1);
+  expectCanonicalCurveTarget(afterBuy.submittedTransactions[0]);
 
   await trade.getByRole('tab', { name: 'Sell' }).click();
   await setWalletTransactionHashes(page, [SELL_TX_HASH]);
@@ -65,5 +77,6 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
 
   const snapshot = await walletSnapshot(page);
   expect(snapshot.submittedTransactions).toHaveLength(2);
+  expectCanonicalCurveTarget(snapshot.submittedTransactions[1]);
   expect(rpcState.unknownCalls).toEqual([]);
 });

@@ -1,4 +1,4 @@
-schema_version: 1.47
+schema_version: 1.48
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-10
@@ -15,10 +15,11 @@ completed_checkpoints:
   - "Day 6: SDK_INDEXER_API_INTEGRATED_PASS_DURABLE"
   - "Day 7 Tasks 1-9: individually integrated and durably handed off"
   - "Day 7 Task 10 PR #82 + durable handoff PR #83: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
+  - "Day 8 Lanes 1-5: local/security/failure-recovery/capacity lane gates PASS; Day-8 exact-head integrated closeout remains pending"
 
 active_checkpoint: "Day 8 — Attack the System"
-active_lane: "Day-8 preflight from the exact durable Day-7 public-web baseline. Day 8 is stabilization, security, failure-injection and capacity work; no feature invention."
-active_gate: DAY8_ATTACK_SYSTEM_EXTENDED_SECURITY_FAILURE_INJECTION_CAPACITY_RECOVERY
+active_lane: "Day-8 exact-head integration closeout after source-backed Lanes 1-5 PASS. PR #84 remains draft and unmerged until the final unified continuity/security matrix is green."
+active_gate: DAY8_EXACT_HEAD_INTEGRATED_CLOSEOUT_PENDING
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -31,11 +32,11 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.46
-  prior_state_git_commit: 070a3f274d0ed26bfb1b38cb14b4364c8d7a376a
-  prior_state_blob_sha: 1544eb68148627243abb9154c92cfd511d66f8fd
+  prior_state_schema_version: 1.47
+  prior_state_git_commit: b3c7d7b51ec9398f3b786c795a4f625b8020580a
+  prior_state_blob_sha: acc840812c7afd73bd3ec5c37dc55337a5e85203
   note: >-
-    v1.47 is the small/current 06H continuity pointer. The complete accepted v1.46 and earlier history remains immutable in Git and in the prior handoffs. This update adds Task-10 implementation PR #82 at guarded merge 171a646305f796e222fd3a9f34f4bd343e43983a plus docs-only durability PR #83. It revokes no accepted Day-1 through Day-6 or Day-7 Task-1 through Task-9 verdict, invariant, blocker, source boundary or authority rule.
+    v1.48 is an in-progress Day-8 closeout pointer, not a Day-8 completion verdict. The complete accepted v1.47 and earlier history remains immutable in Git and in prior handoffs. This update records source-backed Lane-1 through Lane-5 PASS evidence and advances NEXT_ACTION to the exact-head integrated closeout matrix. It revokes no accepted Day-1 through Day-7 verdict, invariant, blocker, source boundary or authority rule.
 
 integration_baseline:
   id: DAY7-PUBLIC-WEB-INTEGRATED-CLOSEOUT
@@ -47,8 +48,20 @@ integration_baseline:
   day7_task10_handoff_pr: 83
   status: DAY_7_PUBLIC_WEB_INTEGRATED_PASS_DURABLE
 
+day8_candidate:
+  pr: 84
+  branch: agent/day8-attack-system
+  baseline_main: b3c7d7b51ec9398f3b786c795a4f625b8020580a
+  pre_closeout_head: 279ee0b66f87498c261e8b252eaa77307c14e948
+  status: LANES_1_TO_5_PASS_PENDING_EXACT_HEAD_INTEGRATED_CLOSEOUT
+  lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
+  lane2: STATIC_SECURITY_TRIAGE_PASS_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
+  lane3: FRONTEND_SECURITY_ADVERSARIAL_PASS
+  lane4: FAILURE_RECOVERY_INJECTION_PASS
+  lane5: HOT_LAUNCH_CAPACITY_AND_REPRESENTATIVE_LATENCY_PASS
+
 working_branches:
-  - docs/day7-task10-durable-handoff
+  - agent/day8-attack-system
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -57,9 +70,11 @@ repository:
   day7_task9_handoff_pr: 81
   day7_task10_pr: 82
   day7_task10_handoff_pr: 83
+  day8_pr: 84
   day7_public_web_started: true
   day7_public_web_complete: true
-  day8_started: false
+  day8_started: true
+  day8_complete: false
 
 project_process_note:
   day7_task10_scope_rule: >-
@@ -68,9 +83,11 @@ project_process_note:
     The existing canonical submitted-transaction storage and receipt recovery remain authoritative. Task 10 only makes recovered BUY/SELL state visible through the existing web runtime so refresh cannot present a fresh submit-able trade while recovery is unresolved; it does not duplicate polling, persistence or wallet-send logic.
   day8_scope_rule: >-
     Day 8 attacks the integrated system through extended fuzz/invariants, static/manual security review, RPC/API/indexer/realtime failure injection, hot-launch/bot-burst capacity tests, malicious metadata/CSP/sanitization checks, privileged-role abuse attempts and recovery/runbook verification. It is not a feature-development lane and does not waive open release/mainnet blockers.
+  capacity_measurement_rule: >-
+    06I keeps separate obligations: the 10,000-concurrent hot-launch stress gate proves convergence, healthy-read errors below one percent, bounded shared-service work and no viewer-linear RPC multiplication; existing 04D token/feed p95 targets remain under representative load. The Day-8 harness preserves both rather than weakening either threshold.
 
 verification:
-  durability_continuity_matrix: EXACT_HEAD_ROOT_DAY7_TASK1_TO_TASK9_PLUS_RETAINED_DAY6_TASK5_TO_TASK10
+  durability_continuity_matrix: EXACT_HEAD_ROOT_DAY7_TASK1_TO_TASK10_PLUS_RETAINED_DAY6_TASK5_TO_TASK10_PLUS_DAY8_LANES1_TO_5
   day7_task10_graduation_red_head: 07be2ad31ffbe660763352c06ea4fd383d4638c7
   day7_task10_graduation_red_ci: 31414672664
   day7_task10_recovery_red_head: 5d7be6164f5f3a48024a34d9fb3e9386dac9fe2b
@@ -102,6 +119,27 @@ verification:
   day7_task10_manifest_restoration: PASS
   day7_task10_source_security_review: PASS
   day7_task10_implementation_merge: 171a646305f796e222fd3a9f34f4bd343e43983a
+  day8_pre_closeout_head: 279ee0b66f87498c261e8b252eaa77307c14e948
+  day8_lane1_ci: 31428714842
+  day8_lane1_result: PASS_35_SUITES_201_TESTS_4096_FUZZ
+  day8_lane2_ci: 31428714889
+  day8_lane2_result: PASS_SLITHER_TRIAGED_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
+  day8_lane3_ci: 31428714815
+  day8_lane3_result: PASS
+  day8_lane4_ci: 31428714809
+  day8_lane4_result: PASS
+  day8_lane5_ci: 31428714806
+  day8_lane5_hot_clients: 10000
+  day8_lane5_hot_requests: 10000
+  day8_lane5_hot_error_rate: 0
+  day8_lane5_hot_p95_ms_observed: 248.04
+  day8_lane5_hot_origin_fetches: 8
+  day8_lane5_hot_observed_head_read_delta: 0
+  day8_lane5_representative_token_p95_ms: 94.88
+  day8_lane5_representative_feed_p95_ms: 101.34
+  day8_lane5_realtime_deliveries: 10000
+  day8_lane5_realtime_publish_ms: 8.65
+  day8_lane5_result: PASS
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -118,10 +156,10 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  After docs-only durability PR #83 is exact-head green across the required continuity matrix, guarded-merged and resulting main plus v1.47 and docs/handoffs/day7-task10-public-web-closeout-handoff.md are freshly read back, begin Day 8 — Attack the System from that exact durable main. First perform a source/security/capacity preflight against 05A-05D, 06C-06I and the active v1.5 Source of Truth, then execute the Day-8 stabilization lanes through demonstrated RED/failure evidence and minimum repairs. Required scope includes extended fuzz/invariants, static/manual security review, RPC/API/indexer/realtime failure injection, 06I hot-launch/bot-burst load/capacity verification, malicious metadata/CSP/sanitization, admin/guardian abuse attempts and recovery/runbook verification. Preserve all accepted financial, SDK/API-read, wallet/direct-write, transaction/recovery and canonical-config authorities.
+  Keep PR #84 draft and freeze its next exact head. Run the final unified Day-8 closeout matrix on that exact SHA: root CI; Day-8 Lanes 1-5; retained Day-6 Tasks 5-10; Day-7 Tasks 1-10 including Playwright; then perform the final source/security/diff review. If and only if every required gate is green and main still matches the durable Day-7 baseline, update PR #84 with exact evidence, mark ready and guarded-merge the exact reviewed head. After actual merged main is verified, create a separate docs-only Day-8 durability handoff/current-state update and prove that durability head before Day 9 begins.
 
 do_not_do:
-  - "Do not begin Day 8 before durability PR #83 is exact-head green, guarded-merged and actual main plus v1.47/handoff are freshly verified."
+  - "Do not mark Day 8 complete, merge PR #84 or begin Day 9 before the final exact-head Day-8 continuity/security matrix is green."
   - "Do not reopen accepted Day-1 through Day-7 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
   - "Do not invent new product features during Day 8; Days 8-10 are stabilization/rehearsal/security/load work."
   - "Do not fabricate unsupported feed, chart, portfolio, creator, PnL, average-entry, buyback or other financial values."

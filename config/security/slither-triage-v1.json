@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "tool": "slither-analyzer",
+  "toolVersion": "0.11.6",
+  "scope": "contracts/src",
+  "policy": {
+    "gateImpacts": ["High", "Medium"],
+    "rule": "Every High/Medium detector must match exactly one reviewed rule at its expected count. New, removed, reclassified, or moved High/Medium findings require explicit retriage."
+  },
+  "rules": [
+    {
+      "id": "SLI-H-001",
+      "impact": "High",
+      "check": "reentrancy-balance",
+      "contains": "GraduationCoordinator._releaseExact",
+      "expectedCount": 2,
+      "verdict": "not_actionable",
+      "rationale": "sweep is nonReentrant; the factory-recorded curve is canonical and releaseForGraduation accepts only the configured coordinator; canonical ERC20 transfers have no supported callback into the coordinator; pre/post balances are defensive exact-transfer reconciliation."
+    },
+    {
+      "id": "SLI-H-002",
+      "impact": "High",
+      "check": "reentrancy-balance",
+      "contains": "GraduationCoordinator._settleFeesAndRecord",
+      "expectedCount": 2,
+      "verdict": "not_actionable",
+      "rationale": "sweep is nonReentrant; the immutable canonical FeeEscrow credit path only pulls exact USDC from an authorized creditor and verifies received amount; the balance checkpoint is a conservation postcondition, not an authorization primitive."
+    },
+    {
+      "id": "SLI-H-003",
+      "impact": "High",
+      "check": "reentrancy-balance",
+      "contains": "GraduationCoordinator._executeAdapter",
+      "expectedCount": 2,
+      "verdict": "not_actionable",
+      "rationale": "createPool is nonReentrant; future adapter selection is owner-controlled and snapshotted per launch; enabled adapters must match canonical USDC/locker/config; exact allowances cap spend; the malicious-adapter regression proves callback reentry is rejected while outer graduation remains valid."
+    },
+    {
+      "id": "SLI-M-001",
+      "impact": "Medium",
+      "check": "divide-before-multiply",
+      "contains": "BreadV3GraduationAdapter.constructor",
+      "expectedCount": 2,
+      "verdict": "not_actionable",
+      "rationale": "the arithmetic intentionally aligns MIN_TICK/MAX_TICK to the nearest usable full-range ticks for the configured spacing; canonical Uniswap V3 fee tick spacing is positive and capped below 16384; Bread tests assert the exact full-range result for spacing 60."
+    },
+    {
+      "id": "SLI-M-002",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "BreadBondingCurve._quoteBuy",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "available == 0 is an exact lifecycle sentinel required to distinguish an exhausted curve; it is not balance-based authentication or manipulable raw-token balance authority."
+    },
+    {
+      "id": "SLI-M-003",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "BreadBondingCurve.buyForLaunch",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "zero initialization and exact launch-timestamp equality enforce the one-call launch-buy exemption required by the ratified opening-protection policy."
+    },
+    {
+      "id": "SLI-M-004",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "BreadBondingCurve.currentSnipeTaxBps",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "zero token/timestamp checks are exact initialization sentinels for the fixed five-second opening-protection state machine."
+    },
+    {
+      "id": "SLI-M-005",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "BreadTrackedCurveState.readyToGraduate",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "sellableTokens() == 0 is the exact source-defined completion condition; replacing exact equality would weaken graduation correctness."
+    },
+    {
+      "id": "SLI-M-006",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "BreadBondingCurve.sweepFees",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "totalPending == 0 is an exact no-work sentinel before canonical fee credit; accounting conservation is covered by INV-001-006 and fee/escrow regressions."
+    },
+    {
+      "id": "SLI-M-007",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "BreadV3GraduationAdapter._createAndMint",
+      "expectedCount": 2,
+      "verdict": "not_actionable",
+      "rationale": "pool identity and zero-liquidity checks are exact DEX dependency/postcondition validation; exact equality is required to reject wrong pool identity and zero liquidity."
+    },
+    {
+      "id": "SLI-M-008",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "GraduationCoordinator._creditFee",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "amount == 0 deliberately avoids a zero-value FeeEscrow credit, whose canonical interface rejects zero amounts."
+    },
+    {
+      "id": "SLI-M-009",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "GraduationCoordinator._executeAdapter",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "zero pool identity plus exact used+dust and balance-delta equalities are the INV-050-056 conservation/identity postconditions, not fragile authorization checks."
+    },
+    {
+      "id": "SLI-M-010",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "GraduationCoordinator._lockTokenAmount",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "amount == 0 is an exact no-op sentinel before permanent-lock transfer and cannot authorize withdrawal or bypass locking of a positive amount."
+    },
+    {
+      "id": "SLI-M-011",
+      "impact": "Medium",
+      "check": "incorrect-equality",
+      "contains": "GraduationCoordinator._prepareStageTwo",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "zero and exact custody/lifecycle comparisons reject malformed swept state and enforce sufficient canonical custody before any adapter execution."
+    },
+    {
+      "id": "SLI-M-012",
+      "impact": "Medium",
+      "check": "reentrancy-no-eth",
+      "contains": "GraduationCoordinator.createPool",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "createPool is externally protected by the single OpenZeppelin nonReentrant guard; the existing malicious-adapter regression demonstrates callback rejection."
+    },
+    {
+      "id": "SLI-M-013",
+      "impact": "Medium",
+      "check": "reentrancy-no-eth",
+      "contains": "GraduationCoordinator.sweep",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "sweep is externally protected by the same OpenZeppelin nonReentrant guard; its external curve/FeeEscrow dependencies are canonical immutable/snapshotted Bread boundaries, not user-selected callbacks."
+    },
+    {
+      "id": "SLI-M-014",
+      "impact": "Medium",
+      "check": "uninitialized-local",
+      "contains": "BreadLaunchFactory.previewLaunchEconomics",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "the Solidity memory struct is deliberately declared before field assignment; every EconomicsDigestInput field is explicitly assigned before abi.encode and hashing."
+    },
+    {
+      "id": "SLI-M-015",
+      "impact": "Medium",
+      "check": "unused-return",
+      "contains": "BreadV3GraduationAdapter._poolSqrtPrice",
+      "expectedCount": 1,
+      "verdict": "not_actionable",
+      "rationale": "the adapter intentionally consumes only slot0.sqrtPriceX96 for exact initialization-price identity; the remaining slot0 values are not inputs to this validation."
+    }
+  ]
+}

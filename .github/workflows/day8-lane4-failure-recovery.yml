@@ -1,0 +1,73 @@
+name: day8-lane4-failure-recovery
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day8-lane4-failure-recovery.yml'
+      - 'tests/day8/failure-injection-boundaries.test.ts'
+      - 'apps/api/src/**'
+      - 'apps/indexer/src/**'
+      - 'packages/db/src/**'
+      - 'tests/day6/api-concurrency.test.ts'
+      - 'tests/day6/replay-finality-cache-fanout.test.ts'
+      - 'tests/day6/replay-cache-real-redis.test.ts'
+      - 'tests/day6/rebuild-reconcile*.test.ts'
+      - 'tests/day6/rebuild-safety-report.test.ts'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day8-lane4-failure-recovery.yml'
+      - 'tests/day8/failure-injection-boundaries.test.ts'
+      - 'apps/api/src/**'
+      - 'apps/indexer/src/**'
+      - 'packages/db/src/**'
+
+permissions:
+  contents: read
+
+jobs:
+  infrastructure-failure-and-recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - name: Install exact locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run deterministic bounded-failure attacks
+        run: pnpm exec vitest run tests/day8/failure-injection-boundaries.test.ts
+      - name: Start exact Bread development infrastructure
+        run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
+      - name: Verify PostgreSQL and Redis
+        run: |
+          docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
+          test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
+      - name: Run Redis/cache/fanout/API degradation and replay proofs
+        env:
+          BREAD_DB_INTEGRATION: '1'
+          BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
+          BREAD_REDIS_URL: redis://127.0.0.1:6379
+        run: >-
+          pnpm exec vitest run
+          tests/day6/api-concurrency.test.ts
+          tests/day6/replay-finality-cache-fanout.test.ts
+          tests/day6/replay-cache-real-redis.test.ts
+      - name: Run authoritative rebuild and reconciliation recovery proofs
+        env:
+          BREAD_DB_INTEGRATION: '1'
+          BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
+        run: >-
+          pnpm exec vitest run
+          tests/day6/rebuild-reconcile.test.ts
+          tests/day6/rebuild-reconcile-conformance.test.ts
+          tests/day6/rebuild-reconcile-pregraduation.test.ts
+          tests/day6/rebuild-reconcile-cli.test.ts
+          tests/day6/rebuild-safety-report.test.ts
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose -f infra/docker/compose.yaml down -v

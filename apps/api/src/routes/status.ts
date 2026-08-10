@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 
 import type { FreshnessMeta } from '../../../../packages/types/src/index.js';
 
+import { markNoStore } from '../http-cache.js';
 import type { BreadReadRouteDeps } from './types.js';
 
 type StatusCheckpoint = Readonly<{
@@ -59,6 +60,7 @@ export function buildStatusData(checkpoint: StatusCheckpoint, meta: FreshnessMet
 
 export function registerStatusRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
   app.get('/v1/status', async (request, reply) => {
+    markNoStore(reply);
     const checkpoint = await deps.repository.getCheckpoint(
       deps.context.chainId,
       deps.context.stackVersion,
