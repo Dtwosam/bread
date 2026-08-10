@@ -12,6 +12,7 @@ export function ClaimPanel({
   busy,
   error,
   onReview,
+  onClaim,
 }: Readonly<{
   recipient: `0x${string}`;
   indexedClaimable: string;
@@ -19,6 +20,7 @@ export function ClaimPanel({
   busy: boolean;
   error: string | null;
   onReview: () => void;
+  onClaim: () => void;
 }>) {
   return (
     <Card className="bread-creator-claim-panel">
@@ -40,9 +42,18 @@ export function ClaimPanel({
       </dl>
 
       {error ? <p role="alert">{error}</p> : null}
-      <Button type="button" disabled={busy} onClick={onReview}>
-        {busy ? 'Reviewing claim…' : 'Review claim'}
-      </Button>
+      <div className="bread-inline-actions">
+        <Button type="button" disabled={busy} onClick={onReview}>
+          {busy ? 'Reviewing claim…' : 'Review claim'}
+        </Button>
+        <Button
+          type="button"
+          disabled={busy || !review || review.claimableUsdc === 0n || !review.transaction}
+          onClick={onClaim}
+        >
+          Claim USDC
+        </Button>
+      </div>
     </Card>
   );
 }
