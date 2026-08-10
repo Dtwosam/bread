@@ -37,33 +37,34 @@ export function createTradeWalletAdapter({
     async getChainId(): Promise<number> {
       return chainId;
     },
-    async sendPreparedTransaction(transaction: PreparedBreadTransaction): Promise<TransactionHash> {
-      if (transaction.allowance) {
-        const currentAllowance = canonicalAmount(
-          await publicClient.readContract({
-            address: transaction.allowance.token,
-            abi: ERC20_SPEND_ABI,
-            functionName: 'allowance',
-            args: [account, transaction.allowance.spender],
-          }),
-          'ERC20 allowance',
-        );
+    async ensurePreparedTransactionAllowance(transaction: PreparedBreadTransaction): Promise<void> {
+      if (!transaction.allowance) return;
 
-        if (currentAllowance < transaction.allowance.amount) {
-          const approvalHash = await walletClient.writeContract({
-            account,
-            address: transaction.allowance.token,
-            abi: ERC20_SPEND_ABI,
-            functionName: 'approve',
-            args: [transaction.allowance.spender, transaction.allowance.amount],
-          } as never);
-          const approvalReceipt = await publicClient.waitForTransactionReceipt({ hash: approvalHash });
-          if (approvalReceipt.status !== 'success') {
-            throw new Error('Token approval reverted before the trade could be submitted.');
-          }
-        }
+      const currentAllowance = canonicalAmount(
+        await publicClient.readContract({
+          address: transaction.allowance.token,
+          abi: ERC20_SPEND_ABI,
+          functionName: 'allowance',
+          args: [account, transaction.allowance.spender],
+        }),
+        'ERC20 allowance',
+      );
+
+      if (currentAllowance >= transaction.allowance.amount) return;
+
+      const approvalHash = await walletClient.writeContract({
+        account,
+        address: transaction.allowance.token,
+        abi: ERC20_SPEND_ABI,
+        functionName: 'approve',
+        args: [transaction.allowance.spender, transaction.allowance.amount],
+      } as never);
+      const approvalReceipt = await publicClient.waitForTransactionReceipt({ hash: approvalHash });
+      if (approvalReceipt.status !== 'success') {
+        throw new Error('Token approval reverted before the trade could be prepared.');
       }
-
+    },
+    async sendPreparedTransaction(transaction: PreparedBreadTransaction): Promise<TransactionHash> {
       return walletClient.writeContract({
         account,
         address: transaction.to,
