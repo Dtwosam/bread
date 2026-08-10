@@ -9,6 +9,7 @@ const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
 const paths = {
   page: 'apps/web/app/token/[address]/page.tsx',
   client: 'apps/web/components/token/token-client.tsx',
+  trade: 'apps/web/components/trade/trade-experience.tsx',
   identity: 'apps/web/components/token/token-identity.tsx',
   stats: 'apps/web/components/token/token-stats.tsx',
   chart: 'apps/web/components/token/token-chart.tsx',
@@ -83,27 +84,28 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(graduation).not.toMatch(/guaranteed safe|risk[- ]free/i);
   });
 
-  it('preserves source-defined responsive Token composition without implementing Task-5 trading', () => {
+  it('preserves source-defined responsive Token composition through the Task-5 trade owner', () => {
     const client = read(paths.client);
+    const trade = read(paths.trade);
     const css = read(paths.css);
 
     expect(client).toContain('bread-token-layout');
-    expect(client).toContain('bread-token-trade-slot');
-    expect(client).toContain('bread-token-mobile-actions');
-    expect(client).toContain('disabled');
+    expect(client).toContain('<TradeExperience token={token} />');
+    expect(trade).toContain('bread-token-trade-slot');
+    expect(trade).toContain('bread-token-mobile-actions');
     expect(css).toContain('grid-template-columns: minmax(0, 1fr) 360px');
     expect(css).toContain('.bread-token-mobile-actions');
     expect(css).toContain('@media (max-width: 767px)');
   });
 
-  it('provides the frozen tablet trade-sheet trigger without enabling transactions early', () => {
-    const client = read(paths.client);
+  it('keeps the frozen tablet trade-sheet composition after Task-5 enables transactions', () => {
+    const trade = read(paths.trade);
     const css = read(paths.css);
 
-    expect(client).toContain('bread-token-tablet-trade-trigger');
-    expect(client).toContain('tabletTradeOpen');
-    expect(client).toContain('role="dialog"');
-    expect(client).toContain('aria-modal="true"');
+    expect(trade).toContain('bread-token-tablet-trade-trigger');
+    expect(trade).toContain('sheetOpen');
+    expect(trade).toContain('role="dialog"');
+    expect(trade).toContain('aria-modal="true"');
     expect(css).toContain('.bread-token-tablet-trade-trigger');
     expect(css).toContain('.bread-token-tablet-trade-sheet');
     expect(css).toContain('@media (min-width: 768px) and (max-width: 1023px)');
