@@ -6,14 +6,24 @@ import { BoundedRealtimeFanout } from '../../apps/indexer/src/fanout.js';
 
 const address = (value: number) => `0x${value.toString(16).padStart(40, '0')}`;
 const HOT_TOKEN = address(10);
-const origin = process.env.BREAD_DAY8_ORIGIN ?? 'http://127.0.0.1:3108';
-const headReadsFile = process.env.BREAD_DAY8_HEAD_READS_FILE ?? '/tmp/bread-day8-head-reads';
+const origins = (process.env.BREAD_DAY8_ORIGINS ?? 'http://127.0.0.1:3108')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+const headReadsFiles = (process.env.BREAD_DAY8_HEAD_READS_FILES ?? '/tmp/bread-day8-head-reads-3108')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
 const tokenConcurrency = Number(process.env.BREAD_DAY8_TOKEN_CONCURRENCY ?? '10000');
 const tokenRequests = Number(process.env.BREAD_DAY8_TOKEN_REQUESTS ?? String(tokenConcurrency));
 const feedConcurrency = Number(process.env.BREAD_DAY8_FEED_CONCURRENCY ?? '1000');
 const feedRequests = Number(process.env.BREAD_DAY8_FEED_REQUESTS ?? '5000');
 const connectConcurrency = Number(process.env.BREAD_DAY8_CONNECT_CONCURRENCY ?? '500');
 
+if (origins.length < 1) throw new Error('at least one Bread API origin is required');
+if (headReadsFiles.length !== origins.length) {
+  throw new Error('head-read diagnostic file count must match Bread API origin count');
+}
 for (const [label, value, max] of [
   ['BREAD_DAY8_TOKEN_CONCURRENCY', tokenConcurrency, 10_000],
   ['BREAD_DAY8_TOKEN_REQUESTS', tokenRequests, 100_000],
@@ -29,9 +39,7 @@ if (feedConcurrency > tokenConcurrency) {
   throw new Error('feed concurrency cannot exceed the preconnected token client count');
 }
 
-const tokenUrl = `${origin}/v1/tokens/${HOT_TOKEN}`;
-const feedUrl = `${origin}/v1/feed?view=new&limit=1`;
-
+type LoadClient = Readonly<{ agent: Agent; origin: string }>;
 type LoadResult = Readonly<{
   name: string;
   concurrency: number;
@@ -46,6 +54,9 @@ type LoadResult = Readonly<{
   durationMs: number;
 }>;
 
+const tokenUrl = (origin: string) => `${origin}/v1/tokens/${HOT_TOKEN}`;
+const feedUrl = (origin: string) => `${origin}/v1/feed?view=new&limit=1`;
+
 function percentile(sorted: readonly number[], fraction: number): number {
   if (sorted.length === 0) return 0;
   const index = Math.min(sorted.length - 1, Math.ceil(sorted.length * fraction) - 1);
@@ -53,7 +64,10 @@ function percentile(sorted: readonly number[], fraction: number): number {
 }
 
 function readHeadReads(): number {
-  return Number(readFileSync(headReadsFile, 'utf8').trim());
+  return headReadsFiles.reduce(
+    (total, path) => total + Number(readFileSync(path, 'utf8').trim()),
+    0,
+  );
 }
 
 function freeSocketCount(agent: Agent): number {
@@ -86,30 +100,30 @@ function requestOnce(url: string, agent: Agent): Promise<boolean> {
   });
 }
 
-async function warmAgents(agents: readonly Agent[], url: string): Promise<number> {
+async function warmClients(clients: readonly LoadClient[]): Promise<number> {
   let next = 0;
   let failures = 0;
   async function worker() {
     while (true) {
       const index = next++;
-      const agent = agents[index];
-      if (!agent) return;
+      const client = clients[index];
+      if (!client) return;
       try {
-        if (!(await requestOnce(url, agent))) failures += 1;
+        if (!(await requestOnce(tokenUrl(client.origin), client.agent))) failures += 1;
       } catch {
         failures += 1;
       }
     }
   }
-  await Promise.all(Array.from({ length: Math.min(connectConcurrency, agents.length) }, () => worker()));
+  await Promise.all(Array.from({ length: Math.min(connectConcurrency, clients.length) }, () => worker()));
   return failures;
 }
 
 async function runHttpLoad(input: Readonly<{
   name: string;
-  url: string;
-  agents: readonly Agent[];
+  clients: readonly LoadClient[];
   requests: number;
+  urlFor: (client: LoadClient) => string;
 }>): Promise<LoadResult> {
   let next = 0;
   let ok = 0;
@@ -117,13 +131,13 @@ async function runHttpLoad(input: Readonly<{
   const latencies: number[] = [];
   const startedAll = performance.now();
 
-  async function worker(agent: Agent) {
+  async function worker(client: LoadClient) {
     while (true) {
       const id = next++;
       if (id >= input.requests) return;
       const started = performance.now();
       try {
-        const success = await requestOnce(input.url, agent);
+        const success = await requestOnce(input.urlFor(client), client.agent);
         latencies.push(performance.now() - started);
         if (success) ok += 1;
         else failed += 1;
@@ -134,12 +148,12 @@ async function runHttpLoad(input: Readonly<{
     }
   }
 
-  await Promise.all(input.agents.map((agent) => worker(agent)));
+  await Promise.all(input.clients.map((client) => worker(client)));
   const durationMs = performance.now() - startedAll;
   latencies.sort((left, right) => left - right);
   return {
     name: input.name,
-    concurrency: input.agents.length,
+    concurrency: input.clients.length,
     requests: input.requests,
     ok,
     failed,
@@ -152,32 +166,35 @@ async function runHttpLoad(input: Readonly<{
   };
 }
 
-const agents = Array.from(
-  { length: tokenConcurrency },
-  () => new Agent({ keepAlive: true, maxSockets: 1, maxFreeSockets: 1 }),
-);
+const clients: LoadClient[] = Array.from({ length: tokenConcurrency }, (_, index) => ({
+  agent: new Agent({ keepAlive: true, maxSockets: 1, maxFreeSockets: 1 }),
+  origin: origins[index % origins.length]!,
+}));
 const controlAgent = new Agent({ keepAlive: true, maxSockets: 1, maxFreeSockets: 1 });
 
 try {
-  if (!(await requestOnce(feedUrl, controlAgent))) throw new Error('feed warmup failed');
-  const warmFailures = await warmAgents(agents, tokenUrl);
-  const preconnectedSockets = agents.reduce((count, agent) => count + freeSocketCount(agent), 0);
+  if (!(await requestOnce(feedUrl(origins[0]!), controlAgent))) throw new Error('feed warmup failed');
+  const warmFailures = await warmClients(clients);
+  const preconnectedSockets = clients.reduce(
+    (count, client) => count + freeSocketCount(client.agent),
+    0,
+  );
   const observedHeadReadsAfterWarm = readHeadReads();
 
   const token = await runHttpLoad({
-    name: 'hot-token-10k-preconnected',
-    url: tokenUrl,
-    agents,
+    name: 'hot-token-10k-horizontally-scaled-preconnected',
+    clients,
     requests: tokenRequests,
+    urlFor: (client) => tokenUrl(client.origin),
   });
   const headReadsAfterToken = readHeadReads();
 
-  const feedAgents = agents.slice(0, feedConcurrency);
+  const feedClients = clients.slice(0, feedConcurrency);
   const feed = await runHttpLoad({
-    name: 'cached-feed-preconnected',
-    url: feedUrl,
-    agents: feedAgents,
+    name: 'cached-feed-horizontally-scaled-preconnected',
+    clients: feedClients,
     requests: feedRequests,
+    urlFor: (client) => feedUrl(client.origin),
   });
   const headReadsAfterFeed = readHeadReads();
 
@@ -198,9 +215,11 @@ try {
   const fanoutSnapshot = fanout.snapshot();
 
   const report = {
-    schemaVersion: 2,
-    environment: 'github-hosted-runner-separate-node-server-and-generator-local-postgres-redis-fastify',
-    connectionModel: 'one keepalive agent/socket per hot-token client; connections established before timed stampede',
+    schemaVersion: 3,
+    environment: 'github-hosted-runner-horizontally-scaled-node-api-local-postgres-redis',
+    apiWorkers: origins.length,
+    origins,
+    connectionModel: 'one keepalive agent/socket per hot-token client; round-robin stateless API workers; connections established before timed stampede',
     warmFailures,
     preconnectedSockets,
     clientRssBytes: process.memoryUsage().rss,
@@ -247,5 +266,5 @@ try {
   }
 } finally {
   controlAgent.destroy();
-  for (const agent of agents) agent.destroy();
+  for (const client of clients) client.agent.destroy();
 }
