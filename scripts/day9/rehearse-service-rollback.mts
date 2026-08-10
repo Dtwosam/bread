@@ -134,6 +134,7 @@ function spawnHealthProcess(releaseDir: string, service: 'api' | 'indexer', port
     cwd: releaseDir,
     env: { ...process.env, BREAD_ROLLBACK_PORT: String(port) },
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: process.platform !== 'win32',
   });
 }
 
@@ -142,6 +143,7 @@ function spawnWebProcess(releaseDir: string, port: number): ChildProcess {
     cwd: releaseDir,
     env: { ...process.env, NODE_ENV: 'production' },
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: process.platform !== 'win32',
   });
 }
 
@@ -169,7 +171,16 @@ async function startRelease(releaseDir: string): Promise<ReleaseProcesses> {
 }
 
 function stopProcess(child: ChildProcess): void {
-  if (!child.killed) child.kill('SIGTERM');
+  if (child.exitCode !== null || child.killed) return;
+  if (process.platform !== 'win32' && child.pid) {
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+      return;
+    } catch {
+      // Fall through to direct child termination if the process group already exited.
+    }
+  }
+  child.kill('SIGTERM');
 }
 
 function stopRelease(release: ReleaseProcesses | undefined): void {
@@ -335,8 +346,8 @@ export async function rehearseServiceRollback(input: RollbackInput): Promise<Ser
       waitForUrl(`http://127.0.0.1:${router.port}/indexer`, 'indexer'),
     ]);
 
-    // Application-only failure injection: kill the candidate web process. No
-    // contract/config/DB mutation is used to manufacture the failure.
+    // Application-only failure injection: terminate the entire candidate web
+    // process group. No contract/config/DB mutation is used to manufacture the failure.
     stopProcess(candidate.web);
     await waitForFailure(`http://127.0.0.1:${candidate.webPort}/`);
     await waitForFailure(`http://127.0.0.1:${router.port}/web`);
