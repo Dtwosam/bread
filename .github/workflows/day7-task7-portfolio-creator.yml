@@ -1,0 +1,49 @@
+name: day7-task7-portfolio-creator
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day7-task7-portfolio-creator.yml'
+      - 'packages/types/src/**'
+      - 'packages/protocol-sdk/src/**'
+      - 'apps/api/src/routes/portfolio.ts'
+      - 'apps/api/src/routes/creators.ts'
+      - 'apps/web/app/portfolio/**'
+      - 'apps/web/app/creator/**'
+      - 'apps/web/components/portfolio/**'
+      - 'apps/web/components/creator/**'
+      - 'apps/web/lib/transactions/**'
+      - 'apps/web/lib/api/**'
+      - 'apps/web/components/trade/**'
+      - 'apps/web/lib/wallet/**'
+      - 'tests/day7/portfolio-creator.test.tsx'
+      - 'tests/day7/claim-execution.test.ts'
+      - 'tests/day7/creator-claim-ui.test.tsx'
+      - 'docs/current-build-state.yaml'
+      - 'docs/handoffs/day7-task7-portfolio-creator-handoff.md'
+  push:
+    branches:
+      - 'agent/day7-task7-portfolio-creator-claims'
+
+permissions:
+  contents: read
+
+jobs:
+  portfolio-creator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Run Day 7 Portfolio, Creator and claim tests
+        run: >-
+          pnpm exec vitest run
+          tests/day7/portfolio-creator.test.tsx
+          tests/day7/claim-execution.test.ts
+          tests/day7/creator-claim-ui.test.tsx

@@ -15,12 +15,19 @@ function isLaunchAction(action: unknown): action is Extract<TransactionAction, '
   return action === 'LAUNCH' || action === 'LAUNCH_AND_BUY';
 }
 
+function isClaimAction(action: unknown): action is Extract<TransactionAction, 'CLAIM'> {
+  return action === 'CLAIM';
+}
+
 function hasValidSubject(record: Record<string, unknown>): boolean {
   if (isTradeAction(record.action)) {
     return typeof record.tokenAddress === 'string' && ADDRESS.test(record.tokenAddress);
   }
   if (isLaunchAction(record.action)) {
     return typeof record.launchIntentId === 'string' && record.launchIntentId.trim().length > 0;
+  }
+  if (isClaimAction(record.action)) {
+    return typeof record.claimRecipient === 'string' && ADDRESS.test(record.claimRecipient);
   }
   return false;
 }
@@ -32,7 +39,7 @@ function isRecord(value: unknown): value is SubmittedTransactionRecord {
     Number.isInteger(record.chainId) &&
     typeof record.hash === 'string' &&
     HASH.test(record.hash) &&
-    (isTradeAction(record.action) || isLaunchAction(record.action)) &&
+    (isTradeAction(record.action) || isLaunchAction(record.action) || isClaimAction(record.action)) &&
     hasValidSubject(record) &&
     typeof record.submittedAt === 'string' &&
     !Number.isNaN(Date.parse(record.submittedAt)) &&

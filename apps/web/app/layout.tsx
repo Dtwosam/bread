@@ -6,6 +6,7 @@ import '@bread/ui/theme.css';
 import { Providers } from '../components/providers';
 import { SearchSurface } from '../components/search-surface';
 import './globals.css';
+import './portfolio-creator.css';
 
 const inter = Inter({
   subsets: ['latin'],
