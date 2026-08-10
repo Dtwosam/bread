@@ -1,0 +1,98 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const root = resolve(import.meta.dirname, '../..');
+const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
+
+const paths = {
+  page: 'apps/web/app/token/[address]/page.tsx',
+  client: 'apps/web/components/token/token-client.tsx',
+  identity: 'apps/web/components/token/token-identity.tsx',
+  stats: 'apps/web/components/token/token-stats.tsx',
+  chart: 'apps/web/components/token/token-chart.tsx',
+  graduation: 'apps/web/components/token/graduation-module.tsx',
+  tabs: 'apps/web/components/token/token-tabs.tsx',
+  css: 'apps/web/app/globals.css',
+} as const;
+
+describe('Day 7 Task 4 Token page behavior', () => {
+  it('builds the frozen Token page from dedicated source-defined components', () => {
+    for (const path of Object.values(paths)) expect(existsSync(resolve(root, path))).toBe(true);
+
+    const page = read(paths.page);
+    expect(page).toContain('TokenClient');
+  });
+
+  it('uses one canonical indexed primary read with distinct local malformed and API not-found states', () => {
+    const client = read(paths.client);
+
+    expect(client).toContain('createBreadApiClient');
+    expect(client).toContain('breadQueryKeys.token(address)');
+    expect(client).toContain('api.getToken<IndexedTokenDetail>(address)');
+    expect(client).toContain('enabled: validAddress');
+    expect(client).toContain("error.code === 'TOKEN_NOT_FOUND'");
+    expect(client).toContain('Invalid token address');
+    expect(client).toContain('Not a Bread launch');
+    expect(client).toContain('<FreshnessBanner meta={query.data.meta} />');
+  });
+
+  it('keeps contract identity visible and unsupported financial values explicit', () => {
+    const identity = read(paths.identity);
+    const stats = read(paths.stats);
+
+    expect(identity).toContain('{token.tokenAddress}');
+    expect(identity).not.toContain('shortAddress(token.tokenAddress)');
+    expect(stats).toContain('Market cap');
+    expect(stats).toContain('24h change');
+    expect(stats.match(/—/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+  });
+
+  it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
+    const tabs = read(paths.tabs);
+
+    expect(tabs).toContain("activeTab === 'trades'");
+    expect(tabs).toContain("enabled: activeTab === 'trades'");
+    expect(tabs).toContain('breadQueryKeys.trades(tokenAddress');
+    expect(tabs).toContain('api.getTrades<readonly IndexedTokenTrade[]>');
+    expect(tabs).toContain("activeTab === 'holders'");
+    expect(tabs).toContain("enabled: activeTab === 'holders'");
+    expect(tabs).toContain('breadQueryKeys.holders(tokenAddress');
+    expect(tabs).toContain('api.getHolders<IndexedTokenHolders>');
+  });
+
+  it('does not fabricate chart history and provides a textual indexed-price alternative', () => {
+    const client = read(paths.client);
+    const chart = read(paths.chart);
+
+    expect(client).toContain("dynamic(() => import('./token-chart')");
+    expect(chart).toContain('Historical chart unavailable');
+    expect(chart).toContain('Indexed price ratio');
+    expect(chart).not.toMatch(/candles|fake|sampleData|mockData/i);
+  });
+
+  it('shows canonical graduation evidence without describing it as a safety guarantee', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('Graduation');
+    expect(graduation).toContain('progressBps');
+    expect(graduation).toContain('graduationPhase');
+    expect(graduation).toContain('poolId');
+    expect(graduation).toContain('positionLocked');
+    expect(graduation).not.toMatch(/guaranteed safe|risk[- ]free/i);
+  });
+
+  it('preserves source-defined responsive Token composition without implementing Task-5 trading', () => {
+    const client = read(paths.client);
+    const css = read(paths.css);
+
+    expect(client).toContain('bread-token-layout');
+    expect(client).toContain('bread-token-trade-slot');
+    expect(client).toContain('bread-token-mobile-actions');
+    expect(client).toContain('disabled');
+    expect(css).toContain('grid-template-columns: minmax(0, 1fr) 360px');
+    expect(css).toContain('.bread-token-mobile-actions');
+    expect(css).toContain('@media (max-width: 767px)');
+  });
+});
