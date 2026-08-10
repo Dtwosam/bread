@@ -38,7 +38,7 @@ export async function installInjectedWallet(
       let isConnected = connected;
       let currentChainId = chainIdHex;
       let transactionIndex = 0;
-      let queuedTransactionHashes = [...transactionHashes];
+      let queuedTransactionHashes: string[] = [...transactionHashes];
 
       function emit(event: string, ...args: unknown[]) {
         for (const listener of listeners.get(event) ?? []) listener(...args);
