@@ -6,6 +6,7 @@ on:
       - '.github/workflows/day9-lane5-recovery-drills.yml'
       - 'tests/day9/recovery-drill-bundle.test.ts'
       - 'scripts/day9/run-recovery-drills.mts'
+      - 'scripts/day9/run-browser-recovery-drill.mjs'
       - 'scripts/day9/rehearse-service-rollback.mts'
       - 'contracts/test/BreadEmergencyController.t.sol'
       - 'contracts/test/BreadGraduationRetry.t.sol'
@@ -18,6 +19,7 @@ on:
       - '.github/workflows/day9-lane5-recovery-drills.yml'
       - 'tests/day9/recovery-drill-bundle.test.ts'
       - 'scripts/day9/run-recovery-drills.mts'
+      - 'scripts/day9/run-browser-recovery-drill.mjs'
       - 'scripts/day9/rehearse-service-rollback.mts'
       - 'contracts/test/BreadEmergencyController.t.sol'
       - 'contracts/test/BreadGraduationRetry.t.sol'
@@ -49,6 +51,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install pinned Chromium runtime for retained transaction-recovery evidence
         run: pnpm --filter @bread/web exec playwright install --with-deps chromium
+      - name: Run standalone browser recovery drill
+        env:
+          BREAD_DAY9_BROWSER_RECOVERY_MARKER: ${{ runner.temp }}/bread-day9-browser-recovery.json
+        run: node scripts/day9/run-browser-recovery-drill.mjs
+      - name: Verify standalone browser drill restored canonical manifests
+        run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json
       - name: Start exact Bread development infrastructure with bounded registry retry
         shell: bash
         run: |
@@ -73,8 +81,9 @@ jobs:
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
+          BREAD_DAY9_BROWSER_RECOVERY_MARKER: ${{ runner.temp }}/bread-day9-browser-recovery.json
         run: pnpm exec vitest run tests/day9/recovery-drill-bundle.test.ts --testTimeout=1200000
-      - name: Verify browser fixture restored canonical manifests
+      - name: Verify recovery bundle preserved canonical manifests
         if: always()
         run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json
       - name: Run root build after recovery drills
