@@ -4,6 +4,7 @@ import { Geist_Mono, Inter } from 'next/font/google';
 import { MobileNavigation, Navigation } from '@bread/ui';
 import '@bread/ui/theme.css';
 import { Providers } from '../components/providers';
+import { SearchSurface } from '../components/search-surface';
 import './globals.css';
 
 const inter = Inter({
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                   Bread
                 </a>
                 <Navigation />
+                <SearchSurface />
               </div>
             </header>
 
@@ -38,6 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               <a className="bread-brand" href="/explore" aria-label="Bread home">
                 Bread
               </a>
+              <SearchSurface compact />
             </div>
 
             {children}
