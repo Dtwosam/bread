@@ -4,9 +4,9 @@ Date: 2026-08-10
 
 ## Status
 
-`DAY7_TASK5_TRADE_WALLET_TRANSACTION_RECOVERY_IMPLEMENTATION_MERGED_PENDING_DURABLE_HANDOFF`
+`TRADE_WALLET_TRANSACTION_RECOVERY_INTEGRATED_PASS_DURABLE`
 
-This is the separate durability handoff for Day-7 Task 5. It is created from the actual guarded implementation merge on `main`; Task 5 does not become durable until this handoff and `docs/current-build-state.yaml` are exact-head green, guarded-merged, and read back from actual `main`.
+This document becomes the controlling durable Task-5 handoff only after this docs-only handoff PR is exact-head green, guarded-merged to `main`, and actual `main` is freshly reverified.
 
 ## Durable start baseline
 
@@ -15,6 +15,7 @@ This is the separate durability handoff for Day-7 Task 5. It is created from the
 - Task-5 implementation PR: #67
 - Exact reviewed Task-5 implementation head: `87d55976b51a740046cc70a5984b6b94d7727a4b`
 - Guarded Task-5 implementation merge: `7168b0f26daf46bcf4d8a4587088d95a6df92d27`
+- Durable handoff PR: #68
 
 ## What Task 5 integrated
 
@@ -142,4 +143,4 @@ The first Task-6 RED must prove the source-defined Create/Review contract before
 
 ## Durable-closeout rule
 
-Until this handoff PR and `docs/current-build-state.yaml` are exact-head green and merged, Task 5 is `IMPLEMENTATION_MERGED_PENDING_DURABLE_HANDOFF`, not `INTEGRATED_PASS_DURABLE`.
+Until this handoff PR and `docs/current-build-state.yaml` are exact-head green and merged, Task 5 is not the controlling durable baseline for Task 6.
