@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
-      - 'scripts/load/day8-hot-launch.ts'
+      - 'scripts/load/day8-hot-launch.mts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
       - 'packages/db/src/**'
@@ -14,7 +14,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
-      - 'scripts/load/day8-hot-launch.ts'
+      - 'scripts/load/day8-hot-launch.mts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
       - 'packages/db/src/**'
@@ -53,7 +53,7 @@ jobs:
           BREAD_DAY8_TOKEN_REQUESTS: '10000'
           BREAD_DAY8_FEED_CONCURRENCY: '1000'
           BREAD_DAY8_FEED_REQUESTS: '5000'
-        run: pnpm exec tsx scripts/load/day8-hot-launch.ts
+        run: pnpm exec tsx scripts/load/day8-hot-launch.mts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
