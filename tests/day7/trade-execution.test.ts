@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { estimateBuyTradeReview } from '../../packages/protocol-sdk/src/trade-review.js';
 import { executeTradeLifecycle } from '../../apps/web/lib/transactions/controller.js';
 import { loadRecoverableTransactions } from '../../apps/web/lib/transactions/storage.js';
 
@@ -24,6 +25,19 @@ const context = {
     coordinator: address('8'),
   },
 } as const;
+
+const approvedReview = estimateBuyTradeReview({
+  quoteIn: 10_000n,
+  slippageBps: 50,
+  snapshot: {
+    quoteReserve: 1_000_000n,
+    tokenReserve: 2_000_000n,
+    reservedTokens: 0n,
+    tradeFeeBps: 100,
+    creatorTaxBps: 50,
+    openingTaxBps: 0,
+  },
+});
 
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -97,6 +111,7 @@ const trade = {
   curveAddress: address('9'),
   inputAmount: 10_000n,
   slippageBps: 50,
+  approvedReview,
 };
 
 describe('Day 7 Task 5 trade submission and recovery', () => {
@@ -127,6 +142,7 @@ describe('Day 7 Task 5 trade submission and recovery', () => {
       'CONFIRMING',
       'CONFIRMED',
     ]);
+    expect(result.reviewChanged).toBe(false);
     expect(result.state.status).toBe('CONFIRMED');
     expect(harness.reconciled).toEqual([hash('c')]);
     expect(loadRecoverableTransactions(harness.storage)).toEqual([]);
