@@ -155,15 +155,20 @@ async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
 
   try {
     // Task 4 intentionally builds the current web release in production mode.
-    // Bread's CSP is mode-dependent, so a subsequent `next dev` must not reuse
-    // that generated `.next` tree. Reset only the generated build artifact,
-    // then consume the canonical Day-7 browser harness unchanged.
+    // Bread's CSP is mode-dependent, so reset that generated tree first. This
+    // function itself runs inside Vitest, which sets NODE_ENV=test; the nested
+    // canonical Playwright harness must explicitly restore the `next dev`
+    // development environment or Bread correctly serves the production CSP.
     await rm(webBuildPath, { recursive: true, force: true });
     evidence = execute(
-      'canonical Day-7 Playwright harness including apps/web/e2e/specs/transaction-recovery.spec.ts after generated .next reset; Day-9 parent-owned manifest restoration',
+      'canonical Day-7 Playwright harness including apps/web/e2e/specs/transaction-recovery.spec.ts in explicit development mode after generated .next reset; Day-9 parent-owned manifest restoration',
       'pnpm',
       ['--filter', '@bread/web', 'test:e2e'],
-      { cwd: repoRoot, timeout: 600_000 },
+      {
+        cwd: repoRoot,
+        env: { ...process.env, NODE_ENV: 'development' },
+        timeout: 600_000,
+      },
     );
   } finally {
     await writeFile(deploymentPath, originalDeployment);
