@@ -28,6 +28,15 @@ export type {
 } from './api.js';
 
 export type {
+  IndexedAvailableValue,
+  IndexedCreatorLaunch,
+  IndexedCreatorOverview,
+  IndexedPortfolio,
+  IndexedPortfolioHolding,
+  IndexedUnavailableValue,
+} from './portfolio.js';
+
+export type {
   ReconciliationCheck,
   ReconciliationCheckId,
   ReconciliationReport,
