@@ -157,6 +157,7 @@ describe('Day 7 Task 5 real wallet runtime', () => {
   it('mounts one Wagmi/injected runtime, explicit connect/switch controls and automatic recovery', () => {
     const paths = {
       providers: 'apps/web/components/providers.tsx',
+      walletBoundary: 'apps/web/components/wallet/wallet-provider.tsx',
       walletProvider: 'apps/web/components/trade/wallet-trade-provider.tsx',
       runtime: 'apps/web/components/trade/trade-runtime.tsx',
       config: 'apps/web/lib/wallet/config.ts',
@@ -164,12 +165,15 @@ describe('Day 7 Task 5 real wallet runtime', () => {
     for (const path of Object.values(paths)) expect(existsSync(resolve(root, path))).toBe(true);
 
     const providers = read(paths.providers);
+    const walletBoundary = read(paths.walletBoundary);
     const walletProvider = read(paths.walletProvider);
     const runtime = read(paths.runtime);
     const config = read(paths.config);
 
-    expect(providers).toContain('WagmiProvider');
-    expect(providers).toContain('WalletTradeProvider');
+    expect(providers).toContain('WalletProvider');
+    expect(providers).not.toContain('WagmiProvider');
+    expect(walletBoundary).toContain('WagmiProvider');
+    expect(walletBoundary).toContain('WalletTradeProvider');
     expect(config).toContain("from 'wagmi/connectors'");
     expect(config).toContain('injected()');
     expect(config).toContain("config/networks/arc-testnet.json");
@@ -194,6 +198,7 @@ describe('Day 7 Task 5 real wallet runtime', () => {
     for (const status of ["'DISCONNECTED'", "'WRONG_NETWORK'", "'READY'"]) {
       expect(walletProvider).toContain(status);
     }
+    expect(runtime).toContain('walletOptions');
     expect(runtime).toContain('connectWallet');
     expect(runtime).toContain('switchToTargetChain');
   });
