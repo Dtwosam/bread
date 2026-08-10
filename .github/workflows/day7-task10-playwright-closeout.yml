@@ -31,6 +31,8 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
+      - name: Run retained Day 7 Task 3 Explore/Search regression
+        run: pnpm exec vitest run tests/day7/explore-feed-progress.test.ts tests/day7/explore-search.test.ts tests/day7/search-freshness.test.ts --passWithNoTests
       - name: Install pinned Chromium runtime
         run: pnpm --filter @bread/web exec playwright install --with-deps chromium
       - name: Run Day 7 Task 10 desktop/mobile browser journeys
