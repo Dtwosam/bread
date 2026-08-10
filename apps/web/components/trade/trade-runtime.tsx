@@ -3,16 +3,23 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { PublicClient } from 'viem';
 
-import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context';
+import type {
+  TradeExecutionContext,
+  TradeWalletAdapter,
+} from '../../lib/transactions/controller';
 import type { TradeAction } from '../../lib/transactions/state';
-import type { TradeWalletAdapter } from '../../lib/transactions/controller';
 
 type Address = `0x${string}`;
 
+export type TradeConnectionStatus = 'DISCONNECTED' | 'WRONG_NETWORK' | 'READY';
+
 export type TradeRuntime = Readonly<{
   client: PublicClient;
-  wallet: TradeWalletAdapter;
-  context: ProtocolContext;
+  wallet: TradeWalletAdapter | null;
+  context: TradeExecutionContext;
+  connectionStatus: TradeConnectionStatus;
+  connectWallet: () => Promise<void>;
+  switchToTargetChain: () => Promise<void>;
   getSpendableBalance: (action: TradeAction, tokenAddress: Address) => Promise<bigint>;
   storage?: Storage;
 }>;
