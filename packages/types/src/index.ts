@@ -14,7 +14,12 @@ export type {
   CursorPageMeta,
   FreshnessMeta,
   FreshnessStatus,
+  IndexedFeedItem,
+  IndexedGraduationProgressSummary,
+  IndexedPriceSummary,
   IndexedResponse,
+  IndexedSearchResult,
+  IndexedTradeMetricsSummary,
 } from './api.js';
 
 export type {
