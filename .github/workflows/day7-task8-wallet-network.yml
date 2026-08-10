@@ -50,3 +50,14 @@ jobs:
           tests/day7/trade-ui.test.tsx
           tests/day7/create-runtime.test.tsx
           tests/day7/creator-claim-ui.test.tsx
+      - name: Run retained Day 7 Tasks 2-4 read-route regressions
+        run: >-
+          pnpm exec vitest run
+          tests/day7/read-client.test.ts
+          tests/day7/read-provider.test.ts
+          tests/day7/explore-feed-progress.test.ts
+          tests/day7/explore-search.test.ts
+          tests/day7/search-freshness.test.ts
+          tests/day7/explore-shared-types.test.ts
+          tests/day7/token-page.test.tsx
+          tests/day7/token-page-behavior.test.tsx
