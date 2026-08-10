@@ -1,4 +1,4 @@
-import { CLAIM_TX_HASH, E2E_WALLET } from '../fixtures/constants';
+import { CLAIM_TX_HASH, E2E_FEE_ESCROW, E2E_WALLET } from '../fixtures/constants';
 import {
   expect,
   setWalletTransactionHashes,
@@ -34,7 +34,12 @@ test('creator reviews authoritative FeeEscrow claimable value and confirms one U
   await setWalletTransactionHashes(page, [CLAIM_TX_HASH]);
   await main.getByRole('button', { name: 'Claim USDC' }).click();
   await expect(main.getByRole('status')).toContainText('CONFIRMED');
-  expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(1);
+  const snapshot = await walletSnapshot(page);
+  expect(snapshot.submittedTransactions).toHaveLength(1);
+  const submitted = snapshot.submittedTransactions[0] as Readonly<{ to?: unknown; value?: unknown }>;
+  expect(typeof submitted.to).toBe('string');
+  expect((submitted.to as string).toLowerCase()).toBe(E2E_FEE_ESCROW.toLowerCase());
+  expect(submitted.value === undefined || submitted.value === '0x0' || submitted.value === '0x00').toBe(true);
   expect(rpcState.unknownCalls).toEqual([]);
 });
 
