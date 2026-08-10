@@ -334,7 +334,10 @@ try {
       if (feedEdgeDelta.originFetches > maxOriginFetchesPerPhase) failures.push(`feed edge made ${feedEdgeDelta.originFetches} origin fetches > ${maxOriginFetchesPerPhase}`);
       if (tokenEdgeDelta.cacheMisses > maxOriginFetchesPerPhase) failures.push('hot-token edge cache misses were not bounded');
       if (feedEdgeDelta.cacheMisses > maxOriginFetchesPerPhase) failures.push('feed edge cache misses were not bounded');
-      if (tokenEdgeDelta.coalescedWaiters < tokenConcurrency / 2) failures.push('hot-token cold stampede was not predominantly coalesced at the edge');
+      const tokenAbsorbed = tokenEdgeDelta.cacheHits + tokenEdgeDelta.coalescedWaiters;
+      const feedAbsorbed = feedEdgeDelta.cacheHits + feedEdgeDelta.coalescedWaiters;
+      if (tokenAbsorbed / tokenRequests < 0.99) failures.push(`hot-token edge absorbed only ${tokenAbsorbed}/${tokenRequests} requests`);
+      if (feedAbsorbed / feedRequests < 0.99) failures.push(`feed edge absorbed only ${feedAbsorbed}/${feedRequests} requests`);
     }
   }
   if (deliveries !== 10_000) failures.push(`realtime delivered ${deliveries}/10000`);
