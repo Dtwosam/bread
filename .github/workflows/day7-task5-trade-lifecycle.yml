@@ -7,6 +7,8 @@ on:
       - 'contracts/src/BreadLaunchToken.sol'
       - 'packages/protocol-sdk/src/**'
       - 'apps/web/lib/transactions/**'
+      - 'apps/web/lib/wallet/**'
+      - 'apps/web/components/providers.tsx'
       - 'apps/web/components/trade/**'
       - 'apps/web/components/transaction-status.tsx'
       - 'apps/web/components/token/token-client.tsx'
@@ -19,6 +21,7 @@ on:
       - 'tests/day7/trade-ui.test.tsx'
       - 'tests/day7/token-decimals.test.ts'
       - 'tests/day7/transaction-recovery.test.ts'
+      - 'tests/day7/wallet-runtime.test.ts'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task5-trade-lifecycle-handoff.md'
   push:
@@ -52,3 +55,4 @@ jobs:
           tests/day7/trade-ui.test.tsx
           tests/day7/token-decimals.test.ts
           tests/day7/transaction-recovery.test.ts
+          tests/day7/wallet-runtime.test.ts
