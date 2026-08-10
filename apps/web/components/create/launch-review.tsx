@@ -11,6 +11,15 @@ export type LaunchReviewModel = Readonly<{
   creatorRevenueWallet: `0x${string}`;
   permanentLiquidityLock: string;
   launchAndBuy: boolean;
+  initialBuyConsequences?: Readonly<{
+    expectedOutput: string;
+    minimumOutput: string;
+    baseFee: string;
+    creatorTax: string;
+    openingTax: string;
+    priceImpact: string;
+    slippage: string;
+  }>;
 }>;
 
 export function LaunchReview({
@@ -48,6 +57,21 @@ export function LaunchReview({
         <div><dt>Creator revenue wallet</dt><dd>{review?.creatorRevenueWallet ?? unavailable}</dd></div>
         <div><dt>Permanent liquidity lock</dt><dd>{review?.permanentLiquidityLock ?? unavailable}</dd></div>
       </dl>
+
+      {review?.initialBuyConsequences ? (
+        <section className="bread-launch-review__initial-buy" aria-labelledby="bread-launch-buy-review-heading">
+          <h2 id="bread-launch-buy-review-heading">Launch &amp; Buy details</h2>
+          <dl className="bread-launch-review__values">
+            <div><dt>Expected output</dt><dd>{review.initialBuyConsequences.expectedOutput}</dd></div>
+            <div><dt>Minimum output</dt><dd>{review.initialBuyConsequences.minimumOutput}</dd></div>
+            <div><dt>Base fee</dt><dd>{review.initialBuyConsequences.baseFee}</dd></div>
+            <div><dt>Creator tax</dt><dd>{review.initialBuyConsequences.creatorTax}</dd></div>
+            <div><dt>Opening buy tax</dt><dd>{review.initialBuyConsequences.openingTax}</dd></div>
+            <div><dt>Price impact</dt><dd>{review.initialBuyConsequences.priceImpact}</dd></div>
+            <div><dt>Slippage</dt><dd>{review.initialBuyConsequences.slippage}</dd></div>
+          </dl>
+        </section>
+      ) : null}
 
       {!review ? (
         <p className="bread-launch-review__unavailable" role="status">
