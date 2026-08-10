@@ -255,17 +255,20 @@ export async function recoverClaimTransactions({
   client,
   storage,
   chainId,
+  recipient,
   onStateChange,
   onConfirmed,
 }: Readonly<{
   client: Pick<PublicClient, 'waitForTransactionReceipt'>;
   storage: Storage;
   chainId: number;
+  recipient?: Address;
   onStateChange?: (state: TransactionState) => void;
   onConfirmed?: (record: SubmittedTransactionRecord) => Promise<void> | void;
 }>): Promise<TransactionState[]> {
   const records = loadRecoverableTransactions(storage, { actions: ['CLAIM'] })
-    .filter((record) => record.chainId === chainId);
+    .filter((record) => record.chainId === chainId)
+    .filter((record) => recipient === undefined || record.claimRecipient?.toLowerCase() === recipient.toLowerCase());
   const recovered: TransactionState[] = [];
 
   for (const originalRecord of records) {
