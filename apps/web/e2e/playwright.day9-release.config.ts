@@ -31,6 +31,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'pnpm exec next dev --hostname 127.0.0.1 --port 3000',
+    cwd: process.cwd(),
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: false,
     timeout: 120_000,
