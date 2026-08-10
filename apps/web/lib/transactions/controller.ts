@@ -4,7 +4,6 @@ import {
   simulatePreparedTransaction,
   type PreparedBreadTransaction,
 } from '../../../../packages/protocol-sdk/src/builders';
-import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context';
 import {
   estimateBuyTradeReview,
   estimateSellTradeReview,
@@ -31,6 +30,12 @@ type Address = `0x${string}`;
 type TransactionHash = `0x${string}`;
 type TradePublicClient = Parameters<typeof readTradeReviewSnapshot>[0];
 type ApprovedTradeReview = BuyTradeReview | SellTradeReview;
+
+export type TradeExecutionContext = Readonly<{
+  chainId: number;
+  quoteAsset: Address;
+  quoteDecimals: number;
+}>;
 
 const TRANSACTION_HASH = /^0x[0-9a-fA-F]{64}$/;
 
@@ -130,7 +135,7 @@ export async function prepareTradeForSignature({
   slippageBps,
 }: Readonly<{
   client: TradePublicClient;
-  context: ProtocolContext;
+  context: TradeExecutionContext;
   walletChainId: number;
   account: Address;
   action: TradeAction;
@@ -187,7 +192,7 @@ export async function executeTradeLifecycle({
   client: TradePublicClient;
   wallet: TradeWalletAdapter;
   storage: Storage;
-  context: ProtocolContext;
+  context: TradeExecutionContext;
   action: TradeAction;
   tokenAddress: Address;
   curveAddress: Address;
