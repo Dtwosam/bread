@@ -1,13 +1,11 @@
 import { spawnSync } from 'node:child_process';
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { rehearseServiceRollback } from './rehearse-service-rollback.mts';
 
 const repoRoot = path.resolve(new URL('../..', import.meta.url).pathname);
 const contractsRoot = path.join(repoRoot, 'contracts');
-const deploymentPath = path.join(repoRoot, 'config/deployments/arc-testnet.day5.json');
-const webBuildPath = path.join(repoRoot, 'apps/web/.next');
 
 export const REQUIRED_RECOVERY_DRILL_IDS = [
   'GUARDIAN_PAUSE_NEW_LAUNCHES',
@@ -44,6 +42,15 @@ type CommandEvidence = Readonly<{
   evidenceKind: 'EXECUTED_TEST';
 }>;
 
+type BrowserRecoveryProof = Readonly<{
+  status?: string;
+  commit?: string;
+  evidence?: string;
+  evidenceKind?: string;
+  transactionRecoverySpecIncluded?: boolean;
+  manifestRestoration?: string;
+}>;
+
 function execute(
   evidence: string,
   command: string,
@@ -75,6 +82,18 @@ function execute(
   }
 
   return { evidence, evidenceKind: 'EXECUTED_TEST' };
+}
+
+function currentCommit(): string {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (result.status !== 0) {
+    throw new Error(`git rev-parse HEAD failed\n${result.stdout ?? ''}\n${result.stderr ?? ''}`);
+  }
+  return String(result.stdout).trim();
 }
 
 function pass(id: RecoveryDrillId, evidence: CommandEvidence): RecoveryDrillResult {
@@ -150,36 +169,36 @@ function runIndexerReconcile(): RecoveryDrillResult {
 }
 
 async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
-  const originalDeployment = await readFile(deploymentPath);
-  let evidence: CommandEvidence | undefined;
-
-  try {
-    // Task 4 intentionally builds the current web release in production mode.
-    // Bread's CSP is mode-dependent, so reset that generated tree first. This
-    // function itself runs inside Vitest, which sets NODE_ENV=test; the nested
-    // canonical Playwright harness must explicitly restore the `next dev`
-    // development environment or Bread correctly serves the production CSP.
-    await rm(webBuildPath, { recursive: true, force: true });
-    evidence = execute(
-      'canonical Day-7 Playwright harness including apps/web/e2e/specs/transaction-recovery.spec.ts in explicit development mode after generated .next reset; Day-9 parent-owned manifest restoration',
-      'pnpm',
-      ['--filter', '@bread/web', 'test:e2e'],
-      {
-        cwd: repoRoot,
-        env: { ...process.env, NODE_ENV: 'development' },
-        timeout: 600_000,
-      },
-    );
-  } finally {
-    await writeFile(deploymentPath, originalDeployment);
-    const restored = await readFile(deploymentPath);
-    if (!restored.equals(originalDeployment)) {
-      throw new Error('Day 9 recovery drill failed to restore the canonical Arc testnet deployment manifest byte-for-byte');
-    }
+  const markerPath = process.env.BREAD_DAY9_BROWSER_RECOVERY_MARKER;
+  if (!markerPath) {
+    throw new Error('BREAD_DAY9_BROWSER_RECOVERY_MARKER is required; browser recovery must execute as a standalone same-job predecessor');
   }
 
-  if (!evidence) throw new Error('browser transaction recovery evidence did not execute');
-  return pass('SUBMITTED_TX_BROWSER_REFRESH_RECOVERY', evidence);
+  let proof: BrowserRecoveryProof;
+  try {
+    proof = JSON.parse(await readFile(markerPath, 'utf8')) as BrowserRecoveryProof;
+  } catch (error) {
+    throw new Error(`standalone browser recovery proof is unavailable or invalid at ${markerPath}: ${String(error)}`);
+  }
+
+  const commit = currentCommit();
+  if (
+    proof.status !== 'PASS'
+    || proof.commit !== commit
+    || proof.evidenceKind !== 'EXECUTED_TEST'
+    || proof.transactionRecoverySpecIncluded !== true
+    || proof.manifestRestoration !== 'PASS'
+    || !proof.evidence
+  ) {
+    throw new Error(`standalone browser recovery proof does not match current commit ${commit}: ${JSON.stringify(proof)}`);
+  }
+
+  return {
+    id: 'SUBMITTED_TX_BROWSER_REFRESH_RECOVERY',
+    status: 'PASS',
+    evidence: proof.evidence,
+    evidenceKind: 'EXECUTED_TEST',
+  };
 }
 
 function runGraduationRetry(): RecoveryDrillResult {
@@ -211,10 +230,10 @@ export async function runRecoveryDrills(): Promise<RecoveryDrillSummary> {
   requireDbIntegration();
 
   const emergency = runEmergencyDrills();
+  const browserRecovery = await runBrowserTransactionRecovery();
   const applicationRollback = await runApplicationRollback();
   const rpcFailover = runRpcFailover();
   const indexerReconcile = runIndexerReconcile();
-  const browserRecovery = await runBrowserTransactionRecovery();
   const graduationRetry = runGraduationRetry();
   const multisig = multisigEnvironmentBlocker();
 
