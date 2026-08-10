@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
       - 'scripts/load/day8-hot-launch.mts'
+      - 'scripts/load/day8-hot-launch-server.mts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
       - 'packages/db/src/**'
@@ -15,6 +16,7 @@ on:
     paths:
       - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
       - 'scripts/load/day8-hot-launch.mts'
+      - 'scripts/load/day8-hot-launch-server.mts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
       - 'packages/db/src/**'
@@ -45,15 +47,54 @@ jobs:
         run: |
           docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
           test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
-      - name: Run integrated 10k hot-launch capacity proof
+          echo "open_file_limit=$(ulimit -n)"
+      - name: Start isolated Bread API capacity server
         env:
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
           BREAD_REDIS_URL: redis://127.0.0.1:6379
+          BREAD_DAY8_SERVER_PORT: '3108'
+          BREAD_DAY8_HEAD_READS_FILE: /tmp/bread-day8-head-reads
+        run: |
+          rm -f /tmp/day8-load-server.log /tmp/day8-load-server.pid /tmp/bread-day8-head-reads
+          pnpm exec tsx scripts/load/day8-hot-launch-server.mts >/tmp/day8-load-server.log 2>&1 &
+          echo "$!" >/tmp/day8-load-server.pid
+          for _ in $(seq 1 60); do
+            if grep -q 'DAY8_LOAD_SERVER_READY' /tmp/day8-load-server.log; then
+              cat /tmp/day8-load-server.log
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/day8-load-server.pid)" 2>/dev/null; then
+              cat /tmp/day8-load-server.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/day8-load-server.log
+          exit 1
+      - name: Run integrated 10k preconnected hot-launch capacity proof
+        env:
+          BREAD_DAY8_ORIGIN: http://127.0.0.1:3108
+          BREAD_DAY8_HEAD_READS_FILE: /tmp/bread-day8-head-reads
           BREAD_DAY8_TOKEN_CONCURRENCY: '10000'
           BREAD_DAY8_TOKEN_REQUESTS: '10000'
           BREAD_DAY8_FEED_CONCURRENCY: '1000'
           BREAD_DAY8_FEED_REQUESTS: '5000'
+          BREAD_DAY8_CONNECT_CONCURRENCY: '500'
         run: pnpm exec tsx scripts/load/day8-hot-launch.mts
+      - name: Stop isolated capacity server
+        if: always()
+        run: |
+          if test -f /tmp/day8-load-server.pid; then
+            pid="$(cat /tmp/day8-load-server.pid)"
+            if kill -0 "$pid" 2>/dev/null; then
+              kill -TERM "$pid"
+              for _ in $(seq 1 30); do
+                if ! kill -0 "$pid" 2>/dev/null; then break; fi
+                sleep 1
+              done
+            fi
+          fi
+          cat /tmp/day8-load-server.log 2>/dev/null || true
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
