@@ -10,6 +10,10 @@ export type AllowanceRequirement = Readonly<{
   amount: bigint;
 }>;
 
+export type TradeBuilderContext = Readonly<{
+  quoteAsset: Address;
+}>;
+
 /**
  * Signer-free transaction preparation contract. Account/signing state is
  * intentionally absent; callers pass an account only to chain simulation and
@@ -133,7 +137,7 @@ export function prepareLaunchAndBuy(
 }
 
 export function prepareBuy(
-  context: ProtocolContext,
+  context: TradeBuilderContext,
   input: Readonly<{
     curve: Address;
     quoteIn: bigint;
@@ -153,7 +157,7 @@ export function prepareBuy(
 }
 
 export function prepareSell(
-  _context: ProtocolContext,
+  _context: TradeBuilderContext,
   input: Readonly<{
     token: Address;
     curve: Address;
