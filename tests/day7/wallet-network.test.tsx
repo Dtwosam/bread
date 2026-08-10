@@ -15,7 +15,7 @@ const paths = {
   tradeProvider: 'apps/web/components/trade/wallet-trade-provider.tsx',
   runtime: 'apps/web/components/trade/trade-runtime.tsx',
   layout: 'apps/web/app/layout.tsx',
-  globals: 'apps/web/app/globals.css',
+  walletStyles: 'apps/web/app/wallet.css',
   config: 'apps/web/lib/wallet/config.ts',
   tradePanel: 'apps/web/components/trade/trade-panel.tsx',
   create: 'apps/web/app/create/page.tsx',
@@ -94,7 +94,7 @@ describe('Day 7 Task 8 wallet/network integration and recovery convergence', () 
   });
 
   it('renders the wallet menu as a desktop popover and a safe-area-aware mobile sheet', () => {
-    const css = read(paths.globals);
+    const css = read(paths.walletStyles);
 
     expect(css).toMatch(/\.bread-wallet-control\s*\{[\s\S]*?position:\s*relative/);
     expect(css).toMatch(/\.bread-wallet-menu\s*\{[\s\S]*?position:\s*absolute/);
