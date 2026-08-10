@@ -13,14 +13,20 @@ import type { TradeAction } from '../../lib/transactions/state';
 type Address = `0x${string}`;
 
 export type TradeConnectionStatus = 'DISCONNECTED' | 'WRONG_NETWORK' | 'READY';
+export type WalletOption = Readonly<{
+  id: string;
+  name: string;
+}>;
 
 export type TradeRuntime = Readonly<{
   client: PublicClient;
   wallet: TradeWalletAdapter | null;
+  account: Address | null;
+  walletOptions: readonly WalletOption[];
   context: TradeExecutionContext;
   protocolContext: ProtocolContext | null;
   connectionStatus: TradeConnectionStatus;
-  connectWallet: () => Promise<void>;
+  connectWallet: (connectorId?: string) => Promise<void>;
   switchToTargetChain: () => Promise<void>;
   getSpendableBalance: (action: TradeAction, tokenAddress: Address) => Promise<bigint>;
   storage?: Storage;
