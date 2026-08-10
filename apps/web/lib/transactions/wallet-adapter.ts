@@ -147,7 +147,6 @@ export function createTradeWalletAdapter({
             account,
             token: allowance.token,
             spender: allowance.spender,
-            amount: allowance.amount,
           })
         : undefined;
 
