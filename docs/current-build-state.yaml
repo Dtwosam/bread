@@ -1,4 +1,4 @@
-schema_version: 1.48
+schema_version: 1.49
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-10
@@ -13,13 +13,12 @@ completed_checkpoints:
   - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
   - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS_DURABLE"
   - "Day 6: SDK_INDEXER_API_INTEGRATED_PASS_DURABLE"
-  - "Day 7 Tasks 1-9: individually integrated and durably handed off"
-  - "Day 7 Task 10 PR #82 + durable handoff PR #83: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
-  - "Day 8 Lanes 1-5: local/security/failure-recovery/capacity lane gates PASS; Day-8 exact-head integrated closeout remains pending"
+  - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
+  - "Day 8 implementation PR #84: ATTACK_SYSTEM_EXACT_HEAD_INTEGRATED_PASS; separate durability merge/readback is the final acceptance condition"
 
-active_checkpoint: "Day 8 — Attack the System"
-active_lane: "Day-8 exact-head integration closeout after source-backed Lanes 1-5 PASS. PR #84 remains draft and unmerged until the final unified continuity/security matrix is green."
-active_gate: DAY8_EXACT_HEAD_INTEGRATED_CLOSEOUT_PENDING
+active_checkpoint: "Day 8 — durability closeout"
+active_lane: "Docs-only Day-8 durability handoff. No Day-9 work may begin until this v1.49 pointer and its handoff are exact-head green, guarded-merged, and freshly read back from main."
+active_gate: DAY8_DURABILITY_EXACT_HEAD_INTEGRATED_CLOSEOUT_PENDING
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -32,36 +31,32 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.47
-  prior_state_git_commit: b3c7d7b51ec9398f3b786c795a4f625b8020580a
-  prior_state_blob_sha: acc840812c7afd73bd3ec5c37dc55337a5e85203
+  prior_state_schema_version: 1.48
+  prior_state_git_commit: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
+  prior_state_blob_sha: 65714fd9ee8717d849719eed1f3a9c6691e12ddb
   note: >-
-    v1.48 is an in-progress Day-8 closeout pointer, not a Day-8 completion verdict. The complete accepted v1.47 and earlier history remains immutable in Git and in prior handoffs. This update records source-backed Lane-1 through Lane-5 PASS evidence and advances NEXT_ACTION to the exact-head integrated closeout matrix. It revokes no accepted Day-1 through Day-7 verdict, invariant, blocker, source boundary or authority rule.
+    v1.49 promotes the source-backed Day-8 implementation closeout into the durability candidate. The complete accepted v1.48 and earlier history remains immutable in Git and prior handoffs. This pointer revokes no accepted Day-1 through Day-7 verdict, invariant, blocker, source boundary or authority rule. Its DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE verdict becomes accepted only after the docs-only durability PR is exact-head green, guarded-merged, and freshly read back from main.
 
 integration_baseline:
-  id: DAY7-PUBLIC-WEB-INTEGRATED-CLOSEOUT
+  id: DAY8-ATTACK-SYSTEM-INTEGRATED-CLOSEOUT
   branch: main
-  prior_durable_main: 070a3f274d0ed26bfb1b38cb14b4364c8d7a376a
-  day7_task10_final_head: f1d74441abe06f11806e5b2fdf3ca7c012dc3024
-  day7_task10_implementation_merge: 171a646305f796e222fd3a9f34f4bd343e43983a
-  day7_task10_implementation_pr: 82
-  day7_task10_handoff_pr: 83
-  status: DAY_7_PUBLIC_WEB_INTEGRATED_PASS_DURABLE
+  prior_durable_day7_main: b3c7d7b51ec9398f3b786c795a4f625b8020580a
+  day8_implementation_pr: 84
+  day8_exact_audited_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
+  day8_implementation_merge: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
+  status: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE_PENDING_DOCS_MERGE
 
-day8_candidate:
-  pr: 84
-  branch: agent/day8-attack-system
-  baseline_main: b3c7d7b51ec9398f3b786c795a4f625b8020580a
-  pre_closeout_head: 279ee0b66f87498c261e8b252eaa77307c14e948
-  status: LANES_1_TO_5_PASS_PENDING_EXACT_HEAD_INTEGRATED_CLOSEOUT
+day8_accepted_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
   lane2: STATIC_SECURITY_TRIAGE_PASS_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
   lane3: FRONTEND_SECURITY_ADVERSARIAL_PASS
   lane4: FAILURE_RECOVERY_INJECTION_PASS
-  lane5: HOT_LAUNCH_CAPACITY_AND_REPRESENTATIVE_LATENCY_PASS
+  lane5: HOT_LAUNCH_BOT_CACHE_DB_RPC_INDEXER_CATCHUP_CAPACITY_PASS
+  contract_economics_change: NONE
+  production_mainnet_values_inferred: false
 
 working_branches:
-  - agent/day8-attack-system
+  - docs/day8-attack-system-durable-handoff
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -71,75 +66,71 @@ repository:
   day7_task10_pr: 82
   day7_task10_handoff_pr: 83
   day8_pr: 84
-  day7_public_web_started: true
+  day8_handoff_pr: PENDING_CREATION
   day7_public_web_complete: true
   day8_started: true
-  day8_complete: false
+  day8_implementation_complete: true
+  day8_complete: true
+  day9_started: false
 
 project_process_note:
-  day7_task10_scope_rule: >-
-    Task 10 closed the primary browser-journey and integrated Day-7 web lane only. It proved the frozen browse/search/token/trade/create/portfolio/creator/wallet/degraded/recovery/mobile flows using deterministic Playwright fixtures that preserve existing API, SDK, wallet, transaction and canonical-config authorities. It repaired only demonstrated presentation/recovery gaps and added no financial or mainnet authority.
-  task10_recovery_rule: >-
-    The existing canonical submitted-transaction storage and receipt recovery remain authoritative. Task 10 only makes recovered BUY/SELL state visible through the existing web runtime so refresh cannot present a fresh submit-able trade while recovery is unresolved; it does not duplicate polling, persistence or wallet-send logic.
   day8_scope_rule: >-
-    Day 8 attacks the integrated system through extended fuzz/invariants, static/manual security review, RPC/API/indexer/realtime failure injection, hot-launch/bot-burst capacity tests, malicious metadata/CSP/sanitization checks, privileged-role abuse attempts and recovery/runbook verification. It is not a feature-development lane and does not waive open release/mainnet blockers.
+    Day 8 is stabilization/security/failure-injection/capacity work. It introduced no new product economics, custody model, user transaction relay, wallet/transaction/recovery owner, financial ledger or mainnet authority.
   capacity_measurement_rule: >-
-    06I keeps separate obligations: the 10,000-concurrent hot-launch stress gate proves convergence, healthy-read errors below one percent, bounded shared-service work and no viewer-linear RPC multiplication; existing 04D token/feed p95 targets remain under representative load. The Day-8 harness preserves both rather than weakening either threshold.
+    06I keeps separate obligations: the 10,000-concurrent hot-launch stress gate proves convergence, healthy-read errors below one percent, bounded shared-service work and no viewer-linear RPC multiplication; existing 04D token/feed p95 targets remain under representative load. The accepted Day-8 harness preserves both rather than weakening either threshold.
+  rpc_failover_rule: >-
+    The Day-8 failover primitive owns bounded per-provider concurrency, queueing, circuit state and failover mechanics only. Provider identity, network authority, requested logs and retry policy inputs remain caller-owned; no production RPC value is invented.
+  indexer_catchup_rule: >-
+    The Day-8 catch-up controller reuses the existing replay/apply boundary and owns only bounded cycle/batch orchestration plus regression/no-progress guards. Head observation, committed checkpoint read and application authority remain with existing callers.
+  cache_authority_rule: >-
+    Successful public feed/token projections may advertise the source-approved one-second shared-cache policy; operational status and error paths remain no-store. Cache/API/indexer state remains non-authoritative for financial truth.
 
 verification:
-  durability_continuity_matrix: EXACT_HEAD_ROOT_DAY7_TASK1_TO_TASK10_PLUS_RETAINED_DAY6_TASK5_TO_TASK10_PLUS_DAY8_LANES1_TO_5
-  day7_task10_graduation_red_head: 07be2ad31ffbe660763352c06ea4fd383d4638c7
-  day7_task10_graduation_red_ci: 31414672664
-  day7_task10_recovery_red_head: 5d7be6164f5f3a48024a34d9fb3e9386dac9fe2b
-  day7_task10_recovery_red_ci: 31416163954
-  day7_task10_flaky_evidence_head: debf4f3fe73e260e0076370918a2e973396fb9b2
-  day7_task10_flaky_evidence_ci: 31418396796
-  day7_task10_deterministic_repair_head: 2cb94da4ddc0d0541e1c9c05f7170ec66619150c
-  day7_task10_final_head: f1d74441abe06f11806e5b2fdf3ca7c012dc3024
-  day7_task10_final_browser_ci: 31419035434
-  day7_task10_final_cross_browser_ci: 31419035708
-  day7_task10_final_root_ci: 31419035612
-  day7_task10_final_task1_ci: 31419035695
-  day7_task10_final_task2_ci: 31419035744
-  day7_task10_final_task3_retained_in_task10: PASS_3_FILES_9_TESTS
-  day7_task10_final_task4_ci: 31419035732
-  day7_task10_final_task5_ci: 31419035382
-  day7_task10_final_task6_ci: 31419036062
-  day7_task10_final_task7_ci: 31419035449
-  day7_task10_final_task8_ci: 31419035437
-  day7_task10_final_task9_ci: 31419035958
-  day7_task10_final_retained_day6_task5_ci: 31419036001
-  day7_task10_final_retained_day6_task6_ci: 31419036065
-  day7_task10_final_retained_day6_task7_ci: 31419036111
-  day7_task10_final_retained_day6_task8_ci: 31419035426
-  day7_task10_final_retained_day6_task9_ci: 31419035508
-  day7_task10_final_retained_day6_task10_ci: 31419035763
-  day7_task10_chromium_result: PASS_22_PASSED_12_SKIPPED_0_FLAKY
-  day7_task10_firefox_webkit_probe: PASS
-  day7_task10_manifest_restoration: PASS
-  day7_task10_source_security_review: PASS
-  day7_task10_implementation_merge: 171a646305f796e222fd3a9f34f4bd343e43983a
-  day8_pre_closeout_head: 279ee0b66f87498c261e8b252eaa77307c14e948
-  day8_lane1_ci: 31428714842
+  durability_continuity_matrix: EXACT_HEAD_ROOT_DAY8_LANES_PLUS_DAY7_TASK1_TO_TASK10_PLUS_RETAINED_DAY6_TASK5_TO_TASK10
+  day8_exact_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
+  day8_implementation_merge: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
+  day8_lane1_ci: 31430771947
   day8_lane1_result: PASS_35_SUITES_201_TESTS_4096_FUZZ
-  day8_lane2_ci: 31428714889
+  day8_lane2_ci: 31430771932
   day8_lane2_result: PASS_SLITHER_TRIAGED_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
-  day8_lane3_ci: 31428714815
+  day8_lane3_ci: 31430772007
   day8_lane3_result: PASS
-  day8_lane4_ci: 31428714809
+  day8_lane4_ci: 31430771994
   day8_lane4_result: PASS
-  day8_lane5_ci: 31428714806
+  day8_lane5_cache_budget_ci: 31430771992
+  day8_lane5_indexer_catchup_ci: 31430771948
+  day8_lane5_ci: 31430771980
   day8_lane5_hot_clients: 10000
   day8_lane5_hot_requests: 10000
   day8_lane5_hot_error_rate: 0
-  day8_lane5_hot_p95_ms_observed: 248.04
-  day8_lane5_hot_origin_fetches: 8
+  day8_lane5_hot_p95_ms_observed: 221.92
+  day8_lane5_hot_origin_fetches: 9
+  day8_lane5_hot_origin_fetch_budget: 12
   day8_lane5_hot_observed_head_read_delta: 0
-  day8_lane5_representative_token_p95_ms: 94.88
-  day8_lane5_representative_feed_p95_ms: 101.34
+  day8_lane5_representative_token_p95_ms: 116.84
+  day8_lane5_representative_feed_p95_ms: 118.43
   day8_lane5_realtime_deliveries: 10000
-  day8_lane5_realtime_publish_ms: 8.65
+  day8_lane5_realtime_publish_ms: 23.06
   day8_lane5_result: PASS
+  day8_root_ci: 31430771975
+  retained_day6_task5_ci: 31430771979
+  retained_day6_task6_ci: 31430773002
+  retained_day6_task7_ci: 31430772044
+  retained_day6_task8_ci: 31430772001
+  retained_day6_task9_ci: 31430772037
+  retained_day6_task10_ci: 31430772078
+  retained_day7_task1_ci: 31430772102
+  retained_day7_task2_ci: 31430772002
+  retained_day7_task3_ci: 31430771993
+  retained_day7_task4_ci: 31430772089
+  retained_day7_task5_ci: 31430772061
+  retained_day7_task6_ci: 31430772121
+  retained_day7_task7_ci: 31430771934
+  retained_day7_task8_ci: 31430772015
+  retained_day7_task9_ci: 31430772076
+  retained_day7_task10_playwright_ci: 31430771996
+  retained_day7_task10_manifest_restoration: PASS
+  day8_source_security_diff_review: PASS
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -149,19 +140,19 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not block Day-8 local/test security and capacity work"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not invalidate completed local/test Day-8 stabilization evidence"
   PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Keep PR #84 draft and freeze its next exact head. Run the final unified Day-8 closeout matrix on that exact SHA: root CI; Day-8 Lanes 1-5; retained Day-6 Tasks 5-10; Day-7 Tasks 1-10 including Playwright; then perform the final source/security/diff review. If and only if every required gate is green and main still matches the durable Day-7 baseline, update PR #84 with exact evidence, mark ready and guarded-merge the exact reviewed head. After actual merged main is verified, create a separate docs-only Day-8 durability handoff/current-state update and prove that durability head before Day 9 begins.
+  Create the separate docs-only Day-8 durability PR from implementation main ef9b677e883ae7bd2a6969cefc771ad1c83e236c. Backfill its PR number into this pointer/handoff, then freeze one exact durability SHA and run root CI; Day-8 security/recovery/capacity/catch-up gates; retained Day-6 Tasks 5-10; and Day-7 Tasks 1-10 including Playwright. If and only if every required gate is green and main still equals ef9b677e883ae7bd2a6969cefc771ad1c83e236c, guarded-merge that exact docs head and freshly read back main, this pointer and the Day-8 handoff. Only then begin Day 9.
 
 do_not_do:
-  - "Do not mark Day 8 complete, merge PR #84 or begin Day 9 before the final exact-head Day-8 continuity/security matrix is green."
-  - "Do not reopen accepted Day-1 through Day-7 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
-  - "Do not invent new product features during Day 8; Days 8-10 are stabilization/rehearsal/security/load work."
+  - "Do not begin Day 9 before the Day-8 docs-only durability PR is exact-head green, guarded-merged and freshly read back."
+  - "Do not reopen accepted Day-1 through Day-8 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
+  - "Do not invent new product features during Days 8-10; these are stabilization/rehearsal/security/load lanes."
   - "Do not fabricate unsupported feed, chart, portfolio, creator, PnL, average-entry, buyback or other financial values."
   - "Do not introduce private copies of shared DTOs, ABI/address/config authority or financial formulas."
   - "Do not introduce a second wallet provider, transaction lifecycle, recovery store, API/domain authority or financial ledger."
@@ -170,4 +161,4 @@ do_not_do:
   - "Do not make DB/indexer/API/Redis authoritative for financial state."
   - "Do not weaken REC-01 through REC-06 or allow rebuild success without PASS authoritative reconciliation."
   - "Do not infer or guess production economics/authority values, Pons runtime numeric values, Arc mainnet values or canonical Arc DEX addresses."
-  - "Do not claim a full Day-9 physical-device/browser/wallet matrix from Task-10 Playwright smoke evidence."
+  - "Do not claim a full Day-9 physical-device/browser/wallet matrix from Day-7 Task-10 Playwright evidence."
