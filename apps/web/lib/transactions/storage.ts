@@ -3,6 +3,7 @@ import type { SubmittedTransactionRecord, TransactionAction } from './state.js';
 const STORAGE_KEY = 'bread:submitted-transactions:v1';
 const MAX_RECORDS = 20;
 const RECOVERABLE = new Set<SubmittedTransactionRecord['status']>(['SUBMITTED', 'CONFIRMING', 'UNKNOWN']);
+const DEFAULT_TRADE_ACTIONS: readonly TransactionAction[] = ['BUY', 'SELL'];
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
@@ -63,14 +64,19 @@ export function persistSubmittedTransaction(
   writeAll(storage, [...existing, record]);
 }
 
+/**
+ * Trade recovery remains the default for the existing global Task-5 provider.
+ * New transaction surfaces must request their action ownership explicitly so
+ * one recovery consumer cannot accidentally claim another surface's records.
+ */
 export function loadRecoverableTransactions(
   storage: Storage,
   options?: Readonly<{ actions?: readonly TransactionAction[] }>,
 ): SubmittedTransactionRecord[] {
-  const actions = options?.actions === undefined ? null : new Set(options.actions);
+  const actions = new Set(options?.actions ?? DEFAULT_TRADE_ACTIONS);
   return readAll(storage)
     .filter((record) => RECOVERABLE.has(record.status))
-    .filter((record) => actions === null || actions.has(record.action))
+    .filter((record) => actions.has(record.action))
     .sort((left, right) => left.submittedAt.localeCompare(right.submittedAt));
 }
 
