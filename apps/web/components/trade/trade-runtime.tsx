@@ -8,7 +8,7 @@ import type {
   TradeExecutionContext,
   TradeWalletAdapter,
 } from '../../lib/transactions/controller';
-import type { TradeAction } from '../../lib/transactions/state';
+import type { TradeAction, TransactionState } from '../../lib/transactions/state';
 
 type Address = `0x${string}`;
 
@@ -26,6 +26,7 @@ export type TradeRuntime = Readonly<{
   context: TradeExecutionContext;
   protocolContext: ProtocolContext | null;
   connectionStatus: TradeConnectionStatus;
+  recoveredTradeStates: readonly TransactionState[];
   connectWallet: (connectorId?: string) => Promise<void>;
   switchToTargetChain: () => Promise<void>;
   getSpendableBalance: (action: TradeAction, tokenAddress: Address) => Promise<bigint>;
