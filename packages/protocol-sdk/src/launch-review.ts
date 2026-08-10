@@ -6,13 +6,13 @@ import {
   prepareLaunchAndBuy,
   type LaunchParams,
   type PreparedBreadTransaction,
-} from './builders.js';
+} from './builders.ts';
 import type { ProtocolContext } from './context.js';
 import { breadAbiRegistry } from './abi/generated.ts';
 import {
   estimateBuyTradeReview,
   type BuyTradeReview,
-} from './trade-review.js';
+} from './trade-review.ts';
 
 const ZERO = BigInt(0);
 const BPS = 10_000;
