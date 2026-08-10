@@ -21,13 +21,15 @@ test('creator reviews authoritative FeeEscrow claimable value and confirms one U
   test.skip(testInfo.project.name !== 'desktop-chromium', 'Task 4 claim proof is desktop.');
 
   const main = await connectCreator(page);
-  await expect(main.getByText(E2E_WALLET, { exact: true })).toBeVisible();
+  await expect(main.getByRole('paragraph').filter({ hasText: E2E_WALLET })).toBeVisible();
   await expect(main.getByText('10 USDC', { exact: true }).first()).toBeVisible();
 
   await main.getByRole('button', { name: 'Review claim' }).click();
-  await expect(main.getByText('Claimable USDC', { exact: true })).toBeVisible();
-  await expect(main.getByText('10 USDC', { exact: true }).last()).toBeVisible();
-  await expect(main.getByText('Recipient', { exact: true })).toBeVisible();
+  const claimValues = main.locator('.bread-creator-claim-panel dl');
+  await expect(claimValues.getByText('Claimable USDC', { exact: true })).toBeVisible();
+  await expect(claimValues.getByText('10 USDC', { exact: true })).toBeVisible();
+  await expect(claimValues.getByText('Recipient', { exact: true })).toBeVisible();
+  await expect(claimValues.getByText(E2E_WALLET, { exact: true })).toBeVisible();
 
   await setWalletTransactionHashes(page, [CLAIM_TX_HASH]);
   await main.getByRole('button', { name: 'Claim USDC' }).click();
@@ -42,7 +44,7 @@ test('zero authoritative claimable USDC never creates a wallet write', async ({ 
   rpcState.claimable = BigInt(0);
   const main = await connectCreator(page);
   await main.getByRole('button', { name: 'Review claim' }).click();
-  await expect(main.getByText('0 USDC', { exact: true }).last()).toBeVisible();
+  await expect(main.locator('.bread-creator-claim-panel dl').getByText('0 USDC', { exact: true })).toBeVisible();
   await expect(main.getByRole('button', { name: 'Claim USDC' })).toBeDisabled();
   expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(0);
 });
