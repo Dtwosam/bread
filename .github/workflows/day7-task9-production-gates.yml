@@ -41,3 +41,15 @@ jobs:
           tests/day7/create-review.test.tsx
           tests/day7/create-runtime.test.tsx
           tests/day7/wallet-network.test.tsx
+      - name: Generate production bundle analysis and reject operator-code leakage
+        working-directory: apps/web
+        run: |
+          pnpm exec next experimental-analyze --output
+          test -d .next/diagnostics/analyze
+          echo "Bundle analysis output:"
+          du -sh .next/diagnostics/analyze
+          find .next/diagnostics/analyze -maxdepth 2 -type f -print | sort
+          if grep -R -q -E 'apps/operator|@bread/operator' .next/diagnostics/analyze; then
+            echo "Operator/admin application code is present in the public web bundle analysis."
+            exit 1
+          fi
