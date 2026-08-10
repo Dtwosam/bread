@@ -58,6 +58,7 @@ const ACTIVE_LOCKED = new Set<TransactionStatus>([
   'AWAITING_SIGNATURE',
   'SUBMITTED',
   'CONFIRMING',
+  'REPLACED',
 ]);
 
 export function canSubmitTransactionAction(state: TransactionState): boolean {
