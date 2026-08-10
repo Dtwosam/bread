@@ -1,0 +1,43 @@
+name: day8-lane1-extended-invariants
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day8-lane1-extended-invariants.yml'
+      - 'contracts/**'
+      - 'scripts/abi/**'
+      - 'docs/superpowers/plans/2026-08-10-day8-attack-system.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day8-lane1-extended-invariants.yml'
+      - 'contracts/**'
+      - 'scripts/abi/**'
+
+permissions:
+  contents: read
+
+jobs:
+  extended-financial-invariants:
+    runs-on: ubuntu-latest
+    env:
+      FOUNDRY_FUZZ_RUNS: '4096'
+      FOUNDRY_INVARIANT_RUNS: '256'
+      FOUNDRY_INVARIANT_DEPTH: '64'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Foundry
+        uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e
+        with:
+          version: v1.5.0
+      - name: Verify Foundry version
+        run: forge --version
+      - name: Compile Solidity with the accepted toolchain
+        working-directory: contracts
+        run: forge build
+      - name: Run full Day-8 high-intensity contract suite
+        working-directory: contracts
+        run: forge test -vv
+      - name: Verify generated SDK ABI remains exact
+        working-directory: contracts
+        run: node ../scripts/abi/check-bread-abi.mjs
