@@ -18,6 +18,7 @@ on:
       - 'apps/web/lib/wallet/**'
       - 'tests/day7/portfolio-creator.test.tsx'
       - 'tests/day7/claim-execution.test.ts'
+      - 'tests/day7/creator-claim-ui.test.tsx'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task7-portfolio-creator-handoff.md'
   push:
@@ -45,3 +46,4 @@ jobs:
           pnpm exec vitest run
           tests/day7/portfolio-creator.test.tsx
           tests/day7/claim-execution.test.ts
+          tests/day7/creator-claim-ui.test.tsx
