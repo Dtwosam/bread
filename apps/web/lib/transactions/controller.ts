@@ -37,7 +37,20 @@ export type TradeExecutionContext = Readonly<{
   quoteDecimals: number;
 }>;
 
+export type TradePreparationInput = Readonly<{
+  client: TradePublicClient;
+  context: TradeExecutionContext;
+  walletChainId: number;
+  account: Address;
+  action: TradeAction;
+  tokenAddress: Address;
+  curveAddress: Address;
+  inputAmount: bigint;
+  slippageBps: number;
+}>;
+
 const TRANSACTION_HASH = /^0x[0-9a-fA-F]{64}$/;
+const ZERO = BigInt(0);
 
 export type PreparedTradeForSignature = Readonly<{
   review: ApprovedTradeReview;
@@ -47,6 +60,7 @@ export type PreparedTradeForSignature = Readonly<{
 export type TradeWalletAdapter = Readonly<{
   getAccount: () => Promise<Address | null>;
   getChainId: () => Promise<number>;
+  ensurePreparedTransactionAllowance: (transaction: PreparedBreadTransaction) => Promise<void>;
   sendPreparedTransaction: (transaction: PreparedBreadTransaction) => Promise<TransactionHash>;
 }>;
 
@@ -58,6 +72,22 @@ export type TradeLifecycleResult = Readonly<{
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Transaction request failed.';
+}
+
+function isWalletUserRejection(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; depth < 5 && current && typeof current === 'object'; depth += 1) {
+    const candidate = current as { code?: unknown; name?: unknown; cause?: unknown };
+    if (
+      candidate.code === 4001 ||
+      candidate.code === 'ACTION_REJECTED' ||
+      candidate.name === 'UserRejectedRequestError'
+    ) {
+      return true;
+    }
+    current = candidate.cause;
+  }
+  return false;
 }
 
 function emit(
@@ -101,6 +131,19 @@ function rejectedBeforeSignature(
   return { state, reviewChanged: false };
 }
 
+function revertedBeforeSignature(
+  state: TransactionState,
+  error: unknown,
+  onStateChange: ((state: TransactionState) => void) | undefined,
+): TradeLifecycleResult {
+  const failed: TransactionState = {
+    ...state,
+    status: 'REVERTED',
+    error: errorMessage(error),
+  };
+  return { state: emit(failed, onStateChange), reviewChanged: false };
+}
+
 function replacementHash(value: unknown): TransactionHash | null {
   if (!value || typeof value !== 'object') return null;
   const transaction = (value as { transaction?: unknown }).transaction;
@@ -123,7 +166,42 @@ function stateFromRecord(
   };
 }
 
-export async function prepareTradeForSignature({
+function prepareAllowanceProbe({
+  context,
+  account,
+  action,
+  tokenAddress,
+  curveAddress,
+  inputAmount,
+}: Pick<
+  TradePreparationInput,
+  'context' | 'account' | 'action' | 'tokenAddress' | 'curveAddress' | 'inputAmount'
+>): PreparedBreadTransaction {
+  if (action === 'BUY') {
+    return prepareBuy(context, {
+      curve: curveAddress,
+      quoteIn: inputAmount,
+      minTokensOut: ZERO,
+      recipient: account,
+    });
+  }
+
+  return prepareSell(context, {
+    token: tokenAddress,
+    curve: curveAddress,
+    tokensIn: inputAmount,
+    minQuoteOut: ZERO,
+    recipient: account,
+  });
+}
+
+/**
+ * Reads the canonical transaction-critical curve state and builds the exact
+ * transaction/review without simulating it. The user-facing Review screen uses
+ * this path so a first-time wallet is not required to have allowance merely to
+ * inspect current financial consequences.
+ */
+export async function prepareTradeReview({
   client,
   context,
   walletChainId,
@@ -133,17 +211,7 @@ export async function prepareTradeForSignature({
   curveAddress,
   inputAmount,
   slippageBps,
-}: Readonly<{
-  client: TradePublicClient;
-  context: TradeExecutionContext;
-  walletChainId: number;
-  account: Address;
-  action: TradeAction;
-  tokenAddress: Address;
-  curveAddress: Address;
-  inputAmount: bigint;
-  slippageBps: number;
-}>): Promise<PreparedTradeForSignature> {
+}: TradePreparationInput): Promise<PreparedTradeForSignature> {
   if (walletChainId !== context.chainId) {
     throw new Error(`Wrong network: wallet is on chain ${walletChainId}, expected ${context.chainId}.`);
   }
@@ -158,7 +226,6 @@ export async function prepareTradeForSignature({
       minTokensOut: review.minimumOutput,
       recipient: account,
     });
-    await simulatePreparedTransaction(client, transaction, account);
     return { review, transaction };
   }
 
@@ -170,8 +237,20 @@ export async function prepareTradeForSignature({
     minQuoteOut: review.minimumOutput,
     recipient: account,
   });
-  await simulatePreparedTransaction(client, transaction, account);
   return { review, transaction };
+}
+
+/**
+ * Final signature preparation. This must run only after required allowance is
+ * confirmed, then performs a fresh canonical reread and simulation immediately
+ * before the trade-signature boundary.
+ */
+export async function prepareTradeForSignature(
+  input: TradePreparationInput,
+): Promise<PreparedTradeForSignature> {
+  const prepared = await prepareTradeReview(input);
+  await simulatePreparedTransaction(input.client, prepared.transaction, input.account);
+  return prepared;
 }
 
 export async function executeTradeLifecycle({
@@ -226,6 +305,23 @@ export async function executeTradeLifecycle({
 
   state = emit(transitionTransactionState(state, { type: 'PREPARE' }), onStateChange);
 
+  try {
+    const allowanceProbe = prepareAllowanceProbe({
+      context,
+      account,
+      action,
+      tokenAddress,
+      curveAddress,
+      inputAmount,
+    });
+    await wallet.ensurePreparedTransactionAllowance(allowanceProbe);
+  } catch (error) {
+    if (isWalletUserRejection(error)) {
+      return rejectedBeforeSignature(action, tokenAddress, errorMessage(error), onStateChange);
+    }
+    return revertedBeforeSignature(state, error, onStateChange);
+  }
+
   let prepared: PreparedTradeForSignature;
   try {
     prepared = await prepareTradeForSignature({
@@ -240,12 +336,7 @@ export async function executeTradeLifecycle({
       slippageBps,
     });
   } catch (error) {
-    const failed: TransactionState = {
-      ...state,
-      status: 'REVERTED',
-      error: errorMessage(error),
-    };
-    return { state: emit(failed, onStateChange), reviewChanged: false };
+    return revertedBeforeSignature(state, error, onStateChange);
   }
 
   if (!reviewsMatch(approvedReview, prepared.review)) {
