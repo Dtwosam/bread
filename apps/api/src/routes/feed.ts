@@ -7,7 +7,7 @@ import {
   MAX_FEED_LIMIT,
   NEW_FEED_CURSOR_VERSION,
 } from '../pagination.js';
-import { serializeLaunch, serializeTradeMetrics } from './token.js';
+import { serializeGraduationProgress, serializeLaunch, serializeTradeMetrics } from './token.js';
 import type { BreadReadRouteDeps } from './types.js';
 
 const SOURCE_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
@@ -112,10 +112,14 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
       const metricsByToken = new Map(metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]));
       const meta = await deps.freshness();
       return {
-        data: launches.map((launch) => ({
-          ...serializeLaunch(launch),
-          metrics: serializeTradeMetrics(metricsByToken.get(launch.tokenAddress.toLowerCase())),
-        })),
+        data: launches.map((launch) => {
+          const metricRow = metricsByToken.get(launch.tokenAddress.toLowerCase());
+          return {
+            ...serializeLaunch(launch),
+            metrics: serializeTradeMetrics(metricRow),
+            progress: serializeGraduationProgress(metricRow),
+          };
+        }),
         meta,
         page: {
           hasMore,
