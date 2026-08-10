@@ -8,8 +8,10 @@ on:
       - 'scripts/load/day8-hot-launch-server.mts'
       - 'scripts/load/day8-edge-cache.mts'
       - 'tests/day8/api-edge-cache-policy.test.ts'
+      - 'tests/day8/rpc-failover-under-load.test.ts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
+      - 'apps/indexer/src/rpc-failover.ts'
       - 'packages/db/src/**'
       - 'packages/protocol-sdk/src/**'
       - 'infra/docker/compose.yaml'
@@ -21,8 +23,10 @@ on:
       - 'scripts/load/day8-hot-launch-server.mts'
       - 'scripts/load/day8-edge-cache.mts'
       - 'tests/day8/api-edge-cache-policy.test.ts'
+      - 'tests/day8/rpc-failover-under-load.test.ts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
+      - 'apps/indexer/src/rpc-failover.ts'
       - 'packages/db/src/**'
       - 'packages/protocol-sdk/src/**'
       - 'infra/docker/compose.yaml'
@@ -47,6 +51,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Run permanent API edge-cache safety regression
         run: pnpm exec vitest run tests/day8/api-edge-cache-policy.test.ts
+      - name: Run bounded RPC failover under-load regression
+        run: pnpm exec vitest run tests/day8/rpc-failover-under-load.test.ts
       - name: Start exact Bread development infrastructure
         run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
       - name: Verify PostgreSQL, Redis and runner capacity envelope
@@ -96,7 +102,7 @@ jobs:
               fi
               sleep 1
             done
-            grep -q 'DAY8_LOAD_SERVER_READY' "/tmp/day8-load-server-$port.log" || { cat "/tmp/day8-load-server-$port.log"; exit 1; }
+            grep -q 'DAY8_LOAD_SERVER_READY' "/tmp/day8-load-server-$port.log" || { cat "/tmp/day8-load-server-$port.log; exit 1; }
           done
 
           cat /tmp/day8-load-server-3108.log
