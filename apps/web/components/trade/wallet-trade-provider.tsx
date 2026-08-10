@@ -85,13 +85,15 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
         storage: browserStorage,
         chainId: arcTestnetChain.id,
         onConfirmed: async (record) => {
+          const tokenAddress = record.tokenAddress;
+          if (!tokenAddress || (record.action !== 'BUY' && record.action !== 'SELL')) return;
           await Promise.all([
-            queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(record.tokenAddress) }),
+            queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(tokenAddress) }),
             queryClient.invalidateQueries({
-              queryKey: breadQueryKeys.trades(record.tokenAddress, { limit: 25 }),
+              queryKey: breadQueryKeys.trades(tokenAddress, { limit: 25 }),
             }),
             queryClient.invalidateQueries({
-              queryKey: breadQueryKeys.holders(record.tokenAddress, { limit: 25 }),
+              queryKey: breadQueryKeys.holders(tokenAddress, { limit: 25 }),
             }),
           ]);
         },
