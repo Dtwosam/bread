@@ -6,6 +6,7 @@ on:
       - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
       - 'scripts/load/day8-hot-launch.mts'
       - 'scripts/load/day8-hot-launch-server.mts'
+      - 'scripts/load/day8-edge-cache.mts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
       - 'packages/db/src/**'
@@ -17,6 +18,7 @@ on:
       - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
       - 'scripts/load/day8-hot-launch.mts'
       - 'scripts/load/day8-hot-launch-server.mts'
+      - 'scripts/load/day8-edge-cache.mts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/fanout.ts'
       - 'packages/db/src/**'
@@ -109,16 +111,65 @@ jobs:
           tr -d '\r' </tmp/token-headers | grep -Fqi 'cache-control: public, max-age=0, s-maxage=1, must-revalidate'
           tr -d '\r' </tmp/feed-headers | grep -Fqi 'cache-control: public, max-age=0, s-maxage=1, must-revalidate'
           tr -d '\r' </tmp/status-headers | grep -Fqi 'cache-control: no-store'
-      - name: Run integrated 10k horizontally scaled hot-launch capacity proof
+      - name: Start four cache-policy-driven edge workers
         env:
-          BREAD_DAY8_ORIGINS: http://127.0.0.1:3108,http://127.0.0.1:3109,http://127.0.0.1:3110,http://127.0.0.1:3111
+          BREAD_DAY8_UPSTREAM_ORIGINS: http://127.0.0.1:3108,http://127.0.0.1:3109,http://127.0.0.1:3110,http://127.0.0.1:3111
+        run: |
+          rm -f /tmp/day8-edge-*.log /tmp/day8-edge-*.pid
+          for port in 3120 3121 3122 3123; do
+            BREAD_DAY8_EDGE_PORT="$port" \
+            pnpm exec tsx scripts/load/day8-edge-cache.mts >"/tmp/day8-edge-$port.log" 2>&1 &
+            echo "$!" >"/tmp/day8-edge-$port.pid"
+          done
+          for port in 3120 3121 3122 3123; do
+            for _ in $(seq 1 60); do
+              if grep -q 'DAY8_EDGE_READY' "/tmp/day8-edge-$port.log"; then break; fi
+              if ! kill -0 "$(cat /tmp/day8-edge-$port.pid)" 2>/dev/null; then
+                cat "/tmp/day8-edge-$port.log"
+                exit 1
+              fi
+              sleep 1
+            done
+            grep -q 'DAY8_EDGE_READY' "/tmp/day8-edge-$port.log" || { cat "/tmp/day8-edge-$port.log"; exit 1; }
+            cat "/tmp/day8-edge-$port.log"
+          done
+      - name: Verify edge never reuses no-store operational status
+        run: |
+          curl -sS -D /tmp/edge-status-1 -o /dev/null 'http://127.0.0.1:3120/v1/status'
+          curl -sS -D /tmp/edge-status-2 -o /dev/null 'http://127.0.0.1:3120/v1/status'
+          cat /tmp/edge-status-1
+          cat /tmp/edge-status-2
+          tr -d '\r' </tmp/edge-status-1 | grep -Fqi 'cache-control: no-store'
+          tr -d '\r' </tmp/edge-status-2 | grep -Fqi 'cache-control: no-store'
+          tr -d '\r' </tmp/edge-status-1 | grep -Fqi 'x-bread-edge-cache: MISS'
+          tr -d '\r' </tmp/edge-status-2 | grep -Fqi 'x-bread-edge-cache: MISS'
+      - name: Run integrated 10k edge-absorbed hot-launch capacity proof
+        env:
+          BREAD_DAY8_ORIGINS: http://127.0.0.1:3120,http://127.0.0.1:3121,http://127.0.0.1:3122,http://127.0.0.1:3123
           BREAD_DAY8_HEAD_READS_FILES: /tmp/bread-day8-head-reads-3108,/tmp/bread-day8-head-reads-3109,/tmp/bread-day8-head-reads-3110,/tmp/bread-day8-head-reads-3111
+          BREAD_DAY8_EDGE_MODE: '1'
           BREAD_DAY8_TOKEN_CONCURRENCY: '10000'
           BREAD_DAY8_TOKEN_REQUESTS: '10000'
           BREAD_DAY8_FEED_CONCURRENCY: '1000'
           BREAD_DAY8_FEED_REQUESTS: '5000'
           BREAD_DAY8_CONNECT_CONCURRENCY: '500'
         run: pnpm exec tsx scripts/load/day8-hot-launch.mts
+      - name: Stop edge workers
+        if: always()
+        run: |
+          for port in 3123 3122 3121 3120; do
+            if test -f "/tmp/day8-edge-$port.pid"; then
+              pid="$(cat /tmp/day8-edge-$port.pid)"
+              if kill -0 "$pid" 2>/dev/null; then
+                kill -TERM "$pid"
+                for _ in $(seq 1 30); do
+                  if ! kill -0 "$pid" 2>/dev/null; then break; fi
+                  sleep 1
+                done
+              fi
+            fi
+            cat "/tmp/day8-edge-$port.log" 2>/dev/null || true
+          done
       - name: Stop stateless capacity workers
         if: always()
         run: |
