@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { Agent, request } from 'node:http';
 import { performance } from 'node:perf_hooks';
 
+import { PUBLIC_PROJECTION_CACHE_CONTROL } from '../../apps/api/src/http-cache.js';
 import { BoundedRealtimeFanout } from '../../apps/indexer/src/fanout.js';
+import { maxOriginFetchesForBurst, sharedCacheTtlMs } from './day8-cache-budget.js';
 
 const address = (value: number) => `0x${value.toString(16).padStart(40, '0')}`;
 const HOT_TOKEN = address(10);
@@ -24,6 +26,7 @@ const feedArrivalWindowMs = Number(process.env.BREAD_DAY8_FEED_ARRIVAL_WINDOW_MS
 const representativeConcurrency = Number(process.env.BREAD_DAY8_REPRESENTATIVE_CONCURRENCY ?? '500');
 const representativeRequests = Number(process.env.BREAD_DAY8_REPRESENTATIVE_REQUESTS ?? '5000');
 const connectConcurrency = Number(process.env.BREAD_DAY8_CONNECT_CONCURRENCY ?? '500');
+const publicProjectionCacheTtlMs = sharedCacheTtlMs(PUBLIC_PROJECTION_CACHE_CONTROL);
 
 if (origins.length < 1) throw new Error('at least one Bread read origin is required');
 if (headReadsFiles.length < 1) throw new Error('at least one observed-head diagnostic file is required');
@@ -341,8 +344,22 @@ try {
 
   const tokenStressEdgeDelta = deltaEdgeStats(edgeAfterTokenStress, edgeBefore);
   const feedStressEdgeDelta = deltaEdgeStats(edgeAfterFeedStress, edgeAfterTokenStress);
+  const originFetchBudget = edgeMode ? {
+    sharedCacheTtlMs: publicProjectionCacheTtlMs,
+    tokenStress: maxOriginFetchesForBurst({
+      frontends: origins.length,
+      arrivalWindowMs: hotTokenStress.arrivalWindowMs,
+      cacheTtlMs: publicProjectionCacheTtlMs,
+    }),
+    feedStress: maxOriginFetchesForBurst({
+      frontends: origins.length,
+      arrivalWindowMs: feedStress.arrivalWindowMs,
+      cacheTtlMs: publicProjectionCacheTtlMs,
+    }),
+    provenance: 'derived from authoritative public s-maxage and configured burst window; scales with edges/cache epochs, never viewers',
+  } : null;
   const report = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     environment: edgeMode
       ? 'github-hosted-runner-test-edge-before-stateless-api-local-postgres-redis'
       : 'github-hosted-runner-stateless-node-api-local-postgres-redis',
@@ -379,6 +396,7 @@ try {
       tokenStressDelta: tokenStressEdgeDelta,
       feedStressDelta: feedStressEdgeDelta,
       afterRepresentative: edgeAfterRepresentative,
+      originFetchBudget,
     } : null,
     realtime: {
       subscribers: fanoutSnapshot.subscribers,
@@ -407,13 +425,12 @@ try {
   if (headReadsAfterRepresentativeToken - headReadsBeforeRepresentativeToken > Math.max(1, headReadsFiles.length)) failures.push('representative token readers multiplied observed-head source reads');
   if (headReadsAfterRepresentativeFeed - headReadsBeforeRepresentativeFeed > Math.max(1, headReadsFiles.length)) failures.push('representative feed readers multiplied observed-head source reads');
   if (edgeMode) {
-    if (!tokenStressEdgeDelta || !feedStressEdgeDelta) failures.push('edge statistics were unavailable');
+    if (!tokenStressEdgeDelta || !feedStressEdgeDelta || !originFetchBudget) failures.push('edge statistics or cache-epoch budget were unavailable');
     else {
-      const maxOriginFetchesPerPhase = origins.length * 2;
-      if (tokenStressEdgeDelta.originFetches > maxOriginFetchesPerPhase) failures.push(`hot-token edge made ${tokenStressEdgeDelta.originFetches} origin fetches > ${maxOriginFetchesPerPhase}`);
-      if (feedStressEdgeDelta.originFetches > maxOriginFetchesPerPhase) failures.push(`feed edge made ${feedStressEdgeDelta.originFetches} origin fetches > ${maxOriginFetchesPerPhase}`);
-      if (tokenStressEdgeDelta.cacheMisses > maxOriginFetchesPerPhase) failures.push('hot-token edge cache misses were not bounded');
-      if (feedStressEdgeDelta.cacheMisses > maxOriginFetchesPerPhase) failures.push('feed edge cache misses were not bounded');
+      if (tokenStressEdgeDelta.originFetches > originFetchBudget.tokenStress) failures.push(`hot-token edge made ${tokenStressEdgeDelta.originFetches} origin fetches > ${originFetchBudget.tokenStress}`);
+      if (feedStressEdgeDelta.originFetches > originFetchBudget.feedStress) failures.push(`feed edge made ${feedStressEdgeDelta.originFetches} origin fetches > ${originFetchBudget.feedStress}`);
+      if (tokenStressEdgeDelta.cacheMisses > originFetchBudget.tokenStress) failures.push(`hot-token edge cache misses ${tokenStressEdgeDelta.cacheMisses} > ${originFetchBudget.tokenStress}`);
+      if (feedStressEdgeDelta.cacheMisses > originFetchBudget.feedStress) failures.push(`feed edge cache misses ${feedStressEdgeDelta.cacheMisses} > ${originFetchBudget.feedStress}`);
       const tokenAbsorbed = tokenStressEdgeDelta.cacheHits + tokenStressEdgeDelta.coalescedWaiters;
       const feedAbsorbed = feedStressEdgeDelta.cacheHits + feedStressEdgeDelta.coalescedWaiters;
       if (tokenAbsorbed / tokenRequests < 0.99) failures.push(`hot-token edge absorbed only ${tokenAbsorbed}/${tokenRequests} requests`);
