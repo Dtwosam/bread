@@ -102,7 +102,7 @@ jobs:
               fi
               sleep 1
             done
-            grep -q 'DAY8_LOAD_SERVER_READY' "/tmp/day8-load-server-$port.log" || { cat "/tmp/day8-load-server-$port.log; exit 1; }
+            grep -q 'DAY8_LOAD_SERVER_READY' "/tmp/day8-load-server-$port.log" || { cat "/tmp/day8-load-server-$port.log"; exit 1; }
           done
 
           cat /tmp/day8-load-server-3108.log
