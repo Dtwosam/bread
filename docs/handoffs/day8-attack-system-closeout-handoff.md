@@ -18,7 +18,7 @@ This is the small/current 06H continuation pointer for Day 8. The verdict become
 - Lane-1/Lane-2 evidence: `docs/evidence/day8-lane1-lane2-security.md`
 - Controlling plan: `docs/superpowers/plans/2026-08-10-day8-attack-system.md`
 - Durability branch: `docs/day8-attack-system-durable-handoff`
-- Durability PR: pending creation; backfill before the final durability candidate is accepted
+- Durability PR: #85
 
 ## What Day 8 proved
 
@@ -122,6 +122,6 @@ Their typed scopes remain unchanged. Day 8 does not authorize production economi
 
 ## Next safe action after durability merge
 
-Begin **Day 9 — RC Deployment & Browser/Wallet Matrix** only after the durability PR is exact-head green, guarded-merged and freshly read back from `main`.
+Begin **Day 9 — RC Deployment & Browser/Wallet Matrix** only after durability PR #85 is exact-head green, guarded-merged and freshly read back from `main`.
 
 Day 9 is an RC/testnet rehearsal lane, not permission to clear the remaining production/mainnet blockers. Preserve the same financial, wallet, transaction, indexer/API and release authority boundaries while executing the source-defined deployment rehearsal, browser/wallet/device matrix and final RC evidence.
