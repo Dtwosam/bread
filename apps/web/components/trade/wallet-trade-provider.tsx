@@ -16,6 +16,7 @@ import { recoverPersistedTransactions } from '../../lib/transactions/controller'
 import {
   createTradeWalletAdapter,
   readSpendableTradeBalance,
+  recoverPersistedAllowanceTransactions,
 } from '../../lib/transactions/wallet-adapter';
 import {
   arcTestnetChain,
@@ -32,6 +33,7 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
   const publicClient = usePublicClient({ chainId: arcTestnetChain.id });
   const walletClient = useWalletClient();
   const recoveryStarted = useRef(false);
+  const browserStorage = typeof window === 'undefined' ? undefined : window.localStorage;
 
   const connectionStatus: TradeConnectionStatus = !connection.isConnected
     ? 'DISCONNECTED'
@@ -57,8 +59,10 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
       walletClient: walletClient.data,
       account: connection.address,
       chainId: connection.chainId,
+      storage: browserStorage,
     });
   }, [
+    browserStorage,
     connection.address,
     connection.chainId,
     connectionStatus,
@@ -67,26 +71,33 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
   ]);
 
   useEffect(() => {
-    if (!publicClient || recoveryStarted.current) return;
+    if (!publicClient || !browserStorage || recoveryStarted.current) return;
     recoveryStarted.current = true;
 
-    void recoverPersistedTransactions({
-      client: publicClient,
-      storage: window.localStorage,
-      chainId: arcTestnetChain.id,
-      onConfirmed: async (record) => {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(record.tokenAddress) }),
-          queryClient.invalidateQueries({
-            queryKey: breadQueryKeys.trades(record.tokenAddress, { limit: 25 }),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: breadQueryKeys.holders(record.tokenAddress, { limit: 25 }),
-          }),
-        ]);
-      },
-    });
-  }, [publicClient, queryClient]);
+    void Promise.all([
+      recoverPersistedAllowanceTransactions({
+        publicClient,
+        storage: browserStorage,
+        chainId: arcTestnetChain.id,
+      }),
+      recoverPersistedTransactions({
+        client: publicClient,
+        storage: browserStorage,
+        chainId: arcTestnetChain.id,
+        onConfirmed: async (record) => {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(record.tokenAddress) }),
+            queryClient.invalidateQueries({
+              queryKey: breadQueryKeys.trades(record.tokenAddress, { limit: 25 }),
+            }),
+            queryClient.invalidateQueries({
+              queryKey: breadQueryKeys.holders(record.tokenAddress, { limit: 25 }),
+            }),
+          ]);
+        },
+      }),
+    ]);
+  }, [browserStorage, publicClient, queryClient]);
 
   if (!publicClient) return children;
 
@@ -113,6 +124,7 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
         quoteAsset: arcTradeExecutionContext.quoteAsset,
       });
     },
+    ...(browserStorage ? { storage: browserStorage } : {}),
   };
 
   return <TradeRuntimeProvider runtime={runtime}>{children}</TradeRuntimeProvider>;
