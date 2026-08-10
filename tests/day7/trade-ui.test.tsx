@@ -12,7 +12,8 @@ const paths = {
   experience: 'apps/web/components/trade/trade-experience.tsx',
   panel: 'apps/web/components/trade/trade-panel.tsx',
   status: 'apps/web/components/transaction-status.tsx',
-  css: 'apps/web/app/globals.css',
+  globals: 'apps/web/app/globals.css',
+  tradeCss: 'apps/web/components/trade/trade.module.css',
 } as const;
 
 describe('Day 7 Task 5 responsive trade surface', () => {
@@ -41,6 +42,7 @@ describe('Day 7 Task 5 responsive trade surface', () => {
 
   it('shows every source-required financial consequence from the SDK review', () => {
     const panel = read(paths.panel);
+    const experience = read(paths.experience);
 
     for (const label of [
       'Expected output',
@@ -53,9 +55,10 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     ]) {
       expect(panel).toContain(label);
     }
-    expect(panel).toContain('prepareTradeForSignature');
-    expect(panel).toContain('executeTradeLifecycle');
+    expect(experience).toContain('prepareTradeForSignature');
+    expect(experience).toContain('executeTradeLifecycle');
     expect(panel).not.toMatch(/getAmountOut|getAmountIn|quoteReserve\s*\*/);
+    expect(experience).not.toMatch(/getAmountOut|getAmountIn|quoteReserve\s*\*/);
   });
 
   it('keeps the exact Buy/Sell quick actions and mobile-friendly numeric input', () => {
@@ -99,7 +102,7 @@ describe('Day 7 Task 5 responsive trade surface', () => {
 
   it('shares the same experience across desktop, tablet and mobile source-defined slots', () => {
     const experience = read(paths.experience);
-    const css = read(paths.css);
+    const css = read(paths.globals);
 
     expect(experience).toContain('bread-token-trade-slot');
     expect(experience).toContain('bread-token-tablet-trade-trigger');
@@ -110,10 +113,10 @@ describe('Day 7 Task 5 responsive trade surface', () => {
   });
 
   it('keeps all interactive trade controls at the accepted minimum touch target', () => {
-    const css = read(paths.css);
-    expect(css).toContain('.bread-trade-preset');
-    expect(css).toContain('.bread-trade-input');
-    expect(css).toMatch(/\.bread-trade-preset[\s\S]*min-height:\s*44px/);
-    expect(css).toMatch(/\.bread-trade-input[\s\S]*min-height:\s*44px/);
+    const css = read(paths.tradeCss);
+    expect(css).toContain(':global(.bread-trade-preset)');
+    expect(css).toContain(':global(.bread-trade-input)');
+    expect(css).toMatch(/:global\(\.bread-trade-preset\)[\s\S]*min-height:\s*44px/);
+    expect(css).toMatch(/:global\(\.bread-trade-input\)[\s\S]*min-height:\s*44px/);
   });
 });
