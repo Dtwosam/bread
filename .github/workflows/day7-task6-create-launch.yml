@@ -41,3 +41,4 @@ jobs:
           pnpm exec vitest run
           tests/day7/create-review.test.tsx
           tests/day7/launch-review.test.ts
+          tests/day7/launch-execution.test.ts
