@@ -97,12 +97,12 @@ export async function readClaimReview(
     functionName: 'balanceOf',
     args: [recipient],
   } as never);
-  if (typeof raw !== 'bigint' || raw < 0n) throw new Error('FeeEscrow returned an invalid claimable balance.');
+  if (typeof raw !== 'bigint' || raw < BigInt(0)) throw new Error('FeeEscrow returned an invalid claimable balance.');
 
   return {
     recipient,
     claimableUsdc: raw,
-    transaction: raw === 0n ? null : prepareClaim(context, { amount: raw }),
+    transaction: raw === BigInt(0) ? null : prepareClaim(context, { amount: raw }),
   };
 }
 
@@ -279,7 +279,7 @@ export async function recoverClaimTransactions({
     try {
       const receipt = await client.waitForTransactionReceipt({
         hash: currentRecord.hash,
-        onReplaced: (replacement) => {
+        onReplaced: (replacement: unknown) => {
           const nextHash = replacementHash(replacement);
           if (!nextHash || nextHash === currentRecord.hash) return;
           updatePersistedTransactionStatus(storage, currentRecord.hash, 'REPLACED');
