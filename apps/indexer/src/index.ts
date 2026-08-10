@@ -94,6 +94,14 @@ export async function runIndexerCli<T = IndexerCommandResult>(
   return execute(request);
 }
 
+export { runIndexerCatchUp } from './catch-up.js';
+export type { IndexerCatchUpResult, IndexerCheckpoint } from './catch-up.js';
+export {
+  createBoundedRpcFailoverLogClient,
+  RpcFailoverExhaustedError,
+  RpcProviderCapacityError,
+  RpcProviderCircuitOpenError,
+} from './rpc-failover.js';
 export { rebuildStack, reconcileStack } from './reconcile.js';
 export type {
   RebuildRange,
