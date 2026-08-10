@@ -1,7 +1,9 @@
-export const ARC_TESTNET_CHAIN_ID = 5_042_002;
-export const ARC_TESTNET_CHAIN_ID_HEX = '0x4cef52';
-export const ARC_TESTNET_RPC = 'https://rpc.testnet.arc.io/';
-export const ARC_TESTNET_USDC = '0x3600000000000000000000000000000000000000' as const;
+import arcTestnetManifest from '../../../../config/networks/arc-testnet.json';
+
+export const ARC_TESTNET_CHAIN_ID = arcTestnetManifest.chainId;
+export const ARC_TESTNET_CHAIN_ID_HEX = `0x${arcTestnetManifest.chainId.toString(16)}`;
+export const ARC_TESTNET_RPC = `${arcTestnetManifest.rpc[0].replace(/\/+$/, '')}/`;
+export const ARC_TESTNET_USDC = arcTestnetManifest.usdc.address as `0x${string}`;
 
 export const E2E_WALLET = '0x5000000000000000000000000000000000000001' as const;
 export const E2E_SECOND_WALLET = '0x5000000000000000000000000000000000000002' as const;
