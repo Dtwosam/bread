@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/day7-task5-trade-lifecycle.yml'
+      - 'contracts/src/core/BreadLaunchToken.sol'
       - 'packages/protocol-sdk/src/**'
       - 'apps/web/lib/transactions/**'
       - 'apps/web/components/trade/**'
@@ -13,6 +14,11 @@ on:
       - 'tests/day7/transaction-state.test.ts'
       - 'tests/day7/trade-surface.test.tsx'
       - 'tests/day7/trade-controller.test.ts'
+      - 'tests/day7/trade-execution.test.ts'
+      - 'tests/day7/trade-review-guard.test.ts'
+      - 'tests/day7/trade-ui.test.tsx'
+      - 'tests/day7/token-decimals.test.ts'
+      - 'tests/day7/transaction-recovery.test.ts'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task5-trade-lifecycle-handoff.md'
   push:
@@ -36,4 +42,13 @@ jobs:
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Run Day 7 trade lifecycle tests
-        run: pnpm exec vitest run tests/day7/transaction-state.test.ts tests/day7/trade-surface.test.tsx tests/day7/trade-controller.test.ts
+        run: >-
+          pnpm exec vitest run
+          tests/day7/transaction-state.test.ts
+          tests/day7/trade-surface.test.tsx
+          tests/day7/trade-controller.test.ts
+          tests/day7/trade-execution.test.ts
+          tests/day7/trade-review-guard.test.ts
+          tests/day7/trade-ui.test.tsx
+          tests/day7/token-decimals.test.ts
+          tests/day7/transaction-recovery.test.ts
