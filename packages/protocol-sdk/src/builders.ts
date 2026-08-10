@@ -113,8 +113,26 @@ function launchCurve(record: unknown): Address {
   return curve as Address;
 }
 
-export function prepareLaunch(context: ProtocolContext, params: LaunchParams): PreparedBreadTransaction {
-  return prepared(context.addresses.factory, breadAbiRegistry.factory, 'launchToken', [params]);
+/**
+ * Prepares the canonical Factory launch call. When the caller already read the
+ * current canonical launch fee it may supply it here so a direct-wallet
+ * consumer can satisfy exactly the required USDC allowance before simulation.
+ */
+export function prepareLaunch(
+  context: ProtocolContext,
+  params: LaunchParams,
+  launchFeeUsdc: bigint = ZERO,
+): PreparedBreadTransaction {
+  nonNegative('launchFeeUsdc', launchFeeUsdc);
+  return prepared(
+    context.addresses.factory,
+    breadAbiRegistry.factory,
+    'launchToken',
+    [params],
+    launchFeeUsdc === ZERO
+      ? undefined
+      : { token: context.quoteAsset, spender: context.addresses.factory, amount: launchFeeUsdc },
+  );
 }
 
 export function prepareLaunchAndBuy(
@@ -124,16 +142,23 @@ export function prepareLaunchAndBuy(
     quoteIn: bigint;
     minTokensOut: bigint;
     recipient: Address;
+    launchFeeUsdc?: bigint;
   }>,
 ): PreparedBreadTransaction {
   positive('quoteIn', input.quoteIn);
   nonNegative('minTokensOut', input.minTokensOut);
-  return prepared(context.addresses.factory, breadAbiRegistry.factory, 'launchTokenAndBuy', [
-    input.params,
-    input.quoteIn,
-    input.minTokensOut,
-    input.recipient,
-  ]);
+  const launchFeeUsdc = nonNegative('launchFeeUsdc', input.launchFeeUsdc ?? ZERO);
+  return prepared(
+    context.addresses.factory,
+    breadAbiRegistry.factory,
+    'launchTokenAndBuy',
+    [input.params, input.quoteIn, input.minTokensOut, input.recipient],
+    {
+      token: context.quoteAsset,
+      spender: context.addresses.factory,
+      amount: launchFeeUsdc + input.quoteIn,
+    },
+  );
 }
 
 export function prepareBuy(
