@@ -1,0 +1,59 @@
+name: day8-lane5-hot-launch-capacity
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
+      - 'scripts/load/day8-hot-launch.ts'
+      - 'apps/api/src/**'
+      - 'apps/indexer/src/fanout.ts'
+      - 'packages/db/src/**'
+      - 'packages/protocol-sdk/src/**'
+      - 'infra/docker/compose.yaml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day8-lane5-hot-launch-capacity.yml'
+      - 'scripts/load/day8-hot-launch.ts'
+      - 'apps/api/src/**'
+      - 'apps/indexer/src/fanout.ts'
+      - 'packages/db/src/**'
+      - 'packages/protocol-sdk/src/**'
+      - 'infra/docker/compose.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  hot-launch-10k:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - name: Install exact locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Start exact Bread development infrastructure
+        run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
+      - name: Verify PostgreSQL and Redis
+        run: |
+          docker compose -f infra/docker/compose.yaml exec -T postgres pg_isready -U bread -d bread
+          test "$(docker compose -f infra/docker/compose.yaml exec -T redis redis-cli ping | tr -d '\r')" = "PONG"
+      - name: Run integrated 10k hot-launch capacity proof
+        env:
+          BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
+          BREAD_REDIS_URL: redis://127.0.0.1:6379
+          BREAD_DAY8_TOKEN_CONCURRENCY: '10000'
+          BREAD_DAY8_TOKEN_REQUESTS: '10000'
+          BREAD_DAY8_FEED_CONCURRENCY: '1000'
+          BREAD_DAY8_FEED_REQUESTS: '5000'
+        run: pnpm exec tsx scripts/load/day8-hot-launch.ts
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose -f infra/docker/compose.yaml down -v
