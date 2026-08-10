@@ -8,6 +8,7 @@ const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
 
 const creatorPage = 'apps/web/app/creator/page.tsx';
 const claimPanel = 'apps/web/components/creator/claim-panel.tsx';
+const transactionStatus = 'apps/web/components/transaction-status.tsx';
 
 describe('Day 7 Task 7 Creator claim UI integration', () => {
   it('executes only the approved claim review and exposes the shared transaction lifecycle', () => {
@@ -34,5 +35,12 @@ describe('Day 7 Task 7 Creator claim UI integration', () => {
     expect(page).toContain('breadQueryKeys.creator(account)');
     expect(page).toContain('onConfirmed');
     expect(page).toContain('recoverClaimTransactions');
+  });
+
+  it('keeps shared transaction status copy truthful for both trades and claims', () => {
+    const status = read(transactionStatus);
+
+    expect(status).toContain('Refreshing current onchain state and simulating…');
+    expect(status).not.toContain('Refreshing current trade state and simulating…');
   });
 });
