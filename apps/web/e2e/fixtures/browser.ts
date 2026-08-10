@@ -13,6 +13,25 @@ export type BreadE2EFixtures = Readonly<{
   rpcState: RpcFixtureState;
 }>;
 
+type WalletController = Readonly<{
+  connect(): void;
+  disconnect(): void;
+  setChainId(nextChainIdHex: string): void;
+  setTransactionHashes(nextHashes: readonly string[]): void;
+  snapshot(): Readonly<{
+    connected: boolean;
+    chainIdHex: string;
+    requests: readonly Readonly<{ method: string; params: readonly unknown[] }>[];
+    submittedTransactions: readonly unknown[];
+  }>;
+}>;
+
+function walletControllerExpression() {
+  const controller = (window as typeof window & { __breadE2EWallet?: WalletController }).__breadE2EWallet;
+  if (!controller) throw new Error('Injected E2E wallet controller is unavailable.');
+  return controller;
+}
+
 export const test = base.extend<BreadE2EFixtures>({
   indexedApiState: async ({}, use) => {
     await use(createIndexedApiFixtureState());
@@ -30,24 +49,14 @@ export const test = base.extend<BreadE2EFixtures>({
 
 export { expect };
 
-export async function walletSnapshot(page: Page): Promise<Readonly<{
-  connected: boolean;
-  chainIdHex: string;
-  requests: readonly Readonly<{ method: string; params: readonly unknown[] }>[];
-  submittedTransactions: readonly unknown[];
-}>> {
-  return page.evaluate(() => {
-    const controller = (window as typeof window & {
-      __breadE2EWallet?: {
-        snapshot(): Readonly<{
-          connected: boolean;
-          chainIdHex: string;
-          requests: readonly Readonly<{ method: string; params: readonly unknown[] }>[];
-          submittedTransactions: readonly unknown[];
-        }>;
-      };
-    }).__breadE2EWallet;
-    if (!controller) throw new Error('Injected E2E wallet controller is unavailable.');
-    return controller.snapshot();
-  });
+export async function walletSnapshot(page: Page): Promise<ReturnType<WalletController['snapshot']>> {
+  return page.evaluate(() => walletControllerExpression().snapshot());
+}
+
+export async function setWalletChainId(page: Page, chainIdHex: string): Promise<void> {
+  await page.evaluate((nextChainIdHex) => walletControllerExpression().setChainId(nextChainIdHex), chainIdHex);
+}
+
+export async function setWalletTransactionHashes(page: Page, hashes: readonly string[]): Promise<void> {
+  await page.evaluate((nextHashes) => walletControllerExpression().setTransactionHashes(nextHashes), hashes);
 }
