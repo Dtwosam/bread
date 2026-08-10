@@ -1,5 +1,7 @@
 'use client';
 
+import styles from './trade.module.css';
+
 import { Button } from '@bread/ui';
 import { formatUnits } from 'viem';
 
@@ -10,6 +12,8 @@ import type {
 } from '../../../../packages/protocol-sdk/src/trade-review';
 import type { TradeAction, TransactionState } from '../../lib/transactions/state';
 import { TransactionStatus } from '../transaction-status';
+
+void styles;
 
 type TradeReview = BuyTradeReview | SellTradeReview;
 type Preset = '$25' | '$50' | '$100' | '25%' | '50%' | '75%' | 'MAX';
@@ -145,7 +149,7 @@ export function TradePanel({
         ariaLabel={review ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values` : `Review ${action === 'BUY' ? 'buy' : 'sell'}`}
         onClick={review ? onSubmit : onReview}
       >
-        {!runtimeAvailable ? 'Connect wallet' : review ? (action === 'BUY' ? 'Buy' : 'Sell') : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`}
+        {!runtimeAvailable ? 'Connect wallet' : review ? (action === 'BUY' ? 'Buy' : 'Sell') : `Review ${action === 'BUY' ? 'buy' : 'sell'}`}
       </Button>
 
       <TransactionStatus state={transactionState} />
