@@ -1,4 +1,4 @@
-schema_version: 1.44
+schema_version: 1.45
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-10
@@ -33,10 +33,11 @@ completed_checkpoints:
   - "Day 7 Task 5 continuity repair PR #69 + durable handoff PR #70: TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE"
   - "Day 7 Task 6 PR #74 + durable handoff PR #75: CREATE_REVIEW_LAUNCH_INTEGRATED_PASS_DURABLE"
   - "Day 7 Task 7 PR #76 + durable handoff PR #77: PORTFOLIO_CREATOR_CLAIMS_INTEGRATED_PASS_DURABLE"
+  - "Day 7 Task 8 PR #78 + durable handoff PR #79: WALLET_NETWORK_RECOVERY_CONVERGENCE_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 7 — Public Web"
-active_lane: "Task 8 — Wallet/network integration and recovery convergence. Consume validated network manifest/protocol context, wagmi/viem and the accepted Task-5 transaction controller; begin only after Task-7 durable handoff PR #77 is exact-head green, guarded-merged and the resulting main is freshly verified."
-active_gate: DAY7_TASK8_WALLET_NETWORK_RECOVERY_CONVERGENCE_RED_GREEN
+active_lane: "Task 9 — Responsive, accessibility, performance and frontend-security convergence. Consume the integrated Day-7 Tasks 1-8 web product and close only demonstrated 04B-04D production-gate gaps; begin only after Task-8 durable handoff PR #79 is exact-head green, guarded-merged and resulting main is freshly verified."
+active_gate: DAY7_TASK9_RESPONSIVE_ACCESSIBILITY_PERFORMANCE_FRONTEND_SECURITY_RED_GREEN
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -49,13 +50,13 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.43
-  prior_state_blob_sha: a44967ad0d7e24f5b2d9b271d21d65db130eda77
+  prior_state_schema_version: 1.44
+  prior_state_blob_sha: a6c413d3330d8c6e549e9f2460c12686dc0d039f
   note: >-
-    v1.44 preserves the full accepted v1.43 history and adds the exact-head-green Day-7 Task-7 Portfolio/Creator/USDC Claim implementation PR #76 at merge 927718ed0b7579948a69562c78197bebecbc9c21 plus durable handoff PR #77. No accepted Day-1 through Day-6 or Day-7 Task-1 through Task-6 verdict, Task-5 continuity repair, source boundary, blocker, invariant or authority rule is revoked.
+    v1.45 preserves the full accepted v1.44 history and adds the exact-head-green Day-7 Task-8 wallet/network/recovery convergence implementation PR #78 at merge e55d9a5ce57619938a9ffaccfc0bf27e6b78be57 plus durable handoff PR #79. No accepted Day-1 through Day-6 or Day-7 Task-1 through Task-7 verdict, Task-5 continuity repair, source boundary, blocker, invariant or authority rule is revoked.
 
 integration_baseline:
-  id: DAY7-TASK7-PORTFOLIO-CREATOR-CLAIMS
+  id: DAY7-TASK8-WALLET-NETWORK-RECOVERY-CONVERGENCE
   branch: main
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
   day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
@@ -90,7 +91,9 @@ integration_baseline:
   day7_task6_handoff_pr: 75
   day7_task7_implementation_merge: 927718ed0b7579948a69562c78197bebecbc9c21
   day7_task7_handoff_pr: 77
-  status: PORTFOLIO_CREATOR_CLAIMS_INTEGRATED_PASS_DURABLE
+  day7_task8_implementation_merge: e55d9a5ce57619938a9ffaccfc0bf27e6b78be57
+  day7_task8_handoff_pr: 79
+  status: WALLET_NETWORK_RECOVERY_CONVERGENCE_INTEGRATED_PASS_DURABLE
 
 working_branches: []
 
@@ -121,6 +124,8 @@ repository:
   day7_task6_handoff_pr: 75
   day7_task7_pr: 76
   day7_task7_handoff_pr: 77
+  day7_task8_pr: 78
+  day7_task8_handoff_pr: 79
   day6_production_code_started: true
   day7_public_web_started: true
 
@@ -149,6 +154,8 @@ project_process_note:
     Task 6 integrates the frozen /create form, in-route Review, canonical chain-derived launch/economics preparation, Launch and atomic Launch & Buy, direct wallet execution, shared transaction persistence/recovery and confirmed LaunchCreated token identity. It reuses accepted Task-5 wallet/allowance/state owners and Day-6 SDK/config authority, keeps unsupported buyback unavailable, and fails closed while canonical Arc-testnet protocol deployment identity is unresolved. It adds no API write authority, server transaction authority, second financial/state/ABI authority, guessed economics, mainnet values or DEX activation.
   day7_task7_scope_rule: >-
     Task 7 integrates wallet-aware Portfolio and Creator projections plus direct-wallet USDC claims. Portfolio/Creator normal reads remain indexed/API-backed; Claim amount authority is a fresh canonical FeeEscrow balance reread before simulation/signature. PnL/average entry and unsupported Creator analytics remain unavailable rather than guessed. Claim execution/recovery extends the shared transaction owner with action- and recipient-scoped records, preserves BUY/SELL default recovery ownership, persists hashes before confirmation wait, distinguishes revert/replacement/UNKNOWN transport state, and invalidates Creator projection after confirmation. No API mutation authority, second claim ledger, per-row RPC fanout, guessed finance, production value or mainnet value is introduced.
+  day7_task8_scope_rule: >-
+    Task 8 converges the already-existing wallet/network/transaction product boundary without creating a parallel subsystem. One Wagmi/WalletTradeProvider/TradeRuntime owner remains; root shell gains WalletButton/WalletMenu/NetworkSwitcher, connector selection is explicit rather than connectors[0], EIP-6963 injected discovery is explicit, browse surfaces remain available disconnected/wrong-chain, and transaction actions converge on Connect wallet/Switch to Arc. Wallet options are lazy-loaded and discovered connector names are not support certification. No WalletConnect project credential/dependency, branded first-class support claim, API financial write authority, second transaction/recovery owner, production value or mainnet value is introduced.
 
 verification:
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
@@ -378,6 +385,31 @@ verification:
   day7_task7_focused_assertions: 11
   day7_task7_source_design_security_review: PASS
   day7_task7_implementation_merge: 927718ed0b7579948a69562c78197bebecbc9c21
+
+  day7_task8_initial_red_head: fe3a25602d1eeefd9734a0cb44ff58c3c81dc640
+  day7_task8_initial_red_ci: 31395489263
+  day7_task8_responsive_red_head: 07a40e89938aeea86613cae2e014391c510b3271
+  day7_task8_responsive_red_ci: 31397047562
+  day7_task8_connected_menu_red_head: a9f0e8b5a6d87ce5d3997d6ebde1340bc8f74dfc
+  day7_task8_connected_menu_red_ci: 31397605487
+  day7_task8_final_head: b7ac7a9c13a6d54bd4c2945a843783aa2157e0e3
+  day7_task8_final_ci: 31397868421
+  day7_task8_final_dedicated_ci: 31397869536
+  day7_task8_final_task1_ci: 31397868056
+  day7_task8_final_task2_ci: 31397867975
+  day7_task8_final_task5_ci: 31397867928
+  day7_task8_final_task6_ci: 31397867965
+  day7_task8_final_task7_ci: 31397867935
+  day7_task8_final_retained_task5_ci: 31397868098
+  day7_task8_final_retained_task6_ci: 31397868315
+  day7_task8_final_retained_task7_ci: 31397868047
+  day7_task8_final_retained_task8_ci: 31397867994
+  day7_task8_final_retained_task9_ci: 31397868011
+  day7_task8_final_retained_task10_ci: 31397868087
+  day7_task8_focused_assertions: 29
+  day7_task8_retained_day7_task2_task4_assertions: 31
+  day7_task8_source_design_security_review: PASS
+  day7_task8_implementation_merge: e55d9a5ce57619938a9ffaccfc0bf27e6b78be57
 
 day6_handoff_contract:
   architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
@@ -702,6 +734,46 @@ day7_task7:
     responsive: "desktop Portfolio table, tablet density reduction, mobile stacked holdings; Creator summary/list converge without primary horizontal scrolling"
   next_lane: DAY7_TASK8_WALLET_NETWORK_RECOVERY_CONVERGENCE
 
+day7_task8:
+  status: WALLET_NETWORK_RECOVERY_CONVERGENCE_INTEGRATED_PASS_DURABLE
+  implementation_pr: 78
+  implementation_branch: agent/day7-task8-wallet-network-convergence
+  baseline: 7f560c3f218baf6c82af1ea91e60c1e0e380be66
+  final_head: b7ac7a9c13a6d54bd4c2945a843783aa2157e0e3
+  implementation_merge: e55d9a5ce57619938a9ffaccfc0bf27e6b78be57
+  handoff_pr: 79
+  handoff: docs/handoffs/day7-task8-wallet-network-handoff.md
+  source_design_security_review: PASS
+  exact_head_ci:
+    root: 31397868421
+    day7_task1: 31397868056
+    day7_task2: 31397867975
+    day7_task5: 31397867928
+    day7_task6: 31397867965
+    day7_task7: 31397867935
+    day7_task8: 31397869536
+    retained_task5: 31397868098
+    retained_task6: 31397868315
+    retained_task7: 31397868047
+    retained_task8: 31397867994
+    retained_task9: 31397868011
+    retained_task10: 31397868087
+    focused_assertions: 29
+    retained_day7_task2_task4_assertions: 31
+  meaningful_reds:
+    initial_wallet_network: 31395489263
+    responsive_wallet_surface: 31397047562
+    connected_menu_reachability: 31397605487
+  integration_notes:
+    single_owner: "WalletProvider composes the accepted WalletTradeProvider; one TradeRuntime/transaction/recovery owner remains"
+    connector_selection: "runtime-discovered connector IDs are explicit and deduplicated; no connectors[0] fallback; generic no-ID path selects only configured injected"
+    network_truth: "chain/address identity remains canonical-manifest sourced; EIP-6963 injected discovery explicit"
+    support_truth: "connector discovery is not branded support certification; no embedded WalletConnect project credential/dependency or unsupported first-class wallet claim"
+    browse_actions: "read surfaces remain available disconnected/wrong-chain; transaction actions converge on Connect wallet / Switch to Arc"
+    responsive: "lazy wallet menu; desktop anchored popover; mobile fixed safe-area sheet; 44px close target"
+    continuity: "Task-5 approval/direct-write/recovery semantics and Task-6 Create/Task-7 Claim consumers remain on the same runtime"
+  next_lane: DAY7_TASK9_RESPONSIVE_ACCESSIBILITY_PERFORMANCE_FRONTEND_SECURITY
+
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -717,11 +789,11 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  After Task-7 durable handoff PR #77 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 8 Wallet/network integration and recovery convergence from that exact durable Task-7 baseline. Start with a real RED wallet/network source-conformance test. Consume the validated network manifest/protocol context, wagmi/viem and the accepted Task-5 transaction controller. Browsing must remain available while disconnected or on the wrong network; transaction CTAs must resolve to Connect wallet or Switch to Arc rather than hiding read surfaces. Configure only supported injected/WalletConnect-compatible connector boundaries without embedding secrets, and source chain/address configuration exclusively from canonical config manifests. Wallet-specific integration must be lazy enough not to dominate the initial route bundle. Do not label a wallet first-class merely because connector code exists; support must be evidenced. Preserve the one existing wallet/runtime, shared transaction state/storage/recovery ownership and direct wallet/provider writes; do not create parallel wallet, recovery, ABI/address/config or financial authority.
+  After Task-8 durable handoff PR #79 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 9 responsive/accessibility/performance/frontend-security convergence from that exact durable Task-8 baseline. Start with real RED source-conformance tests against 04B-04D and the integrated Tasks 1-8 product. Repair only demonstrated production-gate gaps: keyboard/focus/ARIA/touch-target behavior, mobile viewport/safe-area/keyboard behavior, layout overflow and loading/degraded states, metadata/CSP/external-link and frontend security boundaries, query/fetch deduplication and route bundle/performance risks. Preserve all accepted financial, wallet, API, indexed-read and transaction/recovery owners. Do not invent features, wallet support, protocol values or a new data/transaction authority. Task 10 remains the Playwright primary-journey and integrated Day-7 closeout lane.
 
 do_not_do:
-  - "Do not reopen Day 6 or accepted Day-7 Tasks 1-7 absent a demonstrated regression, genuine source conflict or newly ratified source change."
-  - "Do not begin Day-7 Task 8 before durable handoff PR #77 is exact-head green, guarded-merged and actual main is verified."
+  - "Do not reopen Day 6 or accepted Day-7 Tasks 1-8 absent a demonstrated regression, genuine source conflict or newly ratified source change."
+  - "Do not begin Day-7 Task 9 before durable handoff PR #79 is exact-head green, guarded-merged and actual main is verified."
   - "Do not invent a /search or /create/review route; Search remains an overlay and Review remains state inside /create under the frozen route-correction authority."
   - "Do not fabricate Trending/Graduating/Graduated feed rows when the accepted Day-6 API reports FEED_VIEW_NOT_READY."
   - "Do not fabricate token chart history, USD prices, market caps, price changes, holder percentages, supply values, fee values, portfolio/creator financial values, PnL, average entry, movement, buyback or other fields not canonically supported by accepted source/API contracts."
