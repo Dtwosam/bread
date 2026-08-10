@@ -225,6 +225,7 @@ try {
 
   const validationEnv = {
     ...productionEnv,
+    ARC_RPC_URL: RPC,
     BREAD_RPC_URL: RPC,
   };
   run(process.execPath, ['scripts/day5/configure-graduation.mjs', 'arc-testnet'], {
