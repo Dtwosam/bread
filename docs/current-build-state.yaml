@@ -14,10 +14,10 @@ completed_checkpoints:
   - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS_DURABLE"
   - "Day 6: SDK_INDEXER_API_INTEGRATED_PASS_DURABLE"
   - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
-  - "Day 8 implementation PR #84: ATTACK_SYSTEM_EXACT_HEAD_INTEGRATED_PASS; separate durability merge/readback is the final acceptance condition"
+  - "Day 8 implementation PR #84: ATTACK_SYSTEM_EXACT_HEAD_INTEGRATED_PASS; durability PR #85 merge/readback is the final acceptance condition"
 
 active_checkpoint: "Day 8 — durability closeout"
-active_lane: "Docs-only Day-8 durability handoff. No Day-9 work may begin until this v1.49 pointer and its handoff are exact-head green, guarded-merged, and freshly read back from main."
+active_lane: "Docs-only Day-8 durability handoff PR #85. No Day-9 work may begin until this v1.49 pointer and its handoff are exact-head green, guarded-merged, and freshly read back from main."
 active_gate: DAY8_DURABILITY_EXACT_HEAD_INTEGRATED_CLOSEOUT_PENDING
 
 project_source_state:
@@ -35,7 +35,7 @@ history_preservation:
   prior_state_git_commit: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
   prior_state_blob_sha: 65714fd9ee8717d849719eed1f3a9c6691e12ddb
   note: >-
-    v1.49 promotes the source-backed Day-8 implementation closeout into the durability candidate. The complete accepted v1.48 and earlier history remains immutable in Git and prior handoffs. This pointer revokes no accepted Day-1 through Day-7 verdict, invariant, blocker, source boundary or authority rule. Its DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE verdict becomes accepted only after the docs-only durability PR is exact-head green, guarded-merged, and freshly read back from main.
+    v1.49 promotes the source-backed Day-8 implementation closeout into the durability candidate. The complete accepted v1.48 and earlier history remains immutable in Git and prior handoffs. This pointer revokes no accepted Day-1 through Day-7 verdict, invariant, blocker, source boundary or authority rule. Its DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE verdict becomes accepted only after docs-only durability PR #85 is exact-head green, guarded-merged, and freshly read back from main.
 
 integration_baseline:
   id: DAY8-ATTACK-SYSTEM-INTEGRATED-CLOSEOUT
@@ -44,6 +44,7 @@ integration_baseline:
   day8_implementation_pr: 84
   day8_exact_audited_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
   day8_implementation_merge: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
+  day8_durability_pr: 85
   status: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE_PENDING_DOCS_MERGE
 
 day8_accepted_scope:
@@ -66,7 +67,7 @@ repository:
   day7_task10_pr: 82
   day7_task10_handoff_pr: 83
   day8_pr: 84
-  day8_handoff_pr: PENDING_CREATION
+  day8_handoff_pr: 85
   day7_public_web_complete: true
   day8_started: true
   day8_implementation_complete: true
@@ -147,10 +148,10 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Create the separate docs-only Day-8 durability PR from implementation main ef9b677e883ae7bd2a6969cefc771ad1c83e236c. Backfill its PR number into this pointer/handoff, then freeze one exact durability SHA and run root CI; Day-8 security/recovery/capacity/catch-up gates; retained Day-6 Tasks 5-10; and Day-7 Tasks 1-10 including Playwright. If and only if every required gate is green and main still equals ef9b677e883ae7bd2a6969cefc771ad1c83e236c, guarded-merge that exact docs head and freshly read back main, this pointer and the Day-8 handoff. Only then begin Day 9.
+  Freeze the final docs-only durability head of PR #85 and run root CI; Day-8 security/recovery/capacity/catch-up gates; retained Day-6 Tasks 5-10; and Day-7 Tasks 1-10 including Playwright. If and only if every required gate is green and main still equals ef9b677e883ae7bd2a6969cefc771ad1c83e236c, guarded-merge that exact docs head and freshly read back main, this pointer and the Day-8 handoff. Only then begin Day 9.
 
 do_not_do:
-  - "Do not begin Day 9 before the Day-8 docs-only durability PR is exact-head green, guarded-merged and freshly read back."
+  - "Do not begin Day 9 before the Day-8 docs-only durability PR #85 is exact-head green, guarded-merged and freshly read back."
   - "Do not reopen accepted Day-1 through Day-8 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
   - "Do not invent new product features during Days 8-10; these are stabilization/rehearsal/security/load lanes."
   - "Do not fabricate unsupported feed, chart, portfolio, creator, PnL, average-entry, buyback or other financial values."
