@@ -3,10 +3,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useState } from 'react';
 
+import type { IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
-import { searchIntent, type IndexedSearchResult } from './explore/model';
+import { searchIntent } from './explore/model';
 
 export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
