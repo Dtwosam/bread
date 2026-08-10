@@ -13,7 +13,8 @@ test('mobile trade sheet survives keyboard-sized viewport pressure and executes 
   test.skip(testInfo.project.name !== 'mobile-chromium', 'Task 5 mobile trade proof runs only in the mobile project.');
 
   await page.goto(`/token/${ACTIVE_TOKEN}`);
-  const actions = page.getByRole('group', { name: 'Token trade actions' });
+  const actions = page.locator('.bread-token-mobile-actions');
+  await expect(actions).toHaveAttribute('aria-label', 'Token trade actions');
   const openBuy = actions.getByRole('button', { name: 'Open buy panel' });
   const openSell = actions.getByRole('button', { name: 'Open sell panel' });
   await expect(openBuy).toBeVisible();
