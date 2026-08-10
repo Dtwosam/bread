@@ -89,6 +89,22 @@ const approved = prepareCanonicalLaunchReview({
   slippageBps: 50,
 });
 
+const confirmedLaunchLog = {
+  address: context.addresses.factory,
+  eventName: 'LaunchCreated',
+  args: {
+    deployer: creator.creatorFeeRecipient,
+    token: address('f'),
+    curve: address('e'),
+    creatorFeeRecipient: creator.creatorFeeRecipient,
+    creatorTaxBps: creator.creatorTaxBps,
+    economicsDigest: baseSnapshot.economicsDigest,
+    configVersion: baseSnapshot.configVersion,
+  },
+  topics: [hash('f')],
+  data: '0x',
+};
+
 function chainHarness({
   secondDigest = baseSnapshot.economicsDigest,
   receiptError,
@@ -138,7 +154,7 @@ function chainHarness({
       order.push('receipt');
       expect(loadRecoverableTransactions(storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] })).toHaveLength(1);
       if (receiptError) throw receiptError;
-      return { status: 'success' as const, logs: [] };
+      return { status: 'success' as const, logs: [confirmedLaunchLog] };
     },
   } as never;
 
@@ -179,13 +195,8 @@ const tradeRecord: SubmittedTransactionRecord = {
 describe('Day 7 Task 6 shared launch transaction state', () => {
   it('uses the Task-5 lifecycle for launch actions without pretending a token address exists pre-confirmation', () => {
     let state = createLaunchTransactionState('LAUNCH_AND_BUY', launchRecord.launchIntentId!);
-    expect(state).toMatchObject({
-      action: 'LAUNCH_AND_BUY',
-      launchIntentId: launchRecord.launchIntentId,
-      status: 'IDLE',
-    });
+    expect(state).toMatchObject({ action: 'LAUNCH_AND_BUY', launchIntentId: launchRecord.launchIntentId, status: 'IDLE' });
     expect(state.tokenAddress).toBeUndefined();
-
     state = transitionTransactionState(state, { type: 'VALIDATE' });
     state = transitionTransactionState(state, { type: 'PREPARE' });
     state = transitionTransactionState(state, { type: 'AWAIT_SIGNATURE' });
@@ -198,23 +209,15 @@ describe('Day 7 Task 6 shared launch transaction state', () => {
   it('persists launch records in the same bounded transaction store and recovers their intent identity', () => {
     const storage = memoryStorage();
     persistSubmittedTransaction(storage, launchRecord);
-
-    expect(loadRecoverableTransactions(storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] })).toEqual([
-      launchRecord,
-    ]);
+    expect(loadRecoverableTransactions(storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] })).toEqual([launchRecord]);
   });
 
   it('filters trade and launch recovery ownership so providers cannot consume each other records', () => {
     const storage = memoryStorage();
     persistSubmittedTransaction(storage, launchRecord);
     persistSubmittedTransaction(storage, tradeRecord);
-
-    expect(loadRecoverableTransactions(storage, { actions: ['BUY', 'SELL'] }).map((record) => record.hash)).toEqual([
-      tradeRecord.hash,
-    ]);
-    expect(loadRecoverableTransactions(storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] }).map((record) => record.hash)).toEqual([
-      launchRecord.hash,
-    ]);
+    expect(loadRecoverableTransactions(storage, { actions: ['BUY', 'SELL'] }).map((record) => record.hash)).toEqual([tradeRecord.hash]);
+    expect(loadRecoverableTransactions(storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] }).map((record) => record.hash)).toEqual([launchRecord.hash]);
   });
 });
 
@@ -231,19 +234,11 @@ describe('Day 7 Task 6 launch execution', () => {
       now: () => new Date('2026-08-10T10:30:05.000Z'),
       onStateChange: (state) => test.states.push(state.status),
     });
-
     expect(result.reviewChanged).toBe(false);
     expect(result.state.status).toBe('CONFIRMED');
+    expect(result.tokenAddress).toBe(address('f'));
     expect(test.writes).toEqual(['launch']);
-    expect(test.states).toEqual([
-      'VALIDATING',
-      'PREPARING',
-      'AWAITING_SIGNATURE',
-      'SUBMITTED',
-      'CONFIRMING',
-      'CONFIRMED',
-    ]);
-
+    expect(test.states).toEqual(['VALIDATING', 'PREPARING', 'AWAITING_SIGNATURE', 'SUBMITTED', 'CONFIRMING', 'CONFIRMED']);
     const firstDigestRead = test.order.indexOf('read:previewLaunchEconomics');
     const allowance = test.order.indexOf('allowance');
     const secondDigestRead = test.order.lastIndexOf('read:previewLaunchEconomics');
@@ -265,16 +260,7 @@ describe('Day 7 Task 6 launch execution', () => {
         return test.client.readContract(request as never);
       },
     } as never;
-
-    const result = await executeLaunchLifecycle({
-      client: staleClient,
-      wallet: test.wallet,
-      storage: test.storage,
-      context,
-      approved,
-      launchIntentId: 'create:bread-test:2',
-    });
-
+    const result = await executeLaunchLifecycle({ client: staleClient, wallet: test.wallet, storage: test.storage, context, approved, launchIntentId: 'create:bread-test:2' });
     expect(result.reviewChanged).toBe(true);
     expect(test.order).not.toContain('allowance');
     expect(test.order).not.toContain('launch-write');
@@ -282,15 +268,7 @@ describe('Day 7 Task 6 launch execution', () => {
 
   it('blocks launch signature if economics change while allowance is being confirmed', async () => {
     const test = chainHarness({ secondDigest: digest('f') });
-    const result = await executeLaunchLifecycle({
-      client: test.client,
-      wallet: test.wallet,
-      storage: test.storage,
-      context,
-      approved,
-      launchIntentId: 'create:bread-test:3',
-    });
-
+    const result = await executeLaunchLifecycle({ client: test.client, wallet: test.wallet, storage: test.storage, context, approved, launchIntentId: 'create:bread-test:3' });
     expect(result.reviewChanged).toBe(true);
     expect(test.order).toContain('allowance');
     expect(test.order).not.toContain('simulate');
@@ -299,15 +277,7 @@ describe('Day 7 Task 6 launch execution', () => {
 
   it('keeps post-broadcast receipt transport loss recoverable as UNKNOWN with the launch hash', async () => {
     const test = chainHarness({ receiptError: new Error('network lost') });
-    const result = await executeLaunchLifecycle({
-      client: test.client,
-      wallet: test.wallet,
-      storage: test.storage,
-      context,
-      approved,
-      launchIntentId: 'create:bread-test:4',
-    });
-
+    const result = await executeLaunchLifecycle({ client: test.client, wallet: test.wallet, storage: test.storage, context, approved, launchIntentId: 'create:bread-test:4' });
     expect(result.state.status).toBe('UNKNOWN');
     expect(result.state.hash).toBe(hash('e'));
     expect(loadRecoverableTransactions(test.storage, { actions: ['LAUNCH', 'LAUNCH_AND_BUY'] })).toEqual([
