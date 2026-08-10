@@ -2,11 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
-import { WagmiProvider } from 'wagmi';
 
 import { BreadApiRequestError } from '../lib/api/client';
-import { breadWagmiConfig } from '../lib/wallet/config';
-import { WalletTradeProvider } from './trade/wallet-trade-provider';
+import { WalletProvider } from './wallet/wallet-provider';
 
 const READ_STALE_TIME_MS = 5_000;
 const READ_GC_TIME_MS = 5 * 60_000;
@@ -36,10 +34,8 @@ export function createBreadQueryClient(): QueryClient {
 export function Providers({ children }: Readonly<{ children: ReactNode }>) {
   const [queryClient] = useState(createBreadQueryClient);
   return (
-    <WagmiProvider config={breadWagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <WalletTradeProvider>{children}</WalletTradeProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <QueryClientProvider client={queryClient}>
+      <WalletProvider>{children}</WalletProvider>
+    </QueryClientProvider>
   );
 }
