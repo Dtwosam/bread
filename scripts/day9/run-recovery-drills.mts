@@ -158,12 +158,13 @@ async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
   try {
     await writeFile(deploymentPath, fixtureDeployment);
     evidence = execute(
-      'apps/web/e2e/specs/transaction-recovery.spec.ts (desktop Chromium; Day-9 parent-owned fixture restoration)',
+      'apps/web/e2e/specs/transaction-recovery.spec.ts after retained token-route warm-up (desktop Chromium; Day-9 parent-owned fixture restoration)',
       'pnpm',
       [
         'exec',
         'playwright',
         'test',
+        'e2e/specs/browse-search.spec.ts',
         'e2e/specs/transaction-recovery.spec.ts',
         '--config',
         'playwright.config.ts',
@@ -173,7 +174,7 @@ async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
       {
         cwd: webRoot,
         env: { ...process.env, BREAD_E2E: '1' },
-        timeout: 240_000,
+        timeout: 300_000,
       },
     );
   } finally {
