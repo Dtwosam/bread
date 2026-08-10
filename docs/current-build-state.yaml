@@ -87,7 +87,7 @@ project_process_note:
     Successful public feed/token projections may advertise the source-approved one-second shared-cache policy; operational status and error paths remain no-store. Cache/API/indexer state remains non-authoritative for financial truth.
 
 verification:
-  durability_continuity_matrix: EXACT_HEAD_ROOT_DAY8_LANES_PLUS_DAY7_TASK1_TO_TASK10_PLUS_RETAINED_DAY6_TASK5_TO_TASK10
+  durability_continuity_matrix: EXACT_DOCS_HEAD_ROOT_DAY7_TASK1_TO_TASK10_PLUS_RETAINED_DAY6_TASK5_TO_TASK10_WITH_BYTE_IDENTICAL_DAY8_IMPLEMENTATION_EVIDENCE
   day8_exact_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
   day8_implementation_merge: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
   day8_lane1_ci: 31430771947
@@ -148,7 +148,7 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  Freeze the final docs-only durability head of PR #85 and run root CI; Day-8 security/recovery/capacity/catch-up gates; retained Day-6 Tasks 5-10; and Day-7 Tasks 1-10 including Playwright. If and only if every required gate is green and main still equals ef9b677e883ae7bd2a6969cefc771ad1c83e236c, guarded-merge that exact docs head and freshly read back main, this pointer and the Day-8 handoff. Only then begin Day 9.
+  Freeze the final docs-only durability head of PR #85. Prove exact-head root CI, retained Day-6 Tasks 5-10 and Day-7 Tasks 1-10 including Playwright, and compare the docs head to implementation main ef9b677e883ae7bd2a6969cefc771ad1c83e236c to confirm only continuity/evidence documentation changed. Keep Day-8 attack/security/recovery/capacity/catch-up proof anchored to exact implementation head 6ababe6504a6954625b38e80b0c963faaba2de0c because PR #85 changes no Day-8 executable path; do not manufacture non-documentation changes solely to bypass workflow path filters. If the exact docs-head continuity matrix is green and main still equals ef9b677e883ae7bd2a6969cefc771ad1c83e236c, guarded-merge that exact docs head and freshly read back main, this pointer and the Day-8 handoff. Only then begin Day 9.
 
 do_not_do:
   - "Do not begin Day 9 before the Day-8 docs-only durability PR #85 is exact-head green, guarded-merged and freshly read back."
