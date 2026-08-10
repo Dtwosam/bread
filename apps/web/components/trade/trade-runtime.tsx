@@ -3,7 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { PublicClient } from 'viem';
 
-import type { ProtocolContext } from '@bread/protocol-sdk';
+import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context';
 import type { TradeAction } from '../../lib/transactions/state';
 import type { TradeWalletAdapter } from '../../lib/transactions/controller';
 
