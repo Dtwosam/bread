@@ -35,10 +35,11 @@ const context: ProtocolContext = {
 const HOT_TOKEN = address(10);
 const HOT_CURVE = address(20);
 const port = Number(process.env.BREAD_DAY8_SERVER_PORT ?? '3108');
-const schemaName = process.env.BREAD_DAY8_SCHEMA ?? `day8_load_${process.pid}`;
+const seedOwner = process.env.BREAD_DAY8_SEED_OWNER === '1';
+const schemaName = process.env.BREAD_DAY8_SCHEMA ?? 'day8_load_cluster';
 const databaseUrl = process.env.BREAD_DATABASE_URL ?? 'postgresql://bread:bread_local_only@127.0.0.1:5432/bread';
 const redisUrl = process.env.BREAD_REDIS_URL ?? 'redis://127.0.0.1:6379';
-const headReadsFile = process.env.BREAD_DAY8_HEAD_READS_FILE ?? '/tmp/bread-day8-head-reads';
+const headReadsFile = process.env.BREAD_DAY8_HEAD_READS_FILE ?? `/tmp/bread-day8-head-reads-${port}`;
 
 const requireDb = createRequire(new URL('../../packages/db/package.json', import.meta.url));
 const { Pool } = requireDb('pg') as {
@@ -108,7 +109,9 @@ async function cleanup(): Promise<void> {
   await app?.close().catch(() => undefined);
   await redis?.quit().catch(() => undefined);
   await pool?.end().catch(() => undefined);
-  await adminPool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`).catch(() => undefined);
+  if (seedOwner) {
+    await adminPool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`).catch(() => undefined);
+  }
   await adminPool.end().catch(() => undefined);
 }
 
@@ -120,14 +123,16 @@ process.once('SIGINT', () => {
 });
 
 try {
-  await adminPool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`);
-  await adminPool.query(`CREATE SCHEMA ${schemaName}`);
+  if (seedOwner) {
+    await adminPool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`);
+    await adminPool.query(`CREATE SCHEMA ${schemaName}`);
+  }
   pool = new Pool({ connectionString: databaseUrl, options: `-c search_path=${schemaName}` });
-  await seed(pool);
+  if (seedOwner) await seed(pool);
 
   redis = createClient({ url: redisUrl });
   await redis.connect();
-  await redis.flushDb();
+  if (seedOwner) await redis.flushDb();
 
   let observedHeadReads = 0;
   writeFileSync(headReadsFile, '0\n');
@@ -152,7 +157,7 @@ try {
   });
 
   await app.listen({ port, host: '127.0.0.1' });
-  console.log(`DAY8_LOAD_SERVER_READY http://127.0.0.1:${port}`);
+  console.log(`DAY8_LOAD_SERVER_READY http://127.0.0.1:${port} seedOwner=${seedOwner}`);
 } catch (error) {
   await cleanup();
   throw error;
