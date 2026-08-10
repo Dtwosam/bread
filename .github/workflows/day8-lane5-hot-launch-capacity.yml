@@ -154,8 +154,10 @@ jobs:
           BREAD_DAY8_EDGE_MODE: '1'
           BREAD_DAY8_TOKEN_CONCURRENCY: '10000'
           BREAD_DAY8_TOKEN_REQUESTS: '10000'
+          BREAD_DAY8_TOKEN_ARRIVAL_WINDOW_MS: '2000'
           BREAD_DAY8_FEED_CONCURRENCY: '1000'
           BREAD_DAY8_FEED_REQUESTS: '5000'
+          BREAD_DAY8_FEED_ARRIVAL_WINDOW_MS: '2000'
           BREAD_DAY8_CONNECT_CONCURRENCY: '500'
         run: pnpm exec tsx scripts/load/day8-hot-launch.mts
       - name: Stop edge workers
