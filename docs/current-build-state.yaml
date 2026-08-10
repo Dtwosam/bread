@@ -70,6 +70,7 @@ project_process_note:
     Day 8 attacks the integrated system through extended fuzz/invariants, static/manual security review, RPC/API/indexer/realtime failure injection, hot-launch/bot-burst capacity tests, malicious metadata/CSP/sanitization checks, privileged-role abuse attempts and recovery/runbook verification. It is not a feature-development lane and does not waive open release/mainnet blockers.
 
 verification:
+  durability_continuity_matrix: EXACT_HEAD_ROOT_DAY7_TASK1_TO_TASK9_PLUS_RETAINED_DAY6_TASK5_TO_TASK10
   day7_task10_graduation_red_head: 07be2ad31ffbe660763352c06ea4fd383d4638c7
   day7_task10_graduation_red_ci: 31414672664
   day7_task10_recovery_red_head: 5d7be6164f5f3a48024a34d9fb3e9386dac9fe2b
