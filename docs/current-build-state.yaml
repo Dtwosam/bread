@@ -1,4 +1,4 @@
-schema_version: 1.38
+schema_version: 1.39
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-10
@@ -27,10 +27,11 @@ completed_checkpoints:
   - "Day 6 post-closeout PR #58: DAY6_DURABLE_CLOSEOUT_PASS"
   - "Day 7 Task 1 PR #59 + durable handoff PR #60: PUBLIC_WEB_FOUNDATION_INTEGRATED_PASS_DURABLE"
   - "Day 7 Task 2 PR #61 + durable handoff PR #62: INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE"
+  - "Day 7 Task 3 PR #63 + durable handoff PR #64: EXPLORE_SEARCH_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 7 — Public Web"
-active_lane: "Task 3 — Explore and Search. Task 2 is durably integrated when PR #62 reaches main; begin Task 3 only from the freshly verified PR #62 merge."
-active_gate: DAY7_TASK3_EXPLORE_SEARCH_RED_GREEN
+active_lane: "Task 4 — Token page. Task 3 becomes durably integrated when PR #64 reaches main; begin Task 4 only from the freshly verified PR #64 merge."
+active_gate: DAY7_TASK4_TOKEN_PAGE_RED_GREEN
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -43,13 +44,13 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.37
-  prior_state_blob_sha: 5afb694e877484e5a9048a61d4cda545382ed650
+  prior_state_schema_version: 1.38
+  prior_state_blob_sha: 00e695e34bcb64bab9fc6229e6d903d6e9fbd8ef
   note: >-
-    v1.38 preserves the full accepted v1.37 history and advances through the exact-head-green Day-7 Task-2 indexed read boundary PR #61 at merge 847f940ee6a451cf76fa15e43955d6a5fa40b19e plus durable handoff PR #62. No accepted Day-1 through Day-6 or Day-7 Task-1 verdict, source boundary, blocker, invariant or authority rule is revoked.
+    v1.39 preserves the full accepted v1.38 history and advances through the exact-head-green Day-7 Task-3 Explore/Search PR #63 at merge 3e8563c445781f9e629b2b55dc23bae0ec034c11 plus durable handoff PR #64. No accepted Day-1 through Day-6 or Day-7 Task-1/Task-2 verdict, source boundary, blocker, invariant or authority rule is revoked.
 
 integration_baseline:
-  id: DAY7-TASK2-INDEXED-READ-BOUNDARY
+  id: DAY7-TASK3-EXPLORE-SEARCH
   branch: main
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
   day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
@@ -72,7 +73,9 @@ integration_baseline:
   day7_task1_handoff_merge: 9e3699fc02973b599207328058992310b8e0bb86
   day7_task2_implementation_merge: 847f940ee6a451cf76fa15e43955d6a5fa40b19e
   day7_task2_handoff_pr: 62
-  status: DAY7_TASK2_INDEXED_READ_BOUNDARY_INTEGRATED_PASS_DURABLE
+  day7_task3_implementation_merge: 3e8563c445781f9e629b2b55dc23bae0ec034c11
+  day7_task3_handoff_pr: 64
+  status: EXPLORE_SEARCH_INTEGRATED_PASS_DURABLE
 
 working_branches: []
 
@@ -91,6 +94,8 @@ repository:
   day7_task1_handoff_pr: 60
   day7_task2_pr: 61
   day7_task2_handoff_pr: 62
+  day7_task3_pr: 63
+  day7_task3_handoff_pr: 64
   day6_production_code_started: true
   day7_public_web_started: true
 
@@ -107,6 +112,8 @@ project_process_note:
     Task 1 freezes and integrates the 04B design tokens, reusable UI primitives and responsive global shell only. It does not fabricate feed/token data, implement Search/wallet/transaction behavior early, add raw-RPC primary reads, invent routes or change protocol/economic semantics.
   day7_task2_scope_rule: >-
     Task 2 establishes the canonical browser consumer boundary for the accepted Day-6 indexed read API: response/freshness propagation, typed errors, bounded query serialization, shared query deduplication and truthful degraded-state presentation. It adds no page-level feed/search product behavior, raw-RPC fallback, server-side write authority or financial semantics.
+  day7_task3_scope_rule: >-
+    Task 3 integrates the frozen Explore/Search discovery surfaces only. It consumes the Task-2 indexed read/query boundary, extends canonical shared API DTOs additively, exposes already-indexed graduation progress through the existing batched feed metric load, keeps unsupported deterministic ranking views explicitly not-ready, and introduces no raw-RPC primary UX, transaction authority, guessed finance, production value or second API/domain authority.
 
 verification:
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
@@ -220,6 +227,21 @@ verification:
   day7_task2_final_task10_ci: 31343018862
   day7_task2_source_design_review: PASS
   day7_task2_merge: 847f940ee6a451cf76fa15e43955d6a5fa40b19e
+
+  day7_task3_final_head: 96e4e567fe1726d547ab5d623a0fbb00ee8bf658
+  day7_task3_final_ci: 31346160670
+  day7_task3_final_task1_ci: 31346160665
+  day7_task3_final_task2_ci: 31346160660
+  day7_task3_final_explore_search_ci: 31346160672
+  day7_task3_final_shared_types_ci: 31346160669
+  day7_task3_final_task5_ci: 31346160662
+  day7_task3_final_task6_ci: 31346160701
+  day7_task3_final_task7_ci: 31346160666
+  day7_task3_final_task8_ci: 31346160661
+  day7_task3_final_task9_ci: 31346160675
+  day7_task3_final_task10_ci: 31346160667
+  day7_task3_source_design_review: PASS
+  day7_task3_merge: 3e8563c445781f9e629b2b55dc23bae0ec034c11
 
 day6_handoff_contract:
   architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
@@ -371,6 +393,30 @@ day7_task2:
     retained_task10: 31343018862
   next_lane: DAY7_TASK3_EXPLORE_SEARCH
 
+day7_task3:
+  status: EXPLORE_SEARCH_INTEGRATED_PASS_DURABLE
+  implementation_pr: 63
+  implementation_branch: agent/day7-task3-explore-search
+  baseline: 41a5218da254590521c9c724b4e2e88fb2c85b19
+  final_head: 96e4e567fe1726d547ab5d623a0fbb00ee8bf658
+  implementation_merge: 3e8563c445781f9e629b2b55dc23bae0ec034c11
+  handoff_pr: 64
+  handoff: docs/handoffs/day7-task3-explore-search-handoff.md
+  source_design_review: PASS
+  exact_head_ci:
+    root: 31346160670
+    day7_task1: 31346160665
+    day7_task2: 31346160660
+    day7_task3_explore_search: 31346160672
+    day7_task3_shared_types: 31346160669
+    retained_task5: 31346160662
+    retained_task6: 31346160701
+    retained_task7: 31346160666
+    retained_task8: 31346160661
+    retained_task9: 31346160675
+    retained_task10: 31346160667
+  next_lane: DAY7_TASK4_TOKEN_PAGE
+
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
@@ -386,14 +432,16 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  After PR #62 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 3 Explore/Search from that exact durable baseline. First write and prove a meaningful RED against the actual accepted Day-6 response shapes for real New-feed rendering, explicit unsupported-feed-view not-ready UX, exact-address/text-search thresholds, visible contract identity, cursor preservation and zero per-card RPC. Use only the Task-2 indexed read/query boundary; do not create a second client or frontend financial/domain authority.
+  After PR #64 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 4 Token page from that exact durable baseline. First write and prove a meaningful RED against the actual accepted `GET /v1/tokens/:address`, token trades, token holders, shared DTOs, Task-2 browser client/query keys and Task-3 graduation-progress semantics. The Token page must distinguish malformed addresses from valid-looking non-Bread tokens, render server freshness, keep secondary trades/holders/chart lazy, extend missing canonical projections/types additively at their owning layer, and never fabricate chart history or unsupported financial values.
 
 do_not_do:
-  - "Do not reopen Day 6 or accepted Day-7 Tasks 1-2 absent a demonstrated regression, genuine source conflict or newly ratified source change."
-  - "Do not begin Day-7 Task 3 Explore/Search before durable handoff PR #62 is exact-head green, guarded-merged and actual main is verified."
+  - "Do not reopen Day 6 or accepted Day-7 Tasks 1-3 absent a demonstrated regression, genuine source conflict or newly ratified source change."
+  - "Do not begin Day-7 Task 4 Token page before durable handoff PR #64 is exact-head green, guarded-merged and actual main is verified."
   - "Do not invent a /search or /create/review route; preserve the frozen 04A/04C route map."
   - "Do not fabricate Trending/Graduating/Graduated feed rows when the accepted Day-6 API reports FEED_VIEW_NOT_READY."
-  - "Do not introduce per-card RPC fanout or raw-RPC primary UX."
+  - "Do not fabricate token chart history, USD prices, market caps, price changes, holder percentages, supply values, fee values or other financial fields not canonically supported by accepted source/API contracts."
+  - "Do not introduce private web copies of shared token/detail/trade/holder DTOs, ABI/address/config authority or financial formulas."
+  - "Do not introduce per-card/component RPC fanout or raw-RPC primary UX."
   - "Do not route user trades through a centralized Bread trade server."
   - "Do not add server-side transaction submission, signing, relaying, queueing, or key custody."
   - "Do not make DB/indexer/API/Redis authoritative for financial state."
