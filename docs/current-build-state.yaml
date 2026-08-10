@@ -1,4 +1,4 @@
-schema_version: 1.41
+schema_version: 1.42
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-10
@@ -30,9 +30,10 @@ completed_checkpoints:
   - "Day 7 Task 3 PR #63 + durable handoff PR #64: EXPLORE_SEARCH_INTEGRATED_PASS_DURABLE"
   - "Day 7 Task 4 PR #65 + durable handoff PR #66: TOKEN_PAGE_INTEGRATED_PASS_DURABLE"
   - "Day 7 Task 5 PR #67 + durable handoff PR #68: TRADE_WALLET_TRANSACTION_RECOVERY_INTEGRATED_PASS_DURABLE"
+  - "Day 7 Task 5 continuity repair PR #69 + durable handoff PR #70: TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 7 — Public Web"
-active_lane: "Task 6 — Create, Review, Launch and Launch+Buy. Review is a screen/state inside the canonical /create flow under the controlling route correction; begin Task 6 only after PR #68 reaches main and the resulting durable baseline is freshly verified."
+active_lane: "Task 6 — Create, Review, Launch and Launch+Buy. Review is a screen/state inside the canonical /create flow under the controlling route correction; begin Task 6 only after continuity-repair handoff PR #70 reaches main and the resulting repaired durable baseline is freshly verified."
 active_gate: DAY7_TASK6_CREATE_REVIEW_LAUNCH_RED_GREEN
 
 project_source_state:
@@ -46,13 +47,13 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.40
-  prior_state_blob_sha: 74d4b9761d7e4dc24782696b4c5528d53e0aa45c
+  prior_state_schema_version: 1.41
+  prior_state_blob_sha: cfdc735e06035cbc31afb69a63dee1f6afc2bab4
   note: >-
-    v1.41 preserves the full accepted v1.40 history and advances through the exact-head-green Day-7 Task-5 Trade preparation, wallet lifecycle and transaction recovery PR #67 at merge 7168b0f26daf46bcf4d8a4587088d95a6df92d27 plus durable handoff PR #68. No accepted Day-1 through Day-6 or Day-7 Task-1 through Task-4 verdict, source boundary, blocker, invariant or authority rule is revoked.
+    v1.42 preserves the full accepted v1.41 history and adds the exact-head-green Day-7 Task-5 allowance/simulation/recovery continuity repair PR #69 at merge acfcbab75338086ff1f3b151af4b05f5934e6a98 plus durable handoff PR #70. No accepted Day-1 through Day-6 or Day-7 Task-1 through Task-5 verdict, source boundary, blocker, invariant or authority rule is revoked.
 
 integration_baseline:
-  id: DAY7-TASK5-TRADE-LIFECYCLE
+  id: DAY7-TASK5-TRADE-LIFECYCLE-REPAIRED
   branch: main
   day5_durable_handoff_merge: 4cc1ea7041abaa86402114321bf31e53aff8ea90
   day6_design_merge: f734d6cee2deb447928f94e6928cba2ca51b9b12
@@ -81,7 +82,9 @@ integration_baseline:
   day7_task4_handoff_pr: 66
   day7_task5_implementation_merge: 7168b0f26daf46bcf4d8a4587088d95a6df92d27
   day7_task5_handoff_pr: 68
-  status: TRADE_WALLET_TRANSACTION_RECOVERY_INTEGRATED_PASS_DURABLE
+  day7_task5_continuity_repair_merge: acfcbab75338086ff1f3b151af4b05f5934e6a98
+  day7_task5_continuity_repair_handoff_pr: 70
+  status: TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE
 
 working_branches: []
 
@@ -106,6 +109,8 @@ repository:
   day7_task4_handoff_pr: 66
   day7_task5_pr: 67
   day7_task5_handoff_pr: 68
+  day7_task5_continuity_repair_pr: 69
+  day7_task5_continuity_repair_handoff_pr: 70
   day6_production_code_started: true
   day7_public_web_started: true
 
@@ -128,6 +133,8 @@ project_process_note:
     Task 4 integrates the frozen Token read experience only. It extends canonical shared API DTOs and the existing token-detail projection additively, consumes indexed token/trade/holder boundaries, exposes accepted graduation evidence, keeps unsupported chart/financial values explicit, and leaves wallet simulation/signing/submission/recovery disabled for Task 5. It adds no raw-RPC primary read, server transaction authority, guessed economics or production/mainnet values.
   day7_task5_scope_rule: >-
     Task 5 integrates direct wallet/provider Buy/Sell preparation and execution, canonical pre-sign chain reread/simulation, exact allowance handling, final-review protection, persisted transaction lifecycle/reload/replacement recovery and the accepted responsive Token trade surfaces. It adds no API write authority, server signing/relaying/custody, independent financial formula or ledger authority, Solidity behavior, guessed production economics or mainnet values.
+  day7_task5_allowance_repair_scope_rule: >-
+    The post-Task-5 continuity repair corrects approval-before-simulation ordering, persists and recovers unresolved approval hashes, serializes unresolved approval lanes, and keeps UNKNOWN transactions duplicate-action locked. The record is recovery metadata only; chain allowance remains authoritative. No Solidity, protocol economics, API write authority, server transaction authority, package dependency, production value or mainnet value changes.
 
 verification:
   day6_task8_final_head: 71bb29d7525028f3c952ead3a8098fa197b0cfee
@@ -297,6 +304,23 @@ verification:
   day7_task5_final_retained_task10_ci: 31371777016
   day7_task5_source_design_security_review: PASS
   day7_task5_implementation_merge: 7168b0f26daf46bcf4d8a4587088d95a6df92d27
+
+  day7_task5_allowance_repair_ordering_red_ci: 31374346434
+  day7_task5_allowance_repair_approval_unknown_red_ci: 31376115756
+  day7_task5_allowance_repair_unknown_lock_red_ci: 31376851158
+  day7_task5_allowance_repair_changed_amount_red_ci: 31377038613
+  day7_task5_allowance_repair_final_head: 606223eb70a5333acded9e40f8ba906e42d56b19
+  day7_task5_allowance_repair_final_ci: 31377182804
+  day7_task5_allowance_repair_final_dedicated_ci: 31377182825
+  day7_task5_allowance_repair_final_task1_ci: 31377182783
+  day7_task5_allowance_repair_final_retained_task5_ci: 31377182779
+  day7_task5_allowance_repair_final_retained_task6_ci: 31377182894
+  day7_task5_allowance_repair_final_retained_task7_ci: 31377182835
+  day7_task5_allowance_repair_final_retained_task8_ci: 31377182888
+  day7_task5_allowance_repair_final_retained_task9_ci: 31377182730
+  day7_task5_allowance_repair_final_retained_task10_ci: 31377182869
+  day7_task5_allowance_repair_source_design_security_review: PASS
+  day7_task5_allowance_repair_merge: acfcbab75338086ff1f3b151af4b05f5934e6a98
 
 day6_handoff_contract:
   architecture: TRANSACTIONAL_EVENT_JOURNAL_WITH_SYNCHRONOUS_PROJECTIONS
@@ -498,7 +522,7 @@ day7_task4:
   next_lane: DAY7_TASK5_TRADE_TRANSACTION_LIFECYCLE
 
 day7_task5:
-  status: TRADE_WALLET_TRANSACTION_RECOVERY_INTEGRATED_PASS_DURABLE
+  status: TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE
   implementation_pr: 67
   implementation_branch: agent/day7-task5-trade-lifecycle
   baseline: 6dea2c65004a85735196a97a5b284c4e4077d584
@@ -523,6 +547,30 @@ day7_task5:
     head: 4adf47bda22f6d45e924413c581b2e7c17aef38b
     dedicated_ci: 31371674643
     result: REPLACED_TRANSACTION_DUPLICATE_ACTION_LOCK_RED
+  continuity_repair:
+    implementation_pr: 69
+    implementation_branch: agent/day7-post-task5-allowance-simulation-repair
+    baseline: 7aae446aa0913f84255a3a7b3b00018f27acc3d1
+    final_head: 606223eb70a5333acded9e40f8ba906e42d56b19
+    implementation_merge: acfcbab75338086ff1f3b151af4b05f5934e6a98
+    handoff_pr: 70
+    handoff: docs/handoffs/day7-task5-allowance-simulation-repair-handoff.md
+    source_design_security_review: PASS
+    exact_head_ci:
+      root: 31377182804
+      day7_task1: 31377182783
+      day7_task5: 31377182825
+      retained_task5: 31377182779
+      retained_task6: 31377182894
+      retained_task7: 31377182835
+      retained_task8: 31377182888
+      retained_task9: 31377182730
+      retained_task10: 31377182869
+    meaningful_reds:
+      ordering: 31374346434
+      approval_unknown: 31376115756
+      unknown_duplicate_lock: 31376851158
+      changed_amount_approval_serialization: 31377038613
   next_lane: DAY7_TASK6_CREATE_REVIEW_LAUNCH
 
 blockers:
@@ -540,11 +588,11 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 next_action: >-
-  After PR #68 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 6 Create, Review, Launch and Launch+Buy from that exact durable Task-5 baseline. Reconcile the original Day-7 Task-6 plan against the controlling route correction first: Review is a required screen/state inside /create, and /create/review must not be added. Start with a real RED source-conformance test proving only source-defined creator inputs are editable, protocol-only values are absent, actual canonical prepared launch/economics information is shown in Review, the final action is exactly Launch or Launch & Buy, and Task-5 wallet/network/double-submit/persistence/recovery behavior is reused. Consume accepted prepareLaunch and prepareLaunchAndBuy builders and canonical prepared economics/config authority; do not create parallel transaction or financial semantics.
+  After continuity-repair handoff PR #70 is exact-head green, guarded-merged and actual main is freshly verified, begin Day-7 Task 6 Create, Review, Launch and Launch+Buy from that exact repaired durable Task-5 baseline. Reconcile the original Day-7 Task-6 plan against the controlling route correction first: Review is a required screen/state inside /create, and /create/review must not be added. Start with a real RED source-conformance test proving only source-defined creator inputs are editable, protocol-only values are absent, actual canonical prepared launch/economics information is shown in Review, the final action is exactly Launch or Launch & Buy, and the repaired Task-5 wallet/network/allowance/double-submit/persistence/recovery behavior is reused. Consume accepted prepareLaunch and prepareLaunchAndBuy builders and canonical prepared economics/config authority; do not create parallel transaction or financial semantics. The current Bread stack does not yet contain a canonical buyback/vesting money path; do not invent one in the frontend.
 
 do_not_do:
   - "Do not reopen Day 6 or accepted Day-7 Tasks 1-5 absent a demonstrated regression, genuine source conflict or newly ratified source change."
-  - "Do not begin Day-7 Task 6 before durable handoff PR #68 is exact-head green, guarded-merged and actual main is verified."
+  - "Do not begin Day-7 Task 6 before continuity-repair handoff PR #70 is exact-head green, guarded-merged and actual main is verified."
   - "Do not invent a /search or /create/review route; Search remains an overlay and Review remains state inside /create under the frozen route-correction authority."
   - "Do not fabricate Trending/Graduating/Graduated feed rows when the accepted Day-6 API reports FEED_VIEW_NOT_READY."
   - "Do not fabricate token chart history, USD prices, market caps, price changes, holder percentages, supply values, fee values or other financial fields not canonically supported by accepted source/API contracts."
