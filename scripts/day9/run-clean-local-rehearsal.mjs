@@ -253,6 +253,9 @@ try {
     timeout: 180_000,
     env: {
       ...validationEnv,
+      BREAD_FACTORY: core.factory,
+      BREAD_GRADUATION_COORDINATOR: core.coordinator,
+      BREAD_PERMANENT_LIQUIDITY_LOCKER: core.locker,
       BREAD_SMOKE_PRIVATE_KEY: TEST_ONLY_ANVIL_KEY,
       BREAD_SMOKE_OPERATOR: deployer,
       BREAD_SMOKE_CREATOR_TAX_BPS: MAX_CREATOR_TAX_BPS,
