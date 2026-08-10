@@ -94,11 +94,13 @@ export default function CreatorPage() {
   if (!runtime || runtime.connectionStatus === 'DISCONNECTED') {
     return (
       <main className="bread-page bread-creator-page">
-        <EmptyState
-          title="Connect your wallet"
-          detail="Connect the creator wallet to load its indexed launches and revenue."
-          action={<Button onClick={() => void runtime?.connectWallet()}>Connect wallet</Button>}
-        />
+        <div className="bread-wallet-action-state">
+          <EmptyState
+            title="Connect your wallet"
+            detail="Connect the creator wallet to load its indexed launches and revenue."
+          />
+          <Button disabled={!runtime} onClick={() => void runtime?.connectWallet()}>Connect wallet</Button>
+        </div>
       </main>
     );
   }
@@ -106,14 +108,18 @@ export default function CreatorPage() {
   if (runtime.connectionStatus === 'WRONG_NETWORK') {
     return (
       <main className="bread-page bread-creator-page">
-        <EmptyState
-          title="Switch to Arc"
-          detail="Switch the connected wallet to Arc before reviewing creator claims."
-          action={<Button onClick={() => void runtime.switchToTargetChain()}>Switch to Arc</Button>}
-        />
+        <div className="bread-wallet-action-state">
+          <EmptyState
+            title="Switch to Arc"
+            detail="Switch the connected wallet to Arc before reviewing creator claims."
+          />
+          <Button onClick={() => void runtime.switchToTargetChain()}>Switch to Arc</Button>
+        </div>
       </main>
     );
   }
+
+  const readyRuntime = runtime;
 
   if (!account || query.isPending) {
     return <main className="bread-page bread-creator-page"><Skeleton label="Loading creator dashboard" /></main>;
@@ -131,7 +137,7 @@ export default function CreatorPage() {
   const claimUnlocked = claimState === null || canSubmitTransactionAction(claimState);
 
   async function reviewClaim() {
-    if (!runtime?.protocolContext || !account) {
+    if (!readyRuntime.protocolContext || !account) {
       setClaimError('The canonical FeeEscrow deployment is unavailable in the current network manifest.');
       return;
     }
@@ -142,7 +148,7 @@ export default function CreatorPage() {
     setClaimBusy(true);
     setClaimError(null);
     try {
-      setClaimReview(await readClaimReview(runtime.client, runtime.protocolContext, account));
+      setClaimReview(await readClaimReview(readyRuntime.client, readyRuntime.protocolContext, account));
     } catch (error) {
       setClaimError(error instanceof Error ? error.message : 'Claim review failed.');
     } finally {
@@ -151,7 +157,7 @@ export default function CreatorPage() {
   }
 
   async function claimUsdc() {
-    if (!runtime.protocolContext || !runtime.storage || !runtime.wallet || !account || !claimReview) {
+    if (!readyRuntime.protocolContext || !readyRuntime.storage || !readyRuntime.wallet || !account || !claimReview) {
       setClaimError('Review the current onchain claim before signing.');
       return;
     }
@@ -164,10 +170,10 @@ export default function CreatorPage() {
     setClaimError(null);
     try {
       const result = await executeClaimLifecycle({
-        client: runtime.client,
-        wallet: runtime.wallet,
-        storage: runtime.storage,
-        context: runtime.protocolContext,
+        client: readyRuntime.client,
+        wallet: readyRuntime.wallet,
+        storage: readyRuntime.storage,
+        context: readyRuntime.protocolContext,
         approved: claimReview,
         onStateChange: setClaimState,
         onConfirmed: async () => {
@@ -199,7 +205,7 @@ export default function CreatorPage() {
         <p className="bread-muted">{creator.address}</p>
       </header>
 
-      <section aria-label="Creator summary">
+      <section className="bread-creator-summary" aria-label="Creator summary">
         <div>
           <span>Total earned</span>
           <strong>{formatUnits(BigInt(creator.fees.credited), 6)} USDC</strong>
@@ -236,7 +242,7 @@ export default function CreatorPage() {
         {creator.createdLaunches.length === 0 ? (
           <p className="bread-muted">No indexed launches for this creator wallet.</p>
         ) : (
-          <ul>
+          <ul className="bread-creator-launch-list">
             {creator.createdLaunches.map((launch) => {
               const earned = creator.perLaunchEarnedRevenue.find((row) => row.tokenAddress === launch.tokenAddress);
               return (
