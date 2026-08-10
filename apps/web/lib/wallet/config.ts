@@ -65,6 +65,7 @@ export const arcProtocolContext = resolveArcProtocolContext();
 export const breadWagmiConfig = createConfig({
   chains: [arcTestnetChain],
   connectors: [injected()],
+  multiInjectedProviderDiscovery: true,
   transports: {
     [arcTestnetChain.id]: http(arcTestnetManifest.rpc[0]),
   },
