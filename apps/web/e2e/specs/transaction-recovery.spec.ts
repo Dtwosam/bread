@@ -48,8 +48,9 @@ test('refresh restores a pending Buy visibly and keeps duplicate submission lock
   await expect(trade.getByRole('status')).toContainText('CONFIRMING');
   await expect(trade.getByRole('status')).toContainText(BUY_TX_HASH);
 
-  await trade.getByRole('button', { name: 'Connect wallet' }).click();
   await expect(trade.getByLabel('Trade amount')).toBeDisabled();
-  await expect(trade.getByRole('button', { name: 'Review buy' })).toBeDisabled();
+  await expect(trade.getByRole('button', { name: 'Connect wallet' })).toBeDisabled();
+  await expect(trade.getByRole('tab', { name: 'Buy' })).toBeDisabled();
+  await expect(trade.getByRole('tab', { name: 'Sell' })).toBeDisabled();
   expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(0);
 });
