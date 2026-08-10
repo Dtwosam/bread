@@ -69,6 +69,7 @@ function harness(quoteReserve = 1_000_000n) {
   const wallet = {
     async getAccount() { return address('b'); },
     async getChainId() { return 5042002; },
+    async ensurePreparedTransactionAllowance() {},
     async sendPreparedTransaction() { sends += 1; return hash('c'); },
   };
   return { client, wallet, get sends() { return sends; } };
