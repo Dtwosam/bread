@@ -3,15 +3,15 @@ import {
   prepareSell,
   simulatePreparedTransaction,
   type PreparedBreadTransaction,
-} from '../../../../packages/protocol-sdk/src/builders.js';
-import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context.js';
+} from '../../../../packages/protocol-sdk/src/builders';
+import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context';
 import {
   estimateBuyTradeReview,
   estimateSellTradeReview,
   readTradeReviewSnapshot,
   type BuyTradeReview,
   type SellTradeReview,
-} from '../../../../packages/protocol-sdk/src/trade-review.js';
+} from '../../../../packages/protocol-sdk/src/trade-review';
 
 import {
   canSubmitTransactionAction,
@@ -20,12 +20,12 @@ import {
   type SubmittedTransactionRecord,
   type TradeAction,
   type TransactionState,
-} from './state.js';
+} from './state';
 import {
   loadRecoverableTransactions,
   persistSubmittedTransaction,
   updatePersistedTransactionStatus,
-} from './storage.js';
+} from './storage';
 
 type Address = `0x${string}`;
 type TransactionHash = `0x${string}`;
@@ -273,7 +273,6 @@ export async function executeTradeLifecycle({
     status: 'SUBMITTED',
   };
 
-  // Persist before any receipt wait or navigation-sensitive state transition.
   persistSubmittedTransaction(storage, currentRecord);
   state = emit(
     transitionTransactionState(state, { type: 'SUBMIT', record: currentRecord }),
