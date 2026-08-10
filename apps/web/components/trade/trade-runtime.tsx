@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { PublicClient } from 'viem';
 
+import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context';
 import type {
   TradeExecutionContext,
   TradeWalletAdapter,
@@ -17,6 +18,7 @@ export type TradeRuntime = Readonly<{
   client: PublicClient;
   wallet: TradeWalletAdapter | null;
   context: TradeExecutionContext;
+  protocolContext: ProtocolContext | null;
   connectionStatus: TradeConnectionStatus;
   connectWallet: () => Promise<void>;
   switchToTargetChain: () => Promise<void>;
