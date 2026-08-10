@@ -59,6 +59,7 @@ const ACTIVE_LOCKED = new Set<TransactionStatus>([
   'SUBMITTED',
   'CONFIRMING',
   'REPLACED',
+  'UNKNOWN',
 ]);
 
 export function canSubmitTransactionAction(state: TransactionState): boolean {
