@@ -10,6 +10,7 @@ const paths = {
   tokenClient: 'apps/web/components/token/token-client.tsx',
   runtime: 'apps/web/components/trade/trade-runtime.tsx',
   experience: 'apps/web/components/trade/trade-experience.tsx',
+  controller: 'apps/web/lib/transactions/controller.ts',
   panel: 'apps/web/components/trade/trade-panel.tsx',
   status: 'apps/web/components/transaction-status.tsx',
   globals: 'apps/web/app/globals.css',
@@ -43,6 +44,7 @@ describe('Day 7 Task 5 responsive trade surface', () => {
   it('shows every source-required financial consequence from the SDK review', () => {
     const panel = read(paths.panel);
     const experience = read(paths.experience);
+    const controller = read(paths.controller);
 
     for (const label of [
       'Expected output',
@@ -55,8 +57,11 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     ]) {
       expect(panel).toContain(label);
     }
-    expect(experience).toContain('prepareTradeForSignature');
+    expect(experience).toContain('prepareTradeReview');
     expect(experience).toContain('executeTradeLifecycle');
+    expect(controller).toContain('ensurePreparedTransactionAllowance');
+    expect(controller).toContain('prepareTradeForSignature');
+    expect(controller).toContain('simulatePreparedTransaction');
     expect(panel).not.toMatch(/getAmountOut|getAmountIn|quoteReserve\s*\*/);
     expect(experience).not.toMatch(/getAmountOut|getAmountIn|quoteReserve\s*\*/);
   });
