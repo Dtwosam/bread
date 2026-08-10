@@ -41,6 +41,14 @@ export {
   type RetryGraduationResult,
 } from './builders.js';
 
+export {
+  estimateBuyTradeReview,
+  estimateSellTradeReview,
+  type BuyTradeReview,
+  type SellTradeReview,
+  type TradeReviewSnapshot,
+} from './trade-review.js';
+
 export { decodeBreadError, type DecodedBreadError } from './errors.js';
 
 export { breadAbiRegistry } from './abi/generated.js';
