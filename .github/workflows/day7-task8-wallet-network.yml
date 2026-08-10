@@ -1,0 +1,52 @@
+name: day7-task8-wallet-network
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day7-task8-wallet-network.yml'
+      - 'apps/web/components/providers.tsx'
+      - 'apps/web/components/wallet/**'
+      - 'apps/web/components/trade/**'
+      - 'apps/web/components/transaction-status.tsx'
+      - 'apps/web/lib/wallet/**'
+      - 'apps/web/lib/transactions/**'
+      - 'apps/web/app/layout.tsx'
+      - 'apps/web/app/create/**'
+      - 'apps/web/app/creator/**'
+      - 'apps/web/app/portfolio/**'
+      - 'apps/web/app/token/**'
+      - 'tests/day7/wallet-network.test.tsx'
+      - 'tests/day7/wallet-runtime.test.ts'
+      - 'tests/day7/trade-ui.test.tsx'
+      - 'tests/day7/create-runtime.test.tsx'
+      - 'tests/day7/creator-claim-ui.test.tsx'
+      - 'docs/current-build-state.yaml'
+      - 'docs/handoffs/day7-task8-wallet-network-handoff.md'
+  push:
+    branches:
+      - 'agent/day7-task8-wallet-network-convergence'
+
+permissions:
+  contents: read
+
+jobs:
+  wallet-network:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Run Day 7 wallet/network convergence tests
+        run: >-
+          pnpm exec vitest run
+          tests/day7/wallet-network.test.tsx
+          tests/day7/wallet-runtime.test.ts
+          tests/day7/trade-ui.test.tsx
+          tests/day7/create-runtime.test.tsx
+          tests/day7/creator-claim-ui.test.tsx
