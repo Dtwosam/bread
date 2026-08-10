@@ -2,23 +2,22 @@
 
 Date: 2026-08-10
 
-## Durable verdict candidate
+## Durable verdict
 
-`DAY_7_PUBLIC_WEB_PRIMARY_JOURNEYS_INTEGRATED_PASS_DURABILITY_PENDING`
+`DAY_7_PUBLIC_WEB_INTEGRATED_PASS_DURABLE`
 
-This handoff is the small/current 06H continuation pointer for the completed Day-7 Task-10 implementation. Day 7 is not durably closed until the separate docs-only durability PR containing this file and `docs/current-build-state.yaml` passes its continuity matrix, guarded-merges, and the resulting `main` is freshly read back.
+This is the small/current 06H continuation pointer for Day 7. The verdict becomes the accepted repository continuity state only when durability PR #83 is exact-head green, guarded-merged, and the resulting `main` plus this handoff and `docs/current-build-state.yaml` are freshly read back.
 
 ## Accepted implementation boundary
 
 - Repository: `Dtwosam/bread`
 - Starting durable main: `070a3f274d0ed26bfb1b38cb14b4364c8d7a376a`
-- Task-10 branch: `agent/day7-task10-playwright-closeout`
 - Task-10 implementation PR: #82
 - Exact audited implementation head: `f1d74441abe06f11806e5b2fdf3ca7c012dc3024`
-- Guarded implementation merge / actual post-implementation `main`: `171a646305f796e222fd3a9f34f4bd343e43983a`
+- Guarded implementation merge / verified post-implementation `main`: `171a646305f796e222fd3a9f34f4bd343e43983a`
 - Task-10 evidence: `docs/evidence/day7-public-web-closeout.md`
 - Durability branch: `docs/day7-task10-durable-handoff`
-- Durability PR: pending assignment at this initial handoff commit
+- Durability PR: #83
 
 ## What Task 10 proved
 
@@ -26,13 +25,14 @@ This handoff is the small/current 06H continuation pointer for the completed Day
 - Indexed API remains the primary browse/read authority; failed/degraded reads do not silently fall back to raw Arc RPC.
 - Search keyboard containment/restoration and contract identity are browser-proven.
 - Active, graduation-pending, graduated and permanent-lock evidence remain distinguishable.
-- Real browser wallet connection, wrong-network switching, Buy, Sell, launch-only, atomic Launch + Buy and creator claim flows execute through the existing Bread SDK/wallet/transaction authorities.
+- Browser wallet connection, wrong-network switching, Buy, Sell, launch-only, atomic Launch + Buy and creator claim flows execute through the existing Bread SDK/wallet/transaction authorities.
 - Zero claim produces no wallet write.
-- Duplicate transaction submission remains locked while a saved transaction is unresolved.
+- Duplicate submission remains locked while a saved transaction is unresolved.
 - Persisted transaction state is visibly restored after refresh; a later recovery pass can confirm without a second wallet write; receipt transport failure surfaces `UNKNOWN` with the saved hash.
-- Mobile trade flow meets the source-defined <=90dvh/internal-scroll/safe-area/touch-target gate and remains usable under deterministic keyboard-pressure viewport reduction.
+- Fast terminal recovery is deterministic rather than racing the panel back to visible `IDLE`.
+- Mobile trade meets the source-defined <=90dvh/internal-scroll/safe-area/touch-target gate and remains usable under deterministic keyboard-pressure viewport reduction.
 - Bounded Firefox and WebKit browse + wallet-Buy smoke passed.
-- The temporary E2E protocol deployment overlay restores the canonical unresolved Arc testnet deployment manifest byte-for-byte after every run.
+- The temporary E2E deployment overlay restores the canonical unresolved Arc testnet deployment manifest byte-for-byte after every run.
 
 ## Demonstrated repairs
 
@@ -60,9 +60,7 @@ At `f1d74441abe06f11806e5b2fdf3ca7c012dc3024`:
 
 ## Day-7 integrated status
 
-Tasks 1–10 are implementation-complete. The accepted Day-7 product now contains the public foundation, indexed read boundary, Explore/Search, Token page, trade lifecycle, Create/Review/Launch, Portfolio/Creator/claims, wallet/network convergence, responsive/accessibility/performance/frontend-security convergence, and primary browser journey closeout.
-
-Day 7 becomes `DAY_7_PUBLIC_WEB_INTEGRATED_PASS_DURABLE` only after this separate durability boundary merges.
+Tasks 1–10 are complete. The accepted Day-7 product contains the public foundation, indexed read boundary, Explore/Search, Token page, trade lifecycle, Create/Review/Launch, Portfolio/Creator/claims, wallet/network convergence, responsive/accessibility/performance/frontend-security convergence, and primary browser journey closeout.
 
 ## Unchanged blockers
 
@@ -72,20 +70,12 @@ Day 7 becomes `DAY_7_PUBLIC_WEB_INTEGRATED_PASS_DURABLE` only after this separat
 - `PONS_AUDIT_FINDINGS`
 - `ARC_MAINNET_VALUES`
 
-Their existing typed scopes remain unchanged. Task 10 did not create an exact-current Pons parity claim, freeze Bread production economics, represent Pons audits as complete, or invent Arc mainnet/canonical DEX values.
+Their typed scopes remain unchanged. Task 10 did not create an exact-current Pons parity claim, freeze Bread production economics, represent Pons audits as complete, or invent Arc mainnet/canonical DEX values.
 
-## Next safe action after durability merge
+## Next safe action after PR #83 merges
 
-Begin **Day 8 — Attack the System** from the exact durable Day-7 `main` only after this durability PR is exact-head green, guarded-merged and freshly read back.
+Begin **Day 8 — Attack the System** from the exact durable Day-7 `main` only after PR #83 is exact-head green, guarded-merged and freshly read back.
 
-Day 8 is stabilization/security/load/failure-injection work, not feature invention. Its controlling scope includes:
-
-- extended fuzz/invariant suites;
-- static analysis and focused security review of new/reconstructed money code;
-- RPC/API/indexer/realtime failure injection;
-- feed/search/realtime/indexer-catch-up load testing including the 06I hot-launch/bot-burst target;
-- malicious metadata/CSP/sanitization checks;
-- admin/guardian abuse attempts;
-- verification that recovery behavior matches the runbook.
+Day 8 is stabilization/security/load/failure-injection work, not feature invention. Its controlling scope includes extended fuzz/invariants; static analysis and focused security review; RPC/API/indexer/realtime failure injection; feed/search/realtime/indexer-catch-up load testing including the 06I hot-launch/bot-burst target; malicious metadata/CSP/sanitization checks; admin/guardian abuse attempts; and recovery/runbook verification.
 
 Do not begin Day 9/RC work or public-money release merely because Day 7 is complete. Day-8 mandatory security/capacity/recovery gates remain predecessors.
