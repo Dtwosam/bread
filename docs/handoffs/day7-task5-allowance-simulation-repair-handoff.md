@@ -4,9 +4,9 @@ Date: 2026-08-10
 
 ## Status
 
-`TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE_PENDING_HANDOFF_MERGE`
+`TRADE_ALLOWANCE_SIMULATION_RECOVERY_REPAIR_INTEGRATED_PASS_DURABLE`
 
-This document becomes the controlling durable post-Task-5 repair handoff only after this docs-only handoff PR is exact-head green, guarded-merged to `main`, and actual `main` is freshly reverified.
+PR #70 is exact-head green and guarded-merged to `main`; actual `main`, v1.42 build state and this handoff were freshly read back. This is now the controlling durable post-Task-5 repair handoff.
 
 ## Durable start baseline
 
@@ -16,6 +16,7 @@ This document becomes the controlling durable post-Task-5 repair handoff only af
 - Exact reviewed repair head: `606223eb70a5333acded9e40f8ba906e42d56b19`
 - Guarded repair merge: `acfcbab75338086ff1f3b151af4b05f5934e6a98`
 - Durable repair handoff PR: #70
+- Durable repair handoff merge: `e1a5f0d7959e601f08b490df7702cccc9ac8111e`
 
 ## Why the repair was required
 
@@ -81,7 +82,7 @@ Exact reviewed repair head: `606223eb70a5333acded9e40f8ba906e42d56b19`
 - Retained Day-6 Task 9 `31377182730`: PASS.
 - Retained Day-6 Task 10 `31377182869`: PASS.
 
-Day-7 Task 2, Task 3 and Task 4 workflows are path-filtered and did not run on the final repair head. No fresh exact-head PASS is invented for them.
+Day-7 Task 2, Task 3 and Task 4 workflows are path-filtered and did not run on the final repair implementation head. No fresh implementation-head PASS is invented for them. The final docs handoff head independently reran and passed Day-7 Tasks 1 through 5 and retained Day-6 Tasks 5 through 10.
 
 ## Source / design / security review
 
@@ -103,13 +104,11 @@ Verified:
 
 ## Current project position
 
-Task 5 remains durably complete, now with this continuity repair incorporated. The repair does not create a new Day-7 feature task and does not reopen Day 6.
+Task 5 remains durably complete with this continuity repair incorporated. The repair does not create a new Day-7 feature task and does not reopen Day 6.
 
-The next implementation lane remains:
+The next implementation lane is:
 
 `DAY7_TASK6_CREATE_REVIEW_LAUNCH`
-
-Task 6 must begin only after this handoff PR is exact-head green, guarded-merged and actual `main` is freshly verified.
 
 ## Task-6 route and authority boundary
 
