@@ -259,3 +259,9 @@ No exact-current Pons parity claim, production economics value, completed Pons-a
 ## Closeout rule
 
 This evidence commit must itself rerun the exact Task-10 + cross-browser + root + affected/retained Day-7/Day-6 matrix. PR #82 remains draft until that evidence-bearing exact head is green and the final diff review is rechecked. Only that exact audited head may be marked ready and guarded-merged. Day 7 is not durably closed until the subsequent separate docs-only durability handoff/current-build-state update is independently green, guarded-merged, and read back from actual `main`.
+
+## Durability-boundary revalidation
+
+Task-10 implementation PR #82 guarded-merged at `171a646305f796e222fd3a9f34f4bd343e43983a`. Separate durability PR #83 intentionally carries only continuity/evidence documentation and does not alter application, protocol, SDK, indexer, API, wallet, transaction, economics, permission or deployment behavior.
+
+For the durability merge, the final PR #83 head must independently prove root CI, Day-7 Tasks 1–10, and retained Day-6 Tasks 5–10. This evidence path is intentionally included in the durability PR so the Task-10 Playwright workflow evaluates the same final documentation-only head as the current-build-state-triggered continuity workflows. A green implementation head is supporting history, not a substitute for this final continuity check.
