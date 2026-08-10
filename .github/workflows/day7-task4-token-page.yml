@@ -10,7 +10,9 @@ on:
       - 'apps/web/app/token/**'
       - 'apps/web/components/token/**'
       - 'apps/web/lib/api/**'
+      - 'apps/web/app/globals.css'
       - 'tests/day7/token-page.test.tsx'
+      - 'tests/day7/token-page-behavior.test.tsx'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task4-token-page-handoff.md'
   push:
@@ -34,4 +36,4 @@ jobs:
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Run Day 7 Token page consumer-contract tests
-        run: pnpm exec vitest run tests/day7/token-page.test.tsx
+        run: pnpm exec vitest run tests/day7/token-page.test.tsx tests/day7/token-page-behavior.test.tsx
