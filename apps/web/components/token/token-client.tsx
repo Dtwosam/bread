@@ -2,13 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
-import { Button, Card, ErrorState, Skeleton } from '@bread/ui';
+import { ErrorState, Skeleton } from '@bread/ui';
 import { BreadApiRequestError, createBreadApiClient } from '../../lib/api/client';
 import { breadQueryKeys } from '../../lib/api/queries';
 import { FreshnessBanner } from '../freshness-banner';
+import { TradeExperience } from '../trade/trade-experience';
 import { GraduationModule } from './graduation-module';
 import { TokenIdentity } from './token-identity';
 import { TokenStats } from './token-stats';
@@ -24,22 +25,12 @@ const EXACT_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
 export function TokenClient({ address }: Readonly<{ address: string }>) {
   const api = useMemo(() => createBreadApiClient(), []);
-  const [tabletTradeOpen, setTabletTradeOpen] = useState(false);
   const validAddress = EXACT_ADDRESS.test(address);
   const query = useQuery({
     queryKey: breadQueryKeys.token(address),
     queryFn: () => api.getToken<IndexedTokenDetail>(address),
     enabled: validAddress,
   });
-
-  useEffect(() => {
-    if (!tabletTradeOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setTabletTradeOpen(false);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [tabletTradeOpen]);
 
   if (!validAddress) {
     return (
@@ -101,66 +92,7 @@ export function TokenClient({ address }: Readonly<{ address: string }>) {
           <GraduationModule token={token} />
           <TokenTabs token={token} />
         </div>
-
-        <aside className="bread-token-trade-slot" aria-label="Trade preparation">
-          <Card>
-            <div className="bread-token-trade-slot__content">
-              <div>
-                <h2>Trade</h2>
-                <p>Wallet transaction controls are owned by the next Day-7 lane.</p>
-              </div>
-              <Button variant="buy" disabled ariaLabel="Buy unavailable until trade integration">
-                Buy
-              </Button>
-              <Button variant="sell" disabled ariaLabel="Sell unavailable until trade integration">
-                Sell
-              </Button>
-            </div>
-          </Card>
-        </aside>
-      </div>
-
-      <div className="bread-token-tablet-trade-trigger">
-        <Button variant="secondary" onClick={() => setTabletTradeOpen(true)} ariaLabel="Open trade preparation">
-          Trade
-        </Button>
-      </div>
-
-      {tabletTradeOpen ? (
-        <div className="bread-token-tablet-trade-backdrop" onMouseDown={() => setTabletTradeOpen(false)}>
-          <section
-            className="bread-token-tablet-trade-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bread-token-tablet-trade-heading"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="bread-token-tablet-trade-sheet__heading">
-              <div>
-                <h2 id="bread-token-tablet-trade-heading">Trade</h2>
-                <p>Wallet transaction controls are owned by the next Day-7 lane.</p>
-              </div>
-              <Button variant="small" onClick={() => setTabletTradeOpen(false)} ariaLabel="Close trade preparation">
-                Close
-              </Button>
-            </div>
-            <Button variant="buy" disabled ariaLabel="Buy unavailable until trade integration">
-              Buy
-            </Button>
-            <Button variant="sell" disabled ariaLabel="Sell unavailable until trade integration">
-              Sell
-            </Button>
-          </section>
-        </div>
-      ) : null}
-
-      <div className="bread-token-mobile-actions" aria-label="Token trade actions">
-        <Button variant="buy" disabled ariaLabel="Buy unavailable until trade integration">
-          Buy
-        </Button>
-        <Button variant="sell" disabled ariaLabel="Sell unavailable until trade integration">
-          Sell
-        </Button>
+        <TradeExperience token={token} />
       </div>
     </main>
   );
