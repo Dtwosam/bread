@@ -35,6 +35,7 @@ for (const scenario of [
     test.skip(testInfo.project.name !== 'desktop-chromium', 'Task 4 launch proof is desktop; Task 5 owns mobile trade execution.');
 
     const main = await connectAndFillCreateForm(page, scenario.initialBuy);
+    const primaryReview = main.locator('section.bread-launch-review > dl.bread-launch-review__values');
     for (const label of [
       'Fixed supply',
       'Quote currency',
@@ -46,13 +47,14 @@ for (const scenario of [
       'Creator revenue wallet',
       'Permanent liquidity lock',
     ]) {
-      await expect(main.getByText(label, { exact: true })).toBeVisible();
+      await expect(primaryReview.getByText(label, { exact: true })).toBeVisible();
     }
 
     if (scenario.initialBuy) {
-      await expect(main.getByRole('heading', { name: 'Launch & Buy details' })).toBeVisible();
-      for (const label of ['Expected output', 'Minimum output', 'Base fee', 'Opening buy tax', 'Price impact', 'Slippage']) {
-        await expect(main.getByText(label, { exact: true })).toBeVisible();
+      const buyDetails = main.locator('section.bread-launch-review__initial-buy');
+      await expect(buyDetails.getByRole('heading', { name: 'Launch & Buy details' })).toBeVisible();
+      for (const label of ['Expected output', 'Minimum output', 'Base fee', 'Creator tax', 'Opening buy tax', 'Price impact', 'Slippage']) {
+        await expect(buyDetails.getByText(label, { exact: true })).toBeVisible();
       }
     }
 
