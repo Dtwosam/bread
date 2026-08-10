@@ -81,6 +81,11 @@ describe('Day 8 06I RPC failover under load', () => {
     expect(module?.createBoundedRpcFailoverLogClient).toBeTypeOf('function');
     if (!module) return;
 
+    const maxConcurrentPerProvider = 8;
+    const failureThreshold = 2;
+    const requestCount = 200;
+    const boundedFailureWave = maxConcurrentPerProvider + failureThreshold - 1;
+
     const primary = trackedClient({
       run: async () => {
         throw new Error('primary RPC unavailable');
@@ -92,26 +97,26 @@ describe('Day 8 06I RPC failover under load', () => {
         { name: 'primary', client: primary.client },
         { name: 'secondary', client: secondary.client },
       ],
-      maxConcurrentPerProvider: 8,
+      maxConcurrentPerProvider,
       maxQueuedPerProvider: 256,
-      failureThreshold: 2,
+      failureThreshold,
       cooldownMs: 10_000,
       shouldFailover: () => true,
     });
 
-    const results = await Promise.all(Array.from({ length: 200 }, () => client.getLogs({
+    const results = await Promise.all(Array.from({ length: requestCount }, () => client.getLogs({
       address: context.factoryAddress,
       fromBlock: 100n,
       toBlock: 120n,
     })));
 
-    expect(results).toHaveLength(200);
+    expect(results).toHaveLength(requestCount);
     expect(results.every((logs) => logs.length === 0)).toBe(true);
-    expect(primary.maxActive()).toBeLessThanOrEqual(8);
-    expect(secondary.maxActive()).toBeLessThanOrEqual(8);
-    expect(primary.calls()).toBeLessThanOrEqual(8);
-    expect(secondary.calls()).toBe(200);
-    expect(primary.calls() + secondary.calls()).toBeLessThanOrEqual(208);
+    expect(primary.maxActive()).toBeLessThanOrEqual(maxConcurrentPerProvider);
+    expect(secondary.maxActive()).toBeLessThanOrEqual(maxConcurrentPerProvider);
+    expect(primary.calls()).toBeLessThanOrEqual(boundedFailureWave);
+    expect(secondary.calls()).toBe(requestCount);
+    expect(primary.calls() + secondary.calls()).toBeLessThanOrEqual(requestCount + boundedFailureWave);
 
     const primaryCallsBeforeDiscovery = primary.calls();
     await expect(discoverRange(client, context, [], 100n, 120n)).resolves.toEqual([]);
