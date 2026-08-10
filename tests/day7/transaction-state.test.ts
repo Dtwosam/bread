@@ -70,7 +70,7 @@ describe('Day 7 Task 5 transaction lifecycle', () => {
     expect(() => transitionTransactionState(state, { type: 'PREPARE' })).toThrow(/illegal transaction transition/i);
   });
 
-  it('locks duplicate trade actions while wallet/signature or submitted confirmation is unresolved', () => {
+  it('locks duplicate trade actions while wallet/signature, submission or replacement confirmation is unresolved', () => {
     const token = submitted.tokenAddress;
     const initial = createTransactionState('BUY', token);
     expect(canSubmitTransactionAction(initial)).toBe(true);
@@ -83,7 +83,17 @@ describe('Day 7 Task 5 transaction lifecycle', () => {
 
     const sent = transitionTransactionState(awaiting, { type: 'SUBMIT', record: submitted });
     expect(canSubmitTransactionAction(sent)).toBe(false);
-    expect(canSubmitTransactionAction(transitionTransactionState(sent, { type: 'CONFIRM' }))).toBe(false);
+    const confirming = transitionTransactionState(sent, { type: 'CONFIRM' });
+    expect(canSubmitTransactionAction(confirming)).toBe(false);
+
+    const replacement = {
+      ...submitted,
+      hash: `0x${'55'.repeat(32)}` as const,
+      status: 'CONFIRMING' as const,
+    };
+    const replaced = transitionTransactionState(confirming, { type: 'REPLACE', record: replacement });
+    expect(replaced.status).toBe('REPLACED');
+    expect(canSubmitTransactionAction(replaced)).toBe(false);
   });
 
   it('persists the transaction hash immediately in a bounded local recovery record', () => {
