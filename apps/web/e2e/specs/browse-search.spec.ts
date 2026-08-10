@@ -32,7 +32,8 @@ test('Explore filters and Search preserve contract identity plus keyboard contai
   await expect(page).toHaveURL(/\/explore\?view=trending$/);
   await expect(feedNav.getByRole('link', { name: 'Trending' })).toHaveAttribute('aria-current', 'page');
 
-  const searchTrigger = page.locator('button:visible').filter({ hasText: /^Search$/ }).first();
+  const searchTrigger = page.getByRole('button', { name: 'Search', exact: true });
+  await expect(searchTrigger).toHaveCount(1);
   await searchTrigger.focus();
   await searchTrigger.click();
 
