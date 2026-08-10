@@ -6,9 +6,7 @@ import { rehearseServiceRollback } from './rehearse-service-rollback.mts';
 
 const repoRoot = path.resolve(new URL('../..', import.meta.url).pathname);
 const contractsRoot = path.join(repoRoot, 'contracts');
-const webRoot = path.join(repoRoot, 'apps/web');
 const deploymentPath = path.join(repoRoot, 'config/deployments/arc-testnet.day5.json');
-const playwrightFixturePath = path.join(webRoot, 'e2e/fixtures/protocol-deployment.json');
 
 export const REQUIRED_RECOVERY_DRILL_IDS = [
   'GUARDIAN_PAUSE_NEW_LAUNCHES',
@@ -152,30 +150,19 @@ function runIndexerReconcile(): RecoveryDrillResult {
 
 async function runBrowserTransactionRecovery(): Promise<RecoveryDrillResult> {
   const originalDeployment = await readFile(deploymentPath);
-  const fixtureDeployment = await readFile(playwrightFixturePath);
   let evidence: CommandEvidence | undefined;
 
   try {
-    await writeFile(deploymentPath, fixtureDeployment);
+    // Consume the canonical Day-7 browser harness rather than inventing a
+    // filtered execution shape. That harness owns the deterministic API/RPC/
+    // wallet fixtures and includes transaction-recovery.spec.ts. Day 9 adds a
+    // parent byte snapshot so canonical deployment state is restored even if a
+    // nested browser runner leaves its fixture behind.
     evidence = execute(
-      'apps/web/e2e/specs/transaction-recovery.spec.ts after retained token-route warm-up (desktop Chromium; Day-9 parent-owned fixture restoration)',
+      'canonical Day-7 Playwright harness including apps/web/e2e/specs/transaction-recovery.spec.ts; Day-9 parent-owned manifest restoration',
       'pnpm',
-      [
-        'exec',
-        'playwright',
-        'test',
-        'e2e/specs/browse-search.spec.ts',
-        'e2e/specs/transaction-recovery.spec.ts',
-        '--config',
-        'playwright.config.ts',
-        '--project',
-        'desktop-chromium',
-      ],
-      {
-        cwd: webRoot,
-        env: { ...process.env, BREAD_E2E: '1' },
-        timeout: 300_000,
-      },
+      ['--filter', '@bread/web', 'test:e2e'],
+      { cwd: repoRoot, timeout: 600_000 },
     );
   } finally {
     await writeFile(deploymentPath, originalDeployment);
