@@ -44,7 +44,7 @@ const ECONOMICS_DIGEST = `0x${'66'.repeat(32)}` as `0x${string}`;
 const GRADUATION_CONFIG_HASH = `0x${'77'.repeat(32)}` as `0x${string}`;
 const ZERO_BLOOM = `0x${'00'.repeat(256)}`;
 
-export type RpcReceiptMode = 'SUCCESS' | 'PENDING' | 'REVERTED';
+export type RpcReceiptMode = 'SUCCESS' | 'PENDING' | 'REVERTED' | 'ERROR';
 
 export type RpcFixtureState = {
   requests: ReadonlyArray<{ method: string; params: readonly unknown[] }>;
@@ -243,7 +243,7 @@ function launchCreatedLog() {
   };
 }
 
-function receipt(hash: string, mode: Exclude<RpcReceiptMode, 'PENDING'>) {
+function receipt(hash: string, mode: 'SUCCESS' | 'REVERTED') {
   return {
     blockHash: BLOCK_HASH,
     blockNumber: FIXTURE_BLOCK_NUMBER_HEX,
@@ -308,6 +308,9 @@ function handleRpc(state: RpcFixtureState, request: RpcRequest) {
         break;
       case 'eth_getTransactionReceipt': {
         const hash = String(params[0] ?? '');
+        if (state.receiptMode === 'ERROR') {
+          throw new Error('Deterministic receipt transport failure.');
+        }
         result = state.receiptMode === 'PENDING' ? null : receipt(hash, state.receiptMode);
         break;
       }
