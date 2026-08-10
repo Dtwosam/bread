@@ -21,6 +21,7 @@ import {
 import styles from '../../components/create/create.module.css';
 import { TransactionStatus } from '../../components/transaction-status';
 import { useTradeRuntime } from '../../components/trade/trade-runtime';
+import { normalizeExternalMetadataUrl } from '../../lib/security/external-url';
 import {
   executeLaunchLifecycle,
   recoverLaunchTransactions,
@@ -214,11 +215,11 @@ export default function CreatePage() {
         creator: {
           name: draft.name.trim(),
           symbol: draft.ticker.trim().toUpperCase(),
-          logo: draft.image.trim(),
+          logo: normalizeExternalMetadataUrl(draft.image, 'Image'),
           description: draft.description.trim(),
-          twitter: draft.x.trim(),
-          telegram: draft.telegram.trim(),
-          website: draft.website.trim(),
+          twitter: normalizeExternalMetadataUrl(draft.x, 'X'),
+          telegram: normalizeExternalMetadataUrl(draft.telegram, 'Telegram'),
+          website: normalizeExternalMetadataUrl(draft.website, 'Website'),
           creatorFeeRecipient: account,
           creatorTaxBps,
         },
