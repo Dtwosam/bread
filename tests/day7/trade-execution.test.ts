@@ -96,6 +96,7 @@ function executionHarness({
     async getChainId() {
       return 5042002;
     },
+    async ensurePreparedTransactionAllowance() {},
     async sendPreparedTransaction() {
       return send();
     },
