@@ -109,3 +109,102 @@ export type IndexedSearchResult = Readonly<{
   symbol: string | null;
   matchKind: string;
 }>;
+
+export type IndexedCurveStateSummary = Readonly<{
+  mode: string | null;
+  trackedQuote: string | null;
+  trackedTokens: string | null;
+  quoteFeeBalance: string | null;
+  creatorTaxBalance: string | null;
+  realQuoteReserve: string | null;
+  virtualQuoteReserve: string | null;
+  remainingSellableTokens: string | null;
+  trackedSoldInventory: string | null;
+  readyToGraduate: boolean | null;
+  graduationPhase: string | null;
+  poolId: string | null;
+  graduationAdapter: string | null;
+  sweptUsdcAmount: string | null;
+  sweptTokenAmount: string | null;
+  graduationFailureReasonHash: string | null;
+  positionManager: string | null;
+  positionId: string | null;
+  usdcUsed: string | null;
+  tokenUsed: string | null;
+  tokenLocked: string | null;
+  usdcDust: string | null;
+  positionLocked: boolean | null;
+  tokenSupplyLocked: string | null;
+  graduationCompletedBlock: string | null;
+  graduationCompletedLogIndex: number | null;
+  latestBlockNumber: string | null;
+  latestTransactionHash: string | null;
+  latestLogIndex: number | null;
+}>;
+
+export type IndexedTokenDetail = Omit<
+  IndexedFeedItem,
+  'deployerAddress' | 'creatorFeeRecipient' | 'graduationAdapterFamily'
+> &
+  Readonly<{
+    deployerAddress: string | null;
+    creatorFeeRecipient: string | null;
+    graduationAdapterFamily: number | null;
+    curveState: IndexedCurveStateSummary | null;
+  }>;
+
+export type IndexedTokenTrade = Readonly<{
+  id: Readonly<{
+    chainId: number;
+    transactionHash: string;
+    logIndex: number;
+  }>;
+  transactionHash: string;
+  logIndex: number;
+  side: string;
+  tokenAddress: string;
+  curveAddress: string;
+  actor: string;
+  recipient: string;
+  tokenAmount: string;
+  quoteAmount: string;
+  baseFee: string;
+  creatorTax: string;
+  offeredQuote: string | null;
+  openingTaxBps: string | null;
+  openingTax: string | null;
+  launchBuyExempt: boolean | null;
+  refund: string | null;
+  netCurveInput: string | null;
+  netQuoteOut: string | null;
+  grossCurveQuoteOut: string | null;
+  executionPrice: Readonly<{
+    numerator: string | null;
+    denominator: string | null;
+    source: 'CURVE_EXECUTION';
+  }>;
+  blockNumber: string;
+  blockTimestamp: string | null;
+  transactionIndex: number;
+  stackVersion: string;
+}>;
+
+export type IndexedTokenHolder = Readonly<{
+  walletAddress: string;
+  balance: string;
+  isProtocolAddress: boolean;
+  asOfBlockNumber: string;
+  lastEvent: Readonly<{ transactionHash: string; logIndex: number }> | null;
+}>;
+
+export type IndexedTokenHolders = Readonly<{
+  tokenAddress: string;
+  holders: readonly IndexedTokenHolder[];
+  concentration: Readonly<{
+    top10ExcludesProtocolAddresses: true;
+    top10NonProtocolBalance: string;
+    supply: string | null;
+    holderCount: string;
+    userHolderCount: string;
+  }>;
+}>;
