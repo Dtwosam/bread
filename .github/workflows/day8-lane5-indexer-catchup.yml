@@ -6,6 +6,7 @@ on:
       - '.github/workflows/day8-lane5-indexer-catchup.yml'
       - 'tests/day8/indexer-catchup-under-arrival.test.ts'
       - 'apps/indexer/src/catch-up.ts'
+      - 'apps/indexer/src/rpc-failover.ts'
       - 'apps/indexer/src/replay.ts'
       - 'apps/indexer/src/index.ts'
       - 'packages/db/src/**'
@@ -15,6 +16,7 @@ on:
       - '.github/workflows/day8-lane5-indexer-catchup.yml'
       - 'tests/day8/indexer-catchup-under-arrival.test.ts'
       - 'apps/indexer/src/catch-up.ts'
+      - 'apps/indexer/src/rpc-failover.ts'
       - 'apps/indexer/src/replay.ts'
       - 'apps/indexer/src/index.ts'
       - 'packages/db/src/**'
@@ -38,5 +40,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Run deterministic sustained-arrival catch-up regression
         run: pnpm exec vitest run tests/day8/indexer-catchup-under-arrival.test.ts
-      - name: Typecheck indexer workspace
-        run: pnpm --filter @bread/indexer typecheck
+      - name: Typecheck indexer TypeScript project
+        run: pnpm exec tsc -b apps/indexer/tsconfig.json --pretty false
