@@ -1,7 +1,7 @@
 import type { BreadCanonicalEventName, BreadContractRole, EventDisposition, Hex } from '../../types/src/index.js';
 import { decodeEventLog } from 'viem';
 
-import { breadAbiRegistry } from './abi/generated.ts';
+import { breadAbiRegistry } from './abi/generated.js';
 
 type BreadAbiRegistry = typeof breadAbiRegistry;
 
