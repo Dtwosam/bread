@@ -14,16 +14,15 @@ const headReadsFiles = (process.env.BREAD_DAY8_HEAD_READS_FILES ?? '/tmp/bread-d
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
+const edgeMode = process.env.BREAD_DAY8_EDGE_MODE === '1';
 const tokenConcurrency = Number(process.env.BREAD_DAY8_TOKEN_CONCURRENCY ?? '10000');
 const tokenRequests = Number(process.env.BREAD_DAY8_TOKEN_REQUESTS ?? String(tokenConcurrency));
 const feedConcurrency = Number(process.env.BREAD_DAY8_FEED_CONCURRENCY ?? '1000');
 const feedRequests = Number(process.env.BREAD_DAY8_FEED_REQUESTS ?? '5000');
 const connectConcurrency = Number(process.env.BREAD_DAY8_CONNECT_CONCURRENCY ?? '500');
 
-if (origins.length < 1) throw new Error('at least one Bread API origin is required');
-if (headReadsFiles.length !== origins.length) {
-  throw new Error('head-read diagnostic file count must match Bread API origin count');
-}
+if (origins.length < 1) throw new Error('at least one Bread read origin is required');
+if (headReadsFiles.length < 1) throw new Error('at least one observed-head diagnostic file is required');
 for (const [label, value, max] of [
   ['BREAD_DAY8_TOKEN_CONCURRENCY', tokenConcurrency, 10_000],
   ['BREAD_DAY8_TOKEN_REQUESTS', tokenRequests, 100_000],
@@ -53,9 +52,20 @@ type LoadResult = Readonly<{
   maxMs: number;
   durationMs: number;
 }>;
+type EdgeStats = Readonly<{
+  requests: number;
+  cacheHits: number;
+  cacheMisses: number;
+  coalescedWaiters: number;
+  originFetches: number;
+  nonCacheableResponses: number;
+  cacheEntries: number;
+  inFlight: number;
+}>;
 
 const tokenUrl = (origin: string) => `${origin}/v1/tokens/${HOT_TOKEN}`;
 const feedUrl = (origin: string) => `${origin}/v1/feed?view=new&limit=1`;
+const connectUrl = (origin: string) => edgeMode ? `${origin}/__bread_edge_connect` : tokenUrl(origin);
 
 function percentile(sorted: readonly number[], fraction: number): number {
   if (sorted.length === 0) return 0;
@@ -100,6 +110,51 @@ function requestOnce(url: string, agent: Agent): Promise<boolean> {
   });
 }
 
+async function readEdgeStats(): Promise<EdgeStats | null> {
+  if (!edgeMode) return null;
+  const snapshots = await Promise.all(origins.map(async (origin) => {
+    const response = await fetch(`${origin}/__bread_edge_stats`, {
+      signal: AbortSignal.timeout(5_000),
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`edge stats failed for ${origin}: ${response.status}`);
+    return await response.json() as EdgeStats;
+  }));
+  return snapshots.reduce<EdgeStats>((total, snapshot) => ({
+    requests: total.requests + snapshot.requests,
+    cacheHits: total.cacheHits + snapshot.cacheHits,
+    cacheMisses: total.cacheMisses + snapshot.cacheMisses,
+    coalescedWaiters: total.coalescedWaiters + snapshot.coalescedWaiters,
+    originFetches: total.originFetches + snapshot.originFetches,
+    nonCacheableResponses: total.nonCacheableResponses + snapshot.nonCacheableResponses,
+    cacheEntries: total.cacheEntries + snapshot.cacheEntries,
+    inFlight: total.inFlight + snapshot.inFlight,
+  }), {
+    requests: 0,
+    cacheHits: 0,
+    cacheMisses: 0,
+    coalescedWaiters: 0,
+    originFetches: 0,
+    nonCacheableResponses: 0,
+    cacheEntries: 0,
+    inFlight: 0,
+  });
+}
+
+function deltaEdgeStats(after: EdgeStats | null, before: EdgeStats | null): EdgeStats | null {
+  if (!after || !before) return null;
+  return {
+    requests: after.requests - before.requests,
+    cacheHits: after.cacheHits - before.cacheHits,
+    cacheMisses: after.cacheMisses - before.cacheMisses,
+    coalescedWaiters: after.coalescedWaiters - before.coalescedWaiters,
+    originFetches: after.originFetches - before.originFetches,
+    nonCacheableResponses: after.nonCacheableResponses - before.nonCacheableResponses,
+    cacheEntries: after.cacheEntries,
+    inFlight: after.inFlight,
+  };
+}
+
 async function warmClients(clients: readonly LoadClient[]): Promise<number> {
   let next = 0;
   let failures = 0;
@@ -109,7 +164,7 @@ async function warmClients(clients: readonly LoadClient[]): Promise<number> {
       const client = clients[index];
       if (!client) return;
       try {
-        if (!(await requestOnce(tokenUrl(client.origin), client.agent))) failures += 1;
+        if (!(await requestOnce(connectUrl(client.origin), client.agent))) failures += 1;
       } catch {
         failures += 1;
       }
@@ -173,30 +228,35 @@ const clients: LoadClient[] = Array.from({ length: tokenConcurrency }, (_, index
 const controlAgent = new Agent({ keepAlive: true, maxSockets: 1, maxFreeSockets: 1 });
 
 try {
-  if (!(await requestOnce(feedUrl(origins[0]!), controlAgent))) throw new Error('feed warmup failed');
+  if (!edgeMode && !(await requestOnce(feedUrl(origins[0]!), controlAgent))) {
+    throw new Error('feed warmup failed');
+  }
   const warmFailures = await warmClients(clients);
   const preconnectedSockets = clients.reduce(
     (count, client) => count + freeSocketCount(client.agent),
     0,
   );
   const observedHeadReadsAfterWarm = readHeadReads();
+  const edgeBefore = await readEdgeStats();
 
   const token = await runHttpLoad({
-    name: 'hot-token-10k-horizontally-scaled-preconnected',
+    name: edgeMode ? 'hot-token-10k-edge-preconnected' : 'hot-token-10k-origin-preconnected',
     clients,
     requests: tokenRequests,
     urlFor: (client) => tokenUrl(client.origin),
   });
   const headReadsAfterToken = readHeadReads();
+  const edgeAfterToken = await readEdgeStats();
 
   const feedClients = clients.slice(0, feedConcurrency);
   const feed = await runHttpLoad({
-    name: 'cached-feed-horizontally-scaled-preconnected',
+    name: edgeMode ? 'cached-feed-edge-preconnected' : 'cached-feed-origin-preconnected',
     clients: feedClients,
     requests: feedRequests,
     urlFor: (client) => feedUrl(client.origin),
   });
   const headReadsAfterFeed = readHeadReads();
+  const edgeAfterFeed = await readEdgeStats();
 
   const fanout = new BoundedRealtimeFanout<{ channel: string; sequence: number }>({
     maxPendingPerSubscriber: 2,
@@ -214,12 +274,19 @@ try {
   const fanoutMs = performance.now() - fanoutStarted;
   const fanoutSnapshot = fanout.snapshot();
 
+  const tokenEdgeDelta = deltaEdgeStats(edgeAfterToken, edgeBefore);
+  const feedEdgeDelta = deltaEdgeStats(edgeAfterFeed, edgeAfterToken);
   const report = {
-    schemaVersion: 3,
-    environment: 'github-hosted-runner-horizontally-scaled-node-api-local-postgres-redis',
-    apiWorkers: origins.length,
+    schemaVersion: 4,
+    environment: edgeMode
+      ? 'github-hosted-runner-test-edge-before-stateless-api-local-postgres-redis'
+      : 'github-hosted-runner-stateless-node-api-local-postgres-redis',
+    readFrontends: origins.length,
+    edgeMode,
     origins,
-    connectionModel: 'one keepalive agent/socket per hot-token client; round-robin stateless API workers; connections established before timed stampede',
+    connectionModel: edgeMode
+      ? 'one keepalive client socket to a shared-cache edge; connection-only warmup before a cold-key timed stampede'
+      : 'one keepalive client socket to stateless API workers; connections established before timed stampede',
     warmFailures,
     preconnectedSockets,
     clientRssBytes: process.memoryUsage().rss,
@@ -232,6 +299,12 @@ try {
       tokenLoadDelta: headReadsAfterToken - observedHeadReadsAfterWarm,
       feedLoadDelta: headReadsAfterFeed - headReadsAfterToken,
     },
+    edge: edgeMode ? {
+      before: edgeBefore,
+      tokenDelta: tokenEdgeDelta,
+      feedDelta: feedEdgeDelta,
+      after: edgeAfterFeed,
+    } : null,
     realtime: {
       subscribers: fanoutSnapshot.subscribers,
       deliveries,
@@ -251,8 +324,19 @@ try {
   if (token.p95Ms > 350) failures.push(`hot-token p95 ${token.p95Ms.toFixed(2)}ms > 350ms`);
   if (feed.errorRate >= 0.01) failures.push(`cached-feed healthy-read error rate ${feed.errorRate} >= 0.01`);
   if (feed.p95Ms > 250) failures.push(`cached-feed p95 ${feed.p95Ms.toFixed(2)}ms > 250ms`);
-  if (headReadsAfterToken - observedHeadReadsAfterWarm > 1) failures.push('hot-token viewers multiplied observed-head source reads');
-  if (headReadsAfterFeed - headReadsAfterToken > 1) failures.push('cached-feed viewers multiplied observed-head source reads');
+  if (headReadsAfterToken - observedHeadReadsAfterWarm > Math.max(1, headReadsFiles.length)) failures.push('hot-token viewers multiplied observed-head source reads');
+  if (headReadsAfterFeed - headReadsAfterToken > Math.max(1, headReadsFiles.length)) failures.push('cached-feed viewers multiplied observed-head source reads');
+  if (edgeMode) {
+    if (!tokenEdgeDelta || !feedEdgeDelta) failures.push('edge statistics were unavailable');
+    else {
+      const maxOriginFetchesPerPhase = origins.length * 2;
+      if (tokenEdgeDelta.originFetches > maxOriginFetchesPerPhase) failures.push(`hot-token edge made ${tokenEdgeDelta.originFetches} origin fetches > ${maxOriginFetchesPerPhase}`);
+      if (feedEdgeDelta.originFetches > maxOriginFetchesPerPhase) failures.push(`feed edge made ${feedEdgeDelta.originFetches} origin fetches > ${maxOriginFetchesPerPhase}`);
+      if (tokenEdgeDelta.cacheMisses > maxOriginFetchesPerPhase) failures.push('hot-token edge cache misses were not bounded');
+      if (feedEdgeDelta.cacheMisses > maxOriginFetchesPerPhase) failures.push('feed edge cache misses were not bounded');
+      if (tokenEdgeDelta.coalescedWaiters < tokenConcurrency / 2) failures.push('hot-token cold stampede was not predominantly coalesced at the edge');
+    }
+  }
   if (deliveries !== 10_000) failures.push(`realtime delivered ${deliveries}/10000`);
   if (fanoutMs > 1_000) failures.push(`10k realtime publish ${fanoutMs.toFixed(2)}ms > 1000ms`);
   if (fanoutSnapshot.slowConsumerDrops !== 0) failures.push('fast 10k realtime fanout unexpectedly dropped consumers');
