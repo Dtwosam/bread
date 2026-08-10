@@ -197,6 +197,11 @@ try {
   const network = JSON.parse(readFileSync(networkPath, 'utf8'));
   network.rpc = [RPC];
   network.websocket = [];
+  network.usdc = {
+    address: usdc,
+    decimals: 6,
+    role: 'bread-financial-quote-asset',
+  };
   network.dex = {
     type: 'UNISWAP_V3',
     poolManager: null,
