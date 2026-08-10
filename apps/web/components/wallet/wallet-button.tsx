@@ -24,23 +24,19 @@ export function WalletButton() {
     return <NetworkSwitcher />;
   }
 
-  if (runtime?.connectionStatus === 'READY' && runtime.account) {
-    return (
-      <Button type="button" ariaLabel={`Connected wallet ${runtime.account}`} onClick={() => setOpen((value) => !value)}>
-        {shortAddress(runtime.account)}
-      </Button>
-    );
-  }
+  const connected = runtime?.connectionStatus === 'READY' && runtime.account;
+  const label = connected ? shortAddress(connected) : 'Connect wallet';
+  const ariaLabel = connected ? `Connected wallet ${connected}` : 'Connect wallet';
 
   return (
     <div className="bread-wallet-control">
       <Button
         type="button"
         disabled={!runtime}
-        ariaLabel="Connect wallet"
+        ariaLabel={ariaLabel}
         onClick={() => setOpen((value) => !value)}
       >
-        Connect wallet
+        {label}
       </Button>
       {open ? <WalletMenu onClose={() => setOpen(false)} /> : null}
     </div>
