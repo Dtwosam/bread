@@ -68,7 +68,7 @@ function progressModel(progress: IndexedGraduationProgressSummary | null) {
   if (!progress || progress.progressBps === null) return null;
   if (!/^\d+$/.test(progress.progressBps)) return null;
   const value = BigInt(progress.progressBps);
-  if (value < 0n || value > 10_000n) return null;
+  if (value < BigInt(0) || value > BigInt(10_000)) return null;
   const bps = Number(value);
   return {
     bps,
@@ -92,9 +92,10 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
 export function formatUsdcBaseUnits(value: string | null): string {
   if (value === null || !/^\d+$/.test(value)) return '—';
   const units = BigInt(value);
-  const whole = units / 1_000_000n;
-  const fraction = units % 1_000_000n;
-  if (fraction === 0n) return `${whole.toString(10)} USDC`;
+  const scale = BigInt(1_000_000);
+  const whole = units / scale;
+  const fraction = units % scale;
+  if (fraction === BigInt(0)) return `${whole.toString(10)} USDC`;
   const fractionText = fraction.toString(10).padStart(6, '0').replace(/0+$/, '');
   return `${whole.toString(10)}.${fractionText} USDC`;
 }
