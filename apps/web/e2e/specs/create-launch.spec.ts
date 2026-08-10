@@ -1,4 +1,4 @@
-import { LAUNCH_TX_HASH, NEW_LAUNCH_TOKEN } from '../fixtures/constants';
+import { E2E_FACTORY, LAUNCH_TX_HASH, NEW_LAUNCH_TOKEN } from '../fixtures/constants';
 import {
   expect,
   setWalletTransactionHashes,
@@ -64,7 +64,12 @@ for (const scenario of [
     await expect(main.getByRole('heading', { name: 'Token launched' })).toBeVisible();
     await expect(main.getByText(NEW_LAUNCH_TOKEN, { exact: true })).toBeVisible();
     await expect(main.getByRole('status')).toContainText('CONFIRMED');
-    expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(1);
+    const snapshot = await walletSnapshot(page);
+    expect(snapshot.submittedTransactions).toHaveLength(1);
+    const submitted = snapshot.submittedTransactions[0] as Readonly<{ to?: unknown; value?: unknown }>;
+    expect(typeof submitted.to).toBe('string');
+    expect((submitted.to as string).toLowerCase()).toBe(E2E_FACTORY.toLowerCase());
+    expect(submitted.value === undefined || submitted.value === '0x0' || submitted.value === '0x00').toBe(true);
     expect(rpcState.unknownCalls).toEqual([]);
   });
 }
