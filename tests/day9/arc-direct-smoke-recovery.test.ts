@@ -14,6 +14,7 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: false,
       graduated: false,
       creatorCredit: 0n,
+      creatorClaimObserved: false,
     })).toBe('APPROVE');
   });
 
@@ -26,6 +27,7 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: false,
       graduated: false,
       creatorCredit: 0n,
+      creatorClaimObserved: false,
     })).toBe('LAUNCH');
   });
 
@@ -38,6 +40,7 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: true,
       graduated: false,
       creatorCredit: 0n,
+      creatorClaimObserved: false,
     })).toBe('SWEEP');
   });
 
@@ -50,6 +53,7 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: false,
       graduated: true,
       creatorCredit: 0n,
+      creatorClaimObserved: false,
     })).toBe('CREATE_POOL');
   });
 
@@ -62,10 +66,11 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: false,
       graduated: true,
       creatorCredit: 1n,
+      creatorClaimObserved: false,
     })).toBe('CLAIM');
   });
 
-  it('finishes with read-only replay verification when lock and creator claim are complete', () => {
+  it('finishes with read-only replay verification only after a creator claim was observed', () => {
     expect(classifyArcDirectSmokeStep({
       launchExists: true,
       allowance: 0n,
@@ -74,7 +79,21 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: false,
       graduated: true,
       creatorCredit: 0n,
+      creatorClaimObserved: true,
     })).toBe('VERIFY_REPLAY');
+  });
+
+  it('fails closed when permanent lock exists but creator credit vanished without claim evidence', () => {
+    expect(() => classifyArcDirectSmokeStep({
+      launchExists: true,
+      allowance: 0n,
+      quoteIn,
+      permanentlyLocked: true,
+      readyToGraduate: false,
+      graduated: true,
+      creatorCredit: 0n,
+      creatorClaimObserved: false,
+    })).toThrow(/creator claim evidence/i);
   });
 
   it('fails closed on an existing launch that is neither ready, graduated nor locked', () => {
@@ -86,6 +105,7 @@ describe('Day 9 Arc direct-RPC smoke recovery', () => {
       readyToGraduate: false,
       graduated: false,
       creatorCredit: 0n,
+      creatorClaimObserved: false,
     })).toThrow(/inconsistent existing launch state/i);
   });
 });
