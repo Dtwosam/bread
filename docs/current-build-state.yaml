@@ -45,7 +45,8 @@ integration_baseline:
   day9_live_arc_deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
   day9_live_arc_smoke_recovery_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
   day9_safe_recovery_execution_head: bb04ee1574be298fe4e45b1a2de7e07310638514
-  status: DAY_9_ARC_TESTNET_PUBLIC_LIFECYCLE_AND_SAFE_THRESHOLD_RECOVERY_PASS_PHYSICAL_AND_EXACT_HEAD_GATES_PENDING
+  exact_head_local_release_matrix_head: 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
+  status: DAY_9_ARC_TESTNET_LIFECYCLE_SAFE_RECOVERY_AND_EXACT_HEAD_LOCAL_MATRIX_PASS_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
 
 day8_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
@@ -64,7 +65,7 @@ day9_scope:
   task6_browser_engine_matrix: PASS_AUTOMATED_WITH_PHYSICAL_EXTERNAL
   task7_live_arc_gate: PUBLIC_LIFECYCLE_SMOKE_PASS
   task8_final_rc_verdict: NOT_RERUN_AFTER_SAFE_RECOVERY
-  exact_head_integration_matrix: MUST_RERUN_AFTER_REMAINING_DAY9_GATES
+  exact_head_integration_matrix: PASS_LOCAL_AT_EXACT_HEAD_EXTERNAL_CI_STILL_REQUIRED
   production_change_note: >-
     The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. The Safe recovery drill exercised only the existing testnet Protocol Admin owner set and restored it exactly. No Arc mainnet DEX, production economics, unrestricted public-money authorization, server custody, or alternate financial ledger was introduced.
 
@@ -150,7 +151,10 @@ day9_live_arc:
     signing_secret_material_printed: false
 
 day9_verdict:
-  result: DAY_9_INCOMPLETE_PHYSICAL_AND_EXACT_HEAD_RELEASE_GATES_PENDING
+  result: DAY_9_INCOMPLETE_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
+  exact_head_local_release_matrix: PASS
+  exact_head_local_release_matrix_verified_head: 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
+  exact_head_external_ci: UNAVAILABLE_STARTUP_FAILURE_ZERO_JOBS
   empty_environment_to_usable_launchpad: PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
   rollback: PASS
   reconcile: PASS
@@ -194,8 +198,15 @@ verification:
   day9_safe_threshold_recovery: PASS
   day9_safe_threshold_recovery_end_nonce: 2
   day9_safe_original_owner_set_restored: true
-  day9_exact_head_release_matrix: MUST_RERUN
+  day9_exact_head_release_matrix: PASS_LOCAL
+  day9_exact_head_release_matrix_verified_head: 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
+  day9_exact_head_release_matrix_evidence: docs/evidence/day9-exact-head-local-release-matrix.md
+  day9_exact_head_browser_matrix_result: PASS_76_TESTS_40_PASSED_36_TASK_OWNERSHIP_SKIPS_0_FAILED
+  day9_webkit_accessibility_repairs: PASS_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
   github_actions_current_state: STARTUP_FAILURE_BEFORE_JOB_CREATION
+  github_actions_exact_head_jobs_created: 0
+  github_actions_exact_head_runs: "31512708748 pull_request; 31512701643 push"
+  github_actions_exact_head_classification: UNAVAILABLE_NOT_EXECUTED_NOT_A_TEST_FAILURE
   vercel_current_state: BUILD_RATE_LIMIT_FAILURES
 
 blockers:
@@ -225,10 +236,10 @@ day9_cleared_blockers:
 
 day9_blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; required iOS Safari, representative physical Android Chrome, and current branded Edge rows remain external and engine emulation is not relabeled"
-  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "rerun the final exact-head integration/release matrix after remaining Day-9 gates; current GitHub Actions startup failures and Vercel build-rate-limit statuses are not a PASS"
+  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "the local exact-head release matrix now passes at 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71, but no external CI has executed at that head; GitHub Actions startup failures with zero jobs and Vercel build-rate-limit statuses are unavailability, not a PASS, and the local matrix does not substitute for them"
 
 next_action: >-
-  Do not begin Day 10. Public Arc Testnet deployment, lifecycle smoke, the real reversible 2-of-3 Safe threshold recovery drill, and actual macOS Safari evidence are retained in PR #93. Execute the exact-head local release matrix while GitHub Actions remains separately classified as startup-failing, then truthfully complete or retain blockers for iOS Safari, representative physical Android Chrome, and current branded Edge before any RC tag.
+  Do not begin Day 10. Public Arc Testnet deployment, lifecycle smoke, the real reversible 2-of-3 Safe threshold recovery drill, and actual macOS Safari evidence are retained in PR #93. The exact-head local release matrix has been executed and passed while GitHub Actions remains separately classified as startup-failing before job creation. The remaining Day-9 work is external and cannot be produced by automation in this repository: physical iOS Safari, representative physical Android Chrome, and current branded Microsoft Edge execution, plus a genuinely executed exact-head CI surface. Do not relabel Playwright engines or emulation as physical evidence, and do not create an RC tag.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."

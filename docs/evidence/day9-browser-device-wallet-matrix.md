@@ -4,7 +4,7 @@ Status: **AUTOMATED ENGINE MATRIX PASS — MACOS SAFARI PARTIAL PHYSICAL EVIDENC
 
 This evidence distinguishes browser-engine automation and viewport emulation from actual branded-browser / physical-device execution. A Playwright WebKit run is not a macOS/iOS Safari execution claim, and mobile Chromium emulation is not a physical Android/iOS claim.
 
-The controlling repaired pre-final integrated evidence is Day-9 Lane 6 run `31445491625` on head `5c0e6ce15af30f406a8c367dc906c188451406c8`, with retained Day-7 primary Playwright run `31445491601` and Day-9 recovery run `31445491591` also green on that same head. The recovery regression's deterministic fixture race was repaired without changing production recovery logic, assertions, or timeouts. The final exact-head matrix must rerun the affected automated release surfaces before Day-9 closeout.
+The controlling automated evidence is now the exact-head local release matrix on head `57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71`, recorded in `docs/evidence/day9-exact-head-local-release-matrix.md`. Its Lane 6 executed all four browser projects — 76 tests, 40 passed, 36 skipped, 0 failed — after two WebKit keyboard/focus failures were repaired at their owning layer. The earlier pre-final integrated evidence was Day-9 Lane 6 run `31445491625` on head `5c0e6ce15af30f406a8c367dc906c188451406c8`, with retained Day-7 primary Playwright run `31445491601` and Day-9 recovery run `31445491591` also green on that same head. The recovery regression's deterministic fixture race was repaired without changing production recovery logic, assertions, or timeouts.
 
 The controlling Project Source 04D requires current Chrome and Edge on desktop, current Safari on macOS, current Firefox, current plus previous-major iOS Safari where practical, current Chrome on a representative mid-range Android device, and only the wallet/in-app browser paths Bread explicitly claims to support. A wallet is not first-class until Create/Buy/Sell/Claim/network-switch have been tested with it.
 
@@ -42,7 +42,11 @@ Since that run, the canonical Day-9 Arc Testnet Bread stack and its public launc
 
 ## Automated coverage proved
 
-The automated matrix covers Explore/Search/Token; generic injected EIP-1193 wallet connect; wrong-network to Arc Testnet switch; Buy review/submit/recovery; Sell review/submit; Create and Launch+Buy; creator claim; graduation/permanent-lock visibility; keyboard navigation and visible focus on transaction controls; reduced-motion preference; and the retained mobile keyboard-pressure trade flow.
+The automated matrix covers, in aggregate across its four projects: Explore/Search/Token; generic injected EIP-1193 wallet connect; wrong-network to Arc Testnet switch; Buy review/submit/recovery; Sell review/submit; Create and Launch+Buy; creator claim; graduation/permanent-lock visibility; keyboard navigation and visible focus on transaction controls; reduced-motion preference; and the retained mobile keyboard-pressure trade flow.
+
+That aggregate is not uniform per engine, and is not claimed to be. Under the retained Day-7 task-ownership gating, Create, Claim, Sell and the transaction-recovery journeys execute on `desktop-chromium`, and the mobile keyboard-pressure trade flow executes on `mobile-chromium`. The Firefox and WebKit engine projects execute browse/Explore/Search with keyboard containment and Escape focus restoration, degraded and graduated read truthfulness, the deterministic fixture boundary, the keyboard-reachability/visible-focus/reduced-motion proof, and the alternate-engine wallet Buy smoke (connect, review, submit, `CONFIRMED`, single submitted transaction, no unknown RPC calls).
+
+WebKit's sequential-focus probe presses Safari's native `Option`/`Alt`+`Tab` convention rather than plain `Tab`, because Safari does not include buttons in plain-`Tab` traversal by default. The underlying accessibility assertions are identical to the other engines: the control must be reached by keyboard, must become `document.activeElement`, and must expose a visible focus outline of positive width. A direct probe confirmed the control is `tabIndex=0`, not disabled, not `aria-hidden`, focusable, and rings at solid 2px in WebKit.
 
 Canonical Arc manifests are restored byte-for-byte by the browser harness and independently guarded by repository checks.
 

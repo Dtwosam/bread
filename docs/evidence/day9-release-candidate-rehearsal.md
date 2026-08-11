@@ -29,12 +29,13 @@ All live-money language remains bounded to **Arc Testnet / non-production faucet
 | Service rollback | PASS | Existing Day-9 rollback rehearsal remains retained. |
 | Indexer rebuild/reconcile | PASS | Existing authoritative rebuild/reconcile evidence remains retained. |
 | Recovery/admin drills | PASS | Real Safe-compatible threshold owner replacement and restoration is retained in `docs/evidence/day9-safe-threshold-recovery.json`; recovery bundle now requires this executed evidence. |
-| Browser-engine matrix | PASS | Desktop Chromium, Firefox engine, WebKit engine and mobile Chromium emulation executed with retained journey/accessibility coverage. |
+| Browser-engine matrix | PASS | Desktop Chromium, Firefox engine, WebKit engine and mobile Chromium emulation executed with retained journey/accessibility coverage: 76 tests, 40 passed, 36 pre-existing task-ownership skips, 0 failed on the exact head. Two WebKit keyboard/focus failures were repaired at their owning layer without weakening or skipping any accessibility assertion. |
 | macOS Safari physical | PARTIAL_PASS_EXTERNAL_USER_EXECUTION | Actual Safari navigation/responsive/Rabby connect/network-add/switch evidence exists. Buy/Sell/Create/Claim were not executed in that physical Safari run. |
 | iOS Safari physical | EXTERNAL_EXECUTION_REQUIRED | Required physical/current coverage not yet available. |
 | Android Chrome physical | EXTERNAL_EXECUTION_REQUIRED | Required representative physical Android Chrome coverage not yet available. |
 | Desktop Edge branded | EXTERNAL_EXECUTION_REQUIRED | Current Edge branded execution not yet available; Chromium engine coverage is not relabeled. |
 | Wallet/in-app browsers | NO_FIRST_CLASS_WALLET_BROWSER_CLAIM | Generic injected EIP-1193 only; no wallet brand is promoted to first-class without full Create/Buy/Sell/Claim/network-switch execution. |
+| Exact-head local release matrix | PASS | Complete local matrix executed against head `57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71` with `DAY9_EXACT_HEAD_LOCAL_RELEASE_MATRIX_PASS`; retained deployment/smoke/Safe/fork evidence was not re-executed. See `docs/evidence/day9-exact-head-local-release-matrix.md`. |
 | Exact-head GitHub Actions | EXTERNAL_STARTUP_FAILURE | Root `ci.yml` is byte-for-byte identical to main, but current PR runs conclude `startup_failure` with `jobs: []`; this is not a CI PASS. |
 
 The controlling 04D Browser / Device Release Matrix requires current Chrome and Edge, current Safari on macOS, current Firefox, current plus previous-major iOS Safari where practical, current Chrome on a representative mid-range Android device, and only the wallet/in-app browser paths explicitly claimed. Engine/emulation evidence is not a substitute for required physical/branded execution.
@@ -47,6 +48,7 @@ ROLLBACK = PASS
 RECONCILE = PASS
 RECOVERY_DRILLS = PASS_REAL_SAFE_THRESHOLD_RECOVERY
 SUPPORTED_MATRIX = BLOCKED_EXTERNAL_EXECUTION_REQUIRED
+EXACT_HEAD_LOCAL_RELEASE_MATRIX = PASS_AT_57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
 EXACT_HEAD_GITHUB_ACTIONS = EXTERNAL_STARTUP_FAILURE_BEFORE_JOB_CREATION
 
 DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_PHYSICAL_MATRIX_AND_EXTERNAL_CI
@@ -79,6 +81,8 @@ The root `.github/workflows/ci.yml` blob on the active candidate is identical to
 
 Fresh exact-head local verification may provide independent code/test evidence, but it does not erase the external Actions availability fact. Both are recorded separately.
 
+That local verification has now been performed and passed on head `57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71`. External Actions availability is unchanged: both runs at that exact head (`31512708748` for `pull_request`, `31512701643` for `push`) concluded `startup_failure` with zero jobs and zero check runs. Local inspection at this head found no repairable defect — all 34 workflow files parse as valid YAML with one `name:`, one `on:` trigger and a `jobs:` mapping, no tab indentation exists, and repository Actions are enabled with `allowed_actions: "all"`. The failing runs are attributed to a synthetic `BuildFailed` workflow record rather than any tracked workflow file. Account-level Actions billing/entitlement could not be inspected with the available token scopes. This surface therefore remains classified as unavailable, never as executed CI.
+
 ## Safe continuation
 
-Do not create `bread-day9-rc1` and do not begin Day 10 while the supported physical/branded-device matrix remains incomplete or the final source-required exact-head release evidence has not been truthfully closed. The next work is to complete the external browser/device rows that can actually be executed, run the exact-head local release matrix, re-check GitHub Actions availability, and then rerun this verdict on one unified immutable candidate head.
+Do not create `bread-day9-rc1` and do not begin Day 10 while the supported physical/branded-device matrix remains incomplete or the final source-required exact-head release evidence has not been truthfully closed. The exact-head local release matrix has now been run and re-checked against GitHub Actions availability; the remaining work is the external browser/device rows — physical iOS Safari, representative physical Android Chrome, and current branded Microsoft Edge — plus a genuinely executed exact-head CI surface, before this verdict is rerun on one unified immutable candidate head.
