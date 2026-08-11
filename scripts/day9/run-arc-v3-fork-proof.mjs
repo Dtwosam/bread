@@ -8,6 +8,7 @@ const toolchain = JSON.parse(readFileSync(join(root, 'config/toolchain/versions.
 
 const EXPECTED_CHAIN_ID = 5_042_002;
 const TEST_ONLY_V3_FEE = 3_000;
+const ARC_NATIVE_COIN_CONTROL = '0x1800000000000000000000000000000000000001';
 
 function fail(message) {
   console.error(`day9-arc-v3-fork: FAIL: ${message}`);
@@ -81,6 +82,18 @@ run(process.execPath, [
   '--fee', String(TEST_ONLY_V3_FEE),
 ]);
 
+// Stock Foundry cannot execute Arc's custom Native Coin Control precompile once forked.
+// Before substituting the fork-only read shim, prove the existing external recipient used by
+// the real Synthra liquidity flow is not blocklisted at the exact pinned Arc block.
+const positionManagerBlocklisted = run('cast', [
+  'call', ARC_NATIVE_COIN_CONTROL, 'isBlocklisted(address)(bool)', positionManager,
+  '--rpc-url', rpcUrl,
+  '--block', String(forkBlock),
+]).trim().toLowerCase();
+if (positionManagerBlocklisted !== 'false') {
+  fail(`Synthra Position Manager is blocklisted or blocklist result is unexpected at block ${forkBlock}: ${positionManagerBlocklisted}`);
+}
+
 run('forge', [
   'test',
   '--match-path', 'test/fork/ArcV3DependencyFork.t.sol',
@@ -106,8 +119,10 @@ console.log(JSON.stringify({
   forkBlock,
   factory,
   positionManager,
+  positionManagerBlocklisted: false,
   usdc,
   v3Fee: TEST_ONLY_V3_FEE,
+  arcNativeCoinControlMode: 'FOUNDRY_FORK_TEST_SHIM_ONLY_AFTER_PINNED_BLOCK_PREFLIGHT',
   arcNativeCoinAuthorityMode: 'FOUNDRY_FORK_TEST_SHIM_ONLY',
   liveTransactionBroadcast: false,
   privateKeyRequired: false,
