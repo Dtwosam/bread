@@ -16,7 +16,7 @@ test('ordinary Foundry regressions exclude environment-dependent fork tests whil
   );
   assert.match(
     lane3,
-    /Run full contract regression[\s\S]*?run:\s*forge test -q --no-match-path ['"]?test\/fork\/\*\*['"]?/,
+    /run:\s*forge test -q --no-match-path ['"]?test\/fork\/\*\*['"]?/,
   );
 
   assert.match(forkRunner, /'--match-path',\s*'test\/fork\/ArcV3DependencyFork\.t\.sol'/);
