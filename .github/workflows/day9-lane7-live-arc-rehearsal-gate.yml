@@ -10,6 +10,7 @@ on:
       - 'config/networks/arc-testnet.json'
       - 'config/deployments/arc-testnet.day5.json'
       - 'docs/evidence/day9-live-arc-rehearsal.md'
+      - 'docs/evidence/day9-public-arc-lifecycle-smoke.md'
   push:
     branches: [main]
     paths:
@@ -20,6 +21,7 @@ on:
       - 'config/networks/arc-testnet.json'
       - 'config/deployments/arc-testnet.day5.json'
       - 'docs/evidence/day9-live-arc-rehearsal.md'
+      - 'docs/evidence/day9-public-arc-lifecycle-smoke.md'
 
 permissions:
   contents: read
@@ -38,15 +40,25 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Run fail-closed live Arc rehearsal gate
+      - name: Run verified live Arc rehearsal gate regression
         run: pnpm exec vitest run tests/day9/live-arc-rehearsal-gate.test.ts
-      - name: Confirm existing canonical configure path remains blocked
+      - name: Confirm canonical Arc Testnet repository state is authorized read-only
         run: |
           set -euo pipefail
-          if node scripts/day5/configure-graduation.mjs arc-testnet > "$RUNNER_TEMP/day9-live-configure.log" 2>&1; then
-            echo 'Canonical Arc Testnet configure unexpectedly succeeded while Day-9 gate is blocked.' >&2
-            exit 1
-          fi
-          grep -q 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED' "$RUNNER_TEMP/day9-live-configure.log"
+          output="$(pnpm exec tsx scripts/day9/check-live-arc-rehearsal.mts)"
+          printf '%s\n' "$output"
+          grep -Fq '"authorized": true' <<<"$output"
+          grep -Fq '"blockers": []' <<<"$output"
+      - name: Validate retained verified deployment and lifecycle evidence
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('config/deployments/arc-testnet.day5.json', 'utf8'));
+          if (manifest.status !== 'VERIFIED' || manifest.chainId !== 5042002) throw new Error('canonical Arc Testnet deployment is not VERIFIED');
+          if (manifest.core.factory !== '0xddf400f7a376fb8a962eee6d74c1ba37efa644f7') throw new Error('unexpected canonical Bread factory');
+          if (manifest.authorities.protocolAdmin !== '0x9004e285521d69197cd9965c301b02161eb1d0d8') throw new Error('unexpected Protocol Admin Safe');
+          NODE
+          grep -Fq 'BREAD_ARC_TESTNET_SMOKE_RECOVERY_AND_FINAL_VERIFY_PASS' docs/evidence/day9-public-arc-lifecycle-smoke.md
       - name: Validate repository/source manifests
         run: pnpm validate
