@@ -87,12 +87,6 @@ function run(command, args, options = {}) {
   return (result.stdout ?? '').trim();
 }
 
-function normalizeAddress(value, label) {
-  const match = String(value).match(/0x[0-9a-fA-F]{40}/);
-  if (!match) fail(`${label} did not produce an EVM address: ${value}`);
-  return match[0];
-}
-
 function normalizeHash(value, label) {
   const match = String(value).match(/0x[0-9a-fA-F]{64}/);
   if (!match) fail(`${label} did not produce a bytes32 hash: ${value}`);
@@ -147,12 +141,11 @@ function writeManifest(value) {
   writeFileSync(DEPLOYMENT_PATH, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-function validateReceiptOnChain(receipt, rpc) {
-  if (receipt?.schema !== 'bread://receipts/day9-arc-testnet-deployment-v1') fail('invalid deployment receipt schema');
-  if (receipt.chainId !== 5_042_002) fail('deployment receipt chain ID mismatch');
-  for (const [label, address] of Object.entries(receipt.created ?? {})) {
-    if (codeBytes(rpc, address) === 0) fail(`receipt ${label} ${address} has no runtime code`);
+function assertCreatedLive(created, rpc, context) {
+  for (const [label, address] of Object.entries(created ?? {})) {
+    if (codeBytes(rpc, address) === 0) fail(`${context} ${label} ${address} has no runtime code`);
   }
+  if (!created || Object.keys(created).length !== 8) fail(`${context} does not contain the complete Bread address set`);
 }
 
 const secretFile = argPath('--env-file', DEFAULT_SECRET_FILE);
@@ -188,27 +181,32 @@ const plan = buildArcTestnetDeploymentPlan({
   authority: { deploymentAuthority, guardian, safe, owners },
 });
 
-let receipt = null;
+let receipt = existsSync(receiptFile) ? JSON.parse(readFileSync(receiptFile, 'utf8')) : null;
 let broadcastPerformed = false;
-let recoveredFromBroadcastFile = false;
+let resumedFromIntent = false;
 
-if (existsSync(receiptFile)) {
-  receipt = JSON.parse(readFileSync(receiptFile, 'utf8'));
-  validateReceiptOnChain(receipt, rpc);
-} else if (existsSync(BROADCAST_PATH)) {
-  const broadcast = JSON.parse(readFileSync(BROADCAST_PATH, 'utf8'));
-  const created = createdFromBroadcast(broadcast);
-  const allLive = Object.values(created).every((address) => codeBytes(rpc, address) > 0);
-  if (allLive) {
+if (receipt) {
+  if (receipt?.schema !== 'bread://receipts/day9-arc-testnet-deployment-v1') fail('invalid deployment receipt schema');
+  if (receipt.chainId !== plan.chainId) fail('deployment receipt chain ID mismatch');
+
+  if (receipt.phase === 'PREPARED') {
+    const currentHead = run('git', ['rev-parse', 'HEAD']);
+    if (currentHead !== receipt.sourceCommit) {
+      fail(`prepared deployment intent belongs to source commit ${receipt.sourceCommit}; current HEAD is ${currentHead}`);
+    }
+    if (!existsSync(BROADCAST_PATH)) {
+      fail('prepared deployment intent exists but no Arc broadcast file is present; inspect before retrying to avoid duplicate deployment');
+    }
+    const broadcast = JSON.parse(readFileSync(BROADCAST_PATH, 'utf8'));
+    const created = createdFromBroadcast(broadcast);
+    assertCreatedLive(created, rpc, 'recovered broadcast');
     const adapterConfigHash = normalizeHash(
       run('cast', ['call', created.adapter, 'configHash()(bytes32)', '--rpc-url', rpc]),
       'adapter configHash',
     );
     receipt = {
-      schema: 'bread://receipts/day9-arc-testnet-deployment-v1',
-      chainId: plan.chainId,
-      sourceCommit: run('git', ['rev-parse', 'HEAD']),
-      deploymentStartBlock: Number(run('cast', ['block-number', '--rpc-url', rpc]).split(/\s+/)[0]),
+      ...receipt,
+      phase: 'BROADCASTED',
       created,
       hashes: {
         adapterConfigHash,
@@ -216,13 +214,15 @@ if (existsSync(receiptFile)) {
         dexEvidenceHash: requireValue(env, 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED'),
       },
       transactionHashes: transactionHashes(broadcast),
-      recoveredFromBroadcastFile: true,
-      productionMoneyClaim: false,
-      verified: false,
+      recoveredFromPreparedIntent: true,
     };
     writeJson0600(receiptFile, receipt);
-    recoveredFromBroadcastFile = true;
+    resumedFromIntent = true;
+  } else {
+    assertCreatedLive(receipt.created, rpc, 'deployment receipt');
   }
+} else if (existsSync(BROADCAST_PATH)) {
+  fail('an unattributed live deployment broadcast file exists without a pre-broadcast receipt; refusing to infer its source commit or deploy again');
 }
 
 if (!receipt) {
@@ -240,6 +240,19 @@ if (!receipt) {
 
   const sourceCommit = run('git', ['rev-parse', 'HEAD']);
   const deploymentStartBlock = Number(run('cast', ['block-number', '--rpc-url', rpc]).split(/\s+/)[0]);
+  receipt = {
+    schema: 'bread://receipts/day9-arc-testnet-deployment-v1',
+    phase: 'PREPARED',
+    chainId: plan.chainId,
+    sourceCommit,
+    deploymentStartBlock,
+    created: null,
+    hashes: null,
+    transactionHashes: [],
+    productionMoneyClaim: false,
+    verified: false,
+  };
+  writeJson0600(receiptFile, receipt);
 
   run('forge', [
     'script',
@@ -260,9 +273,7 @@ if (!receipt) {
   if (!existsSync(BROADCAST_PATH)) fail(`Foundry broadcast file missing at ${BROADCAST_PATH}`);
   const broadcast = JSON.parse(readFileSync(BROADCAST_PATH, 'utf8'));
   const created = createdFromBroadcast(broadcast);
-  for (const [label, address] of Object.entries(created)) {
-    if (codeBytes(rpc, address) === 0) fail(`newly deployed ${label} has no runtime code`);
-  }
+  assertCreatedLive(created, rpc, 'newly deployed stack');
 
   const adapterConfigHash = normalizeHash(
     run('cast', ['call', created.adapter, 'configHash()(bytes32)', '--rpc-url', rpc]),
@@ -270,10 +281,8 @@ if (!receipt) {
   );
 
   receipt = {
-    schema: 'bread://receipts/day9-arc-testnet-deployment-v1',
-    chainId: plan.chainId,
-    sourceCommit,
-    deploymentStartBlock,
+    ...receipt,
+    phase: 'BROADCASTED',
     created,
     hashes: {
       adapterConfigHash,
@@ -281,9 +290,7 @@ if (!receipt) {
       dexEvidenceHash: requireValue(env, 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED'),
     },
     transactionHashes: transactionHashes(broadcast),
-    recoveredFromBroadcastFile: false,
-    productionMoneyClaim: false,
-    verified: false,
+    recoveredFromPreparedIntent: false,
   };
   writeJson0600(receiptFile, receipt);
 }
@@ -334,6 +341,7 @@ chmodSync(secretFile, 0o600);
 
 receipt = {
   ...receipt,
+  phase: 'VERIFIED',
   verified: true,
   verifiedAtBlock: Number(run('cast', ['block-number', '--rpc-url', rpc]).split(/\s+/)[0]),
 };
@@ -355,7 +363,7 @@ console.log(JSON.stringify({
   v3Fee: plan.dex.fee,
   transactionHashes: receipt.transactionHashes,
   broadcastPerformed,
-  recoveredFromBroadcastFile,
+  resumedFromIntent,
   manifestStatus: 'VERIFIED',
   productionMoneyClaim: false,
   productionAuthorityClaim: false,
