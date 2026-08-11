@@ -168,7 +168,6 @@ day9_verdict:
 
 working_branches:
   - day9/synthra-arc-testnet-v3-candidate
-  - docs/day9-physical-safari-evidence-20260811
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -176,6 +175,7 @@ repository:
   day8_complete: true
   day9_pr: 93
   day9_physical_safari_pr: 92
+  day9_physical_safari_pr_state: CLOSED_SUPERSEDED_EVIDENCE_INTEGRATED_IN_PR_93
   day9_started: true
   day9_complete: false
   day9_rc_tag_created: false
@@ -224,11 +224,11 @@ day9_cleared_blockers:
   - DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED
 
 day9_blocker_scope:
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence exists in PR #92, but required physical/current branded-device rows are not all satisfied and engine emulation is not relabeled"
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; required iOS Safari, representative physical Android Chrome, and current branded Edge rows remain external and engine emulation is not relabeled"
   DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "rerun the final exact-head integration/release matrix after remaining Day-9 gates; current GitHub Actions startup failures and Vercel build-rate-limit statuses are not a PASS"
 
 next_action: >-
-  Do not begin Day 10. Public Arc Testnet deployment, lifecycle smoke, and the real reversible 2-of-3 Safe threshold recovery drill are PASS for the bounded Day-9 rehearsal. Reconcile PR #92 macOS Safari evidence into the active candidate, truthfully complete or retain blockers for the remaining required physical/current branded-device rows, repair or truthfully classify exact-head release CI, and rerun the final Day-9 matrix before any RC tag.
+  Do not begin Day 10. Public Arc Testnet deployment, lifecycle smoke, the real reversible 2-of-3 Safe threshold recovery drill, and actual macOS Safari evidence are retained in PR #93. Execute the exact-head local release matrix while GitHub Actions remains separately classified as startup-failing, then truthfully complete or retain blockers for iOS Safari, representative physical Android Chrome, and current branded Edge before any RC tag.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
