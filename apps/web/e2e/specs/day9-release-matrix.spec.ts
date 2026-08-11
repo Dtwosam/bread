@@ -51,7 +51,7 @@ test('release matrix distinguishes automated engines, emulation, physical device
 
   const rows = parseMatrix(await readFile(evidencePath, 'utf8'));
 
-  for (const target of ['Desktop Chromium', 'Desktop Firefox', 'Desktop WebKit']) {
+  for (const target of ['Desktop Chromium / Chrome', 'Desktop Firefox', 'Desktop WebKit']) {
     const current = row(rows, target);
     expect(current.status).toBe('PASS');
     expect(current.evidenceKind).toBe('AUTOMATED_BROWSER_ENGINE');
