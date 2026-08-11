@@ -1,4 +1,4 @@
-schema_version: 1.52
+schema_version: 1.53
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-11
@@ -17,7 +17,7 @@ completed_checkpoints:
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal BLOCKED"
-active_lane: "Durable blocked-state handoff / external-prerequisite boundary"
+active_lane: "External-prerequisite boundary / await fresh Day-9 candidate"
 active_gate: DAY9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_EXTERNAL_PREREQUISITES
 
 project_source_state:
@@ -31,21 +31,22 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.51
-  prior_state_git_commit: b45e749077cd30430496ce2173e65783ee5675b5
-  prior_state_blob_sha: 130e30db7e6aaf6bc7e5d86bfdf083a02d6b6325
+  prior_state_schema_version: 1.52
+  prior_state_git_commit: 2e94c24c7643b2bce25a4f1aed847ddc64527384
+  prior_state_blob_sha: 867c159e2db7366fca7020d6432ac586e0d8e19a
   note: >-
-    v1.52 records the actual merged Day-9 rehearsal/blocker state and exact final-head evidence. It does not declare Day 9 complete or PASS, create an RC tag, authorize Day 10, waive a release blocker, or change any previously ratified financial/protocol semantics.
+    v1.53 finalizes the readback of the merged docs-only Day-9 blocked-state handoff. It does not declare Day 9 complete or PASS, create an RC tag, authorize Day 10, waive a release blocker, or change any ratified protocol/financial semantics.
 
 integration_baseline:
-  id: DAY9-REHEARSAL-BLOCKED-MERGED-STATE
+  id: DAY9-REHEARSAL-BLOCKED-DURABLE-STATE
   branch: main
   prior_durable_day8_main: fe9b13f1ce271fd5423fdd76de13034dac18fee1
   day9_implementation_pr: 88
   day9_exact_reviewed_head: b889d6676672d96315c4f5e53cc68f639ea8e944
   day9_implementation_merge: b45e749077cd30430496ce2173e65783ee5675b5
   day9_durable_handoff_pr: 90
-  status: DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_MERGED_PENDING_HANDOFF_READBACK
+  day9_durable_handoff_merge: 2e94c24c7643b2bce25a4f1aed847ddc64527384
+  status: DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_DURABLE
 
 day8_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
@@ -84,7 +85,7 @@ day9_verdict:
   day10_started: false
 
 working_branches:
-  - docs/day9-blocked-rehearsal-handoff
+  - docs/day9-blocked-state-finalization
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -93,6 +94,7 @@ repository:
   day9_pr: 88
   day9_implementation_merged: true
   day9_durable_handoff_pr: 90
+  day9_durable_handoff_merged: true
   day9_started: true
   day9_complete: false
   day9_rc_tag_created: false
@@ -101,6 +103,7 @@ repository:
 verification:
   day9_exact_reviewed_head: b889d6676672d96315c4f5e53cc68f639ea8e944
   day9_implementation_merge: b45e749077cd30430496ce2173e65783ee5675b5
+  day9_durable_handoff_merge: 2e94c24c7643b2bce25a4f1aed847ddc64527384
   day9_final_exact_head_matrix: PASS_BLOCKED_VERDICT
   root_ci: 31446449291
   day8_lane1_extended_invariants: 31446449767
@@ -137,7 +140,9 @@ verification:
   day9_task8_final_rc_gate: 31446449231
   day9_recovery_fixture_race_repair: PASS_NO_PRODUCTION_RECOVERY_LOGIC_CHANGE
   day9_live_arc_classifier: BLOCKED_EXPECTED_NO_BROADCAST
-  day9_durable_handoff_checks: PENDING_PR_90_EXACT_HEAD
+  day9_durable_handoff_checks: PASS_PR_90_EXACT_HEAD
+  day9_durable_handoff_root_ci: 31447039943
+  day9_durable_handoff_final_rc_gate: 31447040024
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -166,7 +171,7 @@ day9_blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "required current physical/branded browser-device rows were not executed; engine emulation is not relabeled"
 
 next_action: >-
-  Merge docs-only PR #90 only after its exact-head source/continuity checks pass, then verify actual main and freshly read back docs/current-build-state.yaml plus docs/handoffs/day9-blocked-release-rehearsal-handoff.md. Do not begin Day 10. A future fresh Day-9 candidate may reconsider RC freeze only after the real canonical Arc Testnet deployment/DEX prerequisites, Safe-compatible threshold recovery environment, and required physical/current-device execution are satisfied (or a controlling Project Source amendment explicitly changes those requirements), followed by affected Day-9 gates and a new final exact-head matrix.
+  Do not begin Day 10. A future fresh Day-9 candidate may reconsider RC freeze only after the real canonical Arc Testnet deployment/DEX prerequisites, Safe-compatible threshold recovery environment, and required physical/current-device execution are satisfied (or a controlling Project Source amendment explicitly changes those requirements). Before any new Day-9 execution, re-verify actual main, Project Sources, this durable blocked handoff, and the external prerequisite state; then rerun the affected Day-9 gates and a new final exact-head matrix before tagging any RC.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED is active."
