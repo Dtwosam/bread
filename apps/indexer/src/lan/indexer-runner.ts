@@ -4,7 +4,11 @@ import { createBreadDb, migrateBreadDb, ReadRepository } from '../../../../packa
 import { applyRange } from '../apply-range.js';
 import { runIndexerCatchUp, type IndexerCheckpoint } from '../catch-up.js';
 import { discoverRange } from '../discovery.js';
-import { createArcReadClient, observeHeadBlock } from './chain-client.js';
+import {
+  createArcProviderSafeLogClient,
+  createArcReadClient,
+  observeHeadBlock,
+} from './chain-client.js';
 import { resolveBreadRuntimeContext, resolveRuntimeInfrastructure } from './runtime-context.js';
 
 const requireFromDb = createRequire(new URL('../../../../packages/db/package.json', import.meta.url));
@@ -47,6 +51,7 @@ export async function runBreadIndexerCatchUp() {
   const db = createBreadDb(pool);
   const repository = new ReadRepository(db);
   const client = createArcReadClient(network);
+  const discoveryClient = createArcProviderSafeLogClient(client as never);
 
   const readCommittedCheckpoint = async (): Promise<IndexerCheckpoint> => {
     const committed = await repository.getCheckpoint(
@@ -96,7 +101,7 @@ export async function runBreadIndexerCatchUp() {
     maxCycles: Number.parseInt(process.env.BREAD_INDEXER_MAX_CYCLES?.trim() || '10000', 10),
     loadRange: async (fromBlock: bigint, toBlock: bigint) => {
       const logs = await discoverRange(
-        client as never,
+        discoveryClient,
         context,
         (await knownLaunchAddresses()) as never,
         fromBlock,

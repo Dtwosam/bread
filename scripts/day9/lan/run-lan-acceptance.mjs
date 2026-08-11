@@ -126,7 +126,7 @@ function spawnRuntime(label, args, env) {
 }
 
 async function teardown() {
-  const { terminateAll } = await import('./process-lifecycle.mjs');
+  const { terminateAll } = await import('./process-lifecycle.mts');
   if (proxyServer) await new Promise((done) => proxyServer.close(() => done()));
   await terminateAll(children).catch(() => undefined);
   if (startedInfrastructure) {
@@ -188,7 +188,7 @@ async function main() {
   await waitFor('web root', async () => (await httpGet(WEB_PORT, '/explore')).status < 500);
 
   log('== 9. Bounded same-origin LAN entrypoint ==');
-  const { createOriginProxy } = await import('./origin-proxy.mjs');
+  const { createOriginProxy } = await import('./origin-proxy.mts');
   proxyServer = createOriginProxy({
     apiTarget: { host: '127.0.0.1', port: API_PORT },
     webTarget: { host: '127.0.0.1', port: WEB_PORT },
