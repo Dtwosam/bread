@@ -10,16 +10,26 @@ function requireAddress(value, label) {
   return value;
 }
 
+// Public Arc Testnet uses the same Day-9 controlled-rehearsal economics shape,
+// but quote-side fixture values are divided by 10,000 so a faucet-funded smoke
+// can exercise launch -> trade -> graduate -> lock without implying production economics.
 export const DAY9_ARC_TESTNET_ECONOMICS = Object.freeze({
   supply: '1000000000000000000000000',
-  phantomQuote: '10000000000',
-  graduationThreshold: '100000000000',
+  phantomQuote: '1000000', // 1 USDC, down from 10,000 USDC local controlled fixture.
+  graduationThreshold: '10000000', // 10 USDC, down from 100,000 USDC.
   launchFeeUsdc: '0',
   tradeFeeBps: '100',
   protocolFeeShareBps: '2500',
   maxCreatorTaxBps: '500',
 });
 
+export const DAY9_ARC_TESTNET_SMOKE = Object.freeze({
+  quoteIn: '11000000', // 11 USDC, preserves the controlled rehearsal's threshold-crossing ratio.
+  minimumFunding: '12000000', // 12 USDC balance floor before the smoke transaction.
+});
+
+export const DAY9_ARC_TESTNET_ECONOMICS_PROVENANCE =
+  'DAY9_CONTROLLED_REHEARSAL_QUOTE_VALUES_DIVIDED_BY_10000';
 export const DAY9_ARC_TESTNET_V3_FEE = 3000;
 export const DAY9_ARC_TESTNET_STACK_VERSION_LABEL = 'BREAD_DAY9_ARC_TESTNET_STACK_V1';
 export const DAY9_ARC_TESTNET_DEX_EVIDENCE_LABEL =
@@ -72,6 +82,8 @@ export function buildArcTestnetDeploymentPlan({ network, authority }) {
       fee: DAY9_ARC_TESTNET_V3_FEE,
     }),
     economics: DAY9_ARC_TESTNET_ECONOMICS,
+    smoke: DAY9_ARC_TESTNET_SMOKE,
+    economicsProvenance: DAY9_ARC_TESTNET_ECONOMICS_PROVENANCE,
     stackVersionLabel: DAY9_ARC_TESTNET_STACK_VERSION_LABEL,
     dexEvidenceLabel: DAY9_ARC_TESTNET_DEX_EVIDENCE_LABEL,
     forkEvidenceBlock: DAY9_ARC_TESTNET_FORK_EVIDENCE_BLOCK,
