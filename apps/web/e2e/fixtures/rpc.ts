@@ -315,7 +315,9 @@ function handleRpc(state: RpcFixtureState, request: RpcRequest) {
         break;
       }
       case 'eth_getTransactionByHash':
-        result = transaction(String(params[0] ?? BUY_TX_HASH));
+        result = state.receiptMode === 'PENDING'
+          ? null
+          : transaction(String(params[0] ?? BUY_TX_HASH));
         break;
       default:
         state.unknownCalls.push(method);
