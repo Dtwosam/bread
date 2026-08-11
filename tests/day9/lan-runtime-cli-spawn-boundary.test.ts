@@ -12,7 +12,7 @@ describe('Day 9 LAN CLI spawn boundary', () => {
       'utf8',
     );
 
-    expect(orchestrator).toContain('function spawnRuntime(label, command, args, env)');
+    expect(orchestrator).toContain('function spawnRuntime(label, command, args, env, cwd = repositoryRoot)');
     expect(orchestrator).toContain('const child = spawn(command, args, {');
     expect(orchestrator).not.toContain('const child = spawn(process.execPath, args, {');
 
@@ -22,6 +22,16 @@ describe('Day 9 LAN CLI spawn boundary', () => {
     expect(orchestrator).toContain(
       "spawnRuntime('bread-web', resolve(repositoryRoot, 'apps/web/node_modules/.bin/next'), [",
     );
+  });
+
+  it('starts the built Next.js app from the workspace that owns its .next output', () => {
+    const orchestrator = readFileSync(
+      resolve(root, 'scripts/day9/lan/run-lan-acceptance.mjs'),
+      'utf8',
+    );
+
+    expect(orchestrator).toContain('cwd,');
+    expect(orchestrator).toContain("], {}, resolve(repositoryRoot, 'apps/web'));\n");
   });
 
   it('builds the web app through Corepack using Bread\'s pinned pnpm contract', () => {
