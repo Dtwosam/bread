@@ -16,6 +16,7 @@ interface ArcForkVm {
     function createSelectFork(string calldata urlOrAlias, uint256 blockNumber) external returns (uint256 forkId);
     function deal(address account, uint256 newBalance) external;
     function etch(address target, bytes calldata newRuntimeBytecode) external;
+    function allowCheatcodes(address account) external;
 }
 
 interface IArcV3FactoryFork {
@@ -124,6 +125,10 @@ contract ArcV3DependencyForkTest {
         VM.etch(ARC_NATIVE_COIN_CONTROL, address(controlShim).code);
         ArcNativeCoinAuthorityForkShim authorityShim = new ArcNativeCoinAuthorityForkShim();
         VM.etch(ARC_NATIVE_COIN_AUTHORITY, address(authorityShim).code);
+        // Foundry intentionally blocks cheatcode calls made from non-test addresses on a fork.
+        // The etched authority shim must use vm.deal to reproduce Arc's native-balance transfer,
+        // so explicitly permit this one fork-only precompile address to invoke cheatcodes.
+        VM.allowCheatcodes(ARC_NATIVE_COIN_AUTHORITY);
 
         // Arc exposes one USDC balance through two precisions: 18-decimal native units
         // and the canonical 6-decimal ERC-20 interface. Fund only the local fork balance.
