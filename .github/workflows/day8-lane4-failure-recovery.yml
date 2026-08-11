@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/day8-lane4-failure-recovery.yml'
+      - 'docs/evidence/day9-release-candidate-rehearsal.md'
       - 'tests/day8/failure-injection-boundaries.test.ts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/**'
@@ -17,6 +18,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/day8-lane4-failure-recovery.yml'
+      - 'docs/evidence/day9-release-candidate-rehearsal.md'
       - 'tests/day8/failure-injection-boundaries.test.ts'
       - 'apps/api/src/**'
       - 'apps/indexer/src/**'

@@ -1,0 +1,76 @@
+name: day9-final-rc-gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day9-final-rc-gate.yml'
+      - 'docs/evidence/day9-release-candidate-rehearsal.md'
+      - 'docs/current-build-state.yaml'
+      - 'docs/evidence/day9-browser-device-wallet-matrix.md'
+      - 'docs/evidence/day9-live-arc-rehearsal.md'
+      - 'scripts/day9/check-live-arc-rehearsal.mts'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day9-final-rc-gate.yml'
+      - 'docs/evidence/day9-release-candidate-rehearsal.md'
+      - 'docs/current-build-state.yaml'
+      - 'docs/evidence/day9-browser-device-wallet-matrix.md'
+      - 'docs/evidence/day9-live-arc-rehearsal.md'
+      - 'scripts/day9/check-live-arc-rehearsal.mts'
+
+permissions:
+  contents: read
+
+jobs:
+  final-rc-verdict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Validate repository and source mirrors
+        run: pnpm validate
+      - name: Assert final Day-9 verdict evidence and durable state are truthful
+        run: |
+          set -euo pipefail
+          test -f docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'EMPTY_ENVIRONMENT_TO_USABLE_LAUNCHPAD = BLOCKED' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'ROLLBACK = PASS' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'RECONCILE = PASS' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'SUPPORTED_MATRIX = BLOCKED_EXTERNAL_EXECUTION_REQUIRED' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'RC_TAG_CREATED = false' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'active_gate: DAY9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_EXTERNAL_PREREQUISITES' docs/current-build-state.yaml
+          grep -Fq 'day9_started: true' docs/current-build-state.yaml
+          grep -Fq 'day9_complete: false' docs/current-build-state.yaml
+          grep -Fq 'day9_rc_tag_created: false' docs/current-build-state.yaml
+          grep -Fq 'day10_started: false' docs/current-build-state.yaml
+      - name: Prove live Arc rehearsal remains fail-closed
+        run: |
+          set -euo pipefail
+          set +e
+          output="$(pnpm exec tsx scripts/day9/check-live-arc-rehearsal.mts 2>&1)"
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          test "$status" -eq 2
+          grep -Fq 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED' <<<"$output"
+          grep -Fq 'ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY' <<<"$output"
+      - name: Prove no Day-9 RC PASS tag exists while blocked
+        run: |
+          set -euo pipefail
+          if git show-ref --verify --quiet refs/tags/bread-day9-rc1; then
+            echo 'bread-day9-rc1 must not exist while the Day-9 release-candidate gate is blocked.' >&2
+            exit 1
+          fi

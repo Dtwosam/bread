@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { discoverRange, type LogClient, type RpcLog } from '../../apps/indexer/src/discovery.ts';
 import type { ProtocolContext } from '../../packages/protocol-sdk/src/context.ts';
 
+// Day 9 final RC verdicts retain this exact under-load RPC proof so the full
+// Day-8 hot-launch capacity workflow reruns on the final candidate head.
 const address = (value: number) => `0x${value.toString(16).padStart(40, '0')}` as `0x${string}`;
 
 const context: ProtocolContext = {

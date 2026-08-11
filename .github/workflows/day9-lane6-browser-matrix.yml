@@ -1,0 +1,63 @@
+name: day9-lane6-browser-matrix
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day9-lane6-browser-matrix.yml'
+      - 'apps/web/e2e/playwright.day9-release.config.ts'
+      - 'apps/web/e2e/specs/**'
+      - 'apps/web/e2e/fixtures/**'
+      - 'apps/web/**'
+      - 'packages/ui/**'
+      - 'config/networks/arc-testnet.json'
+      - 'config/deployments/arc-testnet.day5.json'
+      - 'docs/evidence/day9-browser-device-wallet-matrix.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day9-lane6-browser-matrix.yml'
+      - 'apps/web/e2e/playwright.day9-release.config.ts'
+      - 'apps/web/e2e/specs/**'
+      - 'apps/web/e2e/fixtures/**'
+      - 'apps/web/**'
+      - 'packages/ui/**'
+      - 'config/networks/arc-testnet.json'
+      - 'config/deployments/arc-testnet.day5.json'
+      - 'docs/evidence/day9-browser-device-wallet-matrix.md'
+
+permissions:
+  contents: read
+
+jobs:
+  release-browser-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned Chromium Firefox and WebKit runtimes
+        run: pnpm --filter @bread/web exec playwright install --with-deps chromium firefox webkit
+      - name: Run Day-9 release browser matrix with canonical-manifest restoration
+        shell: bash
+        run: |
+          set -euo pipefail
+          original="$RUNNER_TEMP/arc-testnet.day5.original.json"
+          cp config/deployments/arc-testnet.day5.json "$original"
+          restore() {
+            cp "$original" config/deployments/arc-testnet.day5.json
+          }
+          trap restore EXIT
+          cp apps/web/e2e/fixtures/protocol-deployment.json config/deployments/arc-testnet.day5.json
+          pnpm --filter @bread/web exec playwright test --config=e2e/playwright.day9-release.config.ts
+          restore
+          trap - EXIT
+      - name: Verify release matrix restored canonical Arc manifests
+        if: always()
+        run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json

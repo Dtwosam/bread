@@ -5,10 +5,10 @@
   "nativeGasAsset": "USDC",
   "nativePrecision": 18,
   "rpc": [
-    "https://rpc.testnet.arc.io"
+    "https://rpc.testnet.arc.network"
   ],
   "websocket": [
-    "wss://rpc.testnet.arc.io"
+    "wss://rpc.testnet.arc.network"
   ],
   "explorer": "https://testnet.arcscan.app",
   "usdc": {

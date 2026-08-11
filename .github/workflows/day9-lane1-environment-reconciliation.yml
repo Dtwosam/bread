@@ -1,0 +1,50 @@
+name: day9-lane1-environment-reconciliation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day9-lane1-environment-reconciliation.yml'
+      - 'tests/day9/arc-testnet-environment-reconciliation.test.ts'
+      - 'config/networks/arc-testnet.json'
+      - 'config/networks/arc-mainnet.json'
+      - 'packages/config/src/**'
+      - 'docs/evidence/day9-environment-preflight.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day9-lane1-environment-reconciliation.yml'
+      - 'tests/day9/arc-testnet-environment-reconciliation.test.ts'
+      - 'config/networks/arc-testnet.json'
+      - 'config/networks/arc-mainnet.json'
+      - 'packages/config/src/**'
+      - 'docs/evidence/day9-environment-preflight.md'
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile-arc-testnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Run Arc Testnet environment reconciliation regression
+        run: pnpm exec vitest run tests/day9/arc-testnet-environment-reconciliation.test.ts
+      - uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e
+        with:
+          version: v1.5.0
+      - name: Probe current official Arc Testnet read surface
+        run: |
+          rpc='https://rpc.testnet.arc.network'
+          test "$(cast chain-id --rpc-url "$rpc")" = "5042002"
+          code="$(cast code 0x3600000000000000000000000000000000000000 --rpc-url "$rpc")"
+          test "$code" != "0x"
+          test "$(cast call 0x3600000000000000000000000000000000000000 'decimals()(uint8)' --rpc-url "$rpc")" = "6"

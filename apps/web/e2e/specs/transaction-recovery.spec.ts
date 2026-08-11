@@ -84,10 +84,14 @@ test('refresh restores a pending Buy and a later recovery pass confirms it witho
   expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(0);
 
   // Bread intentionally persists UNKNOWN/CONFIRMING for a later recovery pass;
-  // a failed polling attempt is not kept alive forever. Model the later pass by
-  // making the receipt available and reloading the app.
+  // a failed polling attempt is not kept alive forever. Keep the shared RPC
+  // fixture pending until the reload commits so the old document cannot race
+  // the intended later recovery pass and mark the record terminal just before
+  // navigation. The newly committed document then observes the available
+  // receipt and performs the recovery itself.
+  await page.reload({ waitUntil: 'commit' });
   rpcState.receiptMode = 'SUCCESS';
-  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
   trade = page.getByRole('complementary', { name: 'Trade' });
   await expect(trade.getByRole('status')).toContainText('CONFIRMED', { timeout: 15_000 });
   await expect(trade.getByRole('status')).toContainText(BUY_TX_HASH);
