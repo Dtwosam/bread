@@ -16,12 +16,20 @@ export class ArcLogReadBudgetExceededError extends Error {
   }
 }
 
-type ProviderSafeLogOptions = Readonly<{
+type ProviderSafeReadOptions = Readonly<{
   maxRateLimitRetries?: number;
   baseBackoffMs?: number;
   maxSplitDepth?: number;
   maxRpcAttempts?: number;
   sleep?: (ms: number) => Promise<void>;
+}>;
+
+type ResolvedProviderSafeReadOptions = Readonly<{
+  maxRateLimitRetries: number;
+  baseBackoffMs: number;
+  maxSplitDepth: number;
+  maxRpcAttempts: number;
+  sleep: (ms: number) => Promise<void>;
 }>;
 
 function nonnegativeInteger(value: number, label: string): number {
@@ -32,6 +40,24 @@ function nonnegativeInteger(value: number, label: string): number {
 function positiveInteger(value: number, label: string): number {
   if (!Number.isInteger(value) || value < 1) throw new Error(`${label} must be a positive integer`);
   return value;
+}
+
+function resolveProviderSafeReadOptions(
+  options: ProviderSafeReadOptions,
+): ResolvedProviderSafeReadOptions {
+  return {
+    maxRateLimitRetries: nonnegativeInteger(
+      options.maxRateLimitRetries ?? 4,
+      'maxRateLimitRetries',
+    ),
+    // A bounded live Arc-Testnet diagnostic proved the same 512-block log
+    // request succeeds when calls are spaced by three seconds. This is a
+    // conservative retry cooldown, not a claimed provider throughput limit.
+    baseBackoffMs: positiveInteger(options.baseBackoffMs ?? 3_000, 'baseBackoffMs'),
+    maxSplitDepth: nonnegativeInteger(options.maxSplitDepth ?? 8, 'maxSplitDepth'),
+    maxRpcAttempts: positiveInteger(options.maxRpcAttempts ?? 32, 'maxRpcAttempts'),
+    sleep: options.sleep ?? (async (ms: number) => delay(ms)),
+  };
 }
 
 function errorChain(error: unknown): readonly unknown[] {
@@ -61,9 +87,9 @@ function errorText(error: unknown): string {
 
 /**
  * Distinguish provider request-frequency throttling from an eth_getLogs request
- * shape/range limit. Viem wraps both under LimitExceededRpcError/-32005, so the
- * provider detail text must win when it explicitly says the request was rate
- * limited. This keeps Bread from multiplying traffic in response to throttling.
+ * shape/range limit. Viem can wrap both under LimitExceededRpcError/-32005, so
+ * explicit provider rate-limit detail must win. Bread must never respond to
+ * throttling by splitting one request into more requests.
  */
 export function classifyArcRpcLimitError(error: unknown): ArcRpcLimitKind | null {
   const text = errorText(error);
@@ -92,93 +118,139 @@ function blockBounds(request: Readonly<Record<string, unknown>>): Readonly<{
 }
 
 /**
- * Provider-safe read adapter for Arc eth_getLogs.
+ * One provider-wide serialized read gate for the LAN indexer.
  *
- * Bread's replay overlap is an integrity property and is never reduced to fit a
- * provider. Instead:
- * - explicit rate-limit responses retry the exact same logical request with a
- *   small bounded exponential backoff;
- * - request-size/shape limits split the exact logical block interval into
- *   contiguous halves and concatenate the results in block order;
- * - an overall attempt budget prevents an unhealthy provider from multiplying
- *   work without bound.
- *
- * discoverRange remains the owner of its two-pass identity discovery and final
- * canonical dedupe/order semantics.
+ * The public Arc Testnet endpoint applies request-rate controls across methods,
+ * not just eth_getLogs. Normalization can intentionally issue many readContract
+ * calls concurrently, so protecting getLogs alone still allows a burst. This
+ * gate serializes all read-only client calls and owns the only rate-limit retry
+ * loop used by the LAN runtime.
  */
-export function createArcProviderSafeLogClient(
-  raw: LogClient,
-  options: ProviderSafeLogOptions = {},
-): LogClient {
-  const maxRateLimitRetries = nonnegativeInteger(
-    options.maxRateLimitRetries ?? 4,
-    'maxRateLimitRetries',
-  );
-  const baseBackoffMs = positiveInteger(options.baseBackoffMs ?? 500, 'baseBackoffMs');
-  const maxSplitDepth = nonnegativeInteger(options.maxSplitDepth ?? 8, 'maxSplitDepth');
-  const maxRpcAttempts = positiveInteger(options.maxRpcAttempts ?? 32, 'maxRpcAttempts');
-  const sleep = options.sleep ?? (async (ms: number) => delay(ms));
+class ArcRpcRateGate {
+  private tail: Promise<void> = Promise.resolve();
 
+  constructor(private readonly options: ResolvedProviderSafeReadOptions) {}
+
+  run<T>(operation: () => Promise<T>): Promise<T> {
+    const execute = async (): Promise<T> => {
+      for (let retry = 0; ; retry += 1) {
+        try {
+          return await operation();
+        } catch (error) {
+          if (classifyArcRpcLimitError(error) !== 'RATE_LIMIT') throw error;
+          if (retry >= this.options.maxRateLimitRetries) throw error;
+          await this.options.sleep(this.options.baseBackoffMs * 2 ** retry);
+        }
+      }
+    };
+
+    const result = this.tail.then(execute, execute);
+    this.tail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+}
+
+function createProviderSafeLogReader(
+  raw: LogClient,
+  gate: ArcRpcRateGate,
+  options: ResolvedProviderSafeReadOptions,
+): LogClient {
   return {
     getLogs: async (request) => {
       let attempts = 0;
 
       const read = async (
         currentRequest: Readonly<Record<string, unknown>>,
-        rateLimitRetry: number,
         splitDepth: number,
       ): Promise<readonly RpcLog[]> => {
-        if (attempts >= maxRpcAttempts) {
+        if (attempts >= options.maxRpcAttempts) {
           throw new ArcLogReadBudgetExceededError(
-            new Error(`attempt budget ${maxRpcAttempts} exhausted before next eth_getLogs call`),
+            new Error(`attempt budget ${options.maxRpcAttempts} exhausted before next eth_getLogs call`),
           );
         }
         attempts += 1;
 
         try {
-          return await raw.getLogs(currentRequest);
+          return await gate.run(() => raw.getLogs(currentRequest));
         } catch (error) {
           const kind = classifyArcRpcLimitError(error);
-          if (kind === null) throw error;
-
-          if (kind === 'RATE_LIMIT') {
-            if (rateLimitRetry >= maxRateLimitRetries || attempts >= maxRpcAttempts) {
-              if (attempts >= maxRpcAttempts) throw new ArcLogReadBudgetExceededError(error);
-              throw error;
-            }
-            await sleep(baseBackoffMs * 2 ** rateLimitRetry);
-            return read(currentRequest, rateLimitRetry + 1, splitDepth);
-          }
+          if (kind !== 'REQUEST_LIMIT') throw error;
 
           const bounds = blockBounds(currentRequest);
           if (
             bounds === null
             || bounds.fromBlock === bounds.toBlock
-            || splitDepth >= maxSplitDepth
-            || attempts >= maxRpcAttempts
+            || splitDepth >= options.maxSplitDepth
+            || attempts >= options.maxRpcAttempts
           ) {
-            if (attempts >= maxRpcAttempts) throw new ArcLogReadBudgetExceededError(error);
+            if (attempts >= options.maxRpcAttempts) throw new ArcLogReadBudgetExceededError(error);
             throw error;
           }
 
           const midpoint = bounds.fromBlock + (bounds.toBlock - bounds.fromBlock) / 2n;
           const left = await read(
             { ...currentRequest, fromBlock: bounds.fromBlock, toBlock: midpoint },
-            0,
             splitDepth + 1,
           );
           const right = await read(
             { ...currentRequest, fromBlock: midpoint + 1n, toBlock: bounds.toBlock },
-            0,
             splitDepth + 1,
           );
           return [...left, ...right];
         }
       };
 
-      return read(request, 0, 0);
+      return read(request, 0);
     },
   };
+}
+
+/**
+ * Focused eth_getLogs adapter retained for tests and narrow callers. Rate-limit
+ * retries are serialized by the same gate model used by the full read client;
+ * genuine request-shape limits may still split an exact logical block interval.
+ */
+export function createArcProviderSafeLogClient(
+  raw: LogClient,
+  options: ProviderSafeReadOptions = {},
+): LogClient {
+  const resolved = resolveProviderSafeReadOptions(options);
+  const gate = new ArcRpcRateGate(resolved);
+  return createProviderSafeLogReader(raw, gate, resolved);
+}
+
+/**
+ * Wrap every read-only PublicClient method behind one serialized provider gate.
+ *
+ * A Proxy is used deliberately so normalization's readContract calls, replay's
+ * getBlock calls, head observation and eth_getLogs all share the same throttle
+ * state without duplicating a second chain-read interface. Method calls retain
+ * the original viem client as `this`.
+ */
+export function createArcProviderSafeReadClient<T extends object>(
+  raw: T,
+  options: ProviderSafeReadOptions = {},
+): T {
+  const resolved = resolveProviderSafeReadOptions(options);
+  const gate = new ArcRpcRateGate(resolved);
+  const logReader = createProviderSafeLogReader(raw as unknown as LogClient, gate, resolved);
+
+  return new Proxy(raw, {
+    get(target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      if (typeof value !== 'function') return value;
+
+      if (property === 'getLogs') {
+        return (request: Readonly<Record<string, unknown>>) => logReader.getLogs(request);
+      }
+
+      return (...args: readonly unknown[]) =>
+        gate.run(() => Reflect.apply(value, target, args) as Promise<unknown>);
+    },
+  }) as T;
 }
 
 /**
@@ -186,7 +258,8 @@ export function createArcProviderSafeLogClient(
  *
  * No account, signer, keystore or private key is ever attached: this client
  * only reads chain state. Wallet signing stays entirely on the operator's
- * physical device.
+ * physical device. Viem transport retries are disabled here because the
+ * provider-wide Bread gate above is the sole retry owner for this runtime.
  */
 export function createArcReadClient(network: NetworkManifest): PublicClient {
   if (network.chainId === null) throw new Error('canonical network manifest has no chainId');
@@ -207,7 +280,10 @@ export function createArcReadClient(network: NetworkManifest): PublicClient {
     testnet: true,
   });
 
-  return createPublicClient({ chain, transport: http(rpcUrls[0]) }) as PublicClient;
+  return createPublicClient({
+    chain,
+    transport: http(rpcUrls[0], { retryCount: 0 }),
+  }) as PublicClient;
 }
 
 export function observeHeadBlock(client: PublicClient): () => Promise<bigint> {

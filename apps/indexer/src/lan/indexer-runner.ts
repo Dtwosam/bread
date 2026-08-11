@@ -5,7 +5,7 @@ import { applyRange } from '../apply-range.js';
 import { runIndexerCatchUp, type IndexerCheckpoint } from '../catch-up.js';
 import { discoverRange } from '../discovery.js';
 import {
-  createArcProviderSafeLogClient,
+  createArcProviderSafeReadClient,
   createArcReadClient,
   observeHeadBlock,
 } from './chain-client.js';
@@ -50,8 +50,8 @@ export async function runBreadIndexerCatchUp() {
   await migrateBreadDb(pool as never);
   const db = createBreadDb(pool);
   const repository = new ReadRepository(db);
-  const client = createArcReadClient(network);
-  const discoveryClient = createArcProviderSafeLogClient(client as never);
+  const rawClient = createArcReadClient(network);
+  const client = createArcProviderSafeReadClient(rawClient);
 
   const readCommittedCheckpoint = async (): Promise<IndexerCheckpoint> => {
     const committed = await repository.getCheckpoint(
@@ -101,7 +101,7 @@ export async function runBreadIndexerCatchUp() {
     maxCycles: Number.parseInt(process.env.BREAD_INDEXER_MAX_CYCLES?.trim() || '10000', 10),
     loadRange: async (fromBlock: bigint, toBlock: bigint) => {
       const logs = await discoverRange(
-        discoveryClient,
+        client as never,
         context,
         (await knownLaunchAddresses()) as never,
         fromBlock,

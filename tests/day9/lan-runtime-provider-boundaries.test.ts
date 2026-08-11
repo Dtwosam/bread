@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   classifyArcRpcLimitError,
   createArcProviderSafeLogClient,
+  createArcProviderSafeReadClient,
 } from '../../apps/indexer/src/lan/chain-client.js';
 import type { LogClient, RpcLog } from '../../apps/indexer/src/discovery.js';
 
@@ -43,7 +44,7 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     expect(classifyArcRpcLimitError(limitError())).toBe('REQUEST_LIMIT');
   });
 
-  it('retries rate throttling with bounded backoff without changing the logical range', async () => {
+  it('retries rate throttling without changing the 512-block logical range', async () => {
     const seen: Array<readonly [bigint, bigint]> = [];
     const delays: number[] = [];
     let attempts = 0;
@@ -78,7 +79,7 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     expect(delays).toEqual([10, 20]);
   });
 
-  it('splits only request-size limited ranges into contiguous subranges', async () => {
+  it('splits only genuine request-size limited ranges into contiguous subranges', async () => {
     const successful: Array<readonly [bigint, bigint]> = [];
     const raw: LogClient = {
       getLogs: async (request) => {
@@ -116,6 +117,85 @@ describe('Day 9 LAN provider/runtime regressions', () => {
       385n,
       512n,
     ]);
+  });
+
+  it('serializes all Arc read methods behind one rate-limit retry owner', async () => {
+    const delays: number[] = [];
+    const order: string[] = [];
+    let active = 0;
+    let maxActive = 0;
+    let blockAttempts = 0;
+
+    const enter = async <T>(label: string, result: T, rateLimit = false): Promise<T> => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      order.push(`${label}:start`);
+      await Promise.resolve();
+      try {
+        if (rateLimit) throw limitError('rate limit exceeded');
+        order.push(`${label}:success`);
+        return result;
+      } finally {
+        active -= 1;
+      }
+    };
+
+    const raw = {
+      getBlockNumber: async () => enter('head', 900n),
+      getBlock: async () => {
+        blockAttempts += 1;
+        return enter('block', { hash: '0xabc', timestamp: 1n }, blockAttempts === 1);
+      },
+      readContract: async () => enter('contract', 'ok'),
+      getLogs: async () => enter('logs', [] as readonly RpcLog[]),
+    };
+
+    const client = createArcProviderSafeReadClient(raw, {
+      maxRateLimitRetries: 2,
+      baseBackoffMs: 10,
+      sleep: async (ms) => {
+        delays.push(ms);
+      },
+    });
+
+    const [head, block, contract] = await Promise.all([
+      client.getBlockNumber(),
+      client.getBlock(),
+      client.readContract(),
+    ]);
+
+    expect(head).toBe(900n);
+    expect(block.hash).toBe('0xabc');
+    expect(contract).toBe('ok');
+    expect(blockAttempts).toBe(2);
+    expect(delays).toEqual([10]);
+    expect(maxActive).toBe(1);
+    expect(order).toEqual([
+      'head:start',
+      'head:success',
+      'block:start',
+      'block:start',
+      'block:success',
+      'contract:start',
+      'contract:success',
+    ]);
+  });
+
+  it('pins one retry owner and wires the full LAN read client through it', () => {
+    const chainClient = readFileSync(
+      resolve(root, 'apps/indexer/src/lan/chain-client.ts'),
+      'utf8',
+    );
+    const runner = readFileSync(
+      resolve(root, 'apps/indexer/src/lan/indexer-runner.ts'),
+      'utf8',
+    );
+
+    expect(chainClient).toContain("http(rpcUrls[0], { retryCount: 0 })");
+    expect(runner).toContain('createArcProviderSafeReadClient(rawClient)');
+    expect(runner).not.toContain('createArcProviderSafeLogClient(client');
+    expect(runner).toContain('discoverRange(\n        client as never,');
+    expect(runner).toContain('client: client as never');
   });
 
   it('plain Node resolves the exact TypeScript helpers used by the operator orchestrator', () => {
