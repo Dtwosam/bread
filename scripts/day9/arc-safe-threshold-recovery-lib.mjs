@@ -90,3 +90,30 @@ export function sortSafeSignatures(entries) {
 export function packSafeSignatures(entries) {
   return `0x${sortSafeSignatures(entries).map((entry) => entry.signature.slice(2)).join('')}`;
 }
+
+export function splitPackedSafeSignatures(packed) {
+  if (typeof packed !== 'string' || !/^0x[0-9a-fA-F]+$/.test(packed)) {
+    throw new Error('packed Safe signatures must be hex');
+  }
+  const body = packed.slice(2);
+  const signatureHexLength = 65 * 2;
+  if (body.length === 0 || body.length % signatureHexLength !== 0) {
+    throw new Error('packed Safe signatures must contain complete 65-byte signatures');
+  }
+  const signatures = [];
+  for (let offset = 0; offset < body.length; offset += signatureHexLength) {
+    signatures.push(`0x${body.slice(offset, offset + signatureHexLength).toLowerCase()}`);
+  }
+  return signatures;
+}
+
+export function safeEthSignToStandardSignature(signature) {
+  if (typeof signature !== 'string' || !SIGNATURE_RE.test(signature)) {
+    throw new Error('Safe eth_sign signature must be 65-byte hex');
+  }
+  const safeV = Number.parseInt(signature.slice(-2), 16);
+  if (safeV !== 31 && safeV !== 32) {
+    throw new Error(`Safe eth_sign signature v must be 31 or 32, got ${safeV}`);
+  }
+  return `${signature.slice(0, -2).toLowerCase()}${(safeV - 4).toString(16).padStart(2, '0')}`;
+}
