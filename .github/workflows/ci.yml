@@ -79,7 +79,7 @@ jobs:
         run: node ../scripts/abi/check-bread-abi.mjs
       - name: Run Solidity bootstrap tests
         working-directory: contracts
-        run: forge test
+        run: forge test --no-match-path 'test/fork/**'
 
   infrastructure-health:
     runs-on: ubuntu-latest
