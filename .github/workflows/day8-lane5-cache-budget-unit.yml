@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/day8-lane5-cache-budget-unit.yml'
+      - 'docs/evidence/day9-release-candidate-rehearsal.md'
       - 'scripts/load/day8-cache-budget.ts'
       - 'scripts/load/day8-hot-launch.mts'
       - 'apps/api/src/http-cache.ts'
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/day8-lane5-cache-budget-unit.yml'
+      - 'docs/evidence/day9-release-candidate-rehearsal.md'
       - 'scripts/load/day8-cache-budget.ts'
       - 'scripts/load/day8-hot-launch.mts'
       - 'apps/api/src/http-cache.ts'
