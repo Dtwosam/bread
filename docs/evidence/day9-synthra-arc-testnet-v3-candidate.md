@@ -1,36 +1,25 @@
 # Day 9 — Synthra Arc Testnet V3 Candidate Evidence
 
-Status: **CURRENT SDK DEPLOYMENT IDENTITY PASS — INDEPENDENT ARC RPC PASS — REAL-DEPENDENCY FORK INTEGRATION PASS — PUBLIC TESTNET BREAD DEPLOYMENT PENDING**
+Status: **DEX DEPENDENCY PASS — REAL-DEPENDENCY FORK PASS — 2-OF-3 SAFE PASS — PUBLIC BREAD DEPLOYMENT PREFLIGHT READY**
 
 Checked: 2026-08-11
-Baseline main: `c21b49a1f8edaaad999e461edb0ce602071bda5c`
-Fork-proof branch head executed by operator: `fe7bf6fcd33d2f23530dda54f18d29823cb9ce72`
-Candidate role: Arc Testnet-only V3-compatible graduation dependency behind Bread's existing `IGraduationAdapter` boundary.
+Baseline: `c21b49a1f8edaaad999e461edb0ce602071bda5c`
+Candidate role: Arc Testnet-only graduation DEX dependency behind Bread's existing `IGraduationAdapter` boundary.
 
-## Current Synthra Arc deployment identity
+## Verified Synthra / Arc V3 dependency state
 
-Synthra's current SDK registry was queried exactly through `getSynthraChainDeployment(ChainId.ARC)` from `@synthra-swap/sdk/chains` and returned:
+Current Synthra SDK deployment discovery for `ChainId.ARC` returned:
 
-- Arc chain ID: `5042002`
 - Factory: `0x0fB6EEDA6e90E90797083861A75D15752a27f59c`
 - Nonfungible Position Manager: `0x444Cc395346428216fB6f2892eb03cB804aE4CD5`
-- Quoter: `0x3Ce954107b1A675826B33bF23060Dd655e3758fE`
-- Multicall: `0xe139b61c9B8Eebf32bb335cb11AA6B7Cd69e13f4`
-- SwapRouter02: `0xA545bCB1Bd7985c59ea162aB1748A0803434C31b`
-- Universal Router: `0xbf4479C07Dc6fdc6dAa764A0ccA06969e894275F`
+- Arc chain ID: `5042002`
 
-The SDK/documented Arc quote asset is canonical Arc USDC `0x3600000000000000000000000000000000000000` with 6 ERC-20 decimals, matching Bread's ratified Arc Testnet manifest.
-
-## Independent Arc RPC dependency proof
-
-A separate read-only operator-executed Arc RPC check proved:
+Independent operator-executed read-only Arc RPC evidence proved:
 
 ```json
 {
   "chainId": 5042002,
-  "factory": "0x0fB6EEDA6e90E90797083861A75D15752a27f59c",
   "factoryCodeBytes": 24564,
-  "positionManager": "0x444Cc395346428216fB6f2892eb03cB804aE4CD5",
   "positionManagerCodeBytes": 24384,
   "positionManagerFactory": "0x0fb6eeda6e90e90797083861a75d15752a27f59c",
   "factoryMatches": true,
@@ -46,117 +35,142 @@ A separate read-only operator-executed Arc RPC check proved:
 }
 ```
 
-Therefore the dependency-identity and fee-compatibility gate is PASS. The existing controlled Day-9 rehearsal fee `3000` is available with tick spacing `60`; it remains a testnet/rehearsal value and is not a production/mainnet economics decision.
+Bread's canonical Arc Testnet network manifest therefore records only the generic `UNISWAP_V3` family plus the verified Factory / Position Manager. Synthra remains provenance/evidence metadata only.
 
-## Arc Testnet manifest activation
+## Real-dependency Bread integration proof
 
-`config/networks/arc-testnet.json` records only the generic adapter family and verified dependencies:
-
-- `dex.type = UNISWAP_V3`
-- `positionManager = 0x444Cc395346428216fB6f2892eb03cB804aE4CD5`
-- `factory = 0x0fB6EEDA6e90E90797083861A75D15752a27f59c`
-- `poolManager = null`
-
-`Synthra` remains evidence/provenance metadata only. No core financial path branches on vendor identity.
-
-## Real-dependency Arc fork proof — PASS
-
-Repository proof surfaces:
-
-- `contracts/test/fork/ArcV3DependencyFork.t.sol`
-- `scripts/day9/run-arc-v3-fork-proof.mjs`
-
-The operator executed the exact branch head `fe7bf6fcd33d2f23530dda54f18d29823cb9ce72` using Bread's pinned Foundry `v1.5.0` and received:
+The operator executed `scripts/day9/run-arc-v3-fork-proof.mjs` against Arc fork block `56439192` and received:
 
 ```text
 DAY9_ARC_V3_FORK_PROOF_PASS
 ```
 
-Exact reported result:
+The fork proof used the real Synthra Factory / Position Manager and canonical Arc USDC contract path. Stock Foundry does not implement Arc's Native Coin Control / Native Coin Authority precompiles, so fork-only shims emulate only those Arc primitives; the shims preserve real forked blocklist storage and are never deployed to Arc.
 
-```json
-{
-  "chainId": 5042002,
-  "forkBlock": 56439192,
-  "factory": "0x0fB6EEDA6e90E90797083861A75D15752a27f59c",
-  "positionManager": "0x444Cc395346428216fB6f2892eb03cB804aE4CD5",
-  "positionManagerBlocklisted": false,
-  "usdc": "0x3600000000000000000000000000000000000000",
-  "v3Fee": 3000,
-  "arcNativeCoinControlMode": "FOUNDRY_FORK_TEST_SHIM_ONLY_AFTER_PINNED_BLOCK_PREFLIGHT",
-  "arcNativeCoinAuthorityMode": "FOUNDRY_FORK_TEST_SHIM_ONLY",
-  "liveTransactionBroadcast": false,
-  "privateKeyRequired": false,
-  "mainnetDexSelected": false
-}
+The PASS proved:
+
+- Bread's V3 adapter constructs against the real dependencies;
+- a fresh TOKEN/USDC pool can be created and initialized;
+- the real Position Manager accepts the liquidity mint;
+- the position NFT is minted directly to `BreadPermanentLiquidityLocker`;
+- position ownership/registration is permanent-lock compatible;
+- USDC/token used amounts plus explicit dust reconcile;
+- adapter balances return to zero and allowances are cleared.
+
+No live Arc transaction or private key was required by this fork proof.
+
+## Safe authority proof
+
+A read-only Arc probe proved Safe v1.4.1 core is present at:
+
+- SafeL2: `0x29fcB43b46531BcA003ddC8FCB67FFE91900C762`
+- SafeProxyFactory: `0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67`
+
+The operator then generated five separate test-only identities locally with secret material stored only in a permission-restricted file outside the repository. Public identities are:
+
+- deployment authority: `0x1bc5a40329b309be3ac77cb3688061b985f8d3fb`
+- Guardian: `0xdcb9cb7038ff1a282265a855754dba8695a3121c`
+- Safe owner 1: `0x2473795adf14b131ca76580acb4ecdff7ac08011`
+- Safe owner 2: `0x5c277c90ff2608c4c65445498d63c77264998bb2`
+- Safe owner 3: `0xf7755a64cc76051839968b367400f3215cef8d48`
+
+After testnet faucet funding the deployment authority, the operator executed the chain-specific Safe creation and received:
+
+```text
+DAY9_ARC_SAFE_2_OF_3_PASS
 ```
 
-The passing test exercises the real forked Synthra Factory and Nonfungible Position Manager, canonical Arc USDC contract behavior, Bread's real `BreadV3GraduationAdapter`, a fresh launch token and the real `BreadPermanentLiquidityLocker`.
+Verified Safe:
 
-The PASS proves the tested integration can:
+- address: `0x9004e285521d69197cd9965c301b02161eb1d0d8`
+- version: `1.4.1`
+- threshold: `2`
+- owner count: `3`
+- chain-specific proxy: `true`
+- Safe proxy runtime bytes reported: `171`
+- Guardian remains separate from Safe owners and deployment authority;
+- deployment authority is not a Safe owner;
+- testnet protocol-fee recipient is the Safe, not the deployment EOA;
+- private keys printed: `false`;
+- production authority claim: `false`.
 
-- validate the exact Factory/Position-Manager relationship and enabled fee tier;
-- transfer the canonical Arc USDC amount through Bread's adapter path in the Arc-compatible fork harness;
-- create/initialize a fresh TOKEN/USDC V3 pool through the real Synthra dependencies;
-- mint a full-range V3 position through the real Position Manager;
-- mint the LP NFT directly to `BreadPermanentLiquidityLocker`;
-- confirm `ownerOf(positionId)` is the permanent locker;
-- reconcile USDC used + modeled dust to the supplied USDC amount;
-- reconcile token used + modeled dust to the supplied pool-token amount;
-- leave no adapter token/USDC residue;
-- clear Position Manager allowances;
-- register the locked position in the permanent locker.
+No official Safe service/API support claim is made for Arc; this evidence concerns the on-chain Safe contracts only.
 
-## Foundry / Arc execution-environment qualification
+## Public Arc Testnet economics classification
 
-Stock Foundry does not implement Arc's chain-specific native-USDC precompiles at:
+The controlling Project Sources permit explicit test-only values for testnet integration where production values are not required. They may not be silently promoted into production/public-mainnet configuration.
 
-- `0x1800000000000000000000000000000000000000` — Native Coin Authority;
-- `0x1800000000000000000000000000000000000001` — Native Coin Control.
+Bread's public Arc Testnet rehearsal preserves the controlled Day-9 supply/fee shape and divides only the quote-side fixture values by `10,000` so the full graduation smoke is faucet-sized:
 
-The fork proof therefore uses test-only shims at those exact addresses. This is not Bread production code and is never deployed to Arc.
+```text
+supply = 1000000000000000000000000
+phantomQuote = 1000000          # 1 USDC
+graduationThreshold = 10000000 # 10 USDC
+launchFeeUsdc = 0
+tradeFeeBps = 100
+protocolFeeShareBps = 2500
+maxCreatorTaxBps = 500
+v3Fee = 3000
+smokeQuoteIn = 11000000         # 11 USDC
+smokeFundingFloor = 12000000    # 12 USDC
+```
 
-The Native Coin Control shim reads the real forked Arc blocklist mapping at Solidity slot `2`, preserving the pinned-block blocklist state. The runner also performs a pinned-block RPC preflight showing the existing Synthra Position Manager is not blocklisted before fork substitution. The Native Coin Authority shim reproduces only the native-balance transfer primitive needed for canonical USDC movement, with cheatcode access explicitly limited to the fork-only etched authority address.
+Provenance:
+`DAY9_CONTROLLED_REHEARSAL_QUOTE_VALUES_DIVIDED_BY_10000`
 
-This qualification means the fork PASS is strong real-dependency integration evidence, but it is not a substitute for the source-required clean public Arc Testnet deployment/rehearsal using Arc's native execution client.
+The curve's graduation condition remains the production implementation (`sellableTokens() == 0`); no production curve logic or fee math is modified by the testnet scaling.
 
-## Portability preserved
+## Deployment tooling prepared
 
-This testnet dependency selection does not bind Bread mainnet to Synthra.
+The following execution path is now prepared:
 
-A later mainnet protocol-stack version may independently select canonical Uniswap V4, canonical Uniswap V3, or another approved DEX adapter after its own deployment/security/compatibility gate. Existing launches retain their snapshotted adapter and graduation config hash. A later DEX change applies only to new stack launches and cannot silently redirect existing launches.
+1. `scripts/day9/preflight-bread-arc-testnet-deployment.mjs`
+   - verifies Arc identity, Safe threshold/owners, Guardian/deployer separation, canonical USDC, V3 dependencies, fee tier, fork evidence, deployer key identity and native gas;
+   - derives exact stack/economics/DEX evidence hashes;
+   - runs `DeployDay5Graduation.s.sol` without `--broadcast`;
+   - prints no private keys and sends no transaction.
+2. `scripts/day9/deploy-bread-arc-testnet.mjs`
+   - writes a permission-restricted PREPARED receipt containing the exact source commit before any broadcast;
+   - refuses ambiguous prior broadcast/deployment state;
+   - uses the existing Bread production deployment script;
+   - reads back exact CREATE addresses, writes the existing v1 deployment-manifest schema, executes configure/verify, and marks the manifest VERIFIED only after successful on-chain readback;
+   - is resumable without blind duplicate deployment.
+3. `scripts/day9/smoke-bread-arc-testnet.mjs`
+   - requires a VERIFIED deployment and a 12-USDC testnet balance floor;
+   - writes PREPARED smoke intent before broadcast;
+   - executes the existing Bread launch/buy/graduate/lock/creator-claim/replay smoke;
+   - recovers the exact token and curve from `LaunchCreated` logs;
+   - verifies the permanent Position Manager NFT is owned by the Bread locker;
+   - refuses blind duplicate smoke launches.
 
-Arc mainnet remains unresolved in Bread's canonical mainnet manifest and no Synthra mainnet dependency is selected.
+The existing v1 deployment manifest schema does not permit a `sourceCommit` field (`additionalProperties: false`), so source commit identity is preserved in the permission-restricted deployment receipt and durable PR evidence rather than silently changing the shared manifest schema during this lane.
 
-## Source-defined next gate
+## Portability classification
 
-The financial-invariants source requires integration/fork tests with canonical USDC + selected DEX dependencies in a production-like environment; this fork gate is now PASS for the selected Arc Testnet V3 dependencies.
+Nothing in this lane binds Bread mainnet to Synthra.
 
-The Day-9 release-candidate source still requires a **clean Arc Testnet deployment using production scripts**, followed by code/config/ownership verification and smoke lifecycle before the release-candidate/rehearsal lane can close.
+- `IGraduationAdapter` remains the core boundary.
+- Network manifests hold chain-specific dependencies.
+- Synthra is testnet provenance, not a financial authority or business-logic branch.
+- Arc mainnet remains independently selected/revalidated later.
+- A future stack may select canonical Uniswap V4, canonical V3 or another approved adapter.
+- Existing launches retain their snapshotted adapter/config hash and cannot be redirected by later configuration.
 
-The remaining DEX/deployment work therefore is:
+## Current verdict
 
-1. deploy/wire a test-only Bread protocol stack on public Arc Testnet using the existing production deployment scripts and manifest schema;
-2. use canonical Arc USDC and the verified V3 Factory/Position Manager;
-3. retain the explicit test-only V3 fee `3000` for the controlled rehearsal unless a controlling source changes it;
-4. verify deployed code/config/ownership/adapter config hash and write the deployment manifest;
-5. run the public-testnet launch → trade → graduation → permanent-lock smoke lifecycle;
-6. prove failed external progression/retry cannot duplicate pool/liquidity or double-spend swept assets in the integrated deployment evidence;
-7. retain all remaining Day-9 non-DEX gates: recovery/multisig drill, supported physical matrix, exact-head CI, evidence bundle and RC freeze.
-
-## Current bounded verdict
-
-`SYNTHRA_ARC_TESTNET_V3_REAL_DEPENDENCY_FORK_INTEGRATION_PASS_PUBLIC_TESTNET_BREAD_DEPLOYMENT_PENDING`
+`SYNTHRA_ARC_TESTNET_V3_REAL_DEPENDENCY_FORK_PASS_SAFE_2_OF_3_PASS_BREAD_PUBLIC_TESTNET_DEPLOYMENT_PREFLIGHT_READY`
 
 Consequences:
 
-- Synthra Arc Testnet address discovery: **PASS**.
-- Independent Arc RPC dependency identity: **PASS**.
-- V3 `3000` test/rehearsal fee availability: **PASS** (`tickSpacing = 60`).
-- Arc Testnet network-manifest dependency activation: **PASS / RECORDED**.
-- Real-dependency Bread/Synthra fork integration: **PASS** at fork block `56439192`.
-- `ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED`: **CLEARED for dependency identity and fork compatibility**; public Bread deployment/smoke evidence still required by Day 9.
-- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`: remains **OPEN** until Bread's own public-testnet contracts are deployed, verified and recorded.
-- No Day-9 PASS or RC tag yet.
-- Day 10 remains stopped.
-- No production/mainnet DEX or fee choice is implied.
+- Synthra dependency identity: **PASS**.
+- Independent Arc RPC compatibility: **PASS**.
+- Real Bread↔Synthra fork integration: **PASS**.
+- Genuine chain-specific 2-of-3 Arc Testnet Safe: **PASS**.
+- Bread Arc Testnet deployment preflight tooling: **READY / EXTERNAL EXECUTION PENDING**.
+- Live Bread Arc Testnet core deployment: **NOT YET PERFORMED**.
+- Live Bread lifecycle smoke: **NOT YET PERFORMED**.
+- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`: **OPEN** until deployment/verify succeeds.
+- Safe-compatible threshold recovery drill: **OPEN**.
+- remaining physical/current-device rows: **OPEN**.
+- exact-head CI: **OPEN**; current GitHub Actions runs still fail at startup before job creation, and current Vercel statuses are build-rate-limit failures rather than application-test evidence.
+- No Day-9 PASS, RC tag, Day-10 start, production economics decision or mainnet DEX selection.
