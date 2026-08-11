@@ -51,7 +51,7 @@
           {"path": "src/interfaces/IPoolManager.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_MINIMAL_INITIALIZE_ABI"},
           {"path": "src/types/PoolKey.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_POOL_KEY_ABI"},
           {"path": "src/types/Currency.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_CURRENCY_ABI"},
-          {"path": "src/libraries/TickMath.sol", "spdx": "GPL-3.0-or-later", "usage": "REFERENCE_FOR_SQRT_PRICE_AND_TICK_BOUNDS"}
+          {"path": "src/libraries/TickMath.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_SQRT_PRICE_AND_TICK_BOUNDS"}
         ],
         "excludedImplementationSources": [
           {"path": "src/PoolManager.sol", "reason": "BUSL_IMPLEMENTATION_NOT_REQUIRED_FOR_BREAD_INACTIVE_ADAPTER_SOURCE"},
@@ -64,7 +64,7 @@
         "rootLicense": "MIT",
         "usage": "REFERENCE_FOR_MINIMAL_ALLOWANCE_ABI; NO_NETWORK_ACTIVATION",
         "files": [
-          {"path": "src/interfaces/IAllowanceTransfer.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_APPROVE_ABI; NO_NETWORK_ACTIVATION"}
+          {"path": "src/interfaces/IAllowanceTransfer.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_APPROVE_ABI"}
         ]
       }
     }
