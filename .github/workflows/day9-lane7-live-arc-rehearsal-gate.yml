@@ -1,0 +1,52 @@
+name: day9-lane7-live-arc-rehearsal-gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/day9-lane7-live-arc-rehearsal-gate.yml'
+      - 'tests/day9/live-arc-rehearsal-gate.test.ts'
+      - 'scripts/day9/check-live-arc-rehearsal.mts'
+      - 'scripts/day9/check-rehearsal-readiness.mts'
+      - 'config/networks/arc-testnet.json'
+      - 'config/deployments/arc-testnet.day5.json'
+      - 'docs/evidence/day9-live-arc-rehearsal.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day9-lane7-live-arc-rehearsal-gate.yml'
+      - 'tests/day9/live-arc-rehearsal-gate.test.ts'
+      - 'scripts/day9/check-live-arc-rehearsal.mts'
+      - 'scripts/day9/check-rehearsal-readiness.mts'
+      - 'config/networks/arc-testnet.json'
+      - 'config/deployments/arc-testnet.day5.json'
+      - 'docs/evidence/day9-live-arc-rehearsal.md'
+
+permissions:
+  contents: read
+
+jobs:
+  live-arc-rehearsal-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Run fail-closed live Arc rehearsal gate
+        run: pnpm exec vitest run tests/day9/live-arc-rehearsal-gate.test.ts
+      - name: Confirm existing canonical configure path remains blocked
+        run: |
+          set -euo pipefail
+          if node scripts/day5/configure-graduation.mjs arc-testnet > "$RUNNER_TEMP/day9-live-configure.log" 2>&1; then
+            echo 'Canonical Arc Testnet configure unexpectedly succeeded while Day-9 gate is blocked.' >&2
+            exit 1
+          fi
+          grep -q 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED' "$RUNNER_TEMP/day9-live-configure.log"
+      - name: Validate repository/source manifests
+        run: pnpm validate
