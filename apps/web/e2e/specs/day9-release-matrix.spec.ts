@@ -107,9 +107,13 @@ test('primary trade controls are keyboard reachable with visible focus and reduc
   const connect = trade.getByRole('button', { name: 'Connect wallet' });
   await expect(connect).toBeVisible();
 
+  // Safari/WebKit uses Option+Tab for sequential clickable-item focus unless
+  // the browser/system full-keyboard-navigation preference swaps that behavior.
+  const sequentialFocusKey = testInfo.project.name === 'probe-webkit' ? 'Alt+Tab' : 'Tab';
+
   let reached = false;
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(sequentialFocusKey);
     reached = await connect.evaluate((element) => element === document.activeElement);
     if (reached) break;
   }
