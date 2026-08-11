@@ -110,9 +110,9 @@ function runtimeEnv(extra) {
   };
 }
 
-function spawnRuntime(label, command, args, env) {
+function spawnRuntime(label, command, args, env, cwd = repositoryRoot) {
   const child = spawn(command, args, {
-    cwd: repositoryRoot,
+    cwd,
     env: runtimeEnv(env),
     stdio: ['ignore', 'inherit', 'inherit'],
   });
@@ -188,7 +188,7 @@ async function main() {
     '127.0.0.1',
     '--port',
     String(WEB_PORT),
-  ], {});
+  ], {}, resolve(repositoryRoot, 'apps/web'));
   await waitFor('web root', async () => (await httpGet(WEB_PORT, '/explore')).status < 500);
 
   log('== 9. Bounded same-origin LAN entrypoint ==');
