@@ -15,14 +15,14 @@ async function loadLiveArcGate() {
 }
 
 describe('Day 9 live Arc Testnet rehearsal gate', () => {
-  it('keeps live rehearsal blocked only by the undeployed Bread manifest after DEX evidence passes', async () => {
+  it('authorizes the already-verified canonical Arc Testnet deployment state without blockers', async () => {
     const module = await loadLiveArcGate();
     expect(module?.checkLiveArcRehearsal).toBeTypeOf('function');
     if (!module) return;
 
     expect(module.checkLiveArcRehearsal()).toEqual({
-      authorized: false,
-      blockers: ['ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY'],
+      authorized: true,
+      blockers: [],
     });
   });
 });
