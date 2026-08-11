@@ -12,7 +12,7 @@ The controlling repaired pre-final integrated evidence is Day-9 Lane 6 run `3144
 | Desktop Firefox | PASS | AUTOMATED_BROWSER_ENGINE | Firefox-engine automation executed. This is an engine-automation claim only. |
 | Desktop WebKit | PASS | AUTOMATED_BROWSER_ENGINE | WebKit-engine automation executed. This is not a Safari-branded claim. |
 | Mobile Chromium emulation | PASS | EMULATION | Mobile Chromium emulation executed, including retained mobile keyboard-pressure trade coverage. This is not a physical-device claim. |
-| macOS Safari | EXTERNAL_EXECUTION_REQUIRED | EXTERNAL_EXECUTION | No actual current macOS Safari environment has executed in the available GitHub tooling. WebKit-on-Linux is not relabeled as Safari. |
+| macOS Safari | EXTERNAL_EXECUTION_REQUIRED | EXTERNAL_EXECUTION | No actual current macOS Safari environment has executed in the available GitHub tooling. WebKit-on-Linux is not relabeled as Safari. See PR #92 for subsequently captured operator-executed Safari staging evidence; that evidence remains separate until integrated. |
 | iOS Safari | EXTERNAL_EXECUTION_REQUIRED | EXTERNAL_EXECUTION | No physical/current iOS Safari execution evidence is available in the connected tooling. |
 | Android Chrome physical | EXTERNAL_EXECUTION_REQUIRED | EXTERNAL_EXECUTION | No physical representative Android Chrome execution evidence is available in the connected tooling. |
 | Desktop Edge | EXTERNAL_EXECUTION_REQUIRED | EXTERNAL_EXECUTION | No actual Microsoft Edge branded-browser execution has been performed; Chromium engine automation is not relabeled as Edge. |
