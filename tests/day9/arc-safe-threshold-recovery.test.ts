@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   classifySafeRecoveryState,
   predecessorForOwner,
+  safeEthSignToStandardSignature,
   sortSafeSignatures,
+  splitPackedSafeSignatures,
 } from '../../scripts/day9/arc-safe-threshold-recovery-lib.mjs';
 
 const SENTINEL = '0x0000000000000000000000000000000000000001';
@@ -89,5 +91,15 @@ describe('Day 9 Arc Safe threshold recovery', () => {
       '0x' + '11'.repeat(65),
       '0x' + '33'.repeat(65),
     ]);
+  });
+
+  it('splits two packed signatures and reverses Safe eth_sign v encoding for independent recovery', () => {
+    const safeSig1 = '0x' + '11'.repeat(64) + '1f';
+    const safeSig2 = '0x' + '22'.repeat(64) + '20';
+    const packed = `0x${safeSig1.slice(2)}${safeSig2.slice(2)}`;
+
+    expect(splitPackedSafeSignatures(packed)).toEqual([safeSig1, safeSig2]);
+    expect(safeEthSignToStandardSignature(safeSig1)).toBe('0x' + '11'.repeat(64) + '1b');
+    expect(safeEthSignToStandardSignature(safeSig2)).toBe('0x' + '22'.repeat(64) + '1c');
   });
 });
