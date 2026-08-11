@@ -29,6 +29,45 @@ function forwardableHeaders(headers: IncomingMessage['headers']): Record<string,
   return out;
 }
 
+function removeUpgradeInsecureRequests(value: string): string {
+  return value
+    .split(';')
+    .map((directive) => directive.trim())
+    .filter(
+      (directive) =>
+        directive.length > 0 && directive.toLowerCase() !== 'upgrade-insecure-requests',
+    )
+    .join('; ');
+}
+
+function responseHeadersForLan(
+  headers: IncomingMessage['headers'],
+  isApi: boolean,
+): Record<string, string | string[]> {
+  const out = forwardableHeaders(headers);
+  if (isApi) return out;
+
+  const cspName = Object.keys(out).find(
+    (name) => name.toLowerCase() === 'content-security-policy',
+  );
+  if (!cspName) return out;
+
+  const csp = out[cspName];
+  if (typeof csp === 'string') {
+    const adjusted = removeUpgradeInsecureRequests(csp);
+    if (adjusted.length > 0) out[cspName] = adjusted;
+    else delete out[cspName];
+  } else if (Array.isArray(csp)) {
+    const adjusted = csp
+      .map(removeUpgradeInsecureRequests)
+      .filter((value) => value.length > 0);
+    if (adjusted.length > 0) out[cspName] = adjusted;
+    else delete out[cspName];
+  }
+
+  return out;
+}
+
 /**
  * Bounded same-origin router for the operator LAN acceptance environment.
  *
@@ -37,6 +76,13 @@ function forwardableHeaders(headers: IncomingMessage['headers']): Record<string,
  * is decided solely by request path against two pinned loopback upstreams, so
  * a forged Host header cannot redirect traffic and this can never act as an
  * open proxy.
+ *
+ * The acceptance origin is intentionally plain HTTP so physical devices on the
+ * operator LAN can reach it without installing a local CA. Production Next.js
+ * correctly emits `upgrade-insecure-requests`; forwarding that directive over
+ * this HTTP-only boundary would make browsers upgrade `/_next/*` assets to
+ * HTTPS, where no listener exists. Only this LAN proxy strips that one
+ * directive from web responses. The production CSP itself is not weakened.
  */
 export function createOriginProxy(options: OriginProxyOptions): Server {
   const apiPrefix = options.apiPrefix ?? '/v1/';
@@ -78,7 +124,10 @@ export function createOriginProxy(options: OriginProxyOptions): Server {
         headers: forwardableHeaders(incoming.headers),
       },
       (upstreamResponse) => {
-        response.writeHead(upstreamResponse.statusCode ?? 502, upstreamResponse.headers);
+        response.writeHead(
+          upstreamResponse.statusCode ?? 502,
+          responseHeadersForLan(upstreamResponse.headers, isApi),
+        );
         upstreamResponse.pipe(response);
       },
     );
