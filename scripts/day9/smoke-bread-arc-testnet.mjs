@@ -184,6 +184,7 @@ if (!existsSync(receiptFile)) fail(`Bread deployment receipt not found: ${receip
 
 const env = parseEnv(secretFile);
 const rpcUrl = requireValue(env, 'ARC_RPC_URL');
+const usdc = requireValue(env, 'BREAD_USDC');
 const operator = requireValue(env, 'BREAD_SMOKE_OPERATOR').toLowerCase();
 const smokePrivateKey = requireValue(env, 'BREAD_SMOKE_PRIVATE_KEY');
 const secrets = [
@@ -257,7 +258,7 @@ if (receipt.smoke?.phase === 'PREPARED') {
 }
 
 const currentUsdc = parseUint(
-  run('cast', ['call', manifest.adapter ? env.BREAD_USDC : '', 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
+  run('cast', ['call', usdc, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
   'smoke operator USDC balance',
 );
 const funding = assessArcTestnetSmokeFunding(currentUsdc);
@@ -322,7 +323,7 @@ if (!funding.ready) {
   if (creatorClaimRemaining !== 0n) fail(`creator claim balance remains after smoke: ${creatorClaimRemaining}`);
 
   const finalUsdc = parseUint(
-    run('cast', ['call', env.BREAD_USDC, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
+    run('cast', ['call', usdc, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
     'smoke operator final USDC balance',
   );
 
