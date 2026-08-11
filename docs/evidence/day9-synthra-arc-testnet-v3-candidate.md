@@ -1,6 +1,6 @@
 # Day 9 — Synthra Arc Testnet V3 Candidate Evidence
 
-Status: **CANDIDATE CONFIRMED ON ARC TESTNET — EXACT DEPLOYMENT IDENTITY UNRESOLVED — ACTIVATION BLOCKED**
+Status: **CANDIDATE CONFIRMED ON ARC TESTNET — PORTABLE V3 VALIDATOR READY — EXACT DEPLOYMENT IDENTITY UNRESOLVED — ACTIVATION BLOCKED**
 
 Checked: 2026-08-11
 Baseline: `c21b49a1f8edaaad999e461edb0ce602071bda5c`
@@ -14,6 +14,7 @@ Candidate role: Arc Testnet-only graduation DEX candidate behind Bread's existin
    - Source: `https://docs.synthra.org/`
 3. Synthra publishes V3-named package surfaces including `@synthra-swap/v3-core`, `@synthra-swap/v3-periphery`, and `@synthra-swap/v3-sdk`. These are useful source/ABI research inputs but do not by themselves prove which exact contracts are the current Arc Testnet deployment.
 4. Bread already has an inactive-by-default `BreadV3GraduationAdapter` implementing `IGraduationAdapter` against a narrow V3-compatible Factory / Position Manager ABI. Its existence does not authorize network activation.
+5. Bread now has a **vendor-neutral** pre-activation validator at `scripts/day9/verify-v3-dex-candidate.mjs`. It accepts only RPC/chain/USDC/Factory/Position-Manager/fee inputs and contains no Synthra-specific branch or address. Its focused fixtures cover the compatible case plus wrong-chain, missing-code, Position-Manager/Factory mismatch, disabled-fee-tier and non-6-decimal-USDC rejection.
 
 ## What is not yet established
 
@@ -23,9 +24,17 @@ The bounded research performed on 2026-08-11 did **not** yet produce an authorit
 - Nonfungible Position Manager;
 - selected fee tier.
 
+The final discovery pass checked the current Synthra documentation surface, Synthra V3 package/repository surfaces, Arc's own Synthra spotlight, Arc Testnet explorer/indexed surfaces and current web indexing for chain ID `5042002`. None provided a sufficiently authoritative Arc-specific Factory + Position-Manager pair that could be independently bound to the current Synthra deployment.
+
 Search-engine snippets, another network's Synthra deployment, a copied chain list, or an arbitrary address observed in a frontend are insufficient for Bread's financial activation gate.
 
 No candidate address is recorded here because the Project Sources prohibit inventing or promoting unresolved DEX dependencies.
+
+## Application-security caution
+
+The Synthra project itself has first-party documentation and an Arc ecosystem presence, but the `app.synthra.org` subdomain is currently flagged by multiple independent automated reputation services as phishing/high-risk. Automated reputation systems can produce false positives, so this is **not** treated as proof that Synthra's contracts are malicious. It is, however, sufficient reason not to use the application frontend as a trust root for Bread deployment identity and not to require wallet interaction with that frontend during this integration lane.
+
+Bread activation therefore depends on official deployment publication and independently reproducible on-chain identity checks, not on values observed in the application UI.
 
 ## Portability classification
 
@@ -48,9 +57,11 @@ The candidate remains blocked until a reproducible Arc Testnet check proves all 
 - the V3 ABI behavior required by `BreadV3GraduationAdapter` is compatible;
 - a real Bread testnet graduation can create/initialize the TOKEN/USDC pool, mint the position to `BreadPermanentLiquidityLocker`, preserve permanent-lock ownership, return/reconcile dust correctly, and satisfy the existing graduation invariants/retry protections.
 
+The generic validator now mechanically covers the first dependency-identity subset. The full money-path compatibility proof remains a separate gate and cannot run before the exact Synthra Arc Testnet dependencies are resolved.
+
 ## Current verdict
 
-`SYNTHRA_ARC_TESTNET_V3_CANDIDATE_DISCOVERY_PASS_DEPLOYMENT_IDENTITY_BLOCKED`
+`SYNTHRA_ARC_TESTNET_V3_PORTABILITY_READY_DEPLOYMENT_IDENTITY_BLOCKED`
 
 Consequences:
 
