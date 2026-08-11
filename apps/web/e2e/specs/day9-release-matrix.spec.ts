@@ -4,7 +4,11 @@ import path from 'node:path';
 import { ACTIVE_TOKEN } from '../fixtures/constants';
 import { expect, test } from '../fixtures/browser';
 
-type MatrixStatus = 'PASS' | 'EXTERNAL_EXECUTION_REQUIRED' | 'NO_FIRST_CLASS_WALLET_BROWSER_CLAIM';
+type MatrixStatus =
+  | 'PASS'
+  | 'PARTIAL_PASS_EXTERNAL_USER_EXECUTION'
+  | 'EXTERNAL_EXECUTION_REQUIRED'
+  | 'NO_FIRST_CLASS_WALLET_BROWSER_CLAIM';
 type EvidenceKind =
   | 'AUTOMATED_BROWSER_ENGINE'
   | 'EMULATION'
@@ -62,7 +66,20 @@ test('release matrix distinguishes automated engines, emulation, physical device
   expect(mobileEmulation.status).toBe('PASS');
   expect(mobileEmulation.evidenceKind).toBe('EMULATION');
 
-  for (const target of ['macOS Safari', 'iOS Safari', 'Android Chrome physical']) {
+  const macosSafari = row(rows, 'macOS Safari');
+  expect([
+    'PASS',
+    'PARTIAL_PASS_EXTERNAL_USER_EXECUTION',
+    'EXTERNAL_EXECUTION_REQUIRED',
+  ]).toContain(macosSafari.status);
+  if (macosSafari.status === 'PASS') {
+    expect(macosSafari.evidenceKind).toBe('PHYSICAL_EXECUTION');
+    expect(macosSafari.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
+  } else {
+    expect(macosSafari.evidenceKind).toBe('EXTERNAL_EXECUTION');
+  }
+
+  for (const target of ['iOS Safari', 'Android Chrome physical']) {
     const current = row(rows, target);
     expect(['PASS', 'EXTERNAL_EXECUTION_REQUIRED']).toContain(current.status);
     if (current.status === 'PASS') {
