@@ -45,7 +45,7 @@ integration_baseline:
   day9_live_arc_deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
   day9_live_arc_smoke_recovery_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
   day9_safe_recovery_execution_head: bb04ee1574be298fe4e45b1a2de7e07310638514
-  exact_head_local_release_matrix_head: 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
+  exact_head_local_release_matrix_head: 80b94dcf106b5dce2f6000dab1205405084535ac
   status: DAY_9_ARC_TESTNET_LIFECYCLE_SAFE_RECOVERY_AND_EXACT_HEAD_LOCAL_MATRIX_PASS_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
 
 day8_scope:
@@ -153,7 +153,7 @@ day9_live_arc:
 day9_verdict:
   result: DAY_9_INCOMPLETE_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
   exact_head_local_release_matrix: PASS
-  exact_head_local_release_matrix_verified_head: 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
+  exact_head_local_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
   exact_head_external_ci: UNAVAILABLE_STARTUP_FAILURE_ZERO_JOBS
   empty_environment_to_usable_launchpad: PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
   rollback: PASS
@@ -199,7 +199,7 @@ verification:
   day9_safe_threshold_recovery_end_nonce: 2
   day9_safe_original_owner_set_restored: true
   day9_exact_head_release_matrix: PASS_LOCAL
-  day9_exact_head_release_matrix_verified_head: 57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71
+  day9_exact_head_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
   day9_exact_head_release_matrix_evidence: docs/evidence/day9-exact-head-local-release-matrix.md
   day9_exact_head_browser_matrix_result: PASS_76_TESTS_40_PASSED_36_TASK_OWNERSHIP_SKIPS_0_FAILED
   day9_webkit_accessibility_repairs: PASS_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
@@ -233,6 +233,15 @@ day9_cleared_blockers:
   - DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT
   - BREAD_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_REQUIRED
   - DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED
+
+day9_implementation_prerequisites_repaired:
+  mobile_wallet_connectivity: PASS_WALLETCONNECT_ALONGSIDE_INJECTED
+  mobile_wallet_connectivity_reason: "injected() alone can never present a wallet on ordinary iOS Safari or Android Chrome; 04C names WalletConnect-compatible wallets"
+  executable_lan_runtime_composition: PASS_OPERATOR_ONLY_SAME_ORIGIN
+  executable_lan_runtime_composition_reason: "no .listen() existed anywhere; real API/indexer could not be launched and no single-origin web+API composition existed"
+  canonical_stack_version_derivation: 0xc862a0ec7e5eb592f1a77b4971552b79f65528b1f1addf97fdfc42b8f774e063
+  canonical_stack_version_proof: RECONCILES_WITH_MANIFEST_ECONOMICS_CONFIG_HASH
+  prior_classification_note: "PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED was partly premature while these two prerequisites were missing"
 
 day9_blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; required iOS Safari, representative physical Android Chrome, and current branded Edge rows remain external and engine emulation is not relabeled"

@@ -2,9 +2,10 @@
 
 Status: **DAY9_EXACT_HEAD_LOCAL_RELEASE_MATRIX_PASS — EXTERNAL CI AND PHYSICAL/BRANDED DEVICE ROWS REMAIN OPEN**
 
-Verified code head: `57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71`
 Durable `main` at verification time: `c21b49a1f8edaaad999e461edb0ce602071bda5c`
 Candidate PR: #93 (open, draft, unmerged)
+
+The matrix has been rerun and passed at each subsequent head. The WebKit sections below were verified at code head `57d1dc9f63ed4ba61e7dc1d16eb41d1c29fb3b71`; the Gap-1 and Gap-2 sections appended at the end were verified at `80b94dcf106b5dce2f6000dab1205405084535ac`. No earlier-head result is relied upon for a later head.
 
 This evidence records the complete Day-9 exact-head local release matrix executed against the exact candidate head, plus the systematic debugging that closed the two WebKit keyboard/focus failures which previously stopped Lane 6. It does **not** declare Day-9 PASS, RC readiness, public-money readiness, or Day-10 start.
 
@@ -137,3 +138,56 @@ Unchanged. The repairs touch a browser focus-capture path, a shared UI prop type
 - `DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED` — the local exact-head matrix now passes, but external GitHub Actions has not executed at this head.
 
 PR #93 remains draft and unmerged. No RC tag is authorized and Day 10 remains stopped.
+
+---
+
+# Day-9 implementation prerequisites — Gap 1 and Gap 2
+
+The physical rows were previously classified `EXTERNAL_EXECUTION_REQUIRED`. That was partly premature: two implementation prerequisites were missing, so the physical browsers could not have executed the source-required journeys even with a willing operator and device.
+
+## Gap 1 — mobile wallet connectivity (repaired)
+
+`apps/web/lib/wallet/config.ts` shipped `connectors: [injected()]`, which can only reach a wallet through EIP-6963/EIP-1193 injection. Chrome for Android supports no extensions at all, and no mainstream EVM wallet ships an iOS Safari extension, so neither mandatory 04D mobile target could ever be presented with a wallet. Desktop Edge was unaffected because Chromium extensions load there.
+
+Every Playwright fixture injects a synthetic `window.ethereum`, so the automated matrix proved Bread's transaction logic *given* a provider and never proved provider availability on a real device.
+
+Repaired by adding wagmi's `walletConnect()` connector alongside `injected()` — the provider-neutral remote path named by 04C. The runtime already iterates `useConnectors()`, so no transaction, recovery or network-switch logic changed. Exactly one dependency, `@walletconnect/ethereum-provider`, lazily imported at connect time and absent from every build manifest. The project id is a public client identifier read from `NEXT_PUBLIC_BREAD_WALLETCONNECT_PROJECT_ID`; absent configuration fails closed to injected-only. Signing remains entirely user-side.
+
+## Gap 2 — executable LAN runtime composition (repaired)
+
+No `.listen()` existed anywhere in the repository. `createBreadApi()` and `runIndexerCli()` were only ever called from tests, neither app had a start script or bin, `apps/web` had no `/v1` route handlers, and the infra compose provided only Postgres and Redis. There was therefore no way to serve the web app and the indexed API on one origin — which is why the earlier macOS Safari run reported `Portfolio unavailable`.
+
+Repaired with an operator-only composition: real indexer, real read API, production Next.js build, and one bounded same-origin LAN entrypoint. Every piece is a shell around existing Day-6 code; no second API or indexing model exists.
+
+### Canonical stack identity derivation
+
+The verified deployment manifest carries no `stackVersion`, yet API and indexer checkpoints key on it. Rather than mutating deployment truth or inventing a value, the runtime derives it from the existing canonical label:
+
+```text
+stackVersion = keccak256("BREAD_DAY9_ARC_TESTNET_STACK_V1")
+             = 0xc862a0ec7e5eb592f1a77b4971552b79f65528b1f1addf97fdfc42b8f774e063
+```
+
+Recomputing the deployment economics hash from that derivation reproduces the manifest's recorded `economicsConfigHash` exactly:
+
+```text
+recomputed = 0x081b597d7b603cb67d3921f269f7940a84221524b2d9baefc4f319c9f15f9747
+recorded   = 0x081b597d7b603cb67d3921f269f7940a84221524b2d9baefc4f319c9f15f9747
+```
+
+This proves the derived identity is the identity the deployed stack was configured with.
+
+### Verified by real execution
+
+- API process listened and served canonical `/v1/status`: `503 INDEXER_NOT_READY` before catch-up, then `200` carrying real freshness metadata with a truthful `LAGGING` status, correct factory, deployment start block and derived stack version.
+- One real indexer cycle against Arc Testnet advanced the committed checkpoint `56448201 -> 56448501` against observed head `56487382`.
+- The bounded proxy served that real API at `/v1/*` and the web app at all other paths on a single origin.
+- Real execution also caught and fixed a seed defect where the genesis checkpoint preceded the deployment-start lower bound.
+
+### Security boundary
+
+Routing is decided solely by path against two pinned loopback upstreams, so a forged `Host` header cannot redirect traffic and the proxy can never act as an open proxy. Absolute-form request targets are rejected, `/v1` traversal is contained by normalized-path comparison, and hop-by-hop headers are stripped. Only the bounded proxy binds the LAN interface; Postgres, Redis, the API and the web app remain loopback-only, and the API refuses a non-loopback bind. No signing material is loaded by any process and the chain client is read-only with no account attached.
+
+## Consequence
+
+With both prerequisites repaired, the remaining physical rows — iOS Safari, representative physical Android Chrome, and current branded Microsoft Edge — are now genuinely external execution requirements. They remain open, and no wallet brand is promoted to first-class on the basis of this work.

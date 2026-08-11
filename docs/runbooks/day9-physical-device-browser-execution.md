@@ -14,16 +14,38 @@ macOS Safari already holds `PARTIAL_PASS_EXTERNAL_USER_EXECUTION`. It is not upg
 
 ---
 
-## Environment prerequisite — resolve before starting
+## Environment — bounded LAN acceptance composition
 
-The web app reads through the Day-6 indexed API at **same-origin** `/v1/*` (`createBreadApiClient` defaults `baseUrl` to `''`). `apps/web` contains no `/v1` route handlers, and `infra/docker/compose.yaml` provides only Postgres and Redis. There is therefore **no repository-defined single-origin web+API deployment**, which is exactly why the earlier macOS Safari run reported `Portfolio unavailable`.
+Two implementation prerequisites previously blocked physical execution and are now repaired:
 
-Physical iOS/Android devices additionally cannot reach `127.0.0.1`.
+1. **Mobile wallet connectivity.** `injected()`-only could never present a wallet on ordinary iOS Safari or Android Chrome. A WalletConnect connector now ships alongside `injected()`.
+2. **Executable runtime.** The repository had no `.listen()` anywhere, so the real API/indexer could not be launched and no single-origin composition existed — which is exactly why the earlier macOS Safari run reported `Portfolio unavailable`. An operator-only LAN composition now exists.
 
-Pick one origin before executing, and record which was used:
+### Start
 
-1. **LAN origin (no new infrastructure).** Run Postgres/Redis, the indexer and the API locally, serve the web app bound to the machine's LAN address, and put the API at `/v1` on that same origin. Devices join the same network. Requires no deploy decision.
-2. **Deployed staging origin.** A staging environment serving web and API on one origin. This is an infrastructure decision and is **not** made by this runbook.
+```bash
+export NEXT_PUBLIC_BREAD_WALLETCONNECT_PROJECT_ID=<your Reown project id>
+node scripts/day9/lan/run-lan-acceptance.mjs
+```
+
+The script brings up Postgres and Redis, migrates the schema, catches the **real** Bread indexer up against Arc Testnet from the verified deployment start block, starts the **real** Bread read API on loopback, builds and starts the production Next.js app on loopback, and exposes one LAN origin that serves the web app and proxies `/v1/*` to the real API. It prints:
+
+```text
+BREAD_LAN_ACCEPTANCE_READY
+  LAN origin for physical devices: http://<lan-ip>:4000
+```
+
+Point every physical device at that origin. Postgres, Redis, the API and the web app remain loopback-only; only the bounded proxy listens on the LAN.
+
+The startup gate fails closed unless Postgres and Redis are healthy, migrations are applied, the canonical context resolves, the indexer checkpoint reconciles against the chain, `/v1/status` returns a real indexed response through **both** loopback and the LAN origin, Explore loads through the LAN origin, browser fixture mode is off, and the canonical deployment/network files are byte-for-byte unchanged.
+
+### Reown project id
+
+Required only for the browser acceptance run, because WalletConnect will not dial without it. It is a **public client identifier**, not a secret. Obtain it from `dashboard.reown.com`, allowlist the LAN origin there, and export it as shown above. Without it the app degrades to injected-only, which cannot serve the mobile rows.
+
+### Stop
+
+Press `Ctrl-C`. Teardown terminates the web, API, indexer and proxy processes, stops the local infrastructure, and leaves no LAN listener behind.
 
 Recording a row as PASS while the indexed API was unreachable is not permitted — that is the environment limitation already documented for the macOS Safari run, not a browser result.
 
