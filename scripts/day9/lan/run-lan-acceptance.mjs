@@ -110,8 +110,8 @@ function runtimeEnv(extra) {
   };
 }
 
-function spawnRuntime(label, args, env) {
-  const child = spawn(process.execPath, args, {
+function spawnRuntime(label, command, args, env) {
+  const child = spawn(command, args, {
     cwd: repositoryRoot,
     env: runtimeEnv(env),
     stdio: ['ignore', 'inherit', 'inherit'],
@@ -166,7 +166,7 @@ async function main() {
   });
 
   log('== 6-7. Real Bread read API (loopback only) ==');
-  spawnRuntime('bread-api', [tsx, 'apps/api/src/lan/api-server.ts'], {
+  spawnRuntime('bread-api', tsx, ['apps/api/src/lan/api-server.ts'], {
     BREAD_LAN_API_MAIN: '1',
     BREAD_API_HOST: '127.0.0.1',
     BREAD_API_PORT: String(API_PORT),
@@ -184,7 +184,13 @@ async function main() {
   await run('node_modules/.bin/pnpm', ['--filter', '@bread/web', 'build']).catch(async () => {
     await run('npx', ['--no-install', 'pnpm', '--filter', '@bread/web', 'build']);
   });
-  spawnRuntime('bread-web', [resolve(repositoryRoot, 'apps/web/node_modules/.bin/next'), 'start', '--hostname', '127.0.0.1', '--port', String(WEB_PORT)], {});
+  spawnRuntime('bread-web', resolve(repositoryRoot, 'apps/web/node_modules/.bin/next'), [
+    'start',
+    '--hostname',
+    '127.0.0.1',
+    '--port',
+    String(WEB_PORT),
+  ], {});
   await waitFor('web root', async () => (await httpGet(WEB_PORT, '/explore')).status < 500);
 
   log('== 9. Bounded same-origin LAN entrypoint ==');
