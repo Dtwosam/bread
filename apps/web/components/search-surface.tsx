@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
 
 import type { IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button } from '@bread/ui';
@@ -31,10 +31,8 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     enabled: open && intent.kind === 'search',
   });
 
-  function openSearch() {
-    returnFocusRef.current = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
+  function openSearch(event: MouseEvent<HTMLButtonElement>) {
+    returnFocusRef.current = event.currentTarget;
     setOpen(true);
   }
 
