@@ -1,4 +1,4 @@
-schema_version: 1.54
+schema_version: 1.55
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-11
@@ -17,8 +17,8 @@ completed_checkpoints:
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "Public Arc Testnet lifecycle smoke after verified canonical deployment"
-active_gate: DAY9_PUBLIC_ARC_TESTNET_SMOKE_PENDING
+active_lane: "Real 2-of-3 Safe threshold signer recovery/rotation after public Arc lifecycle PASS"
+active_gate: DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -31,19 +31,20 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.53
-  prior_state_git_commit: c21b49a1f8edaaad999e461edb0ce602071bda5c
-  prior_state_blob_sha: 3804c9ba8d893b2fd93f6acdfd2c8bc71141112d
+  prior_state_schema_version: 1.54
+  prior_state_git_commit: 841264871a5678659d192f3c6aec92d4915757d7
+  prior_state_blob_sha: 157fb13cef298d74ae9943be2220f5783fe224ee
   note: >-
-    v1.54 supersedes the prior external-prerequisite blocked snapshot only for facts now proven on Arc Testnet: verified V3-compatible DEX dependencies, real-dependency fork integration, a genuine chain-specific 2-of-3 Safe, and a verified Bread public Arc Testnet deployment. It does not declare Day 9 complete or PASS, create an RC tag, authorize Day 10, freeze production economics, select an Arc mainnet DEX, or waive remaining release gates.
+    v1.55 records the operator-executed public Arc Testnet lifecycle smoke and independent final verification. It clears only the public lifecycle-smoke blocker. It does not declare Day 9 complete or PASS, create an RC tag, authorize Day 10, freeze production economics, select an Arc mainnet DEX, waive threshold recovery, waive physical/current-device evidence, or claim exact-head CI is green.
 
 integration_baseline:
-  id: DAY9-ARC-TESTNET-DEPLOYMENT-VERIFIED-SMOKE-PENDING
+  id: DAY9-ARC-TESTNET-PUBLIC-LIFECYCLE-SMOKE-PASS-RECOVERY-PENDING
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
   active_branch: day9/synthra-arc-testnet-v3-candidate
   active_pr: 93
   day9_live_arc_deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-  status: DAY_9_ARC_TESTNET_DEPLOYMENT_VERIFY_PASS_SMOKE_PENDING
+  day9_live_arc_smoke_recovery_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
+  status: DAY_9_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_PASS_THRESHOLD_RECOVERY_PENDING
 
 day8_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
@@ -60,11 +61,11 @@ day9_scope:
   task4_service_rollback: PASS
   task5_recovery_drills: PARTIAL_PASS_THRESHOLD_RECOVERY_EXECUTION_REQUIRED
   task6_browser_engine_matrix: PASS_AUTOMATED_WITH_PHYSICAL_EXTERNAL
-  task7_live_arc_gate: DEPLOYMENT_VERIFY_PASS_SMOKE_PENDING
-  task8_final_rc_verdict: NOT_RERUN_AFTER_LIVE_ARC_DEPLOYMENT
+  task7_live_arc_gate: PUBLIC_LIFECYCLE_SMOKE_PASS
+  task8_final_rc_verdict: NOT_RERUN_AFTER_LIVE_ARC_SMOKE
   exact_head_integration_matrix: MUST_RERUN_AFTER_REMAINING_DAY9_GATES
   production_change_note: >-
-    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed the already reviewed Bread contracts using explicit non-production testnet economics. No Arc mainnet DEX, production economics, unrestricted public-money authorization, server custody, or alternate financial ledger was introduced.
+    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. No Arc mainnet DEX, production economics, unrestricted public-money authorization, server custody, or alternate financial ledger was introduced.
 
 day9_live_arc:
   dex_dependency:
@@ -110,35 +111,53 @@ day9_live_arc:
     production_money_claim: false
     production_authority_claim: false
   smoke:
-    status: PENDING
-    quote_in_usdc_atomic: 11000000
-    funding_floor_usdc_atomic: 12000000
+    status: PASS
+    deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
+    recovery_implementation_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
+    execution_mode: DIRECT_ARC_RPC_WITH_REAL_NODE_SIMULATION_PER_TRANSACTION
+    recovered_from_prepared_intent: true
+    token: 0x9dc6c650929b641f93269a3b6d7d5237297d938b
+    curve: 0x68db37eea822d42af898b9777a96bef022a0e36d
+    launch_transaction_hash: 0xb5542a77d767a784f6ce4dc77d3e00a50170256a1320179947d25b2c468883a5
+    position_manager: 0x444Cc395346428216fB6f2892eb03cB804aE4CD5
+    position_id: 265870
+    nft_owner: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
+    creator_claim_log_count: 1
+    creator_claim_remaining: 0
+    graduation_residue_zero: true
+    replay_rejected: true
+    operator_usdc_at_resume: 19696729
+    operator_usdc_after: 9473184
     production_money_claim: false
+    private_keys_printed: false
 
 day9_verdict:
-  result: DAY_9_INCOMPLETE_PUBLIC_ARC_SMOKE_AND_RELEASE_GATES_PENDING
-  empty_environment_to_usable_launchpad: DEPLOYMENT_VERIFIED_SMOKE_PENDING
+  result: DAY_9_INCOMPLETE_THRESHOLD_RECOVERY_PHYSICAL_AND_EXACT_HEAD_RELEASE_GATES_PENDING
+  empty_environment_to_usable_launchpad: PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
   rollback: PASS
   reconcile: PASS
   supported_matrix: PHYSICAL_CURRENT_DEVICE_COMPLETION_REQUIRED
   canonical_arc_testnet_deployment: PASS_VERIFIED
+  public_arc_testnet_lifecycle_smoke: PASS
   recovery_drills: THRESHOLD_RECOVERY_EXECUTION_REQUIRED
   browser_engine_matrix: PASS
   physical_device_matrix: EXTERNAL_EXECUTION_PARTIAL_REMAINDER
   wallet_browser_matrix: NO_FIRST_CLASS_WALLET_BROWSER_CLAIM
   live_arc_broadcast_performed: true
-  live_arc_smoke_performed: false
+  live_arc_smoke_performed: true
   rc_tag_created: false
   day10_started: false
 
 working_branches:
   - day9/synthra-arc-testnet-v3-candidate
+  - docs/day9-physical-safari-evidence-20260811
 
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
   day8_complete: true
   day9_pr: 93
+  day9_physical_safari_pr: 92
   day9_started: true
   day9_complete: false
   day9_rc_tag_created: false
@@ -149,7 +168,11 @@ verification:
   day9_live_arc_fork_block: 56439192
   day9_live_arc_deployment_start_block: 56448201
   day9_live_arc_manifest_status: VERIFIED
-  day9_live_arc_smoke: PENDING
+  day9_live_arc_smoke: PASS
+  day9_live_arc_smoke_token: 0x9dc6c650929b641f93269a3b6d7d5237297d938b
+  day9_live_arc_smoke_position_id: 265870
+  day9_live_arc_smoke_creator_claim: PASS_LOG_COUNT_1_REMAINING_ZERO
+  day9_live_arc_smoke_replay_rejection: PASS
   day9_exact_head_release_matrix: MUST_RERUN
   github_actions_current_state: STARTUP_FAILURE_BEFORE_JOB_CREATION
   vercel_current_state: BUILD_RATE_LIMIT_FAILURES
@@ -169,7 +192,6 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 day9_blockers:
-  - BREAD_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_REQUIRED
   - DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED
@@ -178,21 +200,21 @@ day9_cleared_blockers:
   - ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED
   - ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY
   - DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT
+  - BREAD_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_REQUIRED
 
 day9_blocker_scope:
-  BREAD_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_REQUIRED: "verified public Arc Testnet Bread stack exists; execute the bounded testnet launch/buy/graduate/permanent-lock/creator-claim/replay smoke before RC consideration"
-  DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED: "a genuine 2-of-3 Safe environment now exists; execute the required threshold recovery drill rather than substituting a single EOA"
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "required current physical/branded browser-device rows are not all durably reconciled; engine emulation is not relabeled"
-  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "rerun the final exact-head integration/release matrix after all remaining Day-9 gates; current GitHub Actions startup failures and Vercel build-rate-limit statuses are not a PASS"
+  DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED: "a genuine 2-of-3 Safe environment exists; execute and independently verify a real threshold signer-change/recovery sequence rather than substituting a single EOA or prose evidence"
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence exists in PR #92, but required physical/current branded-device rows are not all satisfied and engine emulation is not relabeled"
+  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "rerun the final exact-head integration/release matrix after remaining Day-9 gates; current GitHub Actions startup failures and Vercel build-rate-limit statuses are not a PASS"
 
 next_action: >-
-  Do not begin Day 10. Execute the separately gated public Arc Testnet Bread lifecycle smoke against the verified deployment from source commit db0f6ed28e4a2475f54e84efadd7cf9693701353. On PASS, durably record the exact token/curve/pool-position evidence, then execute the 2-of-3 Safe-compatible threshold recovery drill, reconcile remaining physical/current-device evidence, repair or truthfully classify release CI, and rerun the final exact-head Day-9 matrix before any RC tag.
+  Do not begin Day 10. The public Arc Testnet deployment and lifecycle smoke are now PASS for the bounded Day-9 rehearsal. Next execute a real reversible 2-of-3 Safe threshold signer recovery/rotation sequence, independently verify the restored owner set/threshold, then reconcile PR #92 and the remaining physical/current-device rows, repair or truthfully classify exact-head release CI, and rerun the final Day-9 matrix before any RC tag.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10, enable unrestricted public-money release, or claim Day-9 PASS while any non-waivable Day-9 end gate is open."
   - "Do not deploy a second Bread Arc Testnet stack; the verified stack starting at block 56448201 is canonical for this Day-9 rehearsal."
-  - "Do not rerun a partially executed smoke blindly; use the prepared receipt/recovery checks to inspect existing on-chain state first."
+  - "Do not create a second public smoke launch; token 0x9dc6c650929b641f93269a3b6d7d5237297d938b / position 265870 is the canonical Day-9 public lifecycle evidence."
   - "Do not invent production economics, Arc mainnet DEX/admin values, Pons runtime numeric values, or missing audit findings."
   - "Do not convert Playwright engine/emulation evidence into physical/branded Safari/Android/Edge/wallet-browser claims."
   - "Do not reopen accepted Day-1 through Day-8 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
