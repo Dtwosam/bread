@@ -28,7 +28,7 @@ const authority = {
 } as const;
 
 describe('Day 9 Arc Testnet Bread deployment preflight plan', () => {
-  it('reuses the controlled Day-9 economics only as explicit non-production testnet values', () => {
+  it('uses an explicit 10,000x quote-side downscale for the non-production public-testnet rehearsal', () => {
     const plan = buildArcTestnetDeploymentPlan({ network, authority });
 
     expect(plan).toMatchObject({
@@ -48,13 +48,18 @@ describe('Day 9 Arc Testnet Bread deployment preflight plan', () => {
       },
       economics: {
         supply: '1000000000000000000000000',
-        phantomQuote: '10000000000',
-        graduationThreshold: '100000000000',
+        phantomQuote: '1000000',
+        graduationThreshold: '10000000',
         launchFeeUsdc: '0',
         tradeFeeBps: '100',
         protocolFeeShareBps: '2500',
         maxCreatorTaxBps: '500',
       },
+      smoke: {
+        quoteIn: '11000000',
+        minimumFunding: '12000000',
+      },
+      economicsProvenance: 'DAY9_CONTROLLED_REHEARSAL_QUOTE_VALUES_DIVIDED_BY_10000',
       stackVersionLabel: 'BREAD_DAY9_ARC_TESTNET_STACK_V1',
       dexEvidenceLabel: 'BREAD_DAY9_ARC_TESTNET_SYNTHRA_V3_REAL_DEPENDENCY_FORK_PASS',
       forkEvidenceBlock: 56_439_192,
