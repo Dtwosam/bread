@@ -1,6 +1,6 @@
 {
   "projectSourcePack": "v1.5-day5-preflight-consolidated",
-  "checkedAt": "2026-08-09",
+  "checkedAt": "2026-08-11",
   "arc": {
     "testnet": {
       "status": "OFFICIAL_TESTNET_VALUES_VERIFIED",
@@ -108,18 +108,39 @@
     }
   },
   "uniswapV3": {
-    "implementationStatus": "INACTIVE_FALLBACK_OFFICIAL_INTERFACE_COMPATIBILITY_ONLY",
-    "activationAllowed": false,
+    "implementationStatus": "V3_COMPATIBLE_FALLBACK_ACTIVE_FOR_VERIFIED_ARC_TESTNET_DEPENDENCIES_ONLY",
+    "activationAllowed": true,
+    "activationScope": "ARC_TESTNET_DEPENDENCY_MANIFEST_ONLY",
     "arcDeployment": {
-      "status": "NO_VERIFIED_ARC_V3_ACTIVATION_EVIDENCE",
-      "checkedAt": "2026-08-09"
+      "status": "VERIFIED_V3_COMPATIBLE_ARC_TESTNET_DEPENDENCIES",
+      "checkedAt": "2026-08-11",
+      "providerProvenance": "Synthra",
+      "providerRegistrySource": "@synthra-swap/sdk/chains:getSynthraChainDeployment(ChainId.ARC)",
+      "factory": "0x0fB6EEDA6e90E90797083861A75D15752a27f59c",
+      "positionManager": "0x444Cc395346428216fB6f2892eb03cB804aE4CD5",
+      "independentRpcCheck": {
+        "chainId": 5042002,
+        "factoryCodeBytes": 24564,
+        "positionManagerCodeBytes": 24384,
+        "positionManagerFactoryMatches": true,
+        "usdcCodeBytes": 1798,
+        "usdcDecimals": 6,
+        "feeAmountTickSpacing": {
+          "100": 1,
+          "500": 10,
+          "3000": 60,
+          "10000": 200
+        }
+      },
+      "evidence": "docs/evidence/day9-synthra-arc-testnet-v3-candidate.md",
+      "breadMoneyPathIntegrationStatus": "PENDING_PUBLIC_TESTNET_GRADUATION_PROOF"
     },
     "officialSource": {
       "periphery": {
         "repository": "https://github.com/Uniswap/v3-periphery",
         "commit": "0682387198a24c7cd63566a2c58398533860a5d1",
         "rootLicense": "GPL-2.0-or-later",
-        "usage": "REFERENCE_FOR_MINIMAL_V3_ABI; NO_NETWORK_ACTIVATION",
+        "usage": "REFERENCE_FOR_MINIMAL_V3_ABI",
         "files": [
           {
             "path": "contracts/interfaces/INonfungiblePositionManager.sol",
@@ -171,7 +192,8 @@
   },
   "activationPolicy": {
     "arcV4": "BLOCKED_UNTIL_OFFICIAL_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
-    "arcV3": "BLOCKED_UNLESS_VERIFIED_ENVIRONMENT_REQUIRES_FALLBACK_AND_COMPATIBILITY_PASS",
+    "arcV3Testnet": "DEPENDENCY_MANIFEST_ALLOWED_AFTER_VERIFIED_PROVIDER_REGISTRY_PLUS_INDEPENDENT_RPC_COMPATIBILITY; BREAD_STACK_DEPLOYMENT_REQUIRES_FULL_GRADUATION_INTEGRATION_PROOF",
+    "arcV3Mainnet": "REQUIRES_FRESH_MAINNET_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
     "productionEconomics": "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED",
     "mainnet": "ARC_MAINNET_VALUES_REQUIRED",
     "fixtures": "TEST_ONLY_NEVER_CANONICAL_DEPLOYMENT_CLAIM"
