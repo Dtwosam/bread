@@ -1,6 +1,6 @@
 # Day 9 — Synthra Arc Testnet V3 Candidate Evidence
 
-Status: **DEX DEPENDENCY PASS — REAL-DEPENDENCY FORK PASS — 2-OF-3 SAFE PASS — PUBLIC BREAD DEPLOYMENT PREFLIGHT READY**
+Status: **DEX DEPENDENCY PASS — REAL-DEPENDENCY FORK PASS — 2-OF-3 SAFE PASS — PUBLIC BREAD DEPLOYMENT VERIFY PASS — SMOKE PENDING**
 
 Checked: 2026-08-11
 Baseline: `c21b49a1f8edaaad999e461edb0ce602071bda5c`
@@ -26,12 +26,7 @@ Independent operator-executed read-only Arc RPC evidence proved:
   "usdc": "0x3600000000000000000000000000000000000000",
   "usdcCodeBytes": 1798,
   "usdcDecimals": 6,
-  "feeTiers": {
-    "100": 1,
-    "500": 10,
-    "3000": 60,
-    "10000": 200
-  }
+  "feeTiers": {"100": 1, "500": 10, "3000": 60, "10000": 200}
 }
 ```
 
@@ -120,30 +115,65 @@ Provenance:
 
 The curve's graduation condition remains the production implementation (`sellableTokens() == 0`); no production curve logic or fee math is modified by the testnet scaling.
 
-## Deployment tooling prepared
+## Public Bread Arc Testnet deployment proof
 
-The following execution path is now prepared:
+The operator executed the non-broadcast preflight on exact head/source commit:
 
-1. `scripts/day9/preflight-bread-arc-testnet-deployment.mjs`
-   - verifies Arc identity, Safe threshold/owners, Guardian/deployer separation, canonical USDC, V3 dependencies, fee tier, fork evidence, deployer key identity and native gas;
-   - derives exact stack/economics/DEX evidence hashes;
-   - runs `DeployDay5Graduation.s.sol` without `--broadcast`;
-   - prints no private keys and sends no transaction.
-2. `scripts/day9/deploy-bread-arc-testnet.mjs`
-   - writes a permission-restricted PREPARED receipt containing the exact source commit before any broadcast;
-   - refuses ambiguous prior broadcast/deployment state;
-   - uses the existing Bread production deployment script;
-   - reads back exact CREATE addresses, writes the existing v1 deployment-manifest schema, executes configure/verify, and marks the manifest VERIFIED only after successful on-chain readback;
-   - is resumable without blind duplicate deployment.
-3. `scripts/day9/smoke-bread-arc-testnet.mjs`
-   - requires a VERIFIED deployment and a 12-USDC testnet balance floor;
-   - writes PREPARED smoke intent before broadcast;
-   - executes the existing Bread launch/buy/graduate/lock/creator-claim/replay smoke;
-   - recovers the exact token and curve from `LaunchCreated` logs;
-   - verifies the permanent Position Manager NFT is owned by the Bread locker;
-   - refuses blind duplicate smoke launches.
+`db0f6ed28e4a2475f54e84efadd7cf9693701353`
 
-The existing v1 deployment manifest schema does not permit a `sourceCommit` field (`additionalProperties: false`), so source commit identity is preserved in the permission-restricted deployment receipt and durable PR evidence rather than silently changing the shared manifest schema during this lane.
+and received:
+
+```text
+BREAD_ARC_TESTNET_DEPLOYMENT_PREFLIGHT_PASS
+```
+
+The preflight verified Safe ownership, canonical Arc USDC, V3 dependencies, fee `3000` / tick spacing `60`, the fork-evidence boundary, deployer gas, and the exact stack/economics/DEX hashes, then successfully simulated `DeployDay5Graduation.s.sol` without broadcast.
+
+The operator then executed the crash-safe deployment runner and received:
+
+```text
+BREAD_ARC_TESTNET_DEPLOYMENT_VERIFY_PASS
+```
+
+Deployment start block: `56448201`.
+
+Verified deployed Bread stack:
+
+```text
+feePolicy             = 0x388e534b94268e231a1badf14c4678f01bfc60e3
+feeEscrow             = 0xea9bb3330e0a2c9898776c75f549d06d2a644c94
+emergencyController   = 0xb6879be6a83b3a6e7a7de5cb841ca1550178ba42
+factory               = 0xddf400f7a376fb8a962eee6d74c1ba37efa644f7
+launchDeployer        = 0x89f70023c11b368d4ce5c6e4c100d4fa176f64fd
+locker                = 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
+coordinator           = 0x239da83ec8294b2433848ea8c85155f41e76f60a
+v3GraduationAdapter   = 0xfe2378a81d655e051b53aba57271d2b4d5b5dd84
+```
+
+Verified hashes/configuration:
+
+```text
+adapterConfigHash   = 0x4069e56d708b6bc2d4b003e09e6a566299b799bc8646732a901024fcf77781c7
+economicsConfigHash = 0x081b597d7b603cb67d3921f269f7940a84221524b2d9baefc4f319c9f15f9747
+dexEvidenceHash     = 0xd30f72e114168ae2786f24e1375804d4ba1dd99822bbb292855597c60384ea26
+Protocol Admin Safe = 0x9004e285521d69197cd9965c301b02161eb1d0d8
+Guardian            = 0xdcb9cb7038ff1a282265a855754dba8695a3121c
+```
+
+The runner reported 18 public Arc Testnet transaction hashes, `broadcastPerformed = true`, `resumedFromIntent = false`, `manifestStatus = VERIFIED`, `productionMoneyClaim = false`, `productionAuthorityClaim = false`, and `privateKeysPrinted = false`.
+
+The canonical `config/deployments/arc-testnet.day5.json` now records this exact verified stack. The existing v1 deployment manifest schema does not permit a `sourceCommit` field (`additionalProperties: false`), so the exact deployment source commit remains preserved in the permission-restricted local deployment receipt and durable PR evidence rather than changing the shared schema mid-lane.
+
+## Remaining public lifecycle smoke
+
+`scripts/day9/smoke-bread-arc-testnet.mjs` is the next bounded execution step. It:
+
+- requires the verified deployment and a 12-USDC testnet balance floor;
+- writes PREPARED smoke intent before broadcast;
+- executes the existing Bread launch/buy/graduate/lock/creator-claim/replay smoke;
+- recovers the exact token and curve from `LaunchCreated` logs;
+- verifies the permanent Position Manager NFT is owned by the Bread locker;
+- refuses blind duplicate smoke launches.
 
 ## Portability classification
 
@@ -158,7 +188,7 @@ Nothing in this lane binds Bread mainnet to Synthra.
 
 ## Current verdict
 
-`SYNTHRA_ARC_TESTNET_V3_REAL_DEPENDENCY_FORK_PASS_SAFE_2_OF_3_PASS_BREAD_PUBLIC_TESTNET_DEPLOYMENT_PREFLIGHT_READY`
+`SYNTHRA_ARC_TESTNET_V3_REAL_DEPENDENCY_FORK_PASS_SAFE_2_OF_3_PASS_BREAD_PUBLIC_TESTNET_DEPLOYMENT_VERIFY_PASS_SMOKE_PENDING`
 
 Consequences:
 
@@ -166,10 +196,10 @@ Consequences:
 - Independent Arc RPC compatibility: **PASS**.
 - Real Bread↔Synthra fork integration: **PASS**.
 - Genuine chain-specific 2-of-3 Arc Testnet Safe: **PASS**.
-- Bread Arc Testnet deployment preflight tooling: **READY / EXTERNAL EXECUTION PENDING**.
-- Live Bread Arc Testnet core deployment: **NOT YET PERFORMED**.
+- Bread Arc Testnet deployment preflight: **PASS**.
+- Live Bread Arc Testnet core deployment + configuration/ownership verification: **PASS**.
+- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`: **CLEARED**.
 - Live Bread lifecycle smoke: **NOT YET PERFORMED**.
-- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`: **OPEN** until deployment/verify succeeds.
 - Safe-compatible threshold recovery drill: **OPEN**.
 - remaining physical/current-device rows: **OPEN**.
 - exact-head CI: **OPEN**; current GitHub Actions runs still fail at startup before job creation, and current Vercel statuses are build-rate-limit failures rather than application-test evidence.
