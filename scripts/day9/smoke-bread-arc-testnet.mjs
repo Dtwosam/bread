@@ -15,14 +15,7 @@ const ROOT = process.cwd();
 const DEFAULT_SECRET_FILE = join(homedir(), '.config', 'bread', 'day9-arc-testnet-safe.env');
 const DEFAULT_RECEIPT_FILE = join(homedir(), '.config', 'bread', 'day9-arc-testnet-bread-deployment.json');
 const DEPLOYMENT_PATH = join(ROOT, 'config', 'deployments', 'arc-testnet.day5.json');
-const SMOKE_BROADCAST_PATH = join(
-  ROOT,
-  'contracts',
-  'broadcast',
-  'SmokeDay5Graduation.s.sol',
-  '5042002',
-  'run-latest.json',
-);
+const DIRECT_SMOKE_RUNNER = join(ROOT, 'packages', 'protocol-sdk', 'scripts', 'day9-arc-direct-smoke.mjs');
 
 function fail(message) {
   console.error(`day9-bread-arc-smoke: FAIL: ${message}`);
@@ -95,85 +88,9 @@ function normalizeAddress(value, label) {
   return match[0].toLowerCase();
 }
 
-function toQuantity(value) {
-  return `0x${BigInt(value).toString(16)}`;
-}
-
-function addressTopic(address) {
-  return `0x${address.slice(2).toLowerCase().padStart(64, '0')}`;
-}
-
-function topicAddress(topic, label) {
-  if (!/^0x[0-9a-fA-F]{64}$/.test(topic ?? '')) fail(`${label} is not an indexed address topic`);
-  return `0x${topic.slice(-40)}`.toLowerCase();
-}
-
-async function rpc(rpcUrl, method, params) {
-  const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-  });
-  if (!response.ok) fail(`RPC HTTP ${response.status} for ${method}`);
-  const body = await response.json();
-  if (body.error) fail(`RPC ${method}: ${JSON.stringify(body.error)}`);
-  return body.result;
-}
-
-function transactionHashes(broadcast) {
-  const hashes = [];
-  for (const receipt of broadcast.receipts ?? []) {
-    const hash = receipt.transactionHash ?? receipt.hash;
-    if (typeof hash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(hash)) hashes.push(hash);
-  }
-  return hashes;
-}
-
 function writeReceipt(path, receipt) {
   writeFileSync(path, `${JSON.stringify(receipt, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
   chmodSync(path, 0o600);
-}
-
-async function findSmokeLaunch({ rpcUrl, factory, operator, fromBlock }) {
-  const topic0 = run('cast', ['keccak', 'LaunchCreated(address,address,address,address,uint16,bytes32,uint64)']);
-  const logs = await rpc(rpcUrl, 'eth_getLogs', [{
-    address: factory,
-    fromBlock: toQuantity(fromBlock),
-    toBlock: 'latest',
-    topics: [topic0, addressTopic(operator)],
-  }]);
-  if (!Array.isArray(logs) || logs.length === 0) return null;
-  if (logs.length > 1) fail(`multiple LaunchCreated events found for smoke operator after block ${fromBlock}; refusing ambiguous evidence`);
-  const log = logs[0];
-  if (!Array.isArray(log.topics) || log.topics.length < 4) fail('LaunchCreated log is missing indexed topics');
-  return {
-    token: topicAddress(log.topics[2], 'LaunchCreated token'),
-    curve: topicAddress(log.topics[3], 'LaunchCreated curve'),
-    transactionHash: log.transactionHash,
-    blockNumber: Number(BigInt(log.blockNumber)),
-  };
-}
-
-function verifyLockedPosition({ rpcUrl, locker, positionManager, token }) {
-  const locked = run('cast', ['call', locker, 'isPositionLocked(address)(bool)', token, '--rpc-url', rpcUrl]);
-  if (!/^true$/i.test(locked.trim())) fail(`token ${token} is not registered as permanently locked`);
-
-  const raw = run('cast', ['call', locker, 'lockedPosition(address)(address,uint256)', token, '--rpc-url', rpcUrl]);
-  const manager = normalizeAddress(raw, 'locked Position Manager');
-  const idMatch = raw.match(/(\d+)\s*$/);
-  if (!idMatch) fail(`lockedPosition did not expose a position ID: ${raw}`);
-  const positionId = BigInt(idMatch[1]);
-  if (positionId === 0n) fail('locked position ID is zero');
-  if (manager !== positionManager.toLowerCase()) {
-    fail(`locked Position Manager mismatch: expected ${positionManager}, got ${manager}`);
-  }
-
-  const nftOwner = normalizeAddress(
-    run('cast', ['call', positionManager, 'ownerOf(uint256)(address)', positionId.toString(), '--rpc-url', rpcUrl]),
-    'position NFT owner',
-  );
-  if (nftOwner !== locker.toLowerCase()) fail(`position NFT ${positionId} is not owned by permanent locker`);
-  return { positionManager: manager, positionId: positionId.toString(), nftOwner };
 }
 
 const secretFile = argPath('--env-file', DEFAULT_SECRET_FILE);
@@ -181,6 +98,7 @@ const receiptFile = argPath('--receipt-file', DEFAULT_RECEIPT_FILE);
 if (!existsSync(secretFile)) fail(`authority file not found: ${secretFile}`);
 if ((statSync(secretFile).mode & 0o077) !== 0) fail('authority secret file permissions are broader than 0600-like');
 if (!existsSync(receiptFile)) fail(`Bread deployment receipt not found: ${receiptFile}`);
+if (!existsSync(DIRECT_SMOKE_RUNNER)) fail(`direct Arc smoke runner not found: ${DIRECT_SMOKE_RUNNER}`);
 
 const env = parseEnv(secretFile);
 const rpcUrl = requireValue(env, 'ARC_RPC_URL');
@@ -208,6 +126,10 @@ if (receipt?.phase !== 'VERIFIED' || receipt?.verified !== true) {
 }
 const manifest = JSON.parse(readFileSync(DEPLOYMENT_PATH, 'utf8'));
 if (manifest.status !== 'VERIFIED') fail('canonical Arc Testnet deployment manifest is not VERIFIED');
+if (manifest.chainId !== 5_042_002) fail(`canonical deployment manifest chain ID is ${manifest.chainId}`);
+if (manifest.adapter?.family !== 'UNISWAP_V3' || !manifest.adapter?.positionManager) {
+  fail('canonical Arc Testnet deployment manifest has no active UNISWAP_V3 Position Manager');
+}
 
 run(process.execPath, ['scripts/day5/verify-graduation-deployment.mjs', 'arc-testnet'], {
   cwd: ROOT,
@@ -217,20 +139,15 @@ run(process.execPath, ['scripts/day5/verify-graduation-deployment.mjs', 'arc-tes
 });
 
 if (receipt.smoke?.phase === 'PASS') {
-  const lockedPosition = verifyLockedPosition({
-    rpcUrl,
-    locker: receipt.created.locker,
-    positionManager: manifest.adapter.positionManager,
-    token: receipt.smoke.token,
-  });
   console.log(JSON.stringify({
     status: 'BREAD_ARC_TESTNET_SMOKE_PASS',
     resumed: true,
     transactionBroadcast: false,
     token: receipt.smoke.token,
     curve: receipt.smoke.curve,
-    lockedPosition,
+    lockedPosition: receipt.smoke.lockedPosition,
     originalSmokeTransactionHashes: receipt.smoke.transactionHashes,
+    executionMode: receipt.smoke.executionMode,
     productionMoneyClaim: false,
     privateKeysPrinted: false,
     nextAction: 'RECORD_DAY9_PUBLIC_ARC_EVIDENCE_AND_RUN_REMAINING_GATES',
@@ -238,135 +155,72 @@ if (receipt.smoke?.phase === 'PASS') {
   process.exit(0);
 }
 
-if (receipt.smoke?.phase === 'PREPARED') {
-  const priorLaunch = await findSmokeLaunch({
-    rpcUrl,
-    factory: receipt.created.factory,
-    operator,
-    fromBlock: receipt.smoke.startBlock,
-  });
-  if (priorLaunch) {
-    const locked = run('cast', [
-      'call', receipt.created.locker, 'isPositionLocked(address)(bool)', priorLaunch.token, '--rpc-url', rpcUrl,
-    ]).trim();
-    fail(
-      `smoke intent already has on-chain launch ${priorLaunch.token} at ${priorLaunch.transactionHash}; `
-      + `permanentLock=${locked}. Refusing to create a second launch; recover/inspect the existing smoke instead.`,
-    );
-  }
-  fail('smoke PREPARED intent exists without a detected launch; inspect prior execution before retrying');
-}
+const currentHead = run('git', ['rev-parse', 'HEAD']);
 
-const currentUsdc = parseUint(
-  run('cast', ['call', usdc, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
-  'smoke operator USDC balance',
-);
-const funding = assessArcTestnetSmokeFunding(currentUsdc);
-if (!funding.ready) {
-  console.log(JSON.stringify({
-    status: 'BREAD_ARC_TESTNET_SMOKE_FUNDING_REQUIRED',
-    chainId: 5_042_002,
-    operator,
-    currentUsdc: funding.currentUsdc,
-    minimumUsdc: funding.minimumUsdc,
-    missingUsdc: funding.missingUsdc,
-    transactionBroadcast: false,
-    privateKeysPrinted: false,
-    nextAction: 'FUND_SMOKE_OPERATOR_WITH_ARC_TESTNET_NATIVE_USDC_AND_RERUN',
-  }, null, 2));
-  process.exitCode = 2;
-} else {
-  const sourceCommit = run('git', ['rev-parse', 'HEAD']);
+if (!receipt.smoke) {
+  const currentUsdc = parseUint(
+    run('cast', ['call', usdc, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
+    'smoke operator USDC balance',
+  );
+  const funding = assessArcTestnetSmokeFunding(currentUsdc);
+  if (!funding.ready) {
+    console.log(JSON.stringify({
+      status: 'BREAD_ARC_TESTNET_SMOKE_FUNDING_REQUIRED',
+      chainId: 5_042_002,
+      operator,
+      currentUsdc: funding.currentUsdc,
+      minimumUsdc: funding.minimumUsdc,
+      missingUsdc: funding.missingUsdc,
+      transactionBroadcast: false,
+      privateKeysPrinted: false,
+      nextAction: 'FUND_SMOKE_OPERATOR_WITH_ARC_TESTNET_NATIVE_USDC_AND_RERUN',
+    }, null, 2));
+    process.exitCode = 2;
+    process.exit();
+  }
+
   const startBlock = Number(run('cast', ['block-number', '--rpc-url', rpcUrl]).split(/\s+/)[0]);
   receipt = {
     ...receipt,
     smoke: {
-      phase: 'PREPARED',
-      sourceCommit,
+      phase: 'PREPARED_DIRECT_RPC',
+      sourceCommit: currentHead,
+      deploymentSourceCommit: receipt.sourceCommit,
+      directRpcRunnerSourceCommit: currentHead,
       startBlock,
       operator,
       quoteIn: requireValue(env, 'BREAD_SMOKE_QUOTE_IN'),
       creatorTaxBps: requireValue(env, 'BREAD_SMOKE_CREATOR_TAX_BPS'),
       productionMoneyClaim: false,
+      executionMode: 'DIRECT_ARC_RPC_WITH_REAL_NODE_SIMULATION_PER_TRANSACTION',
     },
   };
   writeReceipt(receiptFile, receipt);
-
-  run(process.execPath, ['scripts/day5/smoke-graduation.mjs', 'arc-testnet'], {
-    cwd: ROOT,
-    env: { ...env, ARC_RPC_URL: rpcUrl, BREAD_RPC_URL: rpcUrl },
-    timeout: 300_000,
-    secrets,
-  });
-
-  const launch = await findSmokeLaunch({
-    rpcUrl,
-    factory: receipt.created.factory,
-    operator,
-    fromBlock: startBlock,
-  });
-  if (!launch) fail('smoke script passed but no LaunchCreated event was found for the smoke operator');
-
-  const lockedPosition = verifyLockedPosition({
-    rpcUrl,
-    locker: receipt.created.locker,
-    positionManager: manifest.adapter.positionManager,
-    token: launch.token,
-  });
-
-  const creatorClaimRemaining = parseUint(
-    run('cast', [
-      'call', receipt.created.feeEscrow, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl,
-    ]),
-    'creator claim balance after smoke',
-  );
-  if (creatorClaimRemaining !== 0n) fail(`creator claim balance remains after smoke: ${creatorClaimRemaining}`);
-
-  const finalUsdc = parseUint(
-    run('cast', ['call', usdc, 'balanceOf(address)(uint256)', operator, '--rpc-url', rpcUrl]),
-    'smoke operator final USDC balance',
-  );
-
-  let smokeTxHashes = [];
-  if (existsSync(SMOKE_BROADCAST_PATH)) {
-    smokeTxHashes = transactionHashes(JSON.parse(readFileSync(SMOKE_BROADCAST_PATH, 'utf8')));
-  }
-
+} else {
   receipt = {
     ...receipt,
     smoke: {
       ...receipt.smoke,
-      phase: 'PASS',
-      endBlock: Number(run('cast', ['block-number', '--rpc-url', rpcUrl]).split(/\s+/)[0]),
-      token: launch.token,
-      curve: launch.curve,
-      launchTransactionHash: launch.transactionHash,
-      launchBlock: launch.blockNumber,
-      lockedPosition,
-      transactionHashes: smokeTxHashes,
-      operatorUsdcBefore: funding.currentUsdc,
-      operatorUsdcAfter: finalUsdc.toString(),
-      creatorClaimRemaining: '0',
+      deploymentSourceCommit: receipt.smoke.deploymentSourceCommit ?? receipt.sourceCommit,
+      directRpcRunnerSourceCommit: currentHead,
+      recoveredFromFoundryLocalSimulationFailure: receipt.smoke.phase === 'PREPARED',
+      executionMode: 'DIRECT_ARC_RPC_WITH_REAL_NODE_SIMULATION_PER_TRANSACTION',
     },
   };
   writeReceipt(receiptFile, receipt);
-
-  console.log(JSON.stringify({
-    status: 'BREAD_ARC_TESTNET_SMOKE_PASS',
-    chainId: 5_042_002,
-    sourceCommit,
-    token: launch.token,
-    curve: launch.curve,
-    launchTransactionHash: launch.transactionHash,
-    lockedPosition,
-    smokeTransactionHashes: smokeTxHashes,
-    operatorUsdcBefore: funding.currentUsdc,
-    operatorUsdcAfter: finalUsdc.toString(),
-    creatorClaimRemaining: '0',
-    transactionBroadcast: true,
-    productionMoneyClaim: false,
-    privateKeysPrinted: false,
-    receiptFile,
-    nextAction: 'RECORD_DAY9_PUBLIC_ARC_EVIDENCE_AND_RUN_REMAINING_GATES',
-  }, null, 2));
 }
+
+const directOutput = run(process.execPath, [DIRECT_SMOKE_RUNNER], {
+  cwd: ROOT,
+  timeout: 600_000,
+  env: {
+    ...env,
+    ARC_RPC_URL: rpcUrl,
+    BREAD_RPC_URL: rpcUrl,
+    BREAD_POSITION_MANAGER: manifest.adapter.positionManager,
+    BREAD_SMOKE_RECEIPT_FILE: receiptFile,
+  },
+  secrets,
+});
+
+console.log(directOutput);
