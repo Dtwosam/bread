@@ -181,9 +181,7 @@ async function main() {
   });
 
   log('== 8. Production Next.js build (loopback only) ==');
-  await run('node_modules/.bin/pnpm', ['--filter', '@bread/web', 'build']).catch(async () => {
-    await run('npx', ['--no-install', 'pnpm', '--filter', '@bread/web', 'build']);
-  });
+  await run('corepack', ['pnpm', '--filter', '@bread/web', 'build']);
   spawnRuntime('bread-web', resolve(repositoryRoot, 'apps/web/node_modules/.bin/next'), [
     'start',
     '--hostname',
