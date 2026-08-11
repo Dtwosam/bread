@@ -28,34 +28,49 @@ interface IArcV3PositionManagerFork {
     function ownerOf(uint256 tokenId) external view returns (address owner);
 }
 
+interface IArcNativeCoinControlFork {
+    function isBlocklisted(address account) external view returns (bool);
+}
+
+/// @notice Fork-only emulation of Arc's Native Coin Control read primitive.
+/// @dev Stock Foundry cannot execute Arc's custom precompile at 0x1800...0001.
+///      Etching replaces code only, not storage, so this shim reads the real forked Arc
+///      blocklist mapping from the precompile account. Circle's Arc node defines that
+///      mapping at Solidity slot 2 with any non-zero value meaning blocklisted.
+contract ArcNativeCoinControlForkShim {
+    uint256 private constant BLOCKLIST_MAPPING_SLOT = 2;
+
+    function isBlocklisted(address account) external view returns (bool blocked) {
+        bytes32 slot = keccak256(abi.encode(account, BLOCKLIST_MAPPING_SLOT));
+        uint256 status;
+        assembly {
+            status := sload(slot)
+        }
+        blocked = status != 0;
+    }
+}
+
 /// @notice Fork-only emulation of Arc's Native Coin Authority transfer primitive.
 /// @dev Stock Foundry does not implement Arc's custom precompile at 0x1800...0000.
 ///      Arc canonical USDC converts its 6-decimal ERC-20 amount to 18-decimal native units
-///      and calls this primitive. The shim reproduces only the native balance movement needed
-///      by this integration proof; it is never deployed or used by Bread production code.
+///      and calls this primitive. The shim reproduces the transfer checks and native balance
+///      movement needed by this integration proof; it is never deployed or used by production.
 contract ArcNativeCoinAuthorityForkShim {
     ArcForkVm private constant VM = ArcForkVm(address(uint160(uint256(keccak256("hevm cheat code")))));
     address private constant ARC_USDC = 0x3600000000000000000000000000000000000000;
+    address private constant ARC_NATIVE_COIN_CONTROL = 0x1800000000000000000000000000000000000001;
 
     function transfer(address from, address to, uint256 nativeAmount) external returns (bool) {
         require(msg.sender == ARC_USDC, "ONLY_ARC_USDC");
         require(from != address(0) && to != address(0), "ZERO_ADDRESS");
         require(nativeAmount != 0, "ZERO_AMOUNT");
+        require(!IArcNativeCoinControlFork(ARC_NATIVE_COIN_CONTROL).isBlocklisted(from), "FROM_BLOCKLISTED");
+        require(!IArcNativeCoinControlFork(ARC_NATIVE_COIN_CONTROL).isBlocklisted(to), "TO_BLOCKLISTED");
         require(from.balance >= nativeAmount, "NATIVE_BALANCE_TOO_LOW");
 
         VM.deal(from, from.balance - nativeAmount);
         VM.deal(to, to.balance + nativeAmount);
         return true;
-    }
-}
-
-/// @notice Fork-only emulation of Arc's Native Coin Control read primitive.
-/// @dev The runner independently proves the existing Synthra Position Manager is not blocklisted
-///      at the pinned Arc block before this shim is installed. Contracts created only inside the
-///      fork have no prior Arc blocklist state and are therefore represented as unblocked.
-contract ArcNativeCoinControlForkShim {
-    function isBlocklisted(address) external pure returns (bool) {
-        return false;
     }
 }
 
@@ -102,8 +117,9 @@ contract ArcV3DependencyForkTest {
         require(IArcV3FactoryFork(factory).feeAmountTickSpacing(fee) > 0, "FEE_TIER_DISABLED");
 
         // Arc canonical USDC uses two Arc-specific precompiles for mutative ERC-20 movement:
-        // Native Coin Control for blocklist reads and Native Coin Authority for native balance transfer.
-        // Stock Foundry forks do not implement them, so emulate only these two primitives locally.
+        // Native Coin Control for blocklist state and Native Coin Authority for native balance transfer.
+        // Stock Foundry forks do not implement them, so emulate only those primitives locally while
+        // retaining the precompile accounts' real forked storage/state.
         ArcNativeCoinControlForkShim controlShim = new ArcNativeCoinControlForkShim();
         VM.etch(ARC_NATIVE_COIN_CONTROL, address(controlShim).code);
         ArcNativeCoinAuthorityForkShim authorityShim = new ArcNativeCoinAuthorityForkShim();
@@ -113,6 +129,7 @@ contract ArcV3DependencyForkTest {
         // and the canonical 6-decimal ERC-20 interface. Fund only the local fork balance.
         VM.deal(address(this), FORK_USDC_AMOUNT * ARC_NATIVE_TO_ERC20_SCALE);
         require(IERC20(usdc).balanceOf(address(this)) == FORK_USDC_AMOUNT, "FORK_USDC_FUNDING_MISMATCH");
+        require(!IArcNativeCoinControlFork(ARC_NATIVE_COIN_CONTROL).isBlocklisted(address(this)), "TEST_ACCOUNT_BLOCKLISTED");
 
         ArcForkLaunchToken token = new ArcForkLaunchToken();
         BreadPermanentLiquidityLocker locker = new BreadPermanentLiquidityLocker(address(this));
@@ -121,6 +138,7 @@ contract ArcV3DependencyForkTest {
             address(this), usdc, address(locker), positionManager, factory, fee
         );
 
+        require(!IArcNativeCoinControlFork(ARC_NATIVE_COIN_CONTROL).isBlocklisted(address(adapter)), "ADAPTER_BLOCKLISTED");
         token.mint(address(this), POOL_TOKENS);
         require(IERC20(usdc).approve(address(adapter), FORK_USDC_AMOUNT), "USDC_APPROVE_FAILED");
         require(token.approve(address(adapter), POOL_TOKENS), "TOKEN_APPROVE_FAILED");
@@ -138,6 +156,7 @@ contract ArcV3DependencyForkTest {
         address pool = IArcV3FactoryFork(factory).getPool(address(token), usdc, fee);
 
         require(pool != address(0) && pool.code.length != 0, "POOL_NOT_CREATED");
+        require(!IArcNativeCoinControlFork(ARC_NATIVE_COIN_CONTROL).isBlocklisted(pool), "POOL_BLOCKLISTED");
         require(result.poolId == bytes32(uint256(uint160(pool))), "POOL_ID_MISMATCH");
         require(result.positionManager == positionManager, "RESULT_POSITION_MANAGER_MISMATCH");
         require(result.positionId != 0, "POSITION_ID_ZERO");
