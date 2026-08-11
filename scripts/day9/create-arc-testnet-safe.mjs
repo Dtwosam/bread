@@ -64,6 +64,12 @@ function parseAddress(output, label) {
   return match[0].toLowerCase();
 }
 
+function parseUint(output, label) {
+  const match = String(output).match(/\d+/);
+  if (!match) fail(`${label} did not produce an integer: ${output}`);
+  return BigInt(match[0]);
+}
+
 function codeBytes(code) {
   if (!/^0x[0-9a-fA-F]*$/.test(code)) fail(`unexpected eth_getCode response: ${code}`);
   return Math.max(0, (code.length - 2) / 2);
@@ -81,8 +87,7 @@ function verifySafe({ rpc, safe, expectedOwners }) {
   if (!version.includes('1.4.1')) fail(`unexpected Safe version: ${version}`);
 
   const thresholdRaw = run('cast', ['call', safe, 'getThreshold()(uint256)', '--rpc-url', rpc]);
-  const thresholdMatch = thresholdRaw.match(/\d+/);
-  if (!thresholdMatch || BigInt(thresholdMatch[0]) !== 2n) fail(`unexpected Safe threshold: ${thresholdRaw}`);
+  if (parseUint(thresholdRaw, 'Safe threshold') !== 2n) fail(`unexpected Safe threshold: ${thresholdRaw}`);
 
   const ownersRaw = run('cast', ['call', safe, 'getOwners()(address[])', '--rpc-url', rpc]);
   const owners = [...ownersRaw.matchAll(/0x[0-9a-fA-F]{40}/g)].map((match) => match[0].toLowerCase());
@@ -93,6 +98,23 @@ function verifySafe({ rpc, safe, expectedOwners }) {
   }
 
   return { version: '1.4.1', threshold: 2, owners, codeBytes: codeBytes(code) };
+}
+
+function fundingRequired({ chainId, deployer, predictedSafe, balance, minimumRequired = null, gasEstimate = null, gasPrice = null }) {
+  console.log(JSON.stringify({
+    status: 'SAFE_DEPLOYER_FUNDING_REQUIRED',
+    chainId,
+    deploymentAuthority: deployer,
+    predictedSafe,
+    currentNativeBalanceWei: balance.toString(),
+    estimatedGas: gasEstimate?.toString() ?? null,
+    gasPriceWei: gasPrice?.toString() ?? null,
+    minimumNativeBalanceWei: minimumRequired?.toString() ?? null,
+    privateKeysPrinted: false,
+    transactionBroadcast: false,
+    nextAction: 'FUND_DEPLOYMENT_AUTHORITY_WITH_ARC_TESTNET_GAS_AND_RERUN',
+  }, null, 2));
+  process.exitCode = 2;
 }
 
 const secretFile = secretFilePath();
@@ -150,52 +172,44 @@ const existingCode = run('cast', ['code', predictedSafe, '--rpc-url', rpc]);
 let broadcastPerformed = false;
 
 if (codeBytes(existingCode) === 0) {
-  const gasEstimate = BigInt(run('cast', [
-    'estimate',
-    factory,
-    'createChainSpecificProxyWithNonce(address,bytes,uint256)',
-    safeL2,
-    initializer,
-    saltNonce,
-    '--from',
-    deployer,
-    '--rpc-url',
-    rpc,
-  ]).match(/\d+/)?.[0] ?? '0');
-  const gasPrice = BigInt(run('cast', ['gas-price', '--rpc-url', rpc]).match(/\d+/)?.[0] ?? '0');
-  const balance = BigInt(run('cast', ['balance', deployer, '--rpc-url', rpc]).match(/\d+/)?.[0] ?? '0');
-  const minimumRequired = gasEstimate * gasPrice * 2n;
+  const balance = parseUint(run('cast', ['balance', deployer, '--rpc-url', rpc]), 'deployment authority balance');
 
-  if (gasEstimate === 0n || gasPrice === 0n) fail('could not obtain a non-zero Safe deployment gas estimate');
-  if (balance < minimumRequired) {
-    console.log(JSON.stringify({
-      status: 'SAFE_DEPLOYER_FUNDING_REQUIRED',
-      chainId,
-      deploymentAuthority: deployer,
-      predictedSafe,
-      currentNativeBalanceWei: balance.toString(),
-      estimatedGas: gasEstimate.toString(),
-      gasPriceWei: gasPrice.toString(),
-      minimumNativeBalanceWei: minimumRequired.toString(),
-      privateKeysPrinted: false,
-      transactionBroadcast: false,
-      nextAction: 'FUND_DEPLOYMENT_AUTHORITY_WITH_ARC_TESTNET_GAS_AND_RERUN',
-    }, null, 2));
-    process.exitCode = 2;
+  if (balance === 0n) {
+    fundingRequired({ chainId, deployer, predictedSafe, balance });
   } else {
-    run('forge', [
-      'script',
-      'script/rehearsal/CreateDay9ArcSafe.s.sol:CreateDay9ArcSafe',
-      '--broadcast',
+    const gasEstimate = parseUint(run('cast', [
+      'estimate',
+      factory,
+      'createChainSpecificProxyWithNonce(address,bytes,uint256)',
+      safeL2,
+      initializer,
+      saltNonce,
+      '--from',
+      deployer,
       '--rpc-url',
       rpc,
-      '--non-interactive',
-    ], {
-      cwd: CONTRACTS,
-      timeout: 180_000,
-      env,
-    });
-    broadcastPerformed = true;
+    ]), 'Safe deployment gas estimate');
+    const gasPrice = parseUint(run('cast', ['gas-price', '--rpc-url', rpc]), 'Arc gas price');
+    const minimumRequired = gasEstimate * gasPrice * 2n;
+
+    if (gasEstimate === 0n || gasPrice === 0n) fail('could not obtain a non-zero Safe deployment gas estimate');
+    if (balance < minimumRequired) {
+      fundingRequired({ chainId, deployer, predictedSafe, balance, minimumRequired, gasEstimate, gasPrice });
+    } else {
+      run('forge', [
+        'script',
+        'script/rehearsal/CreateDay9ArcSafe.s.sol:CreateDay9ArcSafe',
+        '--broadcast',
+        '--rpc-url',
+        rpc,
+        '--non-interactive',
+      ], {
+        cwd: CONTRACTS,
+        timeout: 180_000,
+        env,
+      });
+      broadcastPerformed = true;
+    }
   }
 }
 
