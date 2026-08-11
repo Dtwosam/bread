@@ -116,8 +116,8 @@ export async function runBreadIndexerCatchUp() {
         logs,
       };
     },
-    applyRange: async (range) =>
-      applyRange({
+    applyRange: async (range) => {
+      const applied = await applyRange({
         db,
         client: client as never,
         context,
@@ -126,7 +126,12 @@ export async function runBreadIndexerCatchUp() {
         toBlockHash: range.toBlockHash as `0x${string}`,
         toBlockTimestamp: range.toBlockTimestamp as bigint | undefined,
         logs: range.logs as never,
-      }),
+      });
+      if (process.env.BREAD_LAN_INDEXER_MAIN === '1') {
+        process.stdout.write(`BREAD_INDEXER_PROGRESS checkpoint=${String(range.toBlock)}\n`);
+      }
+      return applied;
+    },
   });
 
   await pool.end().catch(() => undefined);

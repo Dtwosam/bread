@@ -48,6 +48,7 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     const seen: Array<readonly [bigint, bigint]> = [];
     const delays: number[] = [];
     let attempts = 0;
+    let clock = 0;
     const raw: LogClient = {
       getLogs: async (request) => {
         const fromBlock = request.fromBlock as bigint;
@@ -62,9 +63,12 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     const client = createArcProviderSafeLogClient(raw, {
       maxRateLimitRetries: 3,
       baseBackoffMs: 10,
+      minimumIntervalMs: 0,
       maxRpcAttempts: 8,
+      now: () => clock,
       sleep: async (ms) => {
         delays.push(ms);
+        clock += ms;
       },
     });
 
@@ -94,6 +98,7 @@ describe('Day 9 LAN provider/runtime regressions', () => {
 
     const client = createArcProviderSafeLogClient(raw, {
       maxRateLimitRetries: 0,
+      minimumIntervalMs: 0,
       maxSplitDepth: 8,
       maxRpcAttempts: 32,
       sleep: async () => undefined,
@@ -119,12 +124,50 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     ]);
   });
 
+  it('proactively spaces concurrent Arc reads before the provider has to throttle them', async () => {
+    const starts: number[] = [];
+    const delays: number[] = [];
+    let clock = 0;
+
+    const enter = async <T>(result: T): Promise<T> => {
+      starts.push(clock);
+      return result;
+    };
+
+    const raw = {
+      getBlockNumber: async () => enter(900n),
+      getBlock: async () => enter({ hash: '0xabc', timestamp: 1n }),
+      readContract: async () => enter('ok'),
+      getLogs: async () => enter([] as readonly RpcLog[]),
+    };
+
+    const client = createArcProviderSafeReadClient(raw, {
+      maxRateLimitRetries: 0,
+      minimumIntervalMs: 25,
+      now: () => clock,
+      sleep: async (ms) => {
+        delays.push(ms);
+        clock += ms;
+      },
+    });
+
+    await Promise.all([
+      client.getBlockNumber(),
+      client.getBlock(),
+      client.readContract(),
+    ]);
+
+    expect(starts).toEqual([0, 25, 50]);
+    expect(delays).toEqual([25, 25]);
+  });
+
   it('serializes all Arc read methods behind one rate-limit retry owner', async () => {
     const delays: number[] = [];
     const order: string[] = [];
     let active = 0;
     let maxActive = 0;
     let blockAttempts = 0;
+    let clock = 0;
 
     const enter = async <T>(label: string, result: T, rateLimit = false): Promise<T> => {
       active += 1;
@@ -153,8 +196,11 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     const client = createArcProviderSafeReadClient(raw, {
       maxRateLimitRetries: 2,
       baseBackoffMs: 10,
+      minimumIntervalMs: 0,
+      now: () => clock,
       sleep: async (ms) => {
         delays.push(ms);
+        clock += ms;
       },
     });
 
@@ -181,7 +227,7 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     ]);
   });
 
-  it('pins one retry owner and wires the full LAN read client through it', () => {
+  it('pins one retry owner, proactive pacing and visible LAN catch-up progress', () => {
     const chainClient = readFileSync(
       resolve(root, 'apps/indexer/src/lan/chain-client.ts'),
       'utf8',
@@ -192,10 +238,11 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     );
 
     expect(chainClient).toContain("http(rpcUrls[0], { retryCount: 0 })");
+    expect(chainClient).toContain('options.minimumIntervalMs ?? 500');
     expect(runner).toContain('createArcProviderSafeReadClient(rawClient)');
-    expect(runner).not.toContain('createArcProviderSafeLogClient(client');
     expect(runner).toContain('discoverRange(\n        client as never,');
     expect(runner).toContain('client: client as never');
+    expect(runner).toContain('BREAD_INDEXER_PROGRESS checkpoint=');
   });
 
   it('plain Node resolves the exact TypeScript helpers used by the operator orchestrator', () => {

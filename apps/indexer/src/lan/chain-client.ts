@@ -19,17 +19,21 @@ export class ArcLogReadBudgetExceededError extends Error {
 type ProviderSafeReadOptions = Readonly<{
   maxRateLimitRetries?: number;
   baseBackoffMs?: number;
+  minimumIntervalMs?: number;
   maxSplitDepth?: number;
   maxRpcAttempts?: number;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }>;
 
 type ResolvedProviderSafeReadOptions = Readonly<{
   maxRateLimitRetries: number;
   baseBackoffMs: number;
+  minimumIntervalMs: number;
   maxSplitDepth: number;
   maxRpcAttempts: number;
   sleep: (ms: number) => Promise<void>;
+  now: () => number;
 }>;
 
 function nonnegativeInteger(value: number, label: string): number {
@@ -51,12 +55,22 @@ function resolveProviderSafeReadOptions(
       'maxRateLimitRetries',
     ),
     // A bounded live Arc-Testnet diagnostic proved the same 512-block log
-    // request succeeds when calls are spaced by three seconds. This is a
-    // conservative retry cooldown, not a claimed provider throughput limit.
+    // request succeeds when calls are spaced by three seconds. This remains a
+    // retry cooldown only; it is not treated as a claimed throughput limit.
     baseBackoffMs: positiveInteger(options.baseBackoffMs ?? 3_000, 'baseBackoffMs'),
+    // Arc does not publish a usable public-RPC request-rate ceiling. Serialize
+    // reads and maintain a modest proactive gap so Bread does not create a
+    // burst, while the bounded retry cooldown remains the fallback if Arc still
+    // throttles. This is LAN acceptance tooling, not a production throughput
+    // policy.
+    minimumIntervalMs: nonnegativeInteger(
+      options.minimumIntervalMs ?? 500,
+      'minimumIntervalMs',
+    ),
     maxSplitDepth: nonnegativeInteger(options.maxSplitDepth ?? 8, 'maxSplitDepth'),
     maxRpcAttempts: positiveInteger(options.maxRpcAttempts ?? 32, 'maxRpcAttempts'),
     sleep: options.sleep ?? (async (ms: number) => delay(ms)),
+    now: options.now ?? Date.now,
   };
 }
 
@@ -123,17 +137,28 @@ function blockBounds(request: Readonly<Record<string, unknown>>): Readonly<{
  * The public Arc Testnet endpoint applies request-rate controls across methods,
  * not just eth_getLogs. Normalization can intentionally issue many readContract
  * calls concurrently, so protecting getLogs alone still allows a burst. This
- * gate serializes all read-only client calls and owns the only rate-limit retry
- * loop used by the LAN runtime.
+ * gate serializes all read-only client calls, proactively spaces starts, and
+ * owns the only rate-limit retry loop used by the LAN runtime.
  */
 class ArcRpcRateGate {
   private tail: Promise<void> = Promise.resolve();
+  private lastStartedAtMs: number | null = null;
 
   constructor(private readonly options: ResolvedProviderSafeReadOptions) {}
+
+  private async waitForPacingWindow(): Promise<void> {
+    if (this.lastStartedAtMs !== null && this.options.minimumIntervalMs > 0) {
+      const elapsed = this.options.now() - this.lastStartedAtMs;
+      const waitMs = Math.max(0, this.options.minimumIntervalMs - elapsed);
+      if (waitMs > 0) await this.options.sleep(waitMs);
+    }
+    this.lastStartedAtMs = this.options.now();
+  }
 
   run<T>(operation: () => Promise<T>): Promise<T> {
     const execute = async (): Promise<T> => {
       for (let retry = 0; ; retry += 1) {
+        await this.waitForPacingWindow();
         try {
           return await operation();
         } catch (error) {
