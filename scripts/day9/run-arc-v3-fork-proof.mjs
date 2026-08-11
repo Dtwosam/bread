@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 const root = process.cwd();
 const network = JSON.parse(readFileSync(join(root, 'config/networks/arc-testnet.json'), 'utf8'));
+const toolchain = JSON.parse(readFileSync(join(root, 'config/toolchain/versions.json'), 'utf8'));
 
 const EXPECTED_CHAIN_ID = 5_042_002;
 const TEST_ONLY_V3_FEE = 3_000;
@@ -16,6 +17,24 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 function fail(message) {
   console.error(`day9-arc-v3-fork: FAIL: ${message}`);
   process.exit(1);
+}
+
+function probe(command, args = []) {
+  return spawnSync(command, args, {
+    cwd: root,
+    env: process.env,
+    encoding: 'utf8',
+    timeout: 15_000,
+  });
+}
+
+function requireFoundryTool(command) {
+  const result = probe(command, ['--version']);
+  if (result.error?.code === 'ENOENT') {
+    fail(`${command} is not installed or not on PATH; Bread requires Foundry ${toolchain.foundry}. Install the pinned Foundry toolchain, then rerun this proof.`);
+  }
+  if (result.error) fail(`${command} preflight failed: ${result.error.message}`);
+  if (result.status !== 0) fail(`${command} --version exited ${result.status}: ${result.stderr ?? result.stdout ?? ''}`);
 }
 
 function run(command, args, options = {}) {
@@ -48,6 +67,9 @@ function parseUint(value, label) {
   if (!match) fail(`${label} did not return a uint: ${value}`);
   return BigInt(match[1]);
 }
+
+requireFoundryTool('cast');
+requireFoundryTool('forge');
 
 if (network.chainId !== EXPECTED_CHAIN_ID) fail(`manifest chainId must be ${EXPECTED_CHAIN_ID}`);
 if (network.dex?.type !== 'UNISWAP_V3') fail('Arc Testnet manifest must select UNISWAP_V3');
