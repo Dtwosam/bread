@@ -15,14 +15,14 @@ async function loadReadinessModule() {
 }
 
 describe('Day 9 rehearsal readiness', () => {
-  it('blocks canonical Arc Testnet deployment while DEX evidence is unresolved', async () => {
+  it('recognizes verified Arc Testnet DEX evidence and blocks only on the undeployed Bread manifest', async () => {
     const module = await loadReadinessModule();
     expect(module?.assessDay9RehearsalReadiness).toBeTypeOf('function');
     if (!module) return;
 
     expect(module.assessDay9RehearsalReadiness({ network: 'arc-testnet', mode: 'CANONICAL' })).toMatchObject({
       ready: false,
-      code: 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED',
+      code: 'DEPLOYMENT_MANIFEST_NOT_READY',
     });
   });
 
