@@ -1,60 +1,71 @@
-# Day 9 Release Candidate & Rehearsal — Final Verdict
+# Day 9 Release Candidate & Rehearsal — Current Final Verdict
 
-Status: **DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED**
+Status: **DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_PHYSICAL_MATRIX_AND_EXTERNAL_CI**
 
-Bread's executable Day-9 rehearsal work is complete enough to evaluate the source-defined end gate truthfully, but the release-candidate PASS conditions are not all satisfied. This document therefore records a blocked verdict. It is not an RC PASS, testnet deployment claim, production-money claim, or authorization to begin Day 10.
+Bread's source-defined Day-9 money-path, deployment, rollback/reconcile, and recovery rehearsal gates have advanced materially since the original blocked verdict. The candidate is still **not** a Day-9 PASS because the required supported physical/branded-device matrix is incomplete and GitHub Actions is currently returning `startup_failure` before creating jobs. No RC tag is authorized and Day 10 remains stopped.
 
-## Controlling pre-final integrated checkpoint
+## Current integrated Arc-Testnet evidence
 
-The last accepted pre-final integrated Day-9 checkpoint before this verdict was `5c0e6ce15af30f406a8c367dc906c188451406c8` on PR #88. On that head, root CI, retained Day-6 gates, retained Day-7 primary Playwright, Day-8 security/invariant gates naturally affected by the branch, Day-9 Tasks 1–7, recovery drills, and the four-engine browser matrix were green. Task 8 adds the final blocked verdict and intentionally re-runs the complete source-required exact-head matrix, including retained Day-8 failure-recovery and 10k capacity/catch-up/cache gates.
+Canonical bounded Day-9 Arc Testnet evidence now includes:
 
-Final Task-8 exact-head workflow run IDs are recorded in PR #88 metadata after those workflows complete so this evidence file does not create self-referential commit churn.
+- verified current Arc Testnet network identity and canonical 6-decimal USDC;
+- verified generic `UNISWAP_V3` dependency manifest with Synthra as Arc-Testnet provider provenance only;
+- real-dependency fork integration PASS at Arc block `56439192`;
+- genuine chain-specific Safe v1.4.1 Protocol Admin `0x9004e285521d69197cd9965c301b02161eb1d0d8`, threshold 2-of-3;
+- canonical Bread Arc Testnet deployment/ownership/config verification PASS from source commit `db0f6ed28e4a2475f54e84efadd7cf9693701353`, deployment start block `56448201`;
+- public launch/buy/graduation/permanent-lock/creator-claim/replay lifecycle smoke PASS with token `0x9dc6c650929b641f93269a3b6d7d5237297d938b`, curve `0x68db37eea822d42af898b9777a96bef022a0e36d`, and Position Manager NFT `265870` permanently owned by Bread locker `0xecf66a3a221d90a413d9015803417aa8d4ba97fe`;
+- real reversible Safe threshold signer recovery PASS, with nonce `0 -> 2`, exact original owner set restored, and the temporary recovery signer participating in the restore transaction.
 
-## Task 1–7 result matrix
+All live-money language remains bounded to **Arc Testnet / non-production faucet assets**. No production economics, Arc-mainnet DEX, unrestricted-public-money, or production-authority claim is made.
+
+## Current Day-9 requirement matrix
 
 | Requirement | Result | Evidence boundary |
 | --- | --- | --- |
-| Source/environment reconciliation | PASS | Arc Testnet RPC/WS identity reconciled; read-only chain ID and canonical 6-decimal USDC checks passed. |
-| Clean-environment scripted rehearsal | PASS_NON_CANONICAL | Empty temporary Anvil environment executed Bread's real deploy → configure → verify → launch/buy → graduate → permanent lock → creator claim path. It is a controlled fixture proof, not a canonical Arc Testnet deployment. |
-| Canonical Arc Testnet deployment | EXPLICIT_BLOCKER | `ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED` and `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`; no live deploy/smoke broadcast was performed. |
-| Service rollback | PASS | Candidate application failure was isolated; routing returned to the known-good Day-8 release; web/API/indexer recovery and authoritative reconcile passed without contract mutation. |
-| Indexer rebuild/reconcile | PASS | Retained authoritative rebuild/reconcile evidence passed. |
-| Recovery/admin drills | PASS_EXECUTABLE_WITH_MULTISIG_BLOCKER | Nine executable drills passed. Safe-compatible threshold recovery remains `DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT`. |
-| Browser-engine matrix | PASS | Desktop Chromium, Firefox engine, WebKit engine, and mobile Chromium emulation executed with retained journeys, keyboard/focus/reduced-motion coverage, and manifest restoration. |
-| Physical/current-device matrix | EXTERNAL_EXECUTION_REQUIRED | Current macOS Safari, iOS Safari, representative physical Android Chrome, and branded Edge were not executed by the available tooling. Engine/emulation results are not relabeled as physical/branded execution. |
-| Wallet/in-app browser matrix | NO_FIRST_CLASS_WALLET_BROWSER_CLAIM | Bread V1 claims generic injected EIP-1193 behavior only; no brand-specific wallet/in-app browser compatibility claim is fabricated. |
+| Source/environment reconciliation | PASS | Arc Testnet identity and canonical USDC reconciled. |
+| Clean-environment scripted rehearsal | PASS | Controlled local rehearsal plus canonical public Arc Testnet deployment/lifecycle now prove the scripted path. |
+| Canonical Arc Testnet deployment | PASS_VERIFIED | Canonical manifest is `VERIFIED`; exact deployed addresses/hashes/start block retained. |
+| Public Arc Testnet lifecycle | PASS | Exact launch token/curve/LP position, creator claim, zero graduation residue and replay rejection retained in `docs/evidence/day9-public-arc-lifecycle-smoke.md`. |
+| Service rollback | PASS | Existing Day-9 rollback rehearsal remains retained. |
+| Indexer rebuild/reconcile | PASS | Existing authoritative rebuild/reconcile evidence remains retained. |
+| Recovery/admin drills | PASS | Real Safe-compatible threshold owner replacement and restoration is retained in `docs/evidence/day9-safe-threshold-recovery.json`; recovery bundle now requires this executed evidence. |
+| Browser-engine matrix | PASS | Desktop Chromium, Firefox engine, WebKit engine and mobile Chromium emulation executed with retained journey/accessibility coverage. |
+| macOS Safari physical | PARTIAL_PASS_EXTERNAL_USER_EXECUTION | Actual Safari navigation/responsive/Rabby connect/network-add/switch evidence exists. Buy/Sell/Create/Claim were not executed in that physical Safari run. |
+| iOS Safari physical | EXTERNAL_EXECUTION_REQUIRED | Required physical/current coverage not yet available. |
+| Android Chrome physical | EXTERNAL_EXECUTION_REQUIRED | Required representative physical Android Chrome coverage not yet available. |
+| Desktop Edge branded | EXTERNAL_EXECUTION_REQUIRED | Current Edge branded execution not yet available; Chromium engine coverage is not relabeled. |
+| Wallet/in-app browsers | NO_FIRST_CLASS_WALLET_BROWSER_CLAIM | Generic injected EIP-1193 only; no wallet brand is promoted to first-class without full Create/Buy/Sell/Claim/network-switch execution. |
+| Exact-head GitHub Actions | EXTERNAL_STARTUP_FAILURE | Root `ci.yml` is byte-for-byte identical to main, but current PR runs conclude `startup_failure` with `jobs: []`; this is not a CI PASS. |
 
-## Non-waivable Day-9 end gate
+The controlling 04D Browser / Device Release Matrix requires current Chrome and Edge, current Safari on macOS, current Firefox, current plus previous-major iOS Safari where practical, current Chrome on a representative mid-range Android device, and only the wallet/in-app browser paths explicitly claimed. Engine/emulation evidence is not a substitute for required physical/branded execution.
+
+## Non-waivable Day-9 end gate — current truth
 
 ```text
-EMPTY_ENVIRONMENT_TO_USABLE_LAUNCHPAD = BLOCKED_CANONICAL_ARC_TESTNET_DEPLOYMENT_NOT_EXECUTED
+EMPTY_ENVIRONMENT_TO_USABLE_LAUNCHPAD = PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
 ROLLBACK = PASS
 RECONCILE = PASS
+RECOVERY_DRILLS = PASS_REAL_SAFE_THRESHOLD_RECOVERY
 SUPPORTED_MATRIX = BLOCKED_EXTERNAL_EXECUTION_REQUIRED
+EXACT_HEAD_GITHUB_ACTIONS = EXTERNAL_STARTUP_FAILURE_BEFORE_JOB_CREATION
 
-DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED
+DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_PHYSICAL_MATRIX_AND_EXTERNAL_CI
 RC_TAG_CREATED = false
-LIVE_ARC_DEPLOY_BROADCAST = NOT_PERFORMED
-LIVE_ARC_SMOKE_BROADCAST = NOT_PERFORMED
+LIVE_ARC_DEPLOY_BROADCAST = PERFORMED_AND_VERIFIED_TESTNET_ONLY
+LIVE_ARC_SMOKE_BROADCAST = PERFORMED_AND_VERIFIED_TESTNET_ONLY
 DAY10_STARTED = false
 ```
 
-The controlled local rehearsal cannot substitute for the source-required canonical Testnet deployment when the canonical DEX/deployment manifest is unresolved. Likewise, `EXTERNAL_EXECUTION_REQUIRED` on required supported physical/current-device rows prevents `SUPPORTED_MATRIX = PASS` under the frozen Day-9 plan.
+## Remaining Day-9 blockers
 
-## Why no RC tag exists
+Day-9-specific blockers now are:
 
-The frozen Task-8 plan permits `bread-day9-rc1` only after every required Day-9 gate is PASS on one immutable exact head. That condition is false. The final RC workflow therefore asserts that the tag does not exist while this blocked verdict is active.
-
-## Active blockers at the Day-9 boundary
-
-Day-9-specific blockers:
-
-- `ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED`
-- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`
-- `DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT`
 - `PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED`
+- `DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED`
 
-Existing release/mainnet truthfulness gates remain unchanged:
+The prior Arc DEX/deployment, public lifecycle smoke, Safe environment and threshold-recovery blockers are cleared for the bounded Day-9 Testnet rehearsal.
+
+Existing public/mainnet truthfulness gates remain unchanged and are not silently converted into Day-9 Testnet blockers:
 
 - `CURRENT_PONS_FACTORY_SOURCE_PARITY`
 - `PONS_V2_RUNTIME_REFERENCE`
@@ -62,8 +73,12 @@ Existing release/mainnet truthfulness gates remain unchanged:
 - `PONS_AUDIT_FINDINGS`
 - `ARC_MAINNET_VALUES`
 
-No blocker is satisfied by inventing an address, economics value, admin/Safe identity, DEX deployment, browser compatibility claim, or mainnet value.
+## GitHub Actions classification
+
+The root `.github/workflows/ci.yml` blob on the active candidate is identical to `main`. Current PR workflow runs nevertheless terminate with GitHub `startup_failure` before any job is created (`jobs: []`). No test failure, compile failure or job-level log exists to repair from those runs. Until GitHub can start jobs again, the repository must not label that surface green.
+
+Fresh exact-head local verification may provide independent code/test evidence, but it does not erase the external Actions availability fact. Both are recorded separately.
 
 ## Safe continuation
 
-The final exact-head Task-8 matrix must pass while asserting this blocked verdict. If it does, the Day-9 implementation/rehearsal repairs and blocker evidence may be made durable without creating an RC PASS tag. Day 10 remains stopped. A later continuation must first satisfy the real external prerequisites (or obtain an explicit controlling source amendment), rerun the affected Day-9 gates on a fresh exact head, and only then reconsider RC freeze/tagging.
+Do not create `bread-day9-rc1` and do not begin Day 10 while the supported physical/branded-device matrix remains incomplete or the final source-required exact-head release evidence has not been truthfully closed. The next work is to complete the external browser/device rows that can actually be executed, run the exact-head local release matrix, re-check GitHub Actions availability, and then rerun this verdict on one unified immutable candidate head.
