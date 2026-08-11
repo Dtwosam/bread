@@ -51,7 +51,7 @@
           {"path": "src/interfaces/IPoolManager.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_MINIMAL_INITIALIZE_ABI"},
           {"path": "src/types/PoolKey.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_POOL_KEY_ABI"},
           {"path": "src/types/Currency.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_CURRENCY_ABI"},
-          {"path": "src/libraries/TickMath.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_SQRT_PRICE_AND_TICK_BOUNDS"}
+          {"path": "src/libraries/TickMath.sol", "spdx": "GPL-3.0-or-later", "usage": "REFERENCE_FOR_SQRT_PRICE_AND_TICK_BOUNDS"}
         ],
         "excludedImplementationSources": [
           {"path": "src/PoolManager.sol", "reason": "BUSL_IMPLEMENTATION_NOT_REQUIRED_FOR_BREAD_INACTIVE_ADAPTER_SOURCE"},
@@ -64,7 +64,7 @@
         "rootLicense": "MIT",
         "usage": "REFERENCE_FOR_MINIMAL_ALLOWANCE_ABI; NO_NETWORK_ACTIVATION",
         "files": [
-          {"path": "src/interfaces/IAllowanceTransfer.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_APPROVE_ABI"}
+          {"path": "src/interfaces/IAllowanceTransfer.sol", "spdx": "MIT", "usage": "REFERENCE_FOR_APPROVE_ABI; NO_NETWORK_ACTIVATION"}
         ]
       }
     }
@@ -74,7 +74,7 @@
     "activationAllowed": true,
     "activationScope": "ARC_TESTNET_DEPENDENCY_MANIFEST_ONLY",
     "arcDeployment": {
-      "status": "VERIFIED_V3_COMPATIBLE_ARC_TESTNET_DEPENDENCIES_REAL_DEPENDENCY_FORK_AND_BREAD_DEPLOYMENT_PASS",
+      "status": "VERIFIED_V3_COMPATIBLE_ARC_TESTNET_DEPENDENCIES_REAL_DEPENDENCY_FORK_BREAD_DEPLOYMENT_AND_PUBLIC_SMOKE_PASS",
       "checkedAt": "2026-08-11",
       "providerProvenance": "Synthra",
       "providerRegistrySource": "@synthra-swap/sdk/chains:getSynthraChainDeployment(ChainId.ARC)",
@@ -113,7 +113,7 @@
         "productionAuthorityClaim": false
       },
       "publicTestnetDeploymentPlan": {
-        "status": "DEPLOYMENT_VERIFY_PASS_SMOKE_PENDING",
+        "status": "DEPLOYMENT_VERIFY_AND_PUBLIC_LIFECYCLE_SMOKE_PASS",
         "sourceCommit": "db0f6ed28e4a2475f54e84efadd7cf9693701353",
         "deploymentStartBlock": 56448201,
         "protocolAdminSafe": "0x9004e285521d69197cd9965c301b02161eb1d0d8",
@@ -134,10 +134,32 @@
         "v3Fee": 3000,
         "smokeQuoteIn": "11000000",
         "smokeFundingFloor": "12000000",
+        "smoke": {
+          "status": "PASS",
+          "recoveryImplementationHead": "8bb27d0b6be657b3f3d935a4378e9b93fc1be290",
+          "executionMode": "DIRECT_ARC_RPC_WITH_REAL_NODE_SIMULATION_PER_TRANSACTION",
+          "recoveredFromPreparedIntent": true,
+          "token": "0x9dc6c650929b641f93269a3b6d7d5237297d938b",
+          "curve": "0x68db37eea822d42af898b9777a96bef022a0e36d",
+          "launchTransactionHash": "0xb5542a77d767a784f6ce4dc77d3e00a50170256a1320179947d25b2c468883a5",
+          "positionId": "265870",
+          "positionManager": "0x444Cc395346428216fB6f2892eb03cB804aE4CD5",
+          "nftOwner": "0xecf66a3a221d90a413d9015803417aa8d4ba97fe",
+          "creatorClaimLogCount": 1,
+          "creatorClaimRemaining": "0",
+          "graduationResidueZero": true,
+          "replayRejected": true,
+          "transactionHashes": [
+            "0x4eb708960c79262238166219a150d7c167cffc1420e79cc233b9099e32c0f561",
+            "0xb5542a77d767a784f6ce4dc77d3e00a50170256a1320179947d25b2c468883a5",
+            "0x821730481bf7d87a2b9932ac8e8a3dcba069f98d308f8a6cb27c5ff147348d79",
+            "0x55a93e4e54205a6c22850f067ffe473cf7702891ce1ba1ba318334c5b4ae6071"
+          ]
+        },
         "productionMoneyClaim": false
       },
-      "evidence": "docs/evidence/day9-synthra-arc-testnet-v3-candidate.md",
-      "breadMoneyPathIntegrationStatus": "REAL_DEPENDENCY_FORK_PASS_SAFE_2_OF_3_PASS_PUBLIC_TESTNET_DEPLOYMENT_VERIFY_PASS_SMOKE_PENDING"
+      "evidence": "docs/evidence/day9-public-arc-lifecycle-smoke.md",
+      "breadMoneyPathIntegrationStatus": "REAL_DEPENDENCY_FORK_PASS_SAFE_2_OF_3_PASS_PUBLIC_TESTNET_DEPLOYMENT_VERIFY_AND_LIFECYCLE_SMOKE_PASS"
     },
     "officialSource": {
       "periphery": {
@@ -147,7 +169,7 @@
         "usage": "REFERENCE_FOR_MINIMAL_V3_ABI",
         "files": [
           {"path": "contracts/interfaces/INonfungiblePositionManager.sol", "spdx": "GPL-2.0-or-later", "usage": "REFERENCE_FOR_MINIMAL_MINT_ABI"},
-          {"path": "contracts/interfaces/IPoolInitializer.sol", "spdx": "GPL-2.0-or-later", "usage": "REFERENCE_FOR_POOL_INITIALIZATION_ABI"},
+          {"path": "contracts/interfaces/IPoolInitializer.sol", "spdx": "GPL-2.0-or-later", "usage": "REFERENCE_FOR_MINIMAL_INITIALIZE_ABI"},
           {"path": "contracts/interfaces/IPeripheryImmutableState.sol", "spdx": "GPL-2.0-or-later", "usage": "REFERENCE_FOR_FACTORY_IDENTITY_ABI"}
         ]
       },
@@ -176,7 +198,7 @@
   },
   "activationPolicy": {
     "arcV4": "BLOCKED_UNTIL_OFFICIAL_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
-    "arcV3Testnet": "VERIFIED_DEPENDENCY_FORK_AND_BREAD_DEPLOYMENT_PASS; PUBLIC LIFECYCLE SMOKE STILL REQUIRED",
+    "arcV3Testnet": "VERIFIED_DEPENDENCY_FORK_BREAD_DEPLOYMENT_AND_PUBLIC_LIFECYCLE_SMOKE_PASS",
     "arcV3Mainnet": "REQUIRES_FRESH_MAINNET_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
     "productionEconomics": "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED_FOR_PUBLIC_MAINNET_RELEASE; EXPLICIT_NON_PRODUCTION_TESTNET_VALUES_ALLOWED",
     "mainnet": "ARC_MAINNET_VALUES_REQUIRED",
