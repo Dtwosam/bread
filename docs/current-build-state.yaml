@@ -1,7 +1,7 @@
-schema_version: 1.50
+schema_version: 1.51
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
-updated_at: 2026-08-10
+updated_at: 2026-08-11
 
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
@@ -16,9 +16,9 @@ completed_checkpoints:
   - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
 
-active_checkpoint: "Day 9 — Release Candidate & Rehearsal preflight"
-active_lane: "Day-9 source/baseline/release-gate preflight only. No rehearsal or RC freeze begins until this final durable-state pointer is merged and read back from actual main."
-active_gate: DAY9_PREFLIGHT_PENDING_DURABLE_STATE_FINALIZATION
+active_checkpoint: "Day 9 — Release Candidate & Rehearsal"
+active_lane: "Task 8 — final RC verdict / blocked evidence and exact-head closeout matrix"
+active_gate: DAY9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_EXTERNAL_PREREQUISITES
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -31,28 +31,27 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.49
-  prior_state_git_commit: e6b4a23716694dca2031a73b6a933b3bb8596620
-  prior_state_blob_sha: c03f73b17e4b4c16e71e8f11b4d2e0a5c045afc1
+  prior_state_schema_version: 1.50
+  prior_state_git_commit: fe9b13f1ce271fd5423fdd76de13034dac18fee1
+  prior_state_blob_sha: b1ef99ec0cc06acb1d7f3fdbc04bebb757c5ed65
   note: >-
-    v1.50 finalizes the state transition whose prerequisite was recorded by v1.49. PR #86 has now merged and both v1.49 and the Day-8 durable handoff were freshly read back from actual main. Earlier state remains immutable in Git. No accepted Day-1 through Day-8 behavior, invariant, blocker, source boundary or authority rule is revoked.
+    v1.51 advances only the workflow/evidence boundary from durable Day 8 into the executed-but-blocked Day-9 rehearsal. It does not revoke accepted Day-1 through Day-8 behavior, change a financial invariant, authorize a canonical Arc deployment, satisfy a release/mainnet blocker, or create a release candidate tag.
 
 integration_baseline:
   id: DAY8-ATTACK-SYSTEM-DURABLE-CLOSEOUT
   branch: main
-  day7_durable_main: b3c7d7b51ec9398f3b786c795a4f625b8020580a
+  verified_durable_main: fe9b13f1ce271fd5423fdd76de13034dac18fee1
   day8_implementation_pr: 84
   day8_final_reviewed_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
   day8_implementation_merge: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
   day8_durability_pr: 86
-  day8_durability_head: e4c6f59e2cbfbfa57ed6fe0ddfc42a60a6ec8aa4
   day8_durability_merge: e6b4a23716694dca2031a73b6a933b3bb8596620
-  verified_main_after_durability_merge: e6b4a23716694dca2031a73b6a933b3bb8596620
+  day8_state_finalization_merge: fe9b13f1ce271fd5423fdd76de13034dac18fee1
   status: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE
-  implementation_merge_note: >-
-    PR #84 merged concurrently/external to the active ChatGPT merge sequence. GitHub verification established that it contained the exact reviewed implementation head 6ababe6504a6954625b38e80b0c963faaba2de0c and no intervening code commit entered main.
-  durability_merge_note: >-
-    PR #86 was guarded-merged from exact docs head e4c6f59e2cbfbfa57ed6fe0ddfc42a60a6ec8aa4 after all naturally triggered root/retained continuity gates passed. Actual main was verified identical to e6b4a23716694dca2031a73b6a933b3bb8596620 and v1.49 plus docs/handoffs/day8-attack-system-durable-handoff.md were read back from main.
+  day9_pr: 88
+  day9_branch: agent/day9-release-candidate-rehearsal-preflight
+  day9_pre_final_integrated_head: 5c0e6ce15af30f406a8c367dc906c188451406c8
+  day9_current_status: DAY9_REHEARSAL_EXECUTED_BLOCKED_EXTERNAL_PREREQUISITES_PENDING_FINAL_EXACT_HEAD_GATE
 
 day8_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
@@ -60,18 +59,34 @@ day8_scope:
   lane3: FRONTEND_SECURITY_ADVERSARIAL_PASS
   lane4: FAILURE_RECOVERY_INJECTION_PASS
   lane5: HOT_LAUNCH_BOT_CACHE_RPC_INDEXER_DB_CAPACITY_PASS
-  production_change_boundaries:
-    - apps/api/src/http-cache.ts
-    - apps/api/src/routes/feed.ts
-    - apps/api/src/routes/status.ts
-    - apps/api/src/routes/token.ts
-    - apps/indexer/src/catch-up.ts
-    - apps/indexer/src/index.ts
-    - apps/indexer/src/rpc-failover.ts
   forbidden_change_review: PASS_NO_SOLIDITY_ECONOMICS_CUSTODY_SIGNING_ABI_ADDRESS_MAINNET_OR_LOCKFILE_CHANGE
 
-working_branches:
-  - docs/day8-finalize-durable-state
+day9_scope:
+  task1_environment_reconciliation: PASS
+  task2_rehearsal_readiness: PASS_FAIL_CLOSED
+  task3_clean_local_rehearsal: PASS_NON_CANONICAL
+  task4_service_rollback: PASS
+  task5_recovery_drills: PASS_9_EXECUTABLE_WITH_MULTISIG_ENVIRONMENT_BLOCKER
+  task6_browser_engine_matrix: PASS_AUTOMATED_WITH_PHYSICAL_EXTERNAL
+  task7_live_arc_gate: BLOCKED_REAL_EXTERNAL_PREREQUISITES_NO_BROADCAST
+  task8_final_rc_verdict: DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED
+  production_change_note: >-
+    Day 9 repaired rehearsal/deployment/browser-test boundaries discovered by execution. It did not change Solidity economics, custody, wallet signing authority, canonical DEX selection, production economics, Arc mainnet values, or financial accounting semantics.
+
+day9_verdict:
+  result: DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED
+  empty_environment_to_usable_launchpad: BLOCKED_CANONICAL_ARC_TESTNET_DEPLOYMENT_NOT_EXECUTED
+  rollback: PASS
+  reconcile: PASS
+  supported_matrix: BLOCKED_EXTERNAL_EXECUTION_REQUIRED
+  canonical_arc_testnet_deployment: BLOCKED_REAL_EXTERNAL_PREREQUISITES
+  recovery_drills: PASS_EXECUTABLE_WITH_MULTISIG_ENVIRONMENT_BLOCKER
+  browser_engine_matrix: PASS
+  physical_device_matrix: EXTERNAL_EXECUTION_REQUIRED
+  wallet_browser_matrix: NO_FIRST_CLASS_WALLET_BROWSER_CLAIM
+  live_arc_broadcast_performed: false
+  rc_tag_created: false
+  day10_started: false
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -80,104 +95,40 @@ repository:
   day7_task10_handoff_pr: 83
   day8_implementation_pr: 84
   day8_handoff_pr: 86
+  day9_pr: 88
   day7_public_web_complete: true
   day8_started: true
   day8_implementation_complete: true
   day8_complete: true
-  day9_started: false
-
-project_process_note:
-  day8_scope_rule: >-
-    Day 8 attacked the integrated system through extended fuzz/invariants, static/manual security review, RPC/API/indexer/realtime failure injection, hot-launch/bot-burst capacity tests, malicious metadata/CSP/signing-target checks, privileged-role abuse attempts and recovery verification. It added no product feature and waived no release/mainnet blocker.
-  capacity_measurement_rule: >-
-    06I keeps separate obligations: the 10,000-concurrent hot-launch stress gate proves convergence, healthy cached/read errors below one percent, bounded shared-service work and no viewer-linear RPC multiplication; existing 04D token/feed p95 targets remain under representative load. Day-8 evidence preserved both obligations without weakening either threshold.
-  resilience_ownership_rule: >-
-    Day-8 RPC failover and indexer catch-up wrap the existing LogClient/replayOverlap boundaries. Runtime callers retain provider/network selection, retryability policy, observed-head authority, durable checkpoint reads and event application. No parallel chain, accounting or deployment authority was introduced.
-  day9_scope_rule: >-
-    Day 9 is Release Candidate & Rehearsal, not feature development. It must start from the final verified durable Day-8 main, freeze an RC commit/tag, run clean testnet deployment using production scripts, verify code/config/ownership, smoke the lifecycle, rehearse web/API/indexer rollback, rebuild/reconcile, run multisig/Guardian drills, complete the browser/device/wallet/accessibility matrix, and generate evidence. Open release/mainnet blockers remain controlling and cannot be guessed away.
+  day9_started: true
+  day9_complete: false
+  day9_rc_tag_created: false
+  day10_started: false
 
 verification:
-  implementation_exact_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
-  implementation_root_ci: 31430771975
-
-  day8_lane1_ci: 31430771947
+  day8_durable_main: fe9b13f1ce271fd5423fdd76de13034dac18fee1
   day8_lane1_result: PASS_35_SUITES_201_TESTS_4096_FUZZ_256X64_INVARIANT
-  day8_lane2_ci: 31430771932
   day8_lane2_result: PASS_SLITHER_0_11_6_REVIEWED_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
-  day8_lane3_ci: 31430772007
   day8_lane3_result: PASS
-  day8_lane4_ci: 31430771994
   day8_lane4_result: PASS
-  day8_lane5_cache_budget_ci: 31430771992
-  day8_lane5_indexer_catchup_ci: 31430771948
-  day8_lane5_hot_capacity_ci: 31430771980
   day8_lane5_result: PASS_06I_REQUIRED_SCENARIO_MATRIX
-
   day8_hot_clients: 10000
-  day8_hot_requests: 10000
-  day8_hot_arrival_window_ms: 2000
   day8_hot_error_rate: 0
-  day8_hot_p95_ms_observed: 221.92
-  day8_representative_token_p95_ms: 116.84
-  day8_representative_feed_p95_ms: 118.43
-  day8_hot_token_origin_fetches: 9
-  day8_hot_token_origin_fetch_budget: 12
-  day8_feed_origin_fetches: 8
-  day8_feed_origin_fetch_budget: 12
-  day8_observed_head_read_delta: 0
-  day8_realtime_deliveries: 10000
-  day8_realtime_publish_ms: 23.06
-  day8_realtime_slow_consumer_drops: 0
-  day8_bot_search_requests: 1000
-  day8_bot_search_allowed: 30
-  day8_bot_search_limited: 970
-  day8_rpc_failover_concurrent_reads: 200
-  day8_rpc_failover_max_active_per_provider: 8
-  day8_rpc_failover_primary_failure_wave_max_calls: 9
-  day8_indexer_catchup_start_block: 100
-  day8_indexer_catchup_final_block: 315
-  day8_indexer_catchup_arrival_blocks: 15
-  day8_indexer_catchup_cycles: 5
-  day8_retained_postgres_redis_capacity_tests: PASS_9_OF_9
 
-  implementation_retained_day6_task5_ci: 31430771979
-  implementation_retained_day6_task6_ci: 31430773002
-  implementation_retained_day6_task7_ci: 31430772044
-  implementation_retained_day6_task8_ci: 31430772001
-  implementation_retained_day6_task9_ci: 31430772037
-  implementation_retained_day6_task10_ci: 31430772078
-
-  implementation_retained_day7_task1_ci: 31430772102
-  implementation_retained_day7_task2_ci: 31430772002
-  implementation_retained_day7_task3_ci: 31430771993
-  implementation_retained_day7_task4_ci: 31430772089
-  implementation_retained_day7_task5_ci: 31430772061
-  implementation_retained_day7_task6_ci: 31430772121
-  implementation_retained_day7_task7_ci: 31430771934
-  implementation_retained_day7_task8_ci: 31430772015
-  implementation_retained_day7_task9_ci: 31430772076
-  implementation_retained_day7_task10_playwright_ci: 31430771996
-
-  durability_exact_head: e4c6f59e2cbfbfa57ed6fe0ddfc42a60a6ec8aa4
-  durability_root_ci: 31431645048
-  durability_retained_day6_task5_ci: 31431645152
-  durability_retained_day6_task6_ci: 31431644884
-  durability_retained_day6_task7_ci: 31431644928
-  durability_retained_day6_task8_ci: 31431644871
-  durability_retained_day6_task9_ci: 31431644867
-  durability_retained_day6_task10_ci: 31431645114
-  durability_retained_day7_task1_ci: 31431645065
-  durability_retained_day7_task2_ci: 31431644882
-  durability_retained_day7_task3_ci: 31431644998
-  durability_retained_day7_task4_ci: 31431645069
-  durability_retained_day7_task5_ci: 31431644863
-  durability_retained_day7_task6_ci: 31431645084
-  durability_retained_day7_task7_ci: 31431645076
-  durability_retained_day7_task8_ci: 31431645178
-  durability_retained_day7_task9_ci: 31431644910
-  durability_task10_runtime_source: IMPLEMENTATION_HEAD_RUN_31430771996_NOT_PATH_TRIGGERED_BY_DOCS
-  durability_readback_state: PASS_FROM_MAIN_E6B4A237
-  durability_readback_handoff: PASS_FROM_MAIN_E6B4A237
+  day9_pre_final_integrated_head: 5c0e6ce15af30f406a8c367dc906c188451406c8
+  day9_task1_ci: 31445491597
+  day9_task2_ci: 31445491634
+  day9_task3_ci: 31445491579
+  day9_task4_ci: 31445491604
+  day9_task5_ci: 31445491591
+  day9_task6_ci: 31445491625
+  day9_task7_ci: 31445491580
+  day9_root_ci: 31445491578
+  day9_retained_day7_task10_playwright_ci: 31445491601
+  day9_recovery_fixture_race_repair: PASS_NO_PRODUCTION_RECOVERY_LOGIC_CHANGE
+  day9_live_arc_classifier: BLOCKED_EXPECTED_NO_BROADCAST
+  day9_final_exact_head: PENDING_TASK8_GREEN_COMMIT
+  day9_final_exact_head_matrix: PENDING
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -187,23 +138,34 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; does not invalidate Day-8 integrated security/capacity evidence"
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; do not claim exact-current Pons parity"
   PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
+day9_blockers:
+  - ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED
+  - ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY
+  - DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT
+  - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+
+day9_blocker_scope:
+  ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED: "canonical Arc Testnet DEX activation remains unresolved; controlled fixtures do not satisfy this"
+  ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY: "canonical deployment addresses/economics/authority/DEX evidence are not populated with verified release values"
+  DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT: "no Safe-compatible threshold execution environment was available; no single EOA is substituted"
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "required current physical/branded browser-device rows were not executed; engine emulation is not relabeled"
+
 next_action: >-
-  Merge and read back this state-only finalization from actual main. Then begin Day 9 — Release Candidate & Rehearsal with a source/baseline/blocker preflight from that verified main. Re-read the controlling 05A-05D, 06C-06I, master v1.5 and implementation-plan Day-9 requirements; verify main has not moved; inventory the existing deployment/verification/smoke/rollback/rebuild/reconcile/admin/browser-matrix tooling; freeze an exact Day-9 execution plan before any rehearsal or RC tag. Do not fabricate unresolved production economics, Pons runtime numeric values, Arc mainnet values or canonical Arc DEX addresses.
+  Run the complete Task-8 final exact-head matrix on this blocked-verdict candidate: root CI; Day-8 lanes 1-5 including failure recovery, cache budget, indexer catch-up and 10k hot-launch capacity; retained Day-6 Tasks 5-10; retained Day-7 Tasks 1-10 including Playwright; and all Day-9 lanes including the final RC verdict gate. If and only if that exact head is green, review the scoped diff and preserve the useful Day-9 rehearsal repairs plus blocker evidence durably without creating bread-day9-rc1. Day 10 and public release remain stopped. A later fresh candidate must first satisfy the real canonical Arc Testnet deployment/Dex prerequisites, Safe-compatible threshold recovery environment, and required supported physical-device execution (or receive an explicit controlling source amendment), then rerun the affected Day-9 gates before RC freeze can be reconsidered.
 
 do_not_do:
-  - "Do not begin Day-9 rehearsal or freeze an RC before this state-only finalization is merged and read back from actual main."
+  - "Do not create or push bread-day9-rc1 while DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED is active."
+  - "Do not begin Day 10, enable public-money release, or claim Day-9 PASS while any non-waivable Day-9 end gate is blocked."
+  - "Do not perform a live Arc deploy/smoke broadcast while check-live-arc-rehearsal returns authorized:false."
+  - "Do not invent canonical Arc DEX addresses, production economics, admin/Guardian/Safe values, Arc mainnet values, Pons runtime numeric values, or missing audit findings."
+  - "Do not convert Playwright engine/emulation evidence into physical/branded Safari/Android/Edge/wallet-browser claims."
   - "Do not reopen accepted Day-1 through Day-8 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
-  - "Do not invent new product features during Days 8-10; these days are stabilization/rehearsal/security/load/release work."
-  - "Do not fabricate unsupported financial, runtime, production economics, Pons numeric, Arc mainnet or canonical DEX values."
-  - "Do not introduce private copies of shared DTOs, ABI/address/config authority or financial formulas."
   - "Do not introduce a second wallet provider, transaction lifecycle, recovery store, API/domain authority, chain authority or financial ledger."
   - "Do not route user trades, launches or claims through a centralized Bread transaction server or add server-side signing/relaying/custody."
   - "Do not make DB/indexer/API/Redis authoritative for financial state."
-  - "Do not weaken REC-01 through REC-06 or allow rebuild success without PASS authoritative reconciliation."
-  - "Do not claim Day-9 deployment, rollback, multisig/Guardian, physical-device/browser/wallet or release rehearsal evidence before those Day-9 gates actually run."
