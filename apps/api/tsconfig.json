@@ -12,9 +12,21 @@
     "skipLibCheck": true
   },
   "references": [
-    { "path": "../../packages/db" },
-    { "path": "../../packages/protocol-sdk" },
-    { "path": "../../packages/types" }
+    {
+      "path": "../../packages/db"
+    },
+    {
+      "path": "../../packages/protocol-sdk"
+    },
+    {
+      "path": "../../packages/types"
+    }
   ],
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "src/lan/**/*"
+  ]
 }
