@@ -6,6 +6,7 @@ export function classifyArcDirectSmokeStep({
   readyToGraduate,
   graduated,
   creatorCredit,
+  creatorClaimObserved,
 }) {
   if (typeof allowance !== 'bigint' || allowance < 0n) {
     throw new Error('allowance must be a non-negative bigint');
@@ -16,13 +17,20 @@ export function classifyArcDirectSmokeStep({
   if (typeof creatorCredit !== 'bigint' || creatorCredit < 0n) {
     throw new Error('creatorCredit must be a non-negative bigint');
   }
+  if (typeof creatorClaimObserved !== 'boolean') {
+    throw new Error('creatorClaimObserved must be boolean');
+  }
 
   if (!launchExists) {
     return allowance >= quoteIn ? 'LAUNCH' : 'APPROVE';
   }
 
   if (permanentlyLocked) {
-    return creatorCredit > 0n ? 'CLAIM' : 'VERIFY_REPLAY';
+    if (creatorCredit > 0n) return 'CLAIM';
+    if (!creatorClaimObserved) {
+      throw new Error('creator claim evidence is required before replay verification');
+    }
+    return 'VERIFY_REPLAY';
   }
 
   if (readyToGraduate) return 'SWEEP';
