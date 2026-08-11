@@ -14,7 +14,8 @@ interface ArcForkVm {
     function envAddress(string calldata name) external returns (address value);
     function envUint(string calldata name) external returns (uint256 value);
     function createSelectFork(string calldata urlOrAlias, uint256 blockNumber) external returns (uint256 forkId);
-    function prank(address msgSender) external;
+    function deal(address account, uint256 newBalance) external;
+    function etch(address target, bytes calldata newRuntimeBytecode) external;
 }
 
 interface IArcV3FactoryFork {
@@ -25,6 +26,27 @@ interface IArcV3FactoryFork {
 interface IArcV3PositionManagerFork {
     function factory() external view returns (address);
     function ownerOf(uint256 tokenId) external view returns (address owner);
+}
+
+/// @notice Fork-only emulation of Arc's Native Coin Authority transfer primitive.
+/// @dev Stock Foundry does not implement Arc's custom precompile at 0x1800...0000.
+///      Arc canonical USDC converts its 6-decimal ERC-20 amount to 18-decimal native units
+///      and calls this primitive. The shim reproduces only the native balance movement needed
+///      by this integration proof; it is never deployed or used by Bread production code.
+contract ArcNativeCoinAuthorityForkShim {
+    ArcForkVm private constant VM = ArcForkVm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    address private constant ARC_USDC = 0x3600000000000000000000000000000000000000;
+
+    function transfer(address from, address to, uint256 nativeAmount) external returns (bool) {
+        require(msg.sender == ARC_USDC, "ONLY_ARC_USDC");
+        require(from != address(0) && to != address(0), "ZERO_ADDRESS");
+        require(nativeAmount != 0, "ZERO_AMOUNT");
+        require(from.balance >= nativeAmount, "NATIVE_BALANCE_TOO_LOW");
+
+        VM.deal(from, from.balance - nativeAmount);
+        VM.deal(to, to.balance + nativeAmount);
+        return true;
+    }
 }
 
 contract ArcForkLaunchToken is ERC20 {
@@ -40,6 +62,8 @@ contract ArcForkLaunchToken is ERC20 {
 contract ArcV3DependencyForkTest {
     ArcForkVm private constant VM = ArcForkVm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
+    address private constant ARC_NATIVE_COIN_AUTHORITY = 0x1800000000000000000000000000000000000000;
+    uint256 private constant ARC_NATIVE_TO_ERC20_SCALE = 1e12;
     uint256 private constant FORK_USDC_AMOUNT = 10_000_000; // 10 USDC at 6 decimals.
     uint256 private constant TOTAL_TOKENS = 20 ether;
     uint256 private constant POOL_TOKENS = 10 ether;
@@ -51,7 +75,6 @@ contract ArcV3DependencyForkTest {
         address usdc = VM.envAddress("BREAD_USDC");
         address factory = VM.envAddress("BREAD_V3_FACTORY");
         address positionManager = VM.envAddress("BREAD_V3_POSITION_MANAGER");
-        address forkUsdcDonor = VM.envAddress("BREAD_FORK_USDC_DONOR");
         uint256 feeValue = VM.envUint("BREAD_V3_FEE");
         require(feeValue <= type(uint24).max, "FEE_OUT_OF_RANGE");
         uint24 fee = uint24(feeValue);
@@ -59,6 +82,7 @@ contract ArcV3DependencyForkTest {
         VM.createSelectFork(rpcUrl, forkBlock);
 
         require(block.chainid == expectedChainId, "CHAIN_ID_MISMATCH");
+        require(usdc == 0x3600000000000000000000000000000000000000, "UNEXPECTED_ARC_USDC");
         require(usdc.code.length != 0, "USDC_NO_CODE");
         require(factory.code.length != 0, "FACTORY_NO_CODE");
         require(positionManager.code.length != 0, "POSITION_MANAGER_NO_CODE");
@@ -66,16 +90,23 @@ contract ArcV3DependencyForkTest {
         require(IArcV3PositionManagerFork(positionManager).factory() == factory, "POSITION_MANAGER_FACTORY_MISMATCH");
         require(IArcV3FactoryFork(factory).feeAmountTickSpacing(fee) > 0, "FEE_TIER_DISABLED");
 
+        // Arc's canonical USDC delegates mutative balance movement to the Arc-specific
+        // Native Coin Authority precompile. Stock Foundry forks do not provide that
+        // precompile, so install a fork-only shim at the exact Arc precompile address.
+        ArcNativeCoinAuthorityForkShim shim = new ArcNativeCoinAuthorityForkShim();
+        VM.etch(ARC_NATIVE_COIN_AUTHORITY, address(shim).code);
+
+        // Arc exposes one USDC balance through two precisions: 18-decimal native units
+        // and the canonical 6-decimal ERC-20 interface. Fund only the local fork balance.
+        VM.deal(address(this), FORK_USDC_AMOUNT * ARC_NATIVE_TO_ERC20_SCALE);
+        require(IERC20(usdc).balanceOf(address(this)) == FORK_USDC_AMOUNT, "FORK_USDC_FUNDING_MISMATCH");
+
         ArcForkLaunchToken token = new ArcForkLaunchToken();
         BreadPermanentLiquidityLocker locker = new BreadPermanentLiquidityLocker(address(this));
         locker.setCoordinator(address(this));
         BreadV3GraduationAdapter adapter = new BreadV3GraduationAdapter(
             address(this), usdc, address(locker), positionManager, factory, fee
         );
-
-        require(IERC20(usdc).balanceOf(forkUsdcDonor) >= FORK_USDC_AMOUNT, "FORK_DONOR_USDC_TOO_LOW");
-        VM.prank(forkUsdcDonor);
-        require(IERC20(usdc).transfer(address(this), FORK_USDC_AMOUNT), "FORK_USDC_TRANSFER_FAILED");
 
         token.mint(address(this), POOL_TOKENS);
         require(IERC20(usdc).approve(address(adapter), FORK_USDC_AMOUNT), "USDC_APPROVE_FAILED");
