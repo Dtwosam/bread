@@ -63,6 +63,20 @@ describe('Day 9 mobile wallet connectivity', () => {
     expect(config).toMatch(/connectors:\s*\[\s*injected\(\)\s*,\s*\.\.\.remoteConnectors\s*\]/);
   });
 
+  it('does not initialize the remote connector during server rendering', () => {
+    const config = read(paths.config);
+
+    // Wagmi calls connector.setup() even when createConfig({ ssr: true }) is
+    // used. WalletConnect setup initializes its provider, whose persistence is
+    // browser-only. The remote connector therefore must not be registered at
+    // all while window is absent; injected-only remains the server fallback.
+    expect(config).toMatch(/typeof\s+window\s*!==\s*['"]undefined['"]/);
+    expect(config).toMatch(
+      /const\s+remoteConnectors\s*=\s*[\s\S]*?typeof\s+window\s*!==\s*['"]undefined['"][\s\S]*?walletConnectProjectId[\s\S]*?\?[\s\S]*?walletConnect\(/,
+    );
+    expect(config).toContain('ssr: true');
+  });
+
   it('permits exactly the WalletConnect origins the shipped connector needs', () => {
     const nextConfig = read(paths.nextConfig);
 
