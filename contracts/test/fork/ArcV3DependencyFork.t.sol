@@ -49,6 +49,16 @@ contract ArcNativeCoinAuthorityForkShim {
     }
 }
 
+/// @notice Fork-only emulation of Arc's Native Coin Control read primitive.
+/// @dev The runner independently proves the existing Synthra Position Manager is not blocklisted
+///      at the pinned Arc block before this shim is installed. Contracts created only inside the
+///      fork have no prior Arc blocklist state and are therefore represented as unblocked.
+contract ArcNativeCoinControlForkShim {
+    function isBlocklisted(address) external pure returns (bool) {
+        return false;
+    }
+}
+
 contract ArcForkLaunchToken is ERC20 {
     constructor() ERC20("Bread Arc Fork Launch", "BAFL") {}
 
@@ -63,6 +73,7 @@ contract ArcV3DependencyForkTest {
     ArcForkVm private constant VM = ArcForkVm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     address private constant ARC_NATIVE_COIN_AUTHORITY = 0x1800000000000000000000000000000000000000;
+    address private constant ARC_NATIVE_COIN_CONTROL = 0x1800000000000000000000000000000000000001;
     uint256 private constant ARC_NATIVE_TO_ERC20_SCALE = 1e12;
     uint256 private constant FORK_USDC_AMOUNT = 10_000_000; // 10 USDC at 6 decimals.
     uint256 private constant TOTAL_TOKENS = 20 ether;
@@ -90,11 +101,13 @@ contract ArcV3DependencyForkTest {
         require(IArcV3PositionManagerFork(positionManager).factory() == factory, "POSITION_MANAGER_FACTORY_MISMATCH");
         require(IArcV3FactoryFork(factory).feeAmountTickSpacing(fee) > 0, "FEE_TIER_DISABLED");
 
-        // Arc's canonical USDC delegates mutative balance movement to the Arc-specific
-        // Native Coin Authority precompile. Stock Foundry forks do not provide that
-        // precompile, so install a fork-only shim at the exact Arc precompile address.
-        ArcNativeCoinAuthorityForkShim shim = new ArcNativeCoinAuthorityForkShim();
-        VM.etch(ARC_NATIVE_COIN_AUTHORITY, address(shim).code);
+        // Arc canonical USDC uses two Arc-specific precompiles for mutative ERC-20 movement:
+        // Native Coin Control for blocklist reads and Native Coin Authority for native balance transfer.
+        // Stock Foundry forks do not implement them, so emulate only these two primitives locally.
+        ArcNativeCoinControlForkShim controlShim = new ArcNativeCoinControlForkShim();
+        VM.etch(ARC_NATIVE_COIN_CONTROL, address(controlShim).code);
+        ArcNativeCoinAuthorityForkShim authorityShim = new ArcNativeCoinAuthorityForkShim();
+        VM.etch(ARC_NATIVE_COIN_AUTHORITY, address(authorityShim).code);
 
         // Arc exposes one USDC balance through two precisions: 18-decimal native units
         // and the canonical 6-decimal ERC-20 interface. Fund only the local fork balance.
