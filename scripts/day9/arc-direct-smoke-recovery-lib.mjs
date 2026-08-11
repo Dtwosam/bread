@@ -17,8 +17,8 @@ export function classifyArcDirectSmokeStep({
   if (typeof creatorCredit !== 'bigint' || creatorCredit < 0n) {
     throw new Error('creatorCredit must be a non-negative bigint');
   }
-  if (typeof creatorClaimObserved !== 'boolean') {
-    throw new Error('creatorClaimObserved must be boolean');
+  if (creatorClaimObserved !== undefined && typeof creatorClaimObserved !== 'boolean') {
+    throw new Error('creatorClaimObserved must be boolean when supplied');
   }
 
   if (!launchExists) {
@@ -27,9 +27,12 @@ export function classifyArcDirectSmokeStep({
 
   if (permanentlyLocked) {
     if (creatorCredit > 0n) return 'CLAIM';
-    if (!creatorClaimObserved) {
+    if (creatorClaimObserved === false) {
       throw new Error('creator claim evidence is required before replay verification');
     }
+    // Compatibility for the first direct-RPC recovery runner, which predates the
+    // explicit creatorClaimObserved argument. Its terminal result is accepted only
+    // through the separate read-only final verifier, which requires FeeClaimed.
     return 'VERIFY_REPLAY';
   }
 
