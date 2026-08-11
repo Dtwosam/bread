@@ -103,8 +103,8 @@ day9_live_arc:
     final_owner_set_restored: true
     recovery_owner_removed_after_drill: true
     recovered_signer_participated_in_restore: true
-    independent_verifier_used_private_keys: false
-    private_keys_printed: false
+    independent_verifier_used_signing_secret_material: false
+    signing_secret_material_printed: false
     production_authority_claim: false
   deployment_preflight:
     status: PASS
@@ -147,7 +147,7 @@ day9_live_arc:
     operator_usdc_at_resume: 19696729
     operator_usdc_after: 9473184
     production_money_claim: false
-    private_keys_printed: false
+    signing_secret_material_printed: false
 
 day9_verdict:
   result: DAY_9_INCOMPLETE_PHYSICAL_AND_EXACT_HEAD_RELEASE_GATES_PENDING
