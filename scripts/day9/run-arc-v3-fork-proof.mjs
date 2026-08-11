@@ -8,11 +8,6 @@ const toolchain = JSON.parse(readFileSync(join(root, 'config/toolchain/versions.
 
 const EXPECTED_CHAIN_ID = 5_042_002;
 const TEST_ONLY_V3_FEE = 3_000;
-const FORK_USDC_AMOUNT = 10_000_000n; // 10 USDC, fork-local only.
-// Current Synthra Arc SYN token from Synthra's documented local-development example.
-// This address is used only to discover an existing fork-state USDC holder; it is not a Bread dependency.
-const SYNTHRA_SYN_DONOR_DISCOVERY_TOKEN = '0xC5124C846c6e6307986988dFb7e743327aA05F19';
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 function fail(message) {
   console.error(`day9-arc-v3-fork: FAIL: ${message}`);
@@ -56,18 +51,6 @@ function run(command, args, options = {}) {
   return (result.stdout ?? '').trim();
 }
 
-function parseAddress(value, label) {
-  const match = String(value).match(/0x[0-9a-fA-F]{40}/);
-  if (!match) fail(`${label} did not return an EVM address: ${value}`);
-  return match[0];
-}
-
-function parseUint(value, label) {
-  const match = String(value).match(/^\s*(\d+)/);
-  if (!match) fail(`${label} did not return a uint: ${value}`);
-  return BigInt(match[1]);
-}
-
 requireFoundryTool('cast');
 requireFoundryTool('forge');
 
@@ -98,37 +81,6 @@ run(process.execPath, [
   '--fee', String(TEST_ONLY_V3_FEE),
 ]);
 
-let forkUsdcDonor = null;
-let donorFee = null;
-let donorBalance = 0n;
-for (const fee of [3_000, 500, 100, 10_000]) {
-  const poolRaw = run('cast', [
-    'call', factory, 'getPool(address,address,uint24)(address)',
-    usdc, SYNTHRA_SYN_DONOR_DISCOVERY_TOKEN, String(fee),
-    '--rpc-url', rpcUrl,
-    '--block', String(forkBlock),
-  ]);
-  const pool = parseAddress(poolRaw, `getPool fee ${fee}`);
-  if (pool.toLowerCase() === ZERO_ADDRESS) continue;
-
-  const balanceRaw = run('cast', [
-    'call', usdc, 'balanceOf(address)(uint256)', pool,
-    '--rpc-url', rpcUrl,
-    '--block', String(forkBlock),
-  ]);
-  const balance = parseUint(balanceRaw, `USDC balance for pool ${pool}`);
-  if (balance >= FORK_USDC_AMOUNT) {
-    forkUsdcDonor = pool;
-    donorFee = fee;
-    donorBalance = balance;
-    break;
-  }
-}
-
-if (!forkUsdcDonor) {
-  fail('could not find a Synthra SYN/USDC pool with at least 10 forked USDC for local-only funding');
-}
-
 run('forge', [
   'test',
   '--match-path', 'test/fork/ArcV3DependencyFork.t.sol',
@@ -145,7 +97,6 @@ run('forge', [
     BREAD_V3_FACTORY: factory,
     BREAD_V3_POSITION_MANAGER: positionManager,
     BREAD_V3_FEE: String(TEST_ONLY_V3_FEE),
-    BREAD_FORK_USDC_DONOR: forkUsdcDonor,
   },
 });
 
@@ -157,9 +108,7 @@ console.log(JSON.stringify({
   positionManager,
   usdc,
   v3Fee: TEST_ONLY_V3_FEE,
-  forkUsdcDonor,
-  donorPoolFee: donorFee,
-  donorUsdcBalance: donorBalance.toString(),
+  arcNativeCoinAuthorityMode: 'FOUNDRY_FORK_TEST_SHIM_ONLY',
   liveTransactionBroadcast: false,
   privateKeyRequired: false,
   mainnetDexSelected: false,
