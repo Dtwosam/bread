@@ -1,10 +1,10 @@
 # Day 9 — Synthra Arc Testnet V3 Candidate Evidence
 
-Status: **CURRENT SDK DEPLOYMENT IDENTITIES RESOLVED — INDEPENDENT ARC RPC IDENTITY CHECK PENDING — ACTIVATION BLOCKED**
+Status: **CURRENT SDK DEPLOYMENT IDENTITIES RESOLVED — INDEPENDENT ARC RPC DEPENDENCY COMPATIBILITY PASS — BREAD MONEY-PATH INTEGRATION PENDING**
 
 Checked: 2026-08-11
 Baseline: `c21b49a1f8edaaad999e461edb0ce602071bda5c`
-Candidate role: Arc Testnet-only graduation DEX candidate behind Bread's existing `IGraduationAdapter` boundary.
+Candidate role: Arc Testnet-only graduation DEX dependency behind Bread's existing `IGraduationAdapter` boundary.
 
 ## What is established
 
@@ -22,56 +22,96 @@ Candidate role: Arc Testnet-only graduation DEX candidate behind Bread's existin
    - SwapRouter02: `0xA545bCB1Bd7985c59ea162aB1748A0803434C31b`
    - Universal Router: `0xbf4479C07Dc6fdc6dAa764A0ccA06969e894275F`
 
-   These values are classified as **current Synthra SDK-derived Arc candidate deployment identities**. They are not yet canonical Bread configuration until independently checked against Arc RPC.
-5. The same official Synthra guidance defines Arc USDC as `0x3600000000000000000000000000000000000000` with 6 decimals, matching Bread's already-ratified Arc Testnet quote-asset configuration.
-6. Bread already has an inactive-by-default `BreadV3GraduationAdapter` implementing `IGraduationAdapter` against a narrow V3-compatible Factory / Position Manager ABI. Its existence does not authorize network activation.
-7. Bread now has a **vendor-neutral** pre-activation validator at `scripts/day9/verify-v3-dex-candidate.mjs`. It accepts only RPC/chain/USDC/Factory/Position-Manager/fee inputs and contains no Synthra-specific branch or address. Its focused fixtures cover the compatible case plus wrong-chain, missing-code, Position-Manager/Factory mismatch, disabled-fee-tier and non-6-decimal-USDC rejection.
+5. The same official Synthra guidance defines Arc USDC as `0x3600000000000000000000000000000000000000` with 6 decimals, matching Bread's ratified Arc Testnet quote-asset configuration.
+6. Bread has a vendor-neutral `BreadV3GraduationAdapter` implementing `IGraduationAdapter` against the required V3-compatible Factory / Position Manager ABI. Synthra does not become a Bread protocol authority or a new core adapter family.
+7. Bread has a vendor-neutral pre-activation validator at `scripts/day9/verify-v3-dex-candidate.mjs`. It accepts only RPC/chain/USDC/Factory/Position-Manager/fee inputs and contains no Synthra-specific branch or address.
 
-## What remains to be established
+## Independent Arc RPC compatibility evidence
 
-The exact Arc candidate Factory and Position Manager are now resolved from Synthra's current SDK registry. The remaining dependency-identity gate is **independent Arc RPC verification**, specifically:
+On 2026-08-11, after the SDK lookup, the operator executed a separate **read-only** JSON-RPC identity check against `https://rpc.testnet.arc.network`. No wallet connection, signature or transaction was involved.
 
-- Arc RPC reports chain ID exactly `5042002`;
-- canonical Bread ERC-20 USDC reports 6 decimals and has runtime code;
-- the SDK-derived Factory has runtime code;
-- the SDK-derived Position Manager has runtime code;
-- `positionManager.factory()` equals `0x0fB6EEDA6e90E90797083861A75D15752a27f59c`;
-- the selected V3 fee tier returns positive `feeAmountTickSpacing`.
+Observed result:
 
-Bread's connected execution environment currently cannot resolve `rpc.testnet.arc.network` DNS, so the independent RPC check must not be silently inferred from the SDK result. The repository remains fail-closed until the reproducible RPC output is captured.
+```json
+{
+  "chainId": 5042002,
+  "factory": "0x0fB6EEDA6e90E90797083861A75D15752a27f59c",
+  "factoryCodeBytes": 24564,
+  "positionManager": "0x444Cc395346428216fB6f2892eb03cB804aE4CD5",
+  "positionManagerCodeBytes": 24384,
+  "positionManagerFactory": "0x0fb6eeda6e90e90797083861a75d15752a27f59c",
+  "factoryMatches": true,
+  "usdc": "0x3600000000000000000000000000000000000000",
+  "usdcCodeBytes": 1798,
+  "usdcDecimals": 6,
+  "feeTiers": {
+    "100": 1,
+    "500": 10,
+    "3000": 60,
+    "10000": 200
+  }
+}
+```
+
+This independently establishes the dependency-identity subset required by the Project Sources:
+
+- Arc chain ID is exactly `5042002`;
+- canonical Bread ERC-20 USDC has runtime code and reports exactly 6 decimals;
+- the SDK-derived Factory has runtime bytecode;
+- the SDK-derived Position Manager has runtime bytecode;
+- `positionManager.factory()` equals the SDK-derived Factory;
+- all four checked standard V3 fee tiers are enabled with positive tick spacing;
+- the existing Day-9 controlled rehearsal fee `3000` is supported on this deployment with tick spacing `60`.
+
+The `3000` value remains a **testnet/rehearsal value**, inherited from Bread's existing Day-9 controlled-fixture baseline. This evidence does not select or approve a production/mainnet LP fee tier.
+
+## Manifest activation classification
+
+The independently verified dependency identity now satisfies the Project Source rule requiring official/current DEX deployment evidence plus compatibility checks before network-manifest activation.
+
+`config/networks/arc-testnet.json` may therefore identify the current testnet dependency family as `UNISWAP_V3` with:
+
+- `positionManager = 0x444Cc395346428216fB6f2892eb03cB804aE4CD5`
+- `factory = 0x0fB6EEDA6e90E90797083861A75D15752a27f59c`
+- `poolManager = null`
+
+The string `Synthra` remains provenance/evidence metadata only and does **not** enter the financial core, coordinator, adapter family enum, API/indexer financial truth or frontend transaction semantics.
 
 ## Portability classification
 
-Synthra is **not** a new Bread protocol authority and is **not** a new core adapter family.
+This Arc Testnet activation does not bind Bread mainnet to Synthra.
 
-If the SDK-derived Arc dependencies pass the independent compatibility gate, Bread will classify execution as `UNISWAP_V3` and place the verified Factory / Position Manager addresses in the Arc Testnet network/deployment manifests. The string `Synthra` remains provenance/evidence metadata only; it must not enter `GraduationCoordinator`, bonding-curve accounting, fee accounting, API/indexer financial truth, or frontend transaction semantics.
+A future mainnet protocol-stack version may independently select canonical Uniswap V4, canonical Uniswap V3, or another approved adapter after its own deployment/security gate. Existing launches retain their snapshotted adapter and graduation config hash; later stack/config changes cannot move an existing launch to another DEX destination.
 
-A future mainnet protocol-stack version may independently select canonical Uniswap V4, canonical Uniswap V3, or another approved adapter. Existing launches retain their snapshotted adapter and graduation config hash. Changing the testnet venue therefore does not bind Bread mainnet to Synthra.
+## What remains before Bread may treat the DEX lane as fully integrated
 
-## Mandatory compatibility checks before activation
+Dependency identity is now PASS. The remaining mandatory Bread-specific proof is a real Arc Testnet graduation integration using the selected dependencies:
 
-The candidate remains blocked until a reproducible Arc Testnet check proves all of the following:
+- deploy/wire a test-only Bread protocol stack through the existing deployment scripts and manifest schema;
+- use the canonical 6-decimal Arc ERC-20 USDC quote asset;
+- use the verified V3 Factory / Position Manager dependencies;
+- use an explicit test-only V3 fee (the existing Day-9 controlled baseline uses `3000`);
+- create/initialize the TOKEN/USDC pool through `BreadV3GraduationAdapter`;
+- mint the LP NFT directly to `BreadPermanentLiquidityLocker`;
+- prove pool identity/opening price and permanent-lock ownership;
+- reconcile all used USDC/tokens and explicit dust;
+- prove failed external progression/retry cannot duplicate the pool/liquidity or double-spend swept assets;
+- satisfy INV-050 through INV-056 and the existing smoke/verification gates.
 
-- RPC chain ID is exactly `5042002`;
-- canonical Bread ERC-20 USDC is `0x3600000000000000000000000000000000000000` and reports `decimals() == 6`;
-- Factory has runtime bytecode;
-- Position Manager has runtime bytecode;
-- `positionManager.factory()` equals the SDK-derived Factory;
-- `factory.feeAmountTickSpacing(selectedFee)` returns positive tick spacing;
-- the V3 ABI behavior required by `BreadV3GraduationAdapter` is compatible;
-- a real Bread testnet graduation can create/initialize the TOKEN/USDC pool, mint the position to `BreadPermanentLiquidityLocker`, preserve permanent-lock ownership, return/reconcile dust correctly, and satisfy the existing graduation invariants/retry protections.
-
-The generic validator mechanically covers the dependency-identity subset. The full money-path compatibility proof remains a separate gate and must run only after dependency identity passes.
+No mainnet economics, admin, recipient, DEX address or production fee value is authorized by this testnet evidence.
 
 ## Current verdict
 
-`SYNTHRA_ARC_TESTNET_V3_SDK_DEPLOYMENT_IDENTITY_DISCOVERY_PASS_RPC_COMPATIBILITY_PENDING`
+`SYNTHRA_ARC_TESTNET_V3_DEPENDENCY_IDENTITY_AND_FEE_COMPATIBILITY_PASS_BREAD_INTEGRATION_PENDING`
 
 Consequences:
 
-- the previous address-discovery sub-blocker is **CLEARED** by the current SDK registry output;
-- `ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED` remains **OPEN** pending independent RPC compatibility proof and graduation smoke;
-- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY` remains **OPEN**;
-- `config/networks/arc-testnet.json` remains `UNRESOLVED_TESTNET_ADAPTER` until the RPC check passes;
-- no Bread contract deployment is authorized from SDK output alone;
-- no Day-9 PASS, RC tag, Day-10 start, production DEX decision, or mainnet choice is implied.
+- Synthra Arc Testnet address discovery: **PASS**.
+- Independent Arc RPC dependency identity: **PASS**.
+- V3 `3000` test/rehearsal fee availability: **PASS** (`tickSpacing = 60`).
+- Arc Testnet network-manifest DEX dependency activation: **AUTHORIZED** by the dependency-evidence gate.
+- `ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED`: **DEPENDENCY-EVIDENCE SUB-BLOCKER CLEARED**; remains relevant only until the full Bread graduation integration evidence/hash is produced for the deployed Bread stack.
+- `ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY`: remains **OPEN** until Bread's own testnet contracts are actually deployed, verified and recorded.
+- No Day-9 PASS or RC tag yet.
+- Day 10 remains stopped.
+- No production/mainnet DEX choice is implied.
