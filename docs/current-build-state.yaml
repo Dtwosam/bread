@@ -1,4 +1,4 @@
-schema_version: 1.51
+schema_version: 1.52
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-11
@@ -16,8 +16,8 @@ completed_checkpoints:
   - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
 
-active_checkpoint: "Day 9 — Release Candidate & Rehearsal"
-active_lane: "Task 8 — final RC verdict / blocked evidence and exact-head closeout matrix"
+active_checkpoint: "Day 9 — Release Candidate & Rehearsal BLOCKED"
+active_lane: "Durable blocked-state handoff / external-prerequisite boundary"
 active_gate: DAY9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_EXTERNAL_PREREQUISITES
 
 project_source_state:
@@ -31,27 +31,21 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.50
-  prior_state_git_commit: fe9b13f1ce271fd5423fdd76de13034dac18fee1
-  prior_state_blob_sha: b1ef99ec0cc06acb1d7f3fdbc04bebb757c5ed65
+  prior_state_schema_version: 1.51
+  prior_state_git_commit: b45e749077cd30430496ce2173e65783ee5675b5
+  prior_state_blob_sha: 130e30db7e6aaf6bc7e5d86bfdf083a02d6b6325
   note: >-
-    v1.51 advances only the workflow/evidence boundary from durable Day 8 into the executed-but-blocked Day-9 rehearsal. It does not revoke accepted Day-1 through Day-8 behavior, change a financial invariant, authorize a canonical Arc deployment, satisfy a release/mainnet blocker, or create a release candidate tag.
+    v1.52 records the actual merged Day-9 rehearsal/blocker state and exact final-head evidence. It does not declare Day 9 complete or PASS, create an RC tag, authorize Day 10, waive a release blocker, or change any previously ratified financial/protocol semantics.
 
 integration_baseline:
-  id: DAY8-ATTACK-SYSTEM-DURABLE-CLOSEOUT
+  id: DAY9-REHEARSAL-BLOCKED-MERGED-STATE
   branch: main
-  verified_durable_main: fe9b13f1ce271fd5423fdd76de13034dac18fee1
-  day8_implementation_pr: 84
-  day8_final_reviewed_head: 6ababe6504a6954625b38e80b0c963faaba2de0c
-  day8_implementation_merge: ef9b677e883ae7bd2a6969cefc771ad1c83e236c
-  day8_durability_pr: 86
-  day8_durability_merge: e6b4a23716694dca2031a73b6a933b3bb8596620
-  day8_state_finalization_merge: fe9b13f1ce271fd5423fdd76de13034dac18fee1
-  status: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE
-  day9_pr: 88
-  day9_branch: agent/day9-release-candidate-rehearsal-preflight
-  day9_pre_final_integrated_head: 5c0e6ce15af30f406a8c367dc906c188451406c8
-  day9_current_status: DAY9_REHEARSAL_EXECUTED_BLOCKED_EXTERNAL_PREREQUISITES_PENDING_FINAL_EXACT_HEAD_GATE
+  prior_durable_day8_main: fe9b13f1ce271fd5423fdd76de13034dac18fee1
+  day9_implementation_pr: 88
+  day9_exact_reviewed_head: b889d6676672d96315c4f5e53cc68f639ea8e944
+  day9_implementation_merge: b45e749077cd30430496ce2173e65783ee5675b5
+  day9_durable_handoff_pr: 90
+  status: DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_MERGED_PENDING_HANDOFF_READBACK
 
 day8_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
@@ -70,6 +64,7 @@ day9_scope:
   task6_browser_engine_matrix: PASS_AUTOMATED_WITH_PHYSICAL_EXTERNAL
   task7_live_arc_gate: BLOCKED_REAL_EXTERNAL_PREREQUISITES_NO_BROADCAST
   task8_final_rc_verdict: DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED
+  exact_head_integration_matrix: PASS
   production_change_note: >-
     Day 9 repaired rehearsal/deployment/browser-test boundaries discovered by execution. It did not change Solidity economics, custody, wallet signing authority, canonical DEX selection, production economics, Arc mainnet values, or financial accounting semantics.
 
@@ -89,49 +84,60 @@ day9_verdict:
   day10_started: false
 
 working_branches:
-  - agent/day9-release-candidate-rehearsal-preflight
+  - docs/day9-blocked-rehearsal-handoff
 
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  day7_task10_pr: 82
-  day7_task10_handoff_pr: 83
-  day8_implementation_pr: 84
-  day8_handoff_pr: 86
-  day9_pr: 88
-  day7_public_web_complete: true
-  day8_started: true
-  day8_implementation_complete: true
   day8_complete: true
+  day9_pr: 88
+  day9_implementation_merged: true
+  day9_durable_handoff_pr: 90
   day9_started: true
   day9_complete: false
   day9_rc_tag_created: false
   day10_started: false
 
 verification:
-  day8_durable_main: fe9b13f1ce271fd5423fdd76de13034dac18fee1
-  day8_lane1_result: PASS_35_SUITES_201_TESTS_4096_FUZZ_256X64_INVARIANT
-  day8_lane2_result: PASS_SLITHER_0_11_6_REVIEWED_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
-  day8_lane3_result: PASS
-  day8_lane4_result: PASS
-  day8_lane5_result: PASS_06I_REQUIRED_SCENARIO_MATRIX
-  day8_hot_clients: 10000
-  day8_hot_error_rate: 0
-
-  day9_pre_final_integrated_head: 5c0e6ce15af30f406a8c367dc906c188451406c8
-  day9_task1_ci: 31445491597
-  day9_task2_ci: 31445491634
-  day9_task3_ci: 31445491579
-  day9_task4_ci: 31445491604
-  day9_task5_ci: 31445491591
-  day9_task6_ci: 31445491625
-  day9_task7_ci: 31445491580
-  day9_root_ci: 31445491578
-  day9_retained_day7_task10_playwright_ci: 31445491601
+  day9_exact_reviewed_head: b889d6676672d96315c4f5e53cc68f639ea8e944
+  day9_implementation_merge: b45e749077cd30430496ce2173e65783ee5675b5
+  day9_final_exact_head_matrix: PASS_BLOCKED_VERDICT
+  root_ci: 31446449291
+  day8_lane1_extended_invariants: 31446449767
+  day8_lane2_static_security: 31446449297
+  day8_lane3_frontend_security: 31446449276
+  day8_lane4_failure_recovery: 31446449200
+  day8_lane5_cache_budget: 31446449143
+  day8_lane5_indexer_catchup: 31446449279
+  day8_lane5_hot_launch_capacity: 31446449111
+  retained_day6_task5: 31446449235
+  retained_day6_task6: 31446449404
+  retained_day6_task7: 31446449247
+  retained_day6_task8: 31446449257
+  retained_day6_task9: 31446449248
+  retained_day6_task10: 31446449170
+  retained_day7_task1: 31446449241
+  retained_day7_task2: 31446449296
+  retained_day7_task3: 31446449300
+  retained_day7_task4: 31446449234
+  retained_day7_task5: 31446449698
+  retained_day7_task6: 31446449295
+  retained_day7_task7: 31446449125
+  retained_day7_task8: 31446449309
+  retained_day7_task9: 31446449183
+  retained_day7_task10_playwright: 31446449313
+  retained_day7_cross_browser: 31446449250
+  day9_task1_environment: 31446449267
+  day9_task2_readiness: 31446449087
+  day9_task3_clean_rehearsal: 31446449245
+  day9_task4_rollback: 31446449304
+  day9_task5_recovery: 31446449368
+  day9_task6_browser_matrix: 31446449266
+  day9_task7_live_arc_gate: 31446449258
+  day9_task8_final_rc_gate: 31446449231
   day9_recovery_fixture_race_repair: PASS_NO_PRODUCTION_RECOVERY_LOGIC_CHANGE
   day9_live_arc_classifier: BLOCKED_EXPECTED_NO_BROADCAST
-  day9_final_exact_head: PENDING_TASK8_GREEN_COMMIT
-  day9_final_exact_head_matrix: PENDING
+  day9_durable_handoff_checks: PENDING_PR_90_EXACT_HEAD
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -160,7 +166,7 @@ day9_blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "required current physical/branded browser-device rows were not executed; engine emulation is not relabeled"
 
 next_action: >-
-  Run the complete Task-8 final exact-head matrix on this blocked-verdict candidate: root CI; Day-8 lanes 1-5 including failure recovery, cache budget, indexer catch-up and 10k hot-launch capacity; retained Day-6 Tasks 5-10; retained Day-7 Tasks 1-10 including Playwright; and all Day-9 lanes including the final RC verdict gate. If and only if that exact head is green, review the scoped diff and preserve the useful Day-9 rehearsal repairs plus blocker evidence durably without creating bread-day9-rc1. Day 10 and public release remain stopped. A later fresh candidate must first satisfy the real canonical Arc Testnet deployment/Dex prerequisites, Safe-compatible threshold recovery environment, and required supported physical-device execution (or receive an explicit controlling source amendment), then rerun the affected Day-9 gates before RC freeze can be reconsidered.
+  Merge docs-only PR #90 only after its exact-head source/continuity checks pass, then verify actual main and freshly read back docs/current-build-state.yaml plus docs/handoffs/day9-blocked-release-rehearsal-handoff.md. Do not begin Day 10. A future fresh Day-9 candidate may reconsider RC freeze only after the real canonical Arc Testnet deployment/DEX prerequisites, Safe-compatible threshold recovery environment, and required physical/current-device execution are satisfied (or a controlling Project Source amendment explicitly changes those requirements), followed by affected Day-9 gates and a new final exact-head matrix.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED is active."
