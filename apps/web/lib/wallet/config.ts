@@ -85,12 +85,17 @@ const walletConnectProjectId =
  * Signing stays entirely on the user's device: the relay only transports
  * session and request payloads between the browser and the user's wallet.
  *
- * When no project id is configured this fails closed to the existing
- * injected-only behaviour rather than registering a connector that cannot dial.
+ * Wagmi calls connector setup while createConfig is constructed, including
+ * during Next.js server rendering. WalletConnect setup initializes browser
+ * persistence, so registering it while `window` is absent can touch IndexedDB
+ * on the server. The server therefore keeps the injected-only fallback; the
+ * remote connector is registered only in a real browser and only when a
+ * project id is configured.
  */
-const remoteConnectors = walletConnectProjectId
-  ? [walletConnect({ projectId: walletConnectProjectId })]
-  : [];
+const remoteConnectors =
+  typeof window !== 'undefined' && walletConnectProjectId
+    ? [walletConnect({ projectId: walletConnectProjectId })]
+    : [];
 
 export const breadWagmiConfig = createConfig({
   chains: [arcTestnetChain],
