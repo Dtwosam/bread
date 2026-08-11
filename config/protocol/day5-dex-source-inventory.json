@@ -100,8 +100,34 @@
         "arcNativeCoinControlMode": "FOUNDRY_FORK_TEST_SHIM_ONLY_AFTER_PINNED_BLOCK_PREFLIGHT",
         "arcNativeCoinAuthorityMode": "FOUNDRY_FORK_TEST_SHIM_ONLY"
       },
+      "safeAuthority": {
+        "status": "DAY9_ARC_SAFE_2_OF_3_PASS",
+        "safeVersion": "1.4.1",
+        "safe": "0x9004e285521d69197cd9965c301b02161eb1d0d8",
+        "threshold": 2,
+        "ownerCount": 3,
+        "guardian": "0xdcb9cb7038ff1a282265a855754dba8695a3121c",
+        "deploymentAuthority": "0x1bc5a40329b309be3ac77cb3688061b985f8d3fb",
+        "chainSpecificProxy": true,
+        "officialSafeServiceSupportClaim": false,
+        "productionAuthorityClaim": false
+      },
+      "publicTestnetDeploymentPlan": {
+        "status": "PREFLIGHT_READY_NO_BREAD_BROADCAST",
+        "economicsProvenance": "DAY9_CONTROLLED_REHEARSAL_QUOTE_VALUES_DIVIDED_BY_10000",
+        "phantomQuote": "1000000",
+        "graduationThreshold": "10000000",
+        "launchFeeUsdc": "0",
+        "tradeFeeBps": "100",
+        "protocolFeeShareBps": "2500",
+        "maxCreatorTaxBps": "500",
+        "v3Fee": 3000,
+        "smokeQuoteIn": "11000000",
+        "smokeFundingFloor": "12000000",
+        "productionMoneyClaim": false
+      },
       "evidence": "docs/evidence/day9-synthra-arc-testnet-v3-candidate.md",
-      "breadMoneyPathIntegrationStatus": "REAL_DEPENDENCY_FORK_PASS_PUBLIC_TESTNET_DEPLOYMENT_PENDING"
+      "breadMoneyPathIntegrationStatus": "REAL_DEPENDENCY_FORK_PASS_SAFE_2_OF_3_PASS_PUBLIC_TESTNET_DEPLOYMENT_PREFLIGHT_READY"
     },
     "officialSource": {
       "periphery": {
@@ -140,10 +166,10 @@
   },
   "activationPolicy": {
     "arcV4": "BLOCKED_UNTIL_OFFICIAL_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
-    "arcV3Testnet": "DEPENDENCY_MANIFEST_AND_REAL_DEPENDENCY_FORK_PASS; CLEAN_PUBLIC_TESTNET_BREAD_DEPLOYMENT_AND_SMOKE_STILL_REQUIRED",
+    "arcV3Testnet": "VERIFIED_DEPENDENCY_AND_FORK_PASS; BREAD_PUBLIC_TESTNET_DEPLOYMENT_REQUIRES_PREFLIGHT_THEN_DEPLOY_VERIFY_SMOKE",
     "arcV3Mainnet": "REQUIRES_FRESH_MAINNET_DEPLOYMENT_EVIDENCE_AND_COMPATIBILITY_PASS",
-    "productionEconomics": "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED",
+    "productionEconomics": "BREAD_PRODUCTION_ECONOMICS_CONFIG_REQUIRED_FOR_PUBLIC_MAINNET_RELEASE; EXPLICIT_NON_PRODUCTION_TESTNET_VALUES_ALLOWED",
     "mainnet": "ARC_MAINNET_VALUES_REQUIRED",
-    "fixtures": "TEST_ONLY_NEVER_CANONICAL_DEPLOYMENT_CLAIM"
+    "fixtures": "TEST_ONLY_NEVER_CANONICAL_PRODUCTION_DEPLOYMENT_CLAIM"
   }
 }
