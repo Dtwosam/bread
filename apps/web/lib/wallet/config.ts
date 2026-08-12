@@ -1,4 +1,4 @@
-import { defineChain } from 'viem';
+import { defineChain, keccak256, toHex } from 'viem';
 import { createConfig, http } from 'wagmi';
 import { injected, walletConnect } from 'wagmi/connectors';
 
@@ -40,20 +40,19 @@ export const arcTradeExecutionContext = {
 
 type ResolverInput = Parameters<typeof resolveProtocolContext>[0];
 
+// The verified Day-9 deployment manifest intentionally does not publish a
+// stackVersion field. The deployment preflight and LAN runtime derive the
+// deployed stack identity from this canonical label instead. Keep browser
+// execution on that same derivation; the Day-9 browser-context regression pins
+// this value against BREAD_LAN_STACK_VERSION so any future drift fails closed.
+const ARC_TESTNET_STACK_VERSION = keccak256(toHex('BREAD_DAY9_ARC_TESTNET_STACK_V1'));
+
 function resolveArcProtocolContext(): ProtocolContext | null {
-  const deployment = arcTestnetDeployment as unknown as Record<string, unknown>;
-  const stackVersion = deployment.stackVersion;
-
-  // The current checked-in Day-5 deployment manifest intentionally leaves the
-  // deployed core/start block unresolved and does not yet publish stackVersion.
-  // Do not synthesize any of those values in the browser.
-  if (typeof stackVersion !== 'string' || stackVersion.trim().length === 0) return null;
-
   try {
     return resolveProtocolContext({
       network: arcTestnetManifest as unknown as ResolverInput['network'],
       deployment: arcTestnetDeployment as unknown as ResolverInput['deployment'],
-      stackVersion,
+      stackVersion: ARC_TESTNET_STACK_VERSION,
     });
   } catch {
     return null;
