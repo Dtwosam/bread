@@ -165,6 +165,14 @@ async function main() {
     env: runtimeEnv({ BREAD_LAN_INDEXER_MAIN: '1' }),
   });
 
+  // Startup catch-up above is a hard readiness gate. After it passes, keep the
+  // same canonical replay/apply machinery alive so launches and trades created
+  // during the physical-device session enter the indexed projection without a
+  // restart. This child is tracked by spawnRuntime and is terminated on teardown.
+  spawnRuntime('bread-indexer', tsx, ['apps/indexer/src/lan/indexer-runner.ts'], {
+    BREAD_LAN_INDEXER_CONTINUOUS: '1',
+  });
+
   log('== 6-7. Real Bread read API (loopback only) ==');
   spawnRuntime('bread-api', tsx, ['apps/api/src/lan/api-server.ts'], {
     BREAD_LAN_API_MAIN: '1',
