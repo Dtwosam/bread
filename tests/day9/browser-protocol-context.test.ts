@@ -2,10 +2,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { keccak256, toHex } from 'viem';
 
+import { BREAD_LAN_STACK_VERSION } from '../../apps/indexer/src/lan/runtime-context';
 import { arcProtocolContext } from '../../apps/web/lib/wallet/config';
-import { DAY9_ARC_TESTNET_STACK_VERSION_LABEL } from '../../scripts/day9/arc-testnet-deployment-preflight-lib.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 
@@ -25,10 +24,8 @@ describe('Day 9 browser canonical protocol context', () => {
     // treating the verified deployment as unresolved.
     expect(deployment.stackVersion).toBeUndefined();
 
-    const expectedStackVersion = keccak256(toHex(DAY9_ARC_TESTNET_STACK_VERSION_LABEL));
-
     expect(arcProtocolContext).not.toBeNull();
-    expect(arcProtocolContext?.stackVersion).toBe(expectedStackVersion);
+    expect(arcProtocolContext?.stackVersion).toBe(BREAD_LAN_STACK_VERSION);
     expect(arcProtocolContext?.factoryAddress).toBe(deployment.core.factory.toLowerCase());
     expect(arcProtocolContext?.deploymentStartBlock).toBe(BigInt(deployment.deploymentStartBlock));
   });
