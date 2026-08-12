@@ -24,6 +24,12 @@ function limitError(details?: string): Error & { code: number; details?: string 
   return error;
 }
 
+function timeoutError(): Error & { details: string } {
+  const error = new Error('The request took too long to respond.') as Error & { details: string };
+  error.details = 'The request timed out.';
+  return error;
+}
+
 function logAt(blockNumber: bigint): RpcLog {
   const hex = blockNumber.toString(16).padStart(64, '0');
   return {
@@ -63,6 +69,45 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     const client = createArcProviderSafeLogClient(raw, {
       maxRateLimitRetries: 3,
       baseBackoffMs: 10,
+      minimumIntervalMs: 0,
+      maxRpcAttempts: 8,
+      now: () => clock,
+      sleep: async (ms) => {
+        delays.push(ms);
+        clock += ms;
+      },
+    });
+
+    const logs = await client.getLogs({ fromBlock: 100n, toBlock: 611n, address: [] });
+
+    expect(logs).toHaveLength(1);
+    expect(seen).toEqual([
+      [100n, 611n],
+      [100n, 611n],
+      [100n, 611n],
+    ]);
+    expect(delays).toEqual([10, 20]);
+  });
+
+  it('retries transient transport timeouts without splitting the logical log range', async () => {
+    const seen: Array<readonly [bigint, bigint]> = [];
+    const delays: number[] = [];
+    let attempts = 0;
+    let clock = 0;
+    const raw: LogClient = {
+      getLogs: async (request) => {
+        const fromBlock = request.fromBlock as bigint;
+        const toBlock = request.toBlock as bigint;
+        seen.push([fromBlock, toBlock]);
+        attempts += 1;
+        if (attempts < 3) throw timeoutError();
+        return [logAt(fromBlock)];
+      },
+    };
+
+    const client = createArcProviderSafeLogClient(raw, {
+      maxTransientRetries: 2,
+      transientBackoffMs: 10,
       minimumIntervalMs: 0,
       maxRpcAttempts: 8,
       now: () => clock,
