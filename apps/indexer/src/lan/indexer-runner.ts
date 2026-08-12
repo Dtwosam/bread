@@ -21,12 +21,21 @@ const { Pool } = requireFromDb('pg') as {
 
 const DEFAULT_OVERLAP_BLOCKS = 12n;
 const DEFAULT_MAX_BATCH_BLOCKS = 500n;
+const DEFAULT_CONTINUOUS_INTERVAL_MS = 10_000;
 
 function positiveBigintFromEnv(name: string, fallback: bigint): bigint {
   const raw = process.env[name]?.trim();
   if (!raw) return fallback;
   const parsed = BigInt(raw);
   if (parsed <= 0n) throw new Error(`${name} must be positive`);
+  return parsed;
+}
+
+function positiveIntegerFromEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive integer`);
   return parsed;
 }
 
@@ -127,7 +136,10 @@ export async function runBreadIndexerCatchUp() {
         toBlockTimestamp: range.toBlockTimestamp as bigint | undefined,
         logs: range.logs as never,
       });
-      if (process.env.BREAD_LAN_INDEXER_MAIN === '1') {
+      if (
+        process.env.BREAD_LAN_INDEXER_MAIN === '1' ||
+        process.env.BREAD_LAN_INDEXER_CONTINUOUS === '1'
+      ) {
         process.stdout.write(`BREAD_INDEXER_PROGRESS checkpoint=${String(range.toBlock)}\n`);
       }
       return applied;
@@ -138,7 +150,29 @@ export async function runBreadIndexerCatchUp() {
   return result;
 }
 
-if (process.env.BREAD_LAN_INDEXER_MAIN === '1') {
+export async function runBreadIndexerContinuously() {
+  const intervalMs = positiveIntegerFromEnv(
+    'BREAD_LAN_INDEXER_CONTINUOUS_INTERVAL_MS',
+    DEFAULT_CONTINUOUS_INTERVAL_MS,
+  );
+
+  while (true) {
+    const result = await runBreadIndexerCatchUp();
+    process.stdout.write(
+      `BREAD_INDEXER_SYNCED checkpoint=${result.checkpoint.blockNumber} head=${result.observedHeadBlock} cycles=${result.cycles}\n`,
+    );
+    await new Promise((done) => setTimeout(done, intervalMs));
+  }
+}
+
+if (process.env.BREAD_LAN_INDEXER_CONTINUOUS === '1') {
+  runBreadIndexerContinuously().catch((error: unknown) => {
+    process.stderr.write(
+      `BREAD_INDEXER_FAILED ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    process.exitCode = 1;
+  });
+} else if (process.env.BREAD_LAN_INDEXER_MAIN === '1') {
   runBreadIndexerCatchUp()
     .then((result) => {
       process.stdout.write(
