@@ -19,6 +19,8 @@ export class ArcLogReadBudgetExceededError extends Error {
 type ProviderSafeReadOptions = Readonly<{
   maxRateLimitRetries?: number;
   baseBackoffMs?: number;
+  maxTransientRetries?: number;
+  transientBackoffMs?: number;
   minimumIntervalMs?: number;
   maxSplitDepth?: number;
   maxRpcAttempts?: number;
@@ -29,6 +31,8 @@ type ProviderSafeReadOptions = Readonly<{
 type ResolvedProviderSafeReadOptions = Readonly<{
   maxRateLimitRetries: number;
   baseBackoffMs: number;
+  maxTransientRetries: number;
+  transientBackoffMs: number;
   minimumIntervalMs: number;
   maxSplitDepth: number;
   maxRpcAttempts: number;
@@ -58,6 +62,17 @@ function resolveProviderSafeReadOptions(
     // request succeeds when calls are spaced by three seconds. This remains a
     // retry cooldown only; it is not treated as a claimed throughput limit.
     baseBackoffMs: positiveInteger(options.baseBackoffMs ?? 3_000, 'baseBackoffMs'),
+    // A transport timeout is transient but must never be converted into range
+    // splitting or an unbounded retry loop. Retry the exact same logical read
+    // a small bounded number of times, then fail closed if Arc remains slow.
+    maxTransientRetries: nonnegativeInteger(
+      options.maxTransientRetries ?? 2,
+      'maxTransientRetries',
+    ),
+    transientBackoffMs: positiveInteger(
+      options.transientBackoffMs ?? 1_000,
+      'transientBackoffMs',
+    ),
     // Arc does not publish a usable public-RPC request-rate ceiling. Serialize
     // reads and maintain a modest proactive gap so Bread does not create a
     // burst, while the bounded retry cooldown remains the fallback if Arc still
@@ -120,6 +135,11 @@ export function classifyArcRpcLimitError(error: unknown): ArcRpcLimitKind | null
   return null;
 }
 
+function isArcTransientTimeoutError(error: unknown): boolean {
+  const text = errorText(error);
+  return /(request took too long to respond|request timed out|timed out|timeout|timeouterror)/i.test(text);
+}
+
 function blockBounds(request: Readonly<Record<string, unknown>>): Readonly<{
   fromBlock: bigint;
   toBlock: bigint;
@@ -138,7 +158,7 @@ function blockBounds(request: Readonly<Record<string, unknown>>): Readonly<{
  * not just eth_getLogs. Normalization can intentionally issue many readContract
  * calls concurrently, so protecting getLogs alone still allows a burst. This
  * gate serializes all read-only client calls, proactively spaces starts, and
- * owns the only rate-limit retry loop used by the LAN runtime.
+ * owns the only provider retry loops used by the LAN runtime.
  */
 class ArcRpcRateGate {
   private tail: Promise<void> = Promise.resolve();
@@ -157,14 +177,29 @@ class ArcRpcRateGate {
 
   run<T>(operation: () => Promise<T>): Promise<T> {
     const execute = async (): Promise<T> => {
-      for (let retry = 0; ; retry += 1) {
+      let rateLimitRetries = 0;
+      let transientRetries = 0;
+
+      for (;;) {
         await this.waitForPacingWindow();
         try {
           return await operation();
         } catch (error) {
-          if (classifyArcRpcLimitError(error) !== 'RATE_LIMIT') throw error;
-          if (retry >= this.options.maxRateLimitRetries) throw error;
-          await this.options.sleep(this.options.baseBackoffMs * 2 ** retry);
+          if (classifyArcRpcLimitError(error) === 'RATE_LIMIT') {
+            if (rateLimitRetries >= this.options.maxRateLimitRetries) throw error;
+            await this.options.sleep(this.options.baseBackoffMs * 2 ** rateLimitRetries);
+            rateLimitRetries += 1;
+            continue;
+          }
+
+          if (isArcTransientTimeoutError(error)) {
+            if (transientRetries >= this.options.maxTransientRetries) throw error;
+            await this.options.sleep(this.options.transientBackoffMs * 2 ** transientRetries);
+            transientRetries += 1;
+            continue;
+          }
+
+          throw error;
         }
       }
     };
@@ -234,7 +269,7 @@ function createProviderSafeLogReader(
 }
 
 /**
- * Focused eth_getLogs adapter retained for tests and narrow callers. Rate-limit
+ * Focused eth_getLogs adapter retained for tests and narrow callers. Provider
  * retries are serialized by the same gate model used by the full read client;
  * genuine request-shape limits may still split an exact logical block interval.
  */
