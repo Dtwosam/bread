@@ -197,6 +197,25 @@ describe('Day 9 LAN runtime composition', () => {
       expect(fingerprint()).toEqual(before);
     });
 
+    it('keeps the real indexer live after the startup catch-up so physical writes enter the projection', () => {
+      const orchestrator = readFileSync(
+        resolve(root, 'scripts/day9/lan/run-lan-acceptance.mjs'),
+        'utf8',
+      );
+      const runner = readFileSync(
+        resolve(root, 'apps/indexer/src/lan/indexer-runner.ts'),
+        'utf8',
+      );
+
+      // Initial catch-up stays a blocking readiness gate.
+      expect(orchestrator).toMatch(/await\s+run\(tsx,\s*\['apps\/indexer\/src\/lan\/indexer-runner\.ts'\]/);
+      // After that gate, the same canonical indexer machinery must remain live
+      // for launches/trades created during the physical-device session.
+      expect(orchestrator).toMatch(/spawnRuntime\(['"]bread-indexer['"]/);
+      expect(orchestrator).toContain('BREAD_LAN_INDEXER_CONTINUOUS');
+      expect(runner).toContain('BREAD_LAN_INDEXER_CONTINUOUS');
+    });
+
     it('terminates every child process it spawns on teardown', async () => {
       const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
         stdio: 'ignore',
