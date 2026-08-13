@@ -132,7 +132,7 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
       return;
     }
 
-    await executeGraduationRetryLifecycle({
+    const result = await executeGraduationRetryLifecycle({
       client: runtime.client,
       wallet: runtime.wallet,
       storage: runtime.storage,
@@ -143,6 +143,9 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
         await queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(tokenAddress) });
       },
     });
+    if (result.review?.kind === 'TERMINAL') {
+      await queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(tokenAddress) });
+    }
   }
 
   const recoveryLabel = runtime?.connectionStatus === 'DISCONNECTED'
