@@ -22,7 +22,7 @@ For a canonical range containing a V3 pool-created graduation:
 4. using the launch's snapshotted adapter identity, resolve and verify the immutable V3 venue identity **before reducer construction**;
 5. combine those verified same-range venue identities with already persisted graduated venue identities from prior ranges;
 6. perform a bounded V3 venue-log discovery against only those exact verified pool addresses;
-7. for a pool activated within the range, start no earlier than its completion block and filter by strict canonical ordering after its own `(blockNumber, transactionIndex, logIndex)` completion position;
+7. for every pool whose completion position is inside the requested range, start no earlier than its completion block and filter by strict canonical ordering after its own `(blockNumber, transactionIndex, logIndex)` completion position;
 8. build each launch's protocol-address set including the verified V3 pool address;
 9. construct reducers;
 10. merge Bread canonical events with separately normalized V3 pool `Swap` events and sort the combined set by canonical `(blockNumber, transactionIndex, logIndex)` order;
@@ -51,6 +51,20 @@ A newly created pool may receive a valid `Swap` later in the same block after Br
 
 Do not advance the lower bound to `completionBlock + 1`; that would lose valid same-block post-completion swaps.
 
+### Replay-overlap activation rule
+
+Whether a venue identity came from the persisted registry or was discovered in the current normalization pass does **not** decide its log-query lower bound.
+
+Bread replay intentionally loads bounded overlap before the committed checkpoint. A pool can therefore already exist in `launch_state` while the requested overlap range begins before that pool's own graduation completion.
+
+For each verified pool independently:
+
+- if `graduationCompletedBlock < fromBlock`, the pool was already active for the whole requested range and may be queried from `fromBlock`;
+- if `graduationCompletedBlock > toBlock`, it is not active in the requested range and must not be queried;
+- if `fromBlock <= graduationCompletedBlock <= toBlock`, query beginning at `graduationCompletedBlock` and retain only logs canonically after the recorded completion transaction/log position.
+
+This rule applies equally to persisted and newly verified venue entries. Do not treat “persisted” as synonymous with “active before replay start.”
+
 ## Holder Consequence
 
 The holder reducer must receive the verified same-range pool address before it processes the graduation transaction's token `Transfer` events.
@@ -68,11 +82,14 @@ V3 user attribution uses transaction `from`, not the pool event's `sender`. Avoi
 Within one bounded range normalization:
 
 - cache `getTransaction` results by transaction hash;
+- require the returned transaction hash to equal the Swap transaction hash;
+- require the returned transaction block number to equal the Swap block number when the provider supplies a canonical mined transaction;
+- validate/canonicalize the returned `from` address before using it as actor evidence;
 - cache block timestamp reads by block number when the required timestamp is not already available;
 - reuse those immutable range-local facts across all V3 Swap events in that transaction/block;
 - keep all underlying RPC calls behind the existing provider-safe pacing/retry owner.
 
-This is an in-memory range-local optimization only; it is not another persistence layer or authority.
+A contradictory transaction response fails the affected range before DB commit. This is an in-memory range-local optimization/validation path only; it is not another persistence layer or authority.
 
 ## Failure Rule
 
@@ -84,7 +101,8 @@ Do not:
 - classify the new pool as an ordinary holder and repair it later silently;
 - use the current network's newest DEX manifest as a substitute for the launch snapshot;
 - query mutable liquidity to decide canonical identity;
-- silently skip V3 Swap discovery merely because the pool first became known inside the requested range.
+- silently skip V3 Swap discovery merely because the pool first became known inside the requested range;
+- accept a transaction `from` from a provider response whose transaction/block identity contradicts the Swap log.
 
 ## RED Coverage Once Execution Returns
 
@@ -96,7 +114,9 @@ Add focused same-range tests proving:
 - the same apply persists the verified V3 venue identity in `launch_state`;
 - a V3 `Swap` later in the same block after `GraduationCompleted` is discovered and indexed;
 - a pool log earlier than or equal to the completion position is rejected from Bread post-graduation market projections;
+- a persisted pool whose replay overlap begins before its completion block is still filtered by its own completion position;
 - multiple relevant Swap logs sharing one transaction cause one bounded transaction-identity read rather than one read per Swap;
+- a contradictory transaction hash/block response fails before projection;
 - replay does not duplicate/correct the holder snapshot or Swap projection a second time;
 - contradictory venue verification prevents the whole range from committing.
 
