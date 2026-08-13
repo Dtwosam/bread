@@ -153,7 +153,7 @@ function curveResult(address: string, data: `0x${string}`): `0x${string}` {
       return functionResult(
         breadAbiRegistry.curve as Abi,
         decoded.functionName,
-        address.toLowerCase() !== ACTIVE_CURVE.toLowerCase(),
+        address.toLowerCase() === PENDING_CURVE.toLowerCase(),
       );
     case 'buy':
       return functionResult(
@@ -253,6 +253,7 @@ function graduationPhase(token: string): number {
   const normalized = token.toLowerCase();
   if (normalized === ACTIVE_TOKEN.toLowerCase()) return 0;
   if (normalized === PENDING_TOKEN.toLowerCase()) return 0;
+  if (normalized === NEW_LAUNCH_TOKEN.toLowerCase()) return 0;
   if (normalized === GRADUATED_TOKEN.toLowerCase()) return 2;
   throw new Error(`Unhandled graduation token ${token}`);
 }
