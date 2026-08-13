@@ -240,7 +240,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       wallet: runtime.wallet,
       storage,
       context: runtime.context,
-      protocolContext: runtime.protocolContext,
+      protocolContext,
       action,
       tokenAddress,
       curveAddress,
