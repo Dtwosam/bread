@@ -9,6 +9,7 @@ import {
 
 const address = (byte: string) => `0x${byte.repeat(40)}` as Address;
 const Q96 = 1n << 96n;
+const MAX_UINT256 = (1n << 256n) - 1n;
 
 const token = address('1');
 const quoteAsset = address('2');
@@ -80,6 +81,34 @@ describe('Day 9 graduated V3 adversarial amount and pricing boundaries', () => {
 
     expect(review.expectedOutput).toBe(999_999n);
     expect(review.minimumOutput).toBe(997_499n);
+  });
+
+  it('preserves the maximum valid uint256 exact input without bigint overflow', async () => {
+    const expectedOutput = MAX_UINT256 - 123n;
+    const review = await readV3TradeReview(
+      quoteClient({ expectedOutput }) as never,
+      route,
+      'BUY',
+      MAX_UINT256,
+      1,
+    );
+
+    expect(review.inputAmount).toBe(MAX_UINT256);
+    expect(review.expectedOutput).toBe(expectedOutput);
+    expect(review.minimumOutput).toBe((expectedOutput * 9_999n) / 10_000n);
+
+    const prepared = prepareV3ExactInputTrade(route, {
+      action: 'BUY',
+      inputAmount: MAX_UINT256,
+      minimumOutput: review.minimumOutput,
+      recipient,
+    });
+    expect(prepared.allowance).toEqual({
+      token: quoteAsset,
+      spender: router,
+      amount: MAX_UINT256,
+    });
+    expect(prepared.args).toEqual([expect.objectContaining({ amountIn: MAX_UINT256 })]);
   });
 
   it('uses V3 token ordering correctly when the current pool price is not 1:1', async () => {
