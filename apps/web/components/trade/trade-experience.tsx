@@ -207,7 +207,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
         throw new Error(`Wrong network: wallet is on chain ${walletChainId}, expected ${protocolContext.chainId}.`);
       }
 
-      const result = await readCanonicalTradeReview(runtime.client, runtime.protocolContext, {
+      const result = await readCanonicalTradeReview(runtime.client, protocolContext, {
         token: tokenAddress,
         action,
         inputAmount: inputAmount(),
@@ -233,7 +233,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       setReviewError('Graduated V3 execution is not enabled in this build.');
       return;
     }
-    if ('route' in review && review.route === 'V3_POOL') {
+    if ('route' in review) {
       setReviewError('Graduated V3 execution is not enabled in this build.');
       return;
     }
