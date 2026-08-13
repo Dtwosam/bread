@@ -127,6 +127,38 @@ Before the controller/execution expansion, the following local results were dire
 
 These results predate the final controller, builder and browser-fixture commits and are not an exact-head substitute.
 
+## Supplemental isolated behavioral harnesses
+
+Because the assistant sandbox has no GitHub/npm network path and the connected external runners are currently unavailable, three production-source behavioral slices from implementation head `a708163851eb71cd7f2934041b68638f3d3a3474` were executed in isolated Node harnesses. External ABI metadata was stubbed only where the production tests themselves treat ABI values as opaque descriptors; no wallet, RPC or live-chain write was involved.
+
+Results:
+
+- `V3_TRADING_SUPPLEMENTAL_HARNESS_PASS`
+  - QuoterV2 BUY and SELL direction;
+  - deterministic minimum-output/slippage calculation;
+  - Router02 BUY and SELL parameter shape;
+  - exact input-token allowance to the router;
+  - zero native value;
+  - classic V3 router positive-deadline requirement;
+  - fail-closed positive-input/slippage/router-kind/minimum-output validation.
+- `CANONICAL_ROUTE_SUPPLEMENTAL_HARNESS_PASS`
+  - active curve route;
+  - ready/SWEPT/RESCUED fail-closed behavior;
+  - adapter family/config/USDC/factory/position-manager mismatch rejection;
+  - router/quoter factory mismatch rejection;
+  - exact pool/pair/fee identity rejection;
+  - zero-liquidity rejection;
+  - successful fully matching `V3_POOL` route.
+- `CANONICAL_CONTROLLER_SUPPLEMENTAL_HARNESS_PASS`
+  - Router02 allowance target;
+  - fresh canonical reread after allowance;
+  - exact-router simulation before signature;
+  - changed-review block with zero wallet sends;
+  - matching review sends exactly once and reaches confirmed state;
+  - pending graduation fails before allowance or broadcast.
+
+These harnesses are supplemental evidence only. They do not substitute for the repository's exact dependency graph, Vitest runner, TypeScript project references, workspace build, or Playwright browser execution.
+
 ## Exact-head verification currently pending
 
 The final affected matrix has not yet been claimed PASS.
@@ -135,7 +167,7 @@ Current runner limitations:
 
 - GitHub Actions continues to terminate as `startup_failure` with zero jobs, so it is unavailable rather than a test failure or PASS;
 - Vercel preview builds are currently rejected by the account-wide build-rate limit, including projects untouched by this change, so those failures are not usable code verdicts;
-- the assistant runtime cannot execute the user's local repository directly.
+- the assistant runtime cannot execute the user's local repository directly and cannot fetch npm dependencies from the network.
 
 Required exact-head verification still includes the affected Vitest suites, workspace/web+SDK typecheck/build, and the deterministic Chromium graduated-V3 browser spec. These will be treated as one bounded verification checkpoint rather than repeatedly asking the operator to run individual commands.
 
