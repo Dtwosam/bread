@@ -4,7 +4,9 @@ import type { ProtocolContext } from '../../packages/protocol-sdk/src/context.js
 import {
   executeGraduationRetryLifecycle,
   readGraduationRetryReview,
+  recoverGraduationRetryTransactions,
 } from '../../apps/web/lib/transactions/graduation-controller.js';
+import { persistSubmittedTransaction } from '../../apps/web/lib/transactions/storage.js';
 
 const address = (byte: string) => `0x${byte.repeat(40)}` as `0x${string}`;
 const hash = (byte: string) => `0x${byte.repeat(64)}` as `0x${string}`;
@@ -117,6 +119,66 @@ describe('Day 9 graduation retry wallet recovery', () => {
       hash: hash('e'),
     });
     expect(storage.getItem('bread:submitted-transactions:v1')).toContain('GRADUATION');
+    expect(storage.getItem('bread:submitted-transactions:v1')).toContain('CONFIRMED');
+  });
+
+  it('treats an already-terminal canonical phase as confirmation without simulation or wallet submission', async () => {
+    const simulateContract = vi.fn();
+    const sendPreparedTransaction = vi.fn();
+    const result = await executeGraduationRetryLifecycle({
+      client: {
+        readContract: vi.fn().mockResolvedValue({ phase: 2 }),
+        simulateContract,
+      } as never,
+      wallet: {
+        async getAccount() { return address('d'); },
+        async getChainId() { return context.chainId; },
+        async ensurePreparedTransactionAllowance() {},
+        sendPreparedTransaction,
+      } as never,
+      storage: new MemoryStorage(),
+      context,
+      tokenAddress: token,
+    });
+
+    expect(result.review).toEqual({ kind: 'TERMINAL', status: 'ALREADY_COMPLETE' });
+    expect(result.state).toMatchObject({ action: 'GRADUATION', tokenAddress: token, status: 'CONFIRMED' });
+    expect(simulateContract).not.toHaveBeenCalled();
+    expect(sendPreparedTransaction).not.toHaveBeenCalled();
+  });
+
+  it('recovers a submitted graduation retry after reload without rebroadcasting it', async () => {
+    const storage = new MemoryStorage();
+    const submittedHash = hash('f');
+    persistSubmittedTransaction(storage, {
+      chainId: context.chainId,
+      hash: submittedHash,
+      action: 'GRADUATION',
+      tokenAddress: token,
+      submittedAt: '2026-08-13T09:00:00.000Z',
+      status: 'SUBMITTED',
+    });
+    const waitForTransactionReceipt = vi.fn().mockResolvedValue({ status: 'success' as const });
+    const onConfirmed = vi.fn();
+
+    const recovered = await recoverGraduationRetryTransactions({
+      client: { waitForTransactionReceipt } as never,
+      storage,
+      chainId: context.chainId,
+      tokenAddress: token,
+      onConfirmed,
+    });
+
+    expect(waitForTransactionReceipt).toHaveBeenCalledTimes(1);
+    expect(waitForTransactionReceipt).toHaveBeenCalledWith(expect.objectContaining({ hash: submittedHash }));
+    expect(onConfirmed).toHaveBeenCalledTimes(1);
+    expect(recovered).toHaveLength(1);
+    expect(recovered[0]).toMatchObject({
+      action: 'GRADUATION',
+      tokenAddress: token,
+      hash: submittedHash,
+      status: 'CONFIRMED',
+    });
     expect(storage.getItem('bread:submitted-transactions:v1')).toContain('CONFIRMED');
   });
 
