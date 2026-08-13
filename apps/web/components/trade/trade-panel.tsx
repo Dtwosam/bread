@@ -74,20 +74,16 @@ export function TradePanel({
     ? 'Connect wallet'
     : connectionStatus === 'WRONG_NETWORK'
       ? 'Switch to Arc'
-      : v3Review
-        ? 'V3 execution unavailable'
-        : review
-          ? action === 'BUY' ? 'Buy' : 'Sell'
-          : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
+      : review
+        ? action === 'BUY' ? 'Buy' : 'Sell'
+        : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
   const primaryAriaLabel = connectionStatus === 'DISCONNECTED'
     ? 'Connect wallet'
     : connectionStatus === 'WRONG_NETWORK'
       ? 'Switch wallet to Arc Testnet'
-      : v3Review
-        ? 'Graduated V3 execution is not enabled in this build'
-        : review
-          ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
-          : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
+      : review
+        ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
+        : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
 
   return (
     <div className="bread-trade-panel">
@@ -154,7 +150,7 @@ export function TradePanel({
         <dl className="bread-trade-review">
           <div><dt>Expected output</dt><dd>{formatAmount(review.expectedOutput, outputDecimals)}</dd></div>
           <div><dt>Minimum output</dt><dd>{formatAmount(review.minimumOutput, outputDecimals)}</dd></div>
-          {'route' in review && review.route === 'V3_POOL' ? (
+          {v3Review ? (
             <div><dt>V3 venue fee</dt><dd>{formatV3Fee(review.venueFee)}</dd></div>
           ) : (
             <>
@@ -179,7 +175,7 @@ export function TradePanel({
 
       <Button
         variant={action === 'BUY' ? 'buy' : 'sell'}
-        disabled={busy || v3Review || (walletReady && amount.trim() === '')}
+        disabled={busy || (walletReady && amount.trim() === '')}
         ariaLabel={primaryAriaLabel}
         onClick={walletReady ? (review ? onSubmit : onReview) : onConnectionAction}
       >
