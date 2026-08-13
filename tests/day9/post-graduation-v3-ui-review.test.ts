@@ -9,7 +9,7 @@ const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
 const experiencePath = 'apps/web/components/trade/trade-experience.tsx';
 const panelPath = 'apps/web/components/trade/trade-panel.tsx';
 
-describe('Day 9 graduated V3 read-only web review boundary', () => {
+describe('Day 9 graduated V3 web review boundary', () => {
   it('uses the canonical SDK review orchestrator with the full protocol context', () => {
     const experience = read(experiencePath);
 
@@ -30,15 +30,5 @@ describe('Day 9 graduated V3 read-only web review boundary', () => {
     expect(panel).toContain('Creator tax');
     expect(panel).toContain('Opening buy tax');
     expect(panel).toMatch(/review\.route === 'V3_POOL'[\s\S]*V3 venue fee[\s\S]*:[\s\S]*Base fee/);
-  });
-
-  it('keeps a V3 review explicitly non-submittable until the router builder is available', () => {
-    const experience = read(experiencePath);
-
-    expect(experience).toContain("reviewRoute?.kind === 'V3_POOL'");
-    expect(experience).toContain('Graduated V3 execution is not enabled in this build.');
-    expect(experience.indexOf("reviewRoute?.kind === 'V3_POOL'")).toBeLessThan(
-      experience.indexOf('executeTradeLifecycle({'),
-    );
   });
 });
