@@ -58,7 +58,7 @@ type NormalizedTrade = Readonly<{
   recipient: Address;
   quoteAmount: bigint;
   tokenAmount: bigint;
-  venueFeeBps: bigint | null;
+  venueFeeTier: bigint | null;
   baseFee: bigint;
   creatorTax: bigint;
   openingTaxBps: bigint;
@@ -78,6 +78,7 @@ For existing bonding-curve trades:
 - `venueKind = BREAD_CURVE`;
 - `venueAddress = curve`;
 - `curve` remains the existing curve address;
+- `venueFeeTier = null` because Bread curve fee accounting remains in its existing exact fee fields;
 - all existing fee/tax/refund/net-curve fields retain their current semantics.
 
 For graduated V3 trades:
@@ -86,7 +87,7 @@ For graduated V3 trades:
 - `venueAddress = exact verified pool`;
 - `curve` remains the launch's historical curve address for launch identity/backward API compatibility, but it is not represented as the execution venue;
 - Bread base fee, creator tax and opening tax are all zero;
-- `venueFeeBps` records the V3 pool fee tier, e.g. `3000`;
+- `venueFeeTier` records the V3 pool fee tier in canonical V3 fee units, e.g. `3000` means `0.30%`; it is deliberately not named `bps`;
 - execution price is derived from exact pool `Swap` amounts, not indexed spot-price guesses;
 - curve-only fields are zero/null and must never be interpreted as V3 accounting.
 
@@ -96,7 +97,7 @@ No separate `dex_trades` table is introduced.
 
 The indexer needs a rebuildable mapping from exact graduated pool address to launch identity.
 
-This mapping must be derived only from canonical Bread graduation state already retained in the indexed launch/launch-state projection and, when necessary, verified onchain through the launch-snapshotted coordinator/adapter identity.
+This mapping is derived from canonical Bread graduation events/state plus launch-snapshotted adapter identity. It is never accepted merely because an arbitrary V3 pool exists for the same token pair.
 
 The minimum registry entry is:
 
@@ -106,7 +107,7 @@ type KnownGraduatedPool = Readonly<{
   tokenAddress: Address;
   curveAddress: Address;
   quoteAsset: Address;
-  fee: number;
+  feeTier: number;
   stackVersion: string;
   factoryAddress: Address;
   graduationCompletedBlock: bigint;
@@ -115,10 +116,11 @@ type KnownGraduatedPool = Readonly<{
 
 Rules:
 
-- only `POOL_CREATED` / canonically completed V3 graduations are eligible;
+- only canonical `GraduationCompleted` / `POOL_CREATED` V3 graduations are eligible;
 - pool address must be nonzero and exact;
 - launch adapter family must be `UNISWAP_V3`;
-- TOKEN/USDC pair and fee must be exact;
+- for this adapter family, coordinator `poolId` is decoded using the already-ratified V3 pool-address encoding only after the launch's snapshotted adapter family/config identity is known;
+- TOKEN/USDC pair and fee tier must be exact and must verify against the launch's V3 adapter/factory identity;
 - the mapping is stack-aware;
 - a pool cannot map to two Bread launch tokens within the same chain/stack;
 - a conflicting mapping fails the range rather than guessing.
@@ -131,17 +133,25 @@ The existing two-pass Bread discovery remains intact and gains one bounded gradu
 
 For each block range `[fromBlock, toBlock]`:
 
-1. Run the current Bread factory/core/known token+curve discovery.
-2. Decode/apply enough canonical Bread graduation information to know the verified graduated-pool registry relevant to this range.
-3. Build the exact set of V3 pool addresses whose graduation completed at or before `toBlock` and whose indexed lifetime overlaps the range.
-4. Fetch logs for those exact pool addresses over the same `[fromBlock, toBlock]` range.
-5. Merge Bread logs and V3 pool logs by canonical `(blockNumber, transactionIndex, logIndex)` order before normalization/apply.
+1. Run the current Bread factory/core/known token+curve discovery for the range.
+2. Build an in-memory graduated-pool registry from:
+   - canonical graduated pools already known before `fromBlock`; and
+   - `GraduationCompleted` events discovered inside the current Bread-log range.
+3. For each in-range `GraduationCompleted`, resolve the launch identity from the same stack and verify the event's V3 pool identity against the launch-snapshotted adapter/factory/pair/fee contract before registering the pool.
+4. Build the exact set of verified V3 pool addresses whose indexed lifetime overlaps `[fromBlock, toBlock]`.
+5. Fetch logs for those exact pool addresses over the overlapping portion of the same range.
+6. Merge Bread logs and V3 pool logs by canonical `(blockNumber, transactionIndex, logIndex)` order.
+7. Normalize and apply the full range atomically through the existing DB transaction boundary.
+
+No partial database commit is allowed merely to discover a pool needed later in the same range.
 
 ### Same-block graduation and first swap
 
 The design must capture a pool created and traded later in the same block.
 
-A pool discovered from a graduation event inside the current range is re-queried from its graduation block through `toBlock`. This is analogous to Bread's existing launch two-pass behavior, which re-queries dynamic addresses so constructor-era logs are not lost.
+`GraduationCompleted` exposes `poolId`, so a newly completed V3 graduation can be registered in memory during the Bread-log pass. The pool is then queried starting at its exact graduation block through `toBlock`. Any earlier logs in that block are ignored unless their canonical order is after the graduation completion event for that same pool.
+
+This is analogous to Bread's existing launch two-pass behavior, which re-queries dynamic addresses so same-transaction constructor-era logs are not lost.
 
 No `fromBlock + 1` shortcut is allowed.
 
@@ -188,14 +198,14 @@ The normalized absolute values become exact `quoteAmount` and `tokenAmount`.
 
 The V3 pool `Swap.sender` is not sufficient for Bread user attribution because Router02 can be the pool caller.
 
-For Bread's own post-graduation direct-wallet path:
+For the current Bread direct-wallet Router02 path:
 
 - `recipient` comes from the canonical V3 `Swap.recipient` field;
-- `actor` is derived from the transaction sender (`eth_getTransactionByHash` / equivalent transaction lookup) for the swap transaction;
-- the actor must be a valid address;
-- transaction lookup is cached/deduplicated per transaction hash within the normalization range.
+- `actor` is the canonical transaction sender (`transaction.from`) returned for the swap transaction;
+- transaction lookup is cached/deduplicated per transaction hash within the normalization range;
+- `actor` means transaction originator at the EVM transaction boundary, not a stronger claim about beneficial ownership behind an arbitrary smart account.
 
-This lets Bread attribute Router02 trades to the wallet that actually submitted the transaction without pretending the router is the trader.
+This prevents the router from being mislabeled as the trader while keeping the indexed fact objectively chain-derived.
 
 The indexer may also ingest valid direct pool/router activity not submitted through Bread UI if it targets the exact verified Bread pool. Bread records what happened on the canonical venue; it does not require the transaction to originate from the Bread frontend.
 
@@ -227,12 +237,12 @@ Required additions:
 
 - `venue_kind` (`BREAD_CURVE` or `UNISWAP_V3`);
 - `venue_address`;
-- `venue_fee_bps` nullable.
+- `venue_fee_tier` nullable.
 
 Compatibility:
 
 - existing `curve_address` remains populated for historical launch association;
-- existing curve rows are backfilled/treated as `venue_kind = BREAD_CURVE`, `venue_address = curve_address`;
+- existing curve rows are backfilled/treated as `venue_kind = BREAD_CURVE`, `venue_address = curve_address`, `venue_fee_tier = null`;
 - existing primary key and token/time ordering indexes remain valid;
 - no migration may rewrite transaction/log identity;
 - curve-only amount columns remain backward compatible and are nullable/zero for V3 as explicitly defined by the repository layer.
@@ -249,7 +259,7 @@ Required public additions:
 venue: Readonly<{
   kind: 'BREAD_CURVE' | 'UNISWAP_V3';
   address: string;
-  feeBps: string | null;
+  feeTier: string | null;
 }>;
 
 executionPrice: Readonly<{
@@ -311,6 +321,8 @@ On reorg/rebuild:
 - replay is idempotent under the existing `(chainId, transactionHash, logIndex)` identity;
 - a pool mapping conflict or malformed Swap fails closed rather than partially applying an ambiguous trade.
 
+The graduated-pool registry itself must be reproducible from retained canonical launch/graduation data; it cannot depend on mutable process memory as durable truth.
+
 ## Failure Handling
 
 Fail the affected range before DB commit for:
@@ -332,19 +344,20 @@ Implementation is TDD-first.
 Minimum RED/GREEN coverage must include:
 
 1. discovery of an already-known graduated pool across a normal range;
-2. same-block graduation followed by Swap capture;
+2. same-block graduation followed by Swap capture without an intermediate DB commit;
 3. exact address chunking with multiple pools;
 4. rejection of unregistered/conflicting pools;
-5. BUY and SELL decoding for both token0/token1 orderings;
-6. Router02 sender attribution using transaction `from` rather than pool `sender`;
-7. exact quote/token amount and execution-price normalization;
-8. V3 Bread fee/tax fields remain zero/null as specified;
-9. append-only DB write with venue fields;
-10. token trades API returns mixed curve+V3 activity in canonical order;
-11. candles/volume/trade counts continue across graduation;
-12. rollback/replay removes and rebuilds V3 activity deterministically;
-13. all existing curve indexing/API tests remain green;
-14. post-graduation browser fixture proves a submitted Router02 trade becomes visible in the indexed token read surface once the indexer applies the range.
+5. rejection of a pool identity that fails launch-snapshotted adapter/factory/pair/fee verification;
+6. BUY and SELL decoding for both token0/token1 orderings;
+7. Router02 sender attribution using transaction `from` rather than pool `sender`;
+8. exact quote/token amount and execution-price normalization;
+9. V3 Bread fee/tax fields remain zero/null and V3 fee tier remains explicit;
+10. append-only DB write with venue fields;
+11. token trades API returns mixed curve+V3 activity in canonical order;
+12. candles/volume/trade counts continue across graduation;
+13. rollback/replay removes and rebuilds V3 activity deterministically;
+14. all existing curve indexing/API tests remain green;
+15. post-graduation browser fixture proves a submitted Router02 trade becomes visible in the indexed token read surface once the indexer applies the range.
 
 The final exact-head matrix must include the new indexer/DB/API tests plus the already-authored post-graduation execution/controller/UI/browser tests.
 
