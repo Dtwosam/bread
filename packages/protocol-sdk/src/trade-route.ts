@@ -233,7 +233,7 @@ export async function resolveCanonicalTradeRoute(
     (sameAddress(token0, context.quoteAsset) && sameAddress(token1, token)) ||
     (sameAddress(token0, token) && sameAddress(token1, context.quoteAsset));
   if (!pairMatches || Number(poolFee) !== fee) throw new Error('graduated pool identity mismatch');
-  if (bigintValue(liquidity, 'graduated pool liquidity') <= 0n) {
+  if (bigintValue(liquidity, 'graduated pool liquidity') <= BigInt(0)) {
     throw new Error('graduated pool has no active liquidity');
   }
 
