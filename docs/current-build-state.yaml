@@ -1,4 +1,4 @@
-schema_version: 1.57
+schema_version: 1.58
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
 updated_at: 2026-08-13
@@ -17,8 +17,8 @@ completed_checkpoints:
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "Remaining physical/current branded-device reconciliation and exact-head external CI after physical Android graduation recovery PASS"
-active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+active_lane: "Post-graduation V3 indexing continuity TDD RED execution blocked; physical/current branded-device reconciliation and exact-head external CI also remain open"
+active_gate: POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -31,11 +31,11 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.56
-  prior_state_git_commit: 06e26cc58a3f635caf12bea41a8e39837f9ce536
-  prior_state_blob_sha: 15d8d29947af83a10e0cb9f89ffe7455dbe16c89
+  prior_state_schema_version: 1.57
+  prior_state_git_commit: c222f52b92f991fdfda1964483ca8a541cb94a39
+  prior_state_blob_sha: 88a182b191e2ba53fbb96aa08a1ead3cb55ce342
   note: >-
-    v1.57 records the demonstrated physical-Android threshold-crossing automatic-graduation regression, its bounded browser recovery repair, exact repaired-head focused verification, and successful permissionless recovery of the same existing BTST token through SWEEP and CREATE_POOL to permanent-lock custody with zero coordinator/adapter token and USDC residue. It closes only that regression/recovery lane. It does not declare Day 9 complete or PASS, create an RC tag, authorize Day 10, freeze production economics, select an Arc mainnet DEX, waive remaining physical/current-device evidence, or claim exact-head GitHub Actions is green.
+    v1.58 preserves the prior physical-Android graduation-recovery PASS and records the newly admitted post-graduation V3 indexed-trade continuity gap, its approved design/implementation plan, the committed RED-only Slice-A test, and the current inability to execute that RED because GitHub Actions cannot create jobs. It does not declare the indexing implementation complete, convert internal draft harnesses into repository evidence, declare Day 9 complete or PASS, create an RC tag, authorize Day 10, freeze production economics, select an Arc mainnet DEX, waive remaining physical/current-device evidence, or claim exact-head GitHub Actions is green.
 
 integration_baseline:
   id: DAY9-ARC-TESTNET-PUBLIC-LIFECYCLE-SAFE-RECOVERY-AND-ANDROID-GRADUATION-RECOVERY-PASS-PHYSICAL-CI-PENDING
@@ -48,7 +48,11 @@ integration_baseline:
   exact_head_local_release_matrix_head: 80b94dcf106b5dce2f6000dab1205405084535ac
   physical_android_graduation_repair_verified_head: 92e70a31ddf1806f843af4142dc8172b6f55f211
   physical_android_graduation_evidence_head: 06e26cc58a3f635caf12bea41a8e39837f9ce536
-  status: DAY_9_ANDROID_GRADUATION_RECOVERY_PASS_REMAINING_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
+  post_graduation_v3_indexing_design_head: f3706917b2860094de58942ae8ae5ada18821bf3
+  post_graduation_v3_indexing_plan_head: f0db7dd33e54c6a514862383647ee090608bb0de
+  post_graduation_v3_indexing_red_test_head: d0f20bf88a9a28bb8a6770a00e6038638d673b36
+  post_graduation_v3_indexing_determinism_head: c222f52b92f991fdfda1964483ca8a541cb94a39
+  status: DAY_9_ANDROID_GRADUATION_RECOVERY_PASS_POST_GRADUATION_V3_INDEXING_TDD_RED_EXECUTION_BLOCKED_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
 
 day8_scope:
   lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
@@ -67,10 +71,11 @@ day9_scope:
   task6_browser_engine_matrix: PASS_AUTOMATED_WITH_PHYSICAL_EXTERNAL
   task7_live_arc_gate: PUBLIC_LIFECYCLE_SMOKE_PASS
   task8_final_rc_verdict: NOT_RERUN_AFTER_ANDROID_GRADUATION_RECOVERY
-  exact_head_integration_matrix: PASS_LOCAL_AT_EXACT_HEAD_EXTERNAL_CI_STILL_REQUIRED
+  exact_head_integration_matrix: PRIOR_PASS_LOCAL_AT_RETAINED_HEAD_CURRENT_INDEXING_HEAD_NOT_VERIFIED
   physical_android_auto_graduation_recovery: PASS_EXISTING_BTST_PERMISSIONLESS_SWEEP_CREATE_POOL_PERMANENT_LOCK_ZERO_RESIDUE
+  post_graduation_v3_indexing_continuity: IN_PROGRESS_RED_ONLY_TEST_COMMITTED_RED_NOT_EXECUTED_NO_PRODUCTION_GREEN
   production_change_note: >-
-    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. The Safe recovery drill exercised only the existing testnet Protocol Admin owner set and restored it exactly. The Android graduation repair changed only the existing browser transaction/recovery owner and tests; no Solidity/protocol/economics/deployment/authority configuration changed. No Arc mainnet DEX, production economics, unrestricted public-money authorization, server custody, or alternate financial ledger was introduced.
+    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. The Safe recovery drill exercised only the existing testnet Protocol Admin owner set and restored it exactly. The Android graduation repair changed only the existing browser transaction/recovery owner and tests; no Solidity/protocol/economics/deployment/authority configuration changed. The current V3 indexing-continuity lane has added only approved planning/state documentation and a RED-only test; no production indexing code, Solidity/protocol/economics/deployment/authority change, Arc mainnet DEX selection, unrestricted public-money authorization, server custody, or alternate financial ledger has been introduced.
 
 day9_live_arc:
   dex_dependency:
@@ -182,19 +187,20 @@ day9_live_arc:
     manual_cast_send_sweep_used: false
 
 day9_verdict:
-  result: DAY_9_INCOMPLETE_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
-  exact_head_local_release_matrix: PASS
+  result: DAY_9_INCOMPLETE_POST_GRADUATION_V3_INDEXING_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
+  exact_head_local_release_matrix: PRIOR_PASS_NOT_CURRENT_HEAD
   exact_head_local_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
   exact_head_external_ci: UNAVAILABLE_STARTUP_FAILURE_ZERO_JOBS
+  post_graduation_v3_indexing: IN_PROGRESS_RED_COMMITTED_NOT_EXECUTED_NO_PRODUCTION_GREEN
   empty_environment_to_usable_launchpad: PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
   rollback: PASS
-  reconcile: PASS
+  reconcile: PASS_RETAINED_PRIOR_HEAD_V3_EXTENSION_NOT_YET_IMPLEMENTED
   supported_matrix: PHYSICAL_CURRENT_DEVICE_COMPLETION_REQUIRED
   canonical_arc_testnet_deployment: PASS_VERIFIED
   public_arc_testnet_lifecycle_smoke: PASS
   recovery_drills: PASS_REAL_SAFE_THRESHOLD_RECOVERY_RETAINED_EVIDENCE
   physical_android_auto_graduation_recovery: PASS
-  browser_engine_matrix: PASS
+  browser_engine_matrix: PASS_RETAINED_PRIOR_HEAD
   physical_device_matrix: EXTERNAL_EXECUTION_PARTIAL_REMAINDER
   wallet_browser_matrix: NO_FIRST_CLASS_WALLET_BROWSER_CLAIM
   live_arc_broadcast_performed: true
@@ -237,16 +243,22 @@ verification:
   day9_physical_android_position_id: 266664
   day9_physical_android_permanent_lock_owner: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
   day9_physical_android_graduation_residue_zero: true
-  day9_exact_head_release_matrix: PASS_LOCAL
+  day9_exact_head_release_matrix: PRIOR_PASS_LOCAL_NOT_CURRENT_HEAD
   day9_exact_head_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
   day9_exact_head_release_matrix_evidence: docs/evidence/day9-exact-head-local-release-matrix.md
-  day9_exact_head_browser_matrix_result: PASS_76_TESTS_40_PASSED_36_TASK_OWNERSHIP_SKIPS_0_FAILED
-  day9_webkit_accessibility_repairs: PASS_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
+  day9_exact_head_browser_matrix_result: PRIOR_PASS_76_TESTS_40_PASSED_36_TASK_OWNERSHIP_SKIPS_0_FAILED
+  day9_webkit_accessibility_repairs: PASS_RETAINED_PRIOR_HEAD_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
+  post_graduation_v3_indexing_design: docs/superpowers/specs/2026-08-13-post-graduation-v3-trade-indexing-design.md
+  post_graduation_v3_indexing_plan: docs/superpowers/plans/2026-08-13-post-graduation-v3-trade-indexing.md
+  post_graduation_v3_indexing_red_test: tests/day9/post-graduation-v3-indexing.test.ts
+  post_graduation_v3_indexing_red_test_status: COMMITTED_NOT_EXECUTED
+  post_graduation_v3_indexing_production_green_status: NOT_STARTED_TDD_GATE_CLOSED
+  post_graduation_v3_indexing_determinism_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-trade-indexing-determinism-addendum.md
   github_actions_current_state: STARTUP_FAILURE_BEFORE_JOB_CREATION
   github_actions_exact_head_jobs_created: 0
-  github_actions_exact_head_runs: "31512708748 pull_request; 31512701643 push"
   github_actions_exact_head_classification: UNAVAILABLE_NOT_EXECUTED_NOT_A_TEST_FAILURE
-  vercel_current_state: READY_AT_ANDROID_GRADUATION_REPAIR_CODE_HEAD
+  github_actions_control_probe: OLD_KNOWN_GOOD_CI_JOB_RERUN_ACCEPTED_THEN_STARTUP_FAILURE_ZERO_JOBS
+  vercel_current_state: BUILD_RATE_LIMIT_EXTERNAL_CHECKS_NOT_EXACT_HEAD_EVIDENCE
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -263,6 +275,7 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 day9_blockers:
+  - POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED
 
@@ -284,15 +297,17 @@ day9_implementation_prerequisites_repaired:
   prior_classification_note: "PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED was partly premature while these two prerequisites were missing"
 
 day9_blocker_scope:
+  POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED: "approved design and implementation plan are durable; the first Slice-A RED-only test is committed, but the real repository test has not executed because GitHub Actions cannot create jobs and no equivalent connected exact-checkout runner is available. Production indexing GREEN work remains TDD-gated. Internal/sandbox draft harnesses are not repository evidence."
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; physical Android Chrome now also has retained real-device automatic-graduation failure/recovery evidence through POOL_CREATED and permanent lock, but that does not by itself complete every required Android checklist row. Required iOS Safari, any still-unexecuted representative physical Android Chrome checklist steps, and current branded Edge remain external; engine emulation is not relabeled."
-  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "local release and focused Android graduation repair verification have passed, but no GitHub Actions CI has executed at the current candidate head; startup failures with zero jobs remain unavailability, not a PASS, and local/Vercel build evidence does not substitute for the required external CI surface."
+  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "the prior local release and focused Android graduation repair verification remain retained at their exact historical heads, but no GitHub Actions CI has executed at the current V3-indexing candidate head. A bounded rerun of an older previously-successful real ci job also converted to startup_failure with zero executable jobs, confirming current Actions execution unavailability independently of the RED-only test. Prior local/Vercel evidence does not substitute for current exact-head CI."
 
 next_action: >-
-  Do not begin Day 10. Public Arc Testnet deployment/lifecycle smoke, the real reversible 2-of-3 Safe threshold recovery drill, actual macOS Safari evidence, and the physical Android BTST automatic-graduation regression/recovery PASS are retained in PR #93. The Android regression is closed: the same existing BTST token was recovered permissionlessly through SWEEP and CREATE_POOL to position 266664 owned by the permanent locker with zero coordinator/adapter token and USDC residue. The remaining Day-9 work is the still-unexecuted required physical/current branded-device checklist coverage and a genuinely executed exact-head GitHub Actions CI surface. Do not relabel partial Android recovery evidence or Playwright engines/emulation as full physical-device PASS, and do not create an RC tag.
+  Do not begin Day 10. Continue post-graduation V3 indexing continuity from the committed RED-only Slice-A test only after that real repository RED can execute and fail for the intended missing venue/schema behavior; do not write production GREEN code before then. Preserve the retained public Arc Testnet lifecycle, reversible 2-of-3 Safe recovery, macOS Safari evidence, and physical Android graduation-recovery PASS. In parallel, the still-unexecuted required physical/current branded-device checklist coverage and a genuinely executed exact-head GitHub Actions CI surface remain open. Do not relabel internal draft harnesses, partial Android recovery evidence, or Playwright engines/emulation as missing repository/physical/CI PASS, and do not create an RC tag.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10, enable unrestricted public-money release, or claim Day-9 PASS while any non-waivable Day-9 end gate is open."
+  - "Do not write production V3 indexing GREEN code before the committed Slice-A repository test has been observed RED for the intended missing behavior."
   - "Do not deploy a second Bread Arc Testnet stack; the verified stack starting at block 56448201 is canonical for this Day-9 rehearsal."
   - "Do not create a second public smoke launch; token 0x9dc6c650929b641f93269a3b6d7d5237297d938b / position 265870 is the canonical Day-9 public lifecycle evidence."
   - "Do not rerun the completed Safe owner rotation; retained evidence in docs/evidence/day9-safe-threshold-recovery.json is the canonical Day-9 threshold recovery proof."
