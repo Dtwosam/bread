@@ -13,6 +13,19 @@ export type ProtocolAddresses = Readonly<{
   graduationAdapter?: Address;
 }>;
 
+export type V3SwapRouterKind = 'V3_SWAP_ROUTER' | 'V3_SWAP_ROUTER_02';
+export type V3QuoterKind = 'V3_QUOTER' | 'V3_QUOTER_V2';
+
+export type GraduatedTradingDependencies = Readonly<{
+  family: 'UNISWAP_V3';
+  factory: Address;
+  positionManager: Address;
+  swapRouter: Address;
+  swapRouterKind: V3SwapRouterKind;
+  quoter: Address;
+  quoterKind: V3QuoterKind;
+}>;
+
 export type ProtocolContext = Readonly<{
   network: string;
   chainId: number;
@@ -22,6 +35,7 @@ export type ProtocolContext = Readonly<{
   quoteDecimals: 6;
   deploymentStartBlock: bigint;
   addresses: ProtocolAddresses;
+  graduatedTrading?: GraduatedTradingDependencies;
 }>;
 
 export type ResolveProtocolContextInput = Readonly<{
@@ -37,6 +51,39 @@ export function canonicalizeProtocolAddress(value: string): Address {
 function requiredAddress(name: string, value: string | null): Address {
   if (value === null) throw new Error(`unresolved protocol deployment: ${name}`);
   return canonicalizeProtocolAddress(value);
+}
+
+function resolveGraduatedTradingDependencies(
+  network: NetworkManifest,
+): GraduatedTradingDependencies | undefined {
+  const { dex } = network;
+
+  if (dex.type !== 'UNISWAP_V3') return undefined;
+
+  if (
+    dex.factory === null ||
+    dex.positionManager === null ||
+    dex.swapRouter === undefined ||
+    dex.swapRouter === null ||
+    dex.swapRouterKind === undefined ||
+    dex.swapRouterKind === null ||
+    dex.quoter === undefined ||
+    dex.quoter === null ||
+    dex.quoterKind === undefined ||
+    dex.quoterKind === null
+  ) {
+    return undefined;
+  }
+
+  return {
+    family: 'UNISWAP_V3',
+    factory: canonicalizeProtocolAddress(dex.factory),
+    positionManager: canonicalizeProtocolAddress(dex.positionManager),
+    swapRouter: canonicalizeProtocolAddress(dex.swapRouter),
+    swapRouterKind: dex.swapRouterKind,
+    quoter: canonicalizeProtocolAddress(dex.quoter),
+    quoterKind: dex.quoterKind,
+  };
 }
 
 export function resolveProtocolContext(input: ResolveProtocolContextInput): ProtocolContext {
@@ -72,6 +119,7 @@ export function resolveProtocolContext(input: ResolveProtocolContextInput): Prot
       ? {}
       : { graduationAdapter: canonicalizeProtocolAddress(deployment.adapter.adapter) }),
   };
+  const graduatedTrading = resolveGraduatedTradingDependencies(network);
 
   return {
     network: network.network,
@@ -82,5 +130,6 @@ export function resolveProtocolContext(input: ResolveProtocolContextInput): Prot
     quoteDecimals: 6,
     deploymentStartBlock: BigInt(deployment.deploymentStartBlock),
     addresses,
+    ...(graduatedTrading === undefined ? {} : { graduatedTrading }),
   };
 }
