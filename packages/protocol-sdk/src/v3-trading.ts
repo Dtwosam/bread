@@ -3,8 +3,9 @@ import { parseAbi, type PublicClient } from 'viem';
 import type { Address } from '../../types/src/index.js';
 import type { CanonicalTradeRoute } from './trade-route.js';
 
-const BPS = 10_000n;
-const Q96 = 1n << 96n;
+const ZERO = BigInt(0) as 0n;
+const BPS = BigInt(10_000);
+const Q96 = BigInt(1) << BigInt(96);
 const Q192 = Q96 * Q96;
 
 const quoterV1Abi = parseAbi([
@@ -37,7 +38,7 @@ export type V3TradeReview = Readonly<{
 }>;
 
 function requirePositiveInput(inputAmount: bigint): void {
-  if (inputAmount <= 0n) throw new Error('V3 trade requires a positive input amount.');
+  if (inputAmount <= ZERO) throw new Error('V3 trade requires a positive input amount.');
 }
 
 function requireSlippage(slippageBps: number): void {
@@ -74,7 +75,7 @@ function slot0SqrtPrice(result: unknown): bigint {
       ? (result as { sqrtPriceX96: unknown }).sqrtPriceX96
       : undefined;
   const sqrtPriceX96 = canonicalBigInt(value, 'V3 pool sqrt price');
-  if (sqrtPriceX96 <= 0n) throw new Error('invalid canonical V3 pool sqrt price');
+  if (sqrtPriceX96 <= ZERO) throw new Error('invalid canonical V3 pool sqrt price');
   return sqrtPriceX96;
 }
 
@@ -95,7 +96,7 @@ function rawSpotOutput(
 }
 
 function priceImpactBps(spotOutput: bigint, expectedOutput: bigint): number {
-  if (spotOutput <= 0n || expectedOutput >= spotOutput) return 0;
+  if (spotOutput <= ZERO || expectedOutput >= spotOutput) return 0;
   return Number(((spotOutput - expectedOutput) * BPS) / spotOutput);
 }
 
@@ -115,14 +116,14 @@ export async function readV3TradeReview(
         address: route.quoter,
         abi: quoterV2Abi,
         functionName: 'quoteExactInputSingle',
-        args: [{ tokenIn, tokenOut, amountIn: inputAmount, fee: route.fee, sqrtPriceLimitX96: 0n }],
+        args: [{ tokenIn, tokenOut, amountIn: inputAmount, fee: route.fee, sqrtPriceLimitX96: ZERO }],
       }
     : route.quoterKind === 'V3_QUOTER'
       ? {
           address: route.quoter,
           abi: quoterV1Abi,
           functionName: 'quoteExactInputSingle',
-          args: [tokenIn, tokenOut, route.fee, inputAmount, 0n],
+          args: [tokenIn, tokenOut, route.fee, inputAmount, ZERO],
         }
       : undefined;
   if (quoteRequest === undefined) throw new Error('unsupported V3 quoter kind');
@@ -133,7 +134,7 @@ export async function readV3TradeReview(
   ]);
 
   const expectedOutput = quoteAmountOut(quote, route.quoterKind);
-  if (expectedOutput <= 0n) throw new Error('V3 quote returned no output');
+  if (expectedOutput <= ZERO) throw new Error('V3 quote returned no output');
   const sqrtPriceX96 = slot0SqrtPrice(slot0);
   const spotOutput = rawSpotOutput(inputAmount, tokenIn, tokenOut, sqrtPriceX96);
   const minimumOutput = (expectedOutput * BigInt(10_000 - slippageBps)) / BPS;
@@ -145,10 +146,10 @@ export async function readV3TradeReview(
     expectedOutput,
     minimumOutput,
     venueFee: route.fee,
-    baseFee: 0n,
-    creatorTax: 0n,
+    baseFee: ZERO,
+    creatorTax: ZERO,
     openingTaxBps: 0,
-    openingTax: 0n,
+    openingTax: ZERO,
     priceImpactBps: priceImpactBps(spotOutput, expectedOutput),
     slippageBps,
   };
