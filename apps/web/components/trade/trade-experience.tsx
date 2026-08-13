@@ -23,7 +23,6 @@ import {
 import { TradePanel } from './trade-panel';
 import { useTradeRuntime, type TradeConnectionStatus } from './trade-runtime';
 
-// Curve execution still re-runs controller prepareTradeReview through executeTradeLifecycle.
 type TradeReview = CanonicalTradeReview;
 type Preset = '$25' | '$50' | '$100' | '25%' | '50%' | '75%' | 'MAX';
 
@@ -229,12 +228,9 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     if (!runtime || !runtime.wallet || !walletReady || !review || busy) return;
     setReviewError(null);
 
-    if (reviewRoute?.kind === 'V3_POOL') {
-      setReviewError('Graduated V3 execution is not enabled in this build.');
-      return;
-    }
-    if ('route' in review) {
-      setReviewError('Graduated V3 execution is not enabled in this build.');
+    const protocolContext = runtime.protocolContext;
+    if (!protocolContext) {
+      setReviewError('Canonical protocol context is not available.');
       return;
     }
 
@@ -244,6 +240,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       wallet: runtime.wallet,
       storage,
       context: runtime.context,
+      protocolContext: runtime.protocolContext,
       action,
       tokenAddress,
       curveAddress,
@@ -263,6 +260,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     setTransactionState(result.state);
     if (result.reviewChanged && result.prepared) {
       setReview(result.prepared.review);
+      setReviewRoute(null);
       setReviewError('Trade values changed during the final canonical reread. Review the updated values before opening your wallet.');
       return;
     }
