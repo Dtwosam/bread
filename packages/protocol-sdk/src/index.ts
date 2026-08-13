@@ -28,6 +28,12 @@ export {
 } from './trade-route.js';
 
 export {
+  readV3TradeReview,
+  type V3TradeReview,
+  type V3TradeRoute,
+} from './v3-trading.js';
+
+export {
   classifyBreadLog,
   createBreadStackAbiBinding,
   decodeBreadLog,
