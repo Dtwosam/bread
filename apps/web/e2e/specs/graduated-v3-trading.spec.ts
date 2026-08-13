@@ -2,6 +2,8 @@ import {
   BUY_TX_HASH,
   GRADUATED_CURVE,
   GRADUATED_TOKEN,
+  SELL_TX_HASH,
+  V3_ROUTER,
 } from '../fixtures/constants';
 import {
   expect,
@@ -10,7 +12,6 @@ import {
   walletSnapshot,
 } from '../fixtures/browser';
 
-const VERIFIED_V3_ROUTER = '0xA545bCB1Bd7985c59ea162aB1748A0803434C31b';
 const ROUTER02_EXACT_INPUT_SINGLE_SELECTOR = '0x04e45aaf';
 
 type SubmittedTransaction = Readonly<{
@@ -22,7 +23,7 @@ type SubmittedTransaction = Readonly<{
 function expectCanonicalV3Target(transaction: unknown) {
   const submitted = transaction as SubmittedTransaction;
   expect(typeof submitted.to).toBe('string');
-  expect((submitted.to as string).toLowerCase()).toBe(VERIFIED_V3_ROUTER.toLowerCase());
+  expect((submitted.to as string).toLowerCase()).toBe(V3_ROUTER.toLowerCase());
   expect((submitted.to as string).toLowerCase()).not.toBe(GRADUATED_CURVE.toLowerCase());
   expect(typeof submitted.data).toBe('string');
   expect((submitted.data as string).toLowerCase()).toMatch(
@@ -31,7 +32,17 @@ function expectCanonicalV3Target(transaction: unknown) {
   expect(submitted.value === undefined || submitted.value === '0x0' || submitted.value === '0x00').toBe(true);
 }
 
-test('graduated token reviews and submits exactly one canonical Router02 trade without reopening its curve', async ({
+async function expectV3Review(trade: Parameters<typeof expect>[0] extends never ? never : any) {
+  const review = trade.locator('dl.bread-trade-review');
+  await expect(review.getByText('Expected output', { exact: true })).toBeVisible();
+  await expect(review.getByText('Minimum output', { exact: true })).toBeVisible();
+  await expect(review.getByText('V3 venue fee', { exact: true })).toBeVisible();
+  await expect(review.getByText('Base fee', { exact: true })).toHaveCount(0);
+  await expect(review.getByText('Creator tax', { exact: true })).toHaveCount(0);
+  await expect(review.getByText('Opening buy tax', { exact: true })).toHaveCount(0);
+}
+
+test('graduated token buys and sells through Router02 without reopening its curve or rebroadcasting after reload', async ({
   page,
   rpcState,
 }, testInfo) => {
@@ -44,29 +55,33 @@ test('graduated token reviews and submits exactly one canonical Router02 trade w
   await trade.getByRole('button', { name: 'Connect wallet' }).click();
   await expect(trade.getByRole('button', { name: 'Review buy' })).toBeVisible();
 
-  await setWalletTransactionHashes(page, [BUY_TX_HASH]);
+  await setWalletTransactionHashes(page, [BUY_TX_HASH, SELL_TX_HASH]);
+
   await trade.getByLabel('Trade amount').fill('10');
   await trade.getByRole('button', { name: 'Review buy' }).click();
-
-  const review = trade.locator('dl.bread-trade-review');
-  await expect(review.getByText('Expected output', { exact: true })).toBeVisible();
-  await expect(review.getByText('Minimum output', { exact: true })).toBeVisible();
-  await expect(review.getByText('V3 venue fee', { exact: true })).toBeVisible();
-  await expect(review.getByText('Base fee', { exact: true })).toHaveCount(0);
-  await expect(review.getByText('Creator tax', { exact: true })).toHaveCount(0);
-  await expect(review.getByText('Opening buy tax', { exact: true })).toHaveCount(0);
-
+  await expectV3Review(trade);
   await trade.getByRole('button', { name: 'Buy after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
 
-  const afterBuy = await walletSnapshot(page);
-  expect(afterBuy.submittedTransactions).toHaveLength(1);
-  expectCanonicalV3Target(afterBuy.submittedTransactions[0]);
+  let wallet = await walletSnapshot(page);
+  expect(wallet.submittedTransactions).toHaveLength(1);
+  expectCanonicalV3Target(wallet.submittedTransactions[0]);
+
+  await trade.getByRole('tab', { name: 'Sell' }).click();
+  await trade.getByLabel('Trade amount').fill('1');
+  await trade.getByRole('button', { name: 'Review sell' }).click();
+  await expectV3Review(trade);
+  await trade.getByRole('button', { name: 'Sell after reviewing current values' }).click();
+  await expect(trade.getByRole('status')).toContainText('CONFIRMED');
+
+  wallet = await walletSnapshot(page);
+  expect(wallet.submittedTransactions).toHaveLength(2);
+  for (const transaction of wallet.submittedTransactions) expectCanonicalV3Target(transaction);
 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Graduated Bread' })).toBeVisible();
   const afterReload = await walletSnapshot(page);
-  expect(afterReload.submittedTransactions).toHaveLength(1);
-  expectCanonicalV3Target(afterReload.submittedTransactions[0]);
+  expect(afterReload.submittedTransactions).toHaveLength(2);
+  for (const transaction of afterReload.submittedTransactions) expectCanonicalV3Target(transaction);
   expect(rpcState.unknownCalls).toEqual([]);
 });
