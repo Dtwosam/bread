@@ -28,6 +28,14 @@ export {
 } from './trade-route.js';
 
 export {
+  readCanonicalTradeReview,
+  type CanonicalTradeAction,
+  type CanonicalTradeReview,
+  type CanonicalTradeReviewResult,
+  type ReadCanonicalTradeReviewInput,
+} from './canonical-trade-review.js';
+
+export {
   readV3TradeReview,
   type V3TradeReview,
   type V3TradeRoute,
