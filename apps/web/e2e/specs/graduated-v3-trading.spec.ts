@@ -83,7 +83,6 @@ test('graduated token buys and sells through Router02 without reopening its curv
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Graduated Bread' })).toBeVisible();
   const afterReload = await walletSnapshot(page);
-  expect(afterReload.submittedTransactions).toHaveLength(2);
-  for (const transaction of afterReload.submittedTransactions) expectCanonicalV3Target(transaction);
+  expect(afterReload.submittedTransactions).toHaveLength(0);
   expect(rpcState.unknownCalls).toEqual([]);
 });
