@@ -1,6 +1,6 @@
 # Day-9 physical Android automatic-graduation failure and recovery repair
 
-Status: `REPAIR_IMPLEMENTED_EXACT_FOCUSED_TEST_EXECUTION_REQUIRED`
+Status: `PHYSICAL_ANDROID_AUTO_GRADUATION_RECOVERY_PASS`
 
 Date: 2026-08-13
 
@@ -8,7 +8,9 @@ PR: #93 (`day9/synthra-arc-testnet-v3-candidate`)
 
 ## Scope
 
-This evidence records the real physical-Android Arc Testnet threshold-crossing Buy regression discovered while completing Day-9 device acceptance, the read-only root-cause investigation, and the bounded browser recovery repair. It does not declare Day 9 complete, does not authorize Day 10, and does not claim an onchain recovery has been executed.
+This evidence records the real physical-Android Arc Testnet threshold-crossing Buy regression discovered while completing Day-9 device acceptance, the read-only root-cause investigation, the bounded browser recovery repair, exact-head local verification, and the successful recovery of the same existing BTST token.
+
+It does not declare Day 9 complete, authorize Day 10, create an RC tag, clear unrelated physical-browser rows, or claim GitHub Actions executed successfully.
 
 No Solidity, deployment, economics, custody, fee, DEX-adapter, permanent-lock, or authority configuration changed in this repair.
 
@@ -33,7 +35,7 @@ Authoritative post-transaction reads established:
 
 The successful threshold-crossing user trade therefore persisted while automatic Stage-1 graduation did not commit, matching the intended INV-053 persistence boundary but leaving the source-required permissionless retry path necessary.
 
-The transaction receipt emitted `GraduationReady` followed by `GraduationAutoAttemptFailed`. The recorded failure hash is:
+The transaction receipt emitted `GraduationReady` followed by `GraduationAutoAttemptFailed`. The recorded failure hash was:
 
 `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`
 
@@ -43,7 +45,7 @@ A later read-only standalone simulation of the exact coordinator call:
 
 `GraduationCoordinator.sweep(0x9E9c161316FFA946E0D809Ba17345728478132f5)`
 
-returned empty ABI success data (`0x`). No recovery transaction was broadcast.
+returned empty ABI success data (`0x`). No recovery write was made before root-cause repair and verification.
 
 ## Root-cause classification
 
@@ -58,9 +60,9 @@ The browser wallet adapter submits prepared transactions without an explicit gas
 3. the curve catches that failure;
 4. the outer transaction still completes successfully.
 
-The physical transaction consumed `444327 / 454675` gas, emitted the empty-reason automatic-failure hash, preserved the Buy, and left a state whose standalone `sweep(token)` now simulates successfully. Those observations converge on the gas-estimation/best-effort liveness class.
+The physical transaction consumed `444327 / 454675` gas, emitted the empty-reason automatic-failure hash, preserved the Buy, and left a state whose standalone `sweep(token)` simulated successfully. Those observations converge on the gas-estimation/best-effort liveness class.
 
-A local `cast run` replay could not be used as definitive inner-call trace evidence because Foundry's replay of Arc's native/system USDC path failed at the chain-specific blocklist system call even though the actual transaction receipt is successful. That replay incompatibility is not classified as a Bread protocol failure.
+A local `cast run` replay could not be used as definitive inner-call trace evidence because Foundry's replay of Arc's native/system USDC path failed at the chain-specific blocklist system call even though the actual transaction receipt was successful. That replay incompatibility is not classified as a Bread protocol failure.
 
 Stopping the indexer was separately ruled out as a cause: the automatic graduation call is an onchain curve → coordinator call inside the Buy transaction. The indexer only observes and projects resulting chain state.
 
@@ -94,8 +96,9 @@ Code repair lineage after incident head `8a72ab366d5048c28a2803ee12e937de51b8754
 - strict optional typing correction: `9946f8a1f31031da3974b14af7702535c8b57686`
 - terminal-state indexed refresh correction: `00e8dfeac87c29d1ef7c03d300536b01e5dc82bb`
 - focused terminal/reload recovery coverage: `67f2f6f9db2b0806e27e0dac6b0b40b5274258fc`
+- pre-recovery evidence head: `92e70a31ddf1806f843af4142dc8172b6f55f211`
 
-Changed implementation surface is bounded to:
+Changed implementation surface was bounded to:
 
 - `apps/web/lib/transactions/graduation-controller.ts`
 - `apps/web/lib/transactions/state.ts`
@@ -114,32 +117,95 @@ The recovery lifecycle now:
 6. recovers replacement/unknown confirmation after reload without rebroadcast;
 7. refreshes indexed token state only after receipt confirmation, or immediately if the canonical chain state is already terminal.
 
-The token Graduation module now tells users in failed-auto state that their completed trade remains confirmed and surfaces a permissionless retry action. Graduated/locked state does not expose a retry action.
+The token Graduation module tells users in failed-auto state that their completed trade remains confirmed and surfaces the permissionless recovery action. `SWEPT` exposes only the next `createPool` step. `POOL_CREATED`/terminal state exposes no further retry action.
 
-## Verification state
+## Exact-head local verification
 
-Verified at code head `67f2f6f9db2b0806e27e0dac6b0b40b5274258fc`:
+The repair was verified locally at exact code/evidence head `92e70a31ddf1806f843af4142dc8172b6f55f211` before any recovery write:
 
-- GitHub compare against incident head: only the six bounded files above changed; no Solidity/economics/deployment/authority files changed.
-- Vercel `bread-web`: production build SUCCESS at the preceding production-code head `00e8dfeac87c29d1ef7c03d300536b01e5dc82bb`; the subsequent `67f2f6f...` commit changes focused test coverage only.
-- Vercel `bread-api`: SUCCESS at `00e8dfe...`.
-- Vercel `bread-api-b5d9`: SUCCESS at `00e8dfe...`.
-- GitHub Actions remains `startup_failure` before usable job creation and is classified as unavailable, not PASS and not a test failure.
-- The current execution environment has no GitHub/network access and no cached Vitest installation, so it cannot independently run the repository test command.
+- focused Vitest command: PASS;
+- files: 3 passed / 3;
+- tests: 15 passed / 15;
+- `tests/day9/graduation-retry-wallet-recovery.test.ts`: 6 passed;
+- `tests/day6/sdk-retry-graduation.test.ts`: 4 passed;
+- `tests/day7/transaction-state.test.ts`: 5 passed;
+- physical recovery browser regression, desktop Chromium: 2 passed / 2;
+- workspace `tsc -b`: PASS;
+- full workspace build: PASS;
+- production Next.js build: PASS.
 
-The following focused commands remain required on the exact repaired head before any onchain recovery write is allowed:
+The first Playwright/build attempt was blocked before test execution because child shells could not resolve plain `pnpm`; a temporary operator-local shim mapped `pnpm` to `corepack pnpm` without modifying the repository or global installation. The rerun then passed. This was classified as local shell tooling, not application behavior.
 
-```bash
-corepack pnpm exec vitest run tests/day9/graduation-retry-wallet-recovery.test.ts tests/day6/sdk-retry-graduation.test.ts tests/day7/transaction-state.test.ts
-corepack pnpm --filter @bread/web exec playwright test e2e/specs/degraded-graduation.spec.ts --project=desktop-chromium
-corepack pnpm typecheck
-corepack pnpm build
-```
+Vercel builds for the repaired branch were also Ready. GitHub Actions remained `startup_failure` before usable job creation and remains classified as unavailable, not PASS and not a test failure.
 
-If those pass at the exact repaired head, the next bounded physical action is to restart the normal read/indexing composition as needed, reopen the existing BTST token, and exercise the new permissionless retry path on that same token. A fresh token, extra Buy/Sell, or blind manual `cast send sweep(...)` is not authorized by this evidence.
+## Bounded LAN recovery environment
 
-## Current verdict
+The source-defined Day-9 LAN composition was restarted from the repaired branch and passed its startup gate:
 
-`PHYSICAL_ANDROID_AUTO_GRADUATION_FAILURE_ROOT_CAUSED_RECOVERY_REPAIR_IMPLEMENTED_VERIFICATION_AND_ONCHAIN_RECOVERY_PENDING`
+- real indexer caught up to Arc Testnet and remained synchronized;
+- real Bread API listened on loopback;
+- production Next.js build completed successfully;
+- same-origin LAN entrypoint became ready at the operator's LAN address;
+- Postgres, Redis, API and web remained loopback-only behind the bounded proxy.
 
-PR #93 remains draft/unmerged. Day 9 remains incomplete.
+The indexer was therefore healthy during the recovery. No fresh token, extra Buy/Sell, contract deployment, or manual `cast send sweep(...)` was used.
+
+## Physical recovery execution
+
+Recovery was performed on the same existing BTST token through the repaired physical Android browser path.
+
+### Stage 1 — permissionless sweep
+
+- action selected from fresh canonical state: `sweep(token)`;
+- transaction hash: `0xbb4e1d42339aa68faaa90ae765f2f1392d7fb9dc4387a10c56049e4713e71360`;
+- browser lifecycle: `CONFIRMED`;
+- indexed coordinator state advanced from `NOT_GRADUATED` to `SWEPT`;
+- no duplicate Buy/Sell and no fresh launch occurred.
+
+### Stage 2 — create pool and permanent lock
+
+At canonical phase `SWEPT`, the repaired SDK can prepare only `createPool(token)`.
+
+- transaction hash: `0xa87ee13b73656edd678e4c4505162bf8dd49d76baef8cda46d3b8f625f0df2e9`;
+- receipt block: `56779955`;
+- receipt status: `1 (success)`;
+- gas used: `5482075`;
+- transaction target: canonical Graduation Coordinator `0x239Da83Ec8294b2433848eA8C85155f41E76f60a`;
+- final coordinator phase: `2 (POOL_CREATED)`;
+- pool: `0x9995b278d08484ff746bbe91187a723d85c093f1`;
+- Position Manager: `0x444Cc395346428216fB6f2892eb03cB804aE4CD5`;
+- position ID: `266664`;
+- curve `graduated()`: `true`.
+
+The Stage-2 receipt records the V3 position NFT mint/transfer directly to Bread's permanent liquidity locker.
+
+## Final custody and residue verification
+
+Read-only post-recovery verification established:
+
+- `PositionManager.ownerOf(266664) = 0xeCF66A3a221D90A413d9015803417aA8D4Ba97fE`;
+- canonical permanent liquidity locker: `0xecf66a3a221d90a413d9015803417aa8d4ba97fe`;
+- Graduation Coordinator BTST balance: `0`;
+- Graduation Adapter BTST balance: `0`;
+- Graduation Coordinator USDC balance: `0`;
+- Graduation Adapter USDC balance: `0`.
+
+Address comparison is case-insensitive; the NFT owner is exactly the canonical locker. No launch-token or USDC graduation residue remains in the coordinator or adapter.
+
+## Recovery verdict
+
+`PHYSICAL_ANDROID_AUTO_GRADUATION_REGRESSION_ROOT_CAUSED_REPAIRED_VERIFIED_AND_EXISTING_BTST_RECOVERY_PASS`
+
+The regression/recovery lane is closed:
+
+- threshold-crossing Buy persistence preserved;
+- permissionless recovery path verified;
+- Stage 1 succeeded;
+- Stage 2 succeeded;
+- final coordinator phase is `POOL_CREATED`;
+- curve is graduated;
+- permanent-lock custody is correct;
+- coordinator/adapter token and USDC residue is zero;
+- no blind manual recovery write, fresh token, or extra trade was required.
+
+PR #93 remains draft/unmerged. Day 9 remains incomplete only for its still-open unrelated release gates, including remaining required physical/current branded-device coverage and unavailable exact-head external CI. No Day-10 start or RC tag is authorized by this evidence.
