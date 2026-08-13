@@ -18,6 +18,10 @@ describe('Day 9 Arc environment reconciliation', () => {
       poolManager: null,
       positionManager: '0x444Cc395346428216fB6f2892eb03cB804aE4CD5',
       factory: '0x0fB6EEDA6e90E90797083861A75D15752a27f59c',
+      swapRouter: '0xA545bCB1Bd7985c59ea162aB1748A0803434C31b',
+      swapRouterKind: 'V3_SWAP_ROUTER_02',
+      quoter: '0x3Ce954107b1A675826B33bF23060Dd655e3758fE',
+      quoterKind: 'V3_QUOTER_V2',
     });
 
     expect(arcMainnet.status).toBe('AWAITING_OFFICIAL_VALUES');
