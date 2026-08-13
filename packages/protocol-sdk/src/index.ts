@@ -14,10 +14,18 @@ export {
 export {
   canonicalizeProtocolAddress,
   resolveProtocolContext,
+  type GraduatedTradingDependencies,
   type ProtocolAddresses,
   type ProtocolContext,
   type ResolveProtocolContextInput,
+  type V3QuoterKind,
+  type V3SwapRouterKind,
 } from './context.js';
+
+export {
+  resolveCanonicalTradeRoute,
+  type CanonicalTradeRoute,
+} from './trade-route.js';
 
 export {
   classifyBreadLog,
