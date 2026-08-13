@@ -5,12 +5,18 @@ import {
   type PreparedBreadTransaction,
 } from '../../../../packages/protocol-sdk/src/builders';
 import {
+  readCanonicalTradeReview,
+  type CanonicalTradeReview,
+} from '../../../../packages/protocol-sdk/src/canonical-trade-review';
+import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/context';
+import {
   estimateBuyTradeReview,
   estimateSellTradeReview,
   readTradeReviewSnapshot,
   type BuyTradeReview,
   type SellTradeReview,
 } from '../../../../packages/protocol-sdk/src/trade-review';
+import { prepareV3ExactInputTrade } from '../../../../packages/protocol-sdk/src/v3-trading';
 
 import {
   canSubmitTransactionAction,
@@ -29,7 +35,7 @@ import {
 type Address = `0x${string}`;
 type TransactionHash = `0x${string}`;
 type TradePublicClient = Parameters<typeof readTradeReviewSnapshot>[0];
-type ApprovedTradeReview = BuyTradeReview | SellTradeReview;
+type ApprovedTradeReview = CanonicalTradeReview;
 
 export type TradeExecutionContext = Readonly<{
   chainId: number;
@@ -40,6 +46,7 @@ export type TradeExecutionContext = Readonly<{
 export type TradePreparationInput = Readonly<{
   client: TradePublicClient;
   context: TradeExecutionContext;
+  protocolContext?: ProtocolContext;
   walletChainId: number;
   account: Address;
   action: TradeAction;
@@ -176,7 +183,26 @@ function stateFromRecord(
   };
 }
 
-function prepareAllowanceProbe({
+function sameAddress(left: Address, right: Address): boolean {
+  return left.toLowerCase() === right.toLowerCase();
+}
+
+function validateCanonicalContext(
+  context: TradeExecutionContext,
+  protocolContext: ProtocolContext,
+): void {
+  if (protocolContext.chainId !== context.chainId) {
+    throw new Error('Canonical protocol context chain mismatch.');
+  }
+  if (!sameAddress(protocolContext.quoteAsset, context.quoteAsset)) {
+    throw new Error('Canonical protocol context quote asset mismatch.');
+  }
+  if (protocolContext.quoteDecimals !== context.quoteDecimals) {
+    throw new Error('Canonical protocol context quote decimals mismatch.');
+  }
+}
+
+function prepareLegacyAllowanceProbe({
   context,
   account,
   action,
@@ -205,15 +231,23 @@ function prepareAllowanceProbe({
   });
 }
 
+async function prepareAllowanceProbe(input: TradePreparationInput): Promise<PreparedBreadTransaction> {
+  if (input.protocolContext === undefined) return prepareLegacyAllowanceProbe(input);
+  const prepared = await prepareTradeReview(input);
+  return prepared.transaction;
+}
+
 /**
- * Reads the canonical transaction-critical curve state and builds the exact
- * transaction/review without simulating it. The user-facing Review screen uses
- * this path so a first-time wallet is not required to have allowance merely to
- * inspect current financial consequences.
+ * Reads fresh canonical transaction-critical state and builds the exact
+ * transaction/review without simulating it. When a full ProtocolContext is
+ * supplied, route selection is chain-authoritative and may return either the
+ * launch curve or the verified graduated V3 pool. Legacy callers without that
+ * context retain the original Day-7 curve behavior.
  */
 export async function prepareTradeReview({
   client,
   context,
+  protocolContext,
   walletChainId,
   account,
   action,
@@ -226,10 +260,55 @@ export async function prepareTradeReview({
     throw new Error(`Wrong network: wallet is on chain ${walletChainId}, expected ${context.chainId}.`);
   }
 
+  if (protocolContext !== undefined) {
+    validateCanonicalContext(context, protocolContext);
+    const canonical = await readCanonicalTradeReview(client, protocolContext, {
+      token: tokenAddress,
+      action,
+      inputAmount,
+      slippageBps,
+    });
+
+    if (canonical.route.kind === 'V3_POOL') {
+      if (!('route' in canonical.review) || canonical.review.route !== 'V3_POOL') {
+        throw new Error('Canonical V3 route review mismatch.');
+      }
+      const transaction = prepareV3ExactInputTrade(canonical.route, {
+        action,
+        inputAmount,
+        minimumOutput: canonical.review.minimumOutput,
+        recipient: account,
+      });
+      return { review: canonical.review, transaction };
+    }
+
+    if ('route' in canonical.review && canonical.review.route === 'V3_POOL') {
+      throw new Error('Canonical curve route review mismatch.');
+    }
+    if (action === 'BUY') {
+      const transaction = prepareBuy(context, {
+        curve: canonical.route.curve,
+        quoteIn: inputAmount,
+        minTokensOut: canonical.review.minimumOutput,
+        recipient: account,
+      });
+      return { review: canonical.review, transaction };
+    }
+
+    const transaction = prepareSell(context, {
+      token: tokenAddress,
+      curve: canonical.route.curve,
+      tokensIn: inputAmount,
+      minQuoteOut: canonical.review.minimumOutput,
+      recipient: account,
+    });
+    return { review: canonical.review, transaction };
+  }
+
   const snapshot = await readTradeReviewSnapshot(client, curveAddress);
 
   if (action === 'BUY') {
-    const review = estimateBuyTradeReview({ quoteIn: inputAmount, slippageBps, snapshot });
+    const review: BuyTradeReview = estimateBuyTradeReview({ quoteIn: inputAmount, slippageBps, snapshot });
     const transaction = prepareBuy(context, {
       curve: curveAddress,
       quoteIn: inputAmount,
@@ -239,7 +318,7 @@ export async function prepareTradeReview({
     return { review, transaction };
   }
 
-  const review = estimateSellTradeReview({ tokensIn: inputAmount, slippageBps, snapshot });
+  const review: SellTradeReview = estimateSellTradeReview({ tokensIn: inputAmount, slippageBps, snapshot });
   const transaction = prepareSell(context, {
     token: tokenAddress,
     curve: curveAddress,
@@ -268,6 +347,7 @@ export async function executeTradeLifecycle({
   wallet,
   storage,
   context,
+  protocolContext,
   action,
   tokenAddress,
   curveAddress,
@@ -282,6 +362,7 @@ export async function executeTradeLifecycle({
   wallet: TradeWalletAdapter;
   storage: Storage;
   context: TradeExecutionContext;
+  protocolContext?: ProtocolContext;
   action: TradeAction;
   tokenAddress: Address;
   curveAddress: Address;
@@ -315,15 +396,21 @@ export async function executeTradeLifecycle({
 
   state = emit(transitionTransactionState(state, { type: 'PREPARE' }), onStateChange);
 
+  const preparation: TradePreparationInput = {
+    client,
+    context,
+    ...(protocolContext === undefined ? {} : { protocolContext }),
+    walletChainId,
+    account,
+    action,
+    tokenAddress,
+    curveAddress,
+    inputAmount,
+    slippageBps,
+  };
+
   try {
-    const allowanceProbe = prepareAllowanceProbe({
-      context,
-      account,
-      action,
-      tokenAddress,
-      curveAddress,
-      inputAmount,
-    });
+    const allowanceProbe = await prepareAllowanceProbe(preparation);
     await wallet.ensurePreparedTransactionAllowance(allowanceProbe);
   } catch (error) {
     const unknownHash = allowanceUnknownHash(error);
@@ -345,17 +432,7 @@ export async function executeTradeLifecycle({
 
   let prepared: PreparedTradeForSignature;
   try {
-    prepared = await prepareTradeForSignature({
-      client,
-      context,
-      walletChainId,
-      account,
-      action,
-      tokenAddress,
-      curveAddress,
-      inputAmount,
-      slippageBps,
-    });
+    prepared = await prepareTradeForSignature(preparation);
   } catch (error) {
     return revertedBeforeSignature(state, error, onStateChange);
   }
