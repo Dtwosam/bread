@@ -1,3 +1,5 @@
+import type { Locator } from '@playwright/test';
+
 import {
   BUY_TX_HASH,
   GRADUATED_CURVE,
@@ -32,7 +34,7 @@ function expectCanonicalV3Target(transaction: unknown) {
   expect(submitted.value === undefined || submitted.value === '0x0' || submitted.value === '0x00').toBe(true);
 }
 
-async function expectV3Review(trade: Parameters<typeof expect>[0] extends never ? never : any) {
+async function expectV3Review(trade: Locator) {
   const review = trade.locator('dl.bread-trade-review');
   await expect(review.getByText('Expected output', { exact: true })).toBeVisible();
   await expect(review.getByText('Minimum output', { exact: true })).toBeVisible();
