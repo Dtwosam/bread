@@ -57,11 +57,11 @@ function stateFromRecord(
 ): TransactionState {
   return {
     action: 'GRADUATION',
-    tokenAddress: record.tokenAddress,
     status,
     chainId: record.chainId,
     hash: record.hash,
     submittedAt: record.submittedAt,
+    ...(record.tokenAddress === undefined ? {} : { tokenAddress: record.tokenAddress }),
   };
 }
 
