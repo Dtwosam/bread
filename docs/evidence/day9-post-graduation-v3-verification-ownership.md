@@ -37,13 +37,16 @@ The required focused Day-9 set is:
 - `tests/day9/post-graduation-v3-trading.test.ts`
 - `tests/day9/post-graduation-v3-route.test.ts`
 - `tests/day9/post-graduation-v3-execution.test.ts`
+- `tests/day9/post-graduation-v3-boundaries.test.ts`
 - `tests/day9/post-graduation-canonical-review.test.ts`
 - `tests/day9/post-graduation-v3-controller.test.ts`
 - `tests/day9/post-graduation-v3-ui-review.test.ts`
 - `tests/day9/post-graduation-v3-ui-execution.test.ts`
 - retained `tests/day6/sdk-builders.test.ts`
 
-A minimal normal GitHub update was attempted to add this focused Vitest set to the existing `dependency-build` job. The connected GitHub safety layer blocked that workflow write. No wrapper workflow, Git-object plumbing, alternate branch trick, or other bypass was used.
+The direct-module boundary suite covers source-required adversarial classes that were not explicit in the earlier execution contract: one-unit input, 6-decimal rounding, non-1:1 pool-price orientation, near-total price impact, invalid quote/slot0 state, negative minimum output, and non-positive classic-router deadline.
+
+A minimal normal GitHub update was attempted to add the focused Vitest set to the existing `dependency-build` job. The connected GitHub safety layer blocked that workflow write. No wrapper workflow, Git-object plumbing, alternate branch trick, or other bypass was used.
 
 ## Packaging relationship
 
