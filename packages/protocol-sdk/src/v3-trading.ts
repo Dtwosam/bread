@@ -1,6 +1,7 @@
 import { parseAbi, type PublicClient } from 'viem';
 
 import type { Address } from '../../types/src/index.js';
+import type { PreparedBreadTransaction } from './builders.js';
 import type { CanonicalTradeRoute } from './trade-route.js';
 
 const ZERO = BigInt(0) as 0n;
@@ -20,6 +21,14 @@ const poolSlot0Abi = parseAbi([
   'function slot0() view returns (uint160 sqrtPriceX96,int24 tick,uint16 observationIndex,uint16 observationCardinality,uint16 observationCardinalityNext,uint8 feeProtocol,bool unlocked)',
 ]);
 
+const v3SwapRouterAbi = parseAbi([
+  'function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96) params) payable returns (uint256 amountOut)',
+]);
+
+const v3SwapRouter02Abi = parseAbi([
+  'function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96) params) payable returns (uint256 amountOut)',
+]);
+
 export type V3TradeRoute = Extract<CanonicalTradeRoute, { kind: 'V3_POOL' }>;
 
 export type V3TradeReview = Readonly<{
@@ -37,8 +46,20 @@ export type V3TradeReview = Readonly<{
   slippageBps: number;
 }>;
 
+export type PrepareV3ExactInputTradeInput = Readonly<{
+  action: 'BUY' | 'SELL';
+  inputAmount: bigint;
+  minimumOutput: bigint;
+  recipient: Address;
+  deadline?: bigint;
+}>;
+
 function requirePositiveInput(inputAmount: bigint): void {
   if (inputAmount <= ZERO) throw new Error('V3 trade requires a positive input amount.');
+}
+
+function requireNonNegativeMinimum(minimumOutput: bigint): void {
+  if (minimumOutput < ZERO) throw new Error('V3 minimum output must not be negative.');
 }
 
 function requireSlippage(slippageBps: number): void {
@@ -153,4 +174,67 @@ export async function readV3TradeReview(
     priceImpactBps: priceImpactBps(spotOutput, expectedOutput),
     slippageBps,
   };
+}
+
+/**
+ * Builds the exact single-hop V3 call after a canonical V3_POOL route has
+ * already been resolved and quoted. This remains signer-free: it exposes only
+ * the exact allowance and contract request that the existing wallet lifecycle
+ * must simulate immediately before asking the user's wallet to sign.
+ */
+export function prepareV3ExactInputTrade(
+  route: V3TradeRoute,
+  input: PrepareV3ExactInputTradeInput,
+): PreparedBreadTransaction {
+  requirePositiveInput(input.inputAmount);
+  requireNonNegativeMinimum(input.minimumOutput);
+  const { tokenIn, tokenOut } = tradeTokens(route, input.action);
+  const allowance = {
+    token: tokenIn,
+    spender: route.swapRouter,
+    amount: input.inputAmount,
+  } as const;
+
+  if (route.swapRouterKind === 'V3_SWAP_ROUTER_02') {
+    return {
+      to: route.swapRouter,
+      abi: v3SwapRouter02Abi,
+      functionName: 'exactInputSingle',
+      args: [{
+        tokenIn,
+        tokenOut,
+        fee: route.fee,
+        recipient: input.recipient,
+        amountIn: input.inputAmount,
+        amountOutMinimum: input.minimumOutput,
+        sqrtPriceLimitX96: ZERO,
+      }],
+      value: ZERO,
+      allowance,
+    } as PreparedBreadTransaction;
+  }
+
+  if (route.swapRouterKind === 'V3_SWAP_ROUTER') {
+    if (input.deadline === undefined) throw new Error('deadline is required for V3_SWAP_ROUTER');
+    if (input.deadline <= ZERO) throw new Error('deadline must be positive for V3_SWAP_ROUTER');
+    return {
+      to: route.swapRouter,
+      abi: v3SwapRouterAbi,
+      functionName: 'exactInputSingle',
+      args: [{
+        tokenIn,
+        tokenOut,
+        fee: route.fee,
+        recipient: input.recipient,
+        deadline: input.deadline,
+        amountIn: input.inputAmount,
+        amountOutMinimum: input.minimumOutput,
+        sqrtPriceLimitX96: ZERO,
+      }],
+      value: ZERO,
+      allowance,
+    } as PreparedBreadTransaction;
+  }
+
+  throw new Error('unsupported V3 swap router kind');
 }
