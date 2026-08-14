@@ -5,28 +5,19 @@ import type {
 } from "../../../packages/types/src/index.js";
 import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
 
-export type NormalizedTrade = Readonly<{
+type CommonNormalizedTrade = Readonly<{
   id: Readonly<{ chainId: number; transactionHash: Hex32; logIndex: number }>;
   side: "BUY" | "SELL";
   token: Address;
   curve: Address;
   actor: Address;
   recipient: Address;
-  venueKind: "BREAD_CURVE" | "UNISWAP_V3";
-  venueAddress: Address;
-  venueFeeTier: number | null;
-  offeredQuote: bigint;
   quoteAmount: bigint;
   tokenAmount: bigint;
   baseFee: bigint;
   creatorTax: bigint;
   openingTaxBps: bigint;
   openingTax: bigint;
-  launchBuyExempt: boolean;
-  refund: bigint;
-  netCurveInput: bigint;
-  netQuoteOut: bigint;
-  grossCurveQuoteOut: bigint;
   executionPriceNumerator: bigint;
   executionPriceDenominator: bigint;
   blockNumber: bigint;
@@ -34,6 +25,34 @@ export type NormalizedTrade = Readonly<{
   blockTimestamp: bigint;
   transactionIndex: number;
 }>;
+
+export type NormalizedCurveTrade = CommonNormalizedTrade &
+  Readonly<{
+    venueKind: "BREAD_CURVE";
+    venueAddress: Address;
+    venueFeeTier: null;
+    offeredQuote: bigint;
+    launchBuyExempt: boolean;
+    refund: bigint;
+    netCurveInput: bigint;
+    netQuoteOut: bigint;
+    grossCurveQuoteOut: bigint;
+  }>;
+
+export type NormalizedV3Trade = CommonNormalizedTrade &
+  Readonly<{
+    venueKind: "UNISWAP_V3";
+    venueAddress: Address;
+    venueFeeTier: number;
+    offeredQuote: null;
+    launchBuyExempt: null;
+    refund: null;
+    netCurveInput: null;
+    netQuoteOut: null;
+    grossCurveQuoteOut: null;
+  }>;
+
+export type NormalizedTrade = NormalizedCurveTrade | NormalizedV3Trade;
 
 export type KnownTradeLaunch = Readonly<{
   tokenAddress: string;
@@ -109,7 +128,7 @@ export function correlateCanonicalTrades(
 ): readonly NormalizedTrade[] {
   const tokenByCurve = curveTokenMap(input.knownLaunches);
   const stateByTxCurve = new Map<string, TransactionState>();
-  const trades: NormalizedTrade[] = [];
+  const trades: NormalizedCurveTrade[] = [];
 
   for (const event of sortEvents(input.events)) {
     if (event.contractRole !== "CURVE") continue;
