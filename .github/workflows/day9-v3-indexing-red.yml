@@ -102,6 +102,7 @@ jobs:
           apps/api/src/routes/portfolio.ts
           apps/indexer/src/apply-range.ts
           apps/indexer/src/catch-up.ts
+          apps/indexer/src/index.ts
           apps/indexer/src/lan/indexer-runner.ts
           apps/indexer/src/post-commit.ts
           apps/indexer/src/reconcile.ts
