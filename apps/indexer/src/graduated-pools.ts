@@ -1,3 +1,5 @@
+export { discoverGraduatedV3SwapLogs } from "./graduated-v3-discovery.js";
+
 import {
   graduatedV3AdapterAbi,
   v3FactoryAbi,
