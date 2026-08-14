@@ -1,10 +1,11 @@
 import { sql } from "drizzle-orm";
 
 import type { BreadDb } from "../client.js";
-import {
-  applyFeeAdminGraduationProjection as applyLegacyFeeAdminGraduationProjection,
-} from "./fees-admin-graduation.js";
-import type { CanonicalIndexedEvent, IndexerProtocolContext } from "./indexer.js";
+import { applyFeeAdminGraduationProjection as applyLegacyFeeAdminGraduationProjection } from "./fees-admin-graduation.js";
+import type {
+  CanonicalIndexedEvent,
+  IndexerProtocolContext,
+} from "./indexer.js";
 
 export type VerifiedGraduatedVenueProjection = Readonly<{
   venueKind: "UNISWAP_V3";
