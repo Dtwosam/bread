@@ -29,6 +29,7 @@ jobs:
           tests/day9/v3-pool-id.test.ts
           tests/day9/post-graduation-v3-route.test.ts
           tests/day9/post-graduation-v3-boundaries.test.ts
+          tests/day9/graduated-v3-registry.test.ts
 
   postgres-red:
     runs-on: ubuntu-latest
@@ -65,7 +66,7 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Check A1 TypeScript and workflow formatting
+      - name: Check affected TypeScript and workflow formatting
         run: >-
           pnpm exec prettier --check
           .github/workflows/day9-v3-indexing-red.yml
@@ -78,6 +79,7 @@ jobs:
           packages/protocol-sdk/src/v3-pool.ts
           packages/protocol-sdk/src/trade-route.ts
           tests/day9/v3-pool-id.test.ts
+          tests/day9/graduated-v3-registry.test.ts
       - name: Run repository typecheck
         run: pnpm typecheck
       - name: Build affected workspaces
