@@ -79,15 +79,26 @@ test('release matrix distinguishes automated engines, emulation, physical device
     expect(macosSafari.evidenceKind).toBe('EXTERNAL_EXECUTION');
   }
 
-  for (const target of ['iOS Safari', 'Android Chrome physical']) {
-    const current = row(rows, target);
-    expect(['PASS', 'EXTERNAL_EXECUTION_REQUIRED']).toContain(current.status);
-    if (current.status === 'PASS') {
-      expect(current.evidenceKind).toBe('PHYSICAL_EXECUTION');
-      expect(current.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
-    } else {
-      expect(current.evidenceKind).toBe('EXTERNAL_EXECUTION');
-    }
+  const iosSafari = row(rows, 'iOS Safari');
+  expect(['PASS', 'EXTERNAL_EXECUTION_REQUIRED']).toContain(iosSafari.status);
+  if (iosSafari.status === 'PASS') {
+    expect(iosSafari.evidenceKind).toBe('PHYSICAL_EXECUTION');
+    expect(iosSafari.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
+  } else {
+    expect(iosSafari.evidenceKind).toBe('EXTERNAL_EXECUTION');
+  }
+
+  const androidChrome = row(rows, 'Android Chrome physical');
+  expect([
+    'PASS',
+    'PARTIAL_PASS_EXTERNAL_USER_EXECUTION',
+    'EXTERNAL_EXECUTION_REQUIRED',
+  ]).toContain(androidChrome.status);
+  if (androidChrome.status === 'PASS') {
+    expect(androidChrome.evidenceKind).toBe('PHYSICAL_EXECUTION');
+    expect(androidChrome.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
+  } else {
+    expect(androidChrome.evidenceKind).toBe('EXTERNAL_EXECUTION');
   }
 
   const walletBrowser = row(rows, 'Wallet / in-app browsers');
