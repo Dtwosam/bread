@@ -31,6 +31,7 @@ function row(tokenAddress: string, curveAddress: string, poolAddress: string) {
     graduatedVenueKind: "UNISWAP_V3",
     graduatedVenueAddress: poolAddress,
     graduatedVenueFeeTier: 3000,
+    graduatedVenueQuoteIsToken0: true,
     graduationCompletedBlock: 123n,
     graduationCompletedTransactionIndex: 4,
     graduationCompletedLogIndex: 7,
@@ -43,6 +44,7 @@ describe("Day 9 canonical graduated V3 registry", () => {
     expect(schema.graduatedVenueKind).toBeDefined();
     expect(schema.graduatedVenueAddress).toBeDefined();
     expect(schema.graduatedVenueFeeTier).toBeDefined();
+    expect(schema.graduatedVenueQuoteIsToken0).toBeDefined();
     expect(schema.graduationCompletedTransactionIndex).toBeDefined();
   });
 
@@ -57,7 +59,11 @@ describe("Day 9 canonical graduated V3 registry", () => {
       | Readonly<{
           byToken: ReadonlyMap<
             string,
-            Readonly<{ poolAddress: string; feeTier: number }>
+            Readonly<{
+              poolAddress: string;
+              feeTier: number;
+              quoteIsToken0: boolean;
+            }>
           >;
           byPool: ReadonlyMap<string, Readonly<{ tokenAddress: string }>>;
         }>
@@ -65,6 +71,7 @@ describe("Day 9 canonical graduated V3 registry", () => {
 
     expect(registry?.byToken.get(tokenA)?.poolAddress).toBe(poolA);
     expect(registry?.byToken.get(tokenA)?.feeTier).toBe(3000);
+    expect(registry?.byToken.get(tokenA)?.quoteIsToken0).toBe(true);
     expect(registry?.byPool.get(poolB)?.tokenAddress).toBe(tokenB);
   });
 
