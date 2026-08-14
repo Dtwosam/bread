@@ -36,7 +36,9 @@ export {
 } from "./canonical-trade-review.js";
 
 export {
+  prepareV3ExactInputTrade,
   readV3TradeReview,
+  type PrepareV3ExactInputTradeInput,
   type V3TradeReview,
   type V3TradeRoute,
 } from "./v3-trading.js";
