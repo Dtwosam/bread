@@ -56,16 +56,14 @@ export function classifyV3SwapAmounts(
   const amount0 = input.amount0;
   const amount1 = input.amount1;
   const onePositiveOneZero =
-    (amount0 > 0n && amount1 === 0n) ||
-    (amount1 > 0n && amount0 === 0n);
+    (amount0 > 0n && amount1 === 0n) || (amount1 > 0n && amount0 === 0n);
 
   if (onePositiveOneZero) {
     return { disposition: "JOURNAL_ONLY_DUST" };
   }
 
   const oppositeNonZero =
-    (amount0 > 0n && amount1 < 0n) ||
-    (amount0 < 0n && amount1 > 0n);
+    (amount0 > 0n && amount1 < 0n) || (amount0 < 0n && amount1 > 0n);
   if (!oppositeNonZero) {
     throw new Error("invalid canonical V3 Swap signed amounts");
   }
