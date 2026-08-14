@@ -228,9 +228,14 @@ function launchCurve(token: string): `0x${string}` {
 }
 
 function canonicalFactoryResult(data: `0x${string}`): `0x${string}` {
-  const decoded = decode(CANONICAL_FACTORY_ABI, data);
+  let decoded: ReturnType<typeof decode>;
+  try {
+    decoded = decode(CANONICAL_FACTORY_ABI, data);
+  } catch {
+    return factoryResult(data);
+  }
   if (decoded.functionName !== 'getLaunch') {
-    throw new Error(`Unhandled canonical Factory function ${decoded.functionName}`);
+    return factoryResult(data);
   }
   const token = String(decoded.args?.[0] ?? '') as `0x${string}`;
   return functionResult(CANONICAL_FACTORY_ABI, decoded.functionName, {
