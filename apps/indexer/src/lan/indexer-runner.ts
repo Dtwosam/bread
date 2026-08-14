@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 
 import { createBreadDb, migrateBreadDb, ReadRepository } from '../../../../packages/db/src/index.js';
+import { projectionCacheGenerationKey } from '../../../../packages/types/src/index.js';
 import { applyRange } from '../apply-range.js';
 import { runIndexerCatchUp, type IndexerCheckpoint } from '../catch-up.js';
 import { discoverRange } from '../discovery.js';
@@ -22,6 +23,68 @@ const { Pool } = requireFromDb('pg') as {
 const DEFAULT_OVERLAP_BLOCKS = 12n;
 const DEFAULT_MAX_BATCH_BLOCKS = 500n;
 const DEFAULT_CONTINUOUS_INTERVAL_MS = 10_000;
+const MAX_PROJECTION_CACHE_INVALIDATION_BATCH = 128;
+
+type ProjectionCacheInvalidationRedis = Readonly<{
+  incr: (key: string) => Promise<number>;
+}>;
+
+export type ProjectionCacheInvalidationResult = Readonly<{
+  status: 'PUBLISHED' | 'DEGRADED';
+  invalidatedChannels: readonly string[];
+  failedChannels: readonly string[];
+}>;
+
+export async function publishProjectionCacheInvalidations(
+  input: Readonly<{
+    redis: ProjectionCacheInvalidationRedis;
+    schemaVersion: string;
+    channels: readonly string[];
+  }>,
+): Promise<ProjectionCacheInvalidationResult> {
+  const channels = [...new Set(input.channels)].sort();
+  const invalidatedChannels: string[] = [];
+  const failedChannels: string[] = [];
+
+  for (
+    let offset = 0;
+    offset < channels.length;
+    offset += MAX_PROJECTION_CACHE_INVALIDATION_BATCH
+  ) {
+    const batch = channels.slice(
+      offset,
+      offset + MAX_PROJECTION_CACHE_INVALIDATION_BATCH,
+    );
+    const results = await Promise.all(
+      batch.map(async (channel) => {
+        try {
+          await input.redis.incr(
+            projectionCacheGenerationKey({
+              schemaVersion: input.schemaVersion,
+              channel,
+            }),
+          );
+          return true;
+        } catch {
+          return false;
+        }
+      }),
+    );
+
+    for (let index = 0; index < batch.length; index += 1) {
+      const channel = batch[index];
+      if (channel === undefined) continue;
+      if (results[index]) invalidatedChannels.push(channel);
+      else failedChannels.push(channel);
+    }
+  }
+
+  return {
+    status: failedChannels.length === 0 ? 'PUBLISHED' : 'DEGRADED',
+    invalidatedChannels,
+    failedChannels,
+  };
+}
 
 function positiveBigintFromEnv(name: string, fallback: bigint): bigint {
   const raw = process.env[name]?.trim();
