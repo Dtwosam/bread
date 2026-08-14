@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 type VerificationModule = Readonly<{
-  verifyGraduatedV3Candidate?: (input: Readonly<Record<string, unknown>>) => Promise<unknown>;
+  verifyGraduatedV3Candidate?: (
+    input: Readonly<Record<string, unknown>>,
+  ) => Promise<unknown>;
 }>;
 
 async function loadVerificationModule(): Promise<VerificationModule> {
@@ -51,7 +53,11 @@ const completion = {
   logIndex: 7,
 } as const;
 
-type Override = Readonly<{ address?: string; functionName: string; value: unknown }>;
+type Override = Readonly<{
+  address?: string;
+  functionName: string;
+  value: unknown;
+}>;
 
 function fakeClient(overrides: readonly Override[] = []) {
   const calls: Array<Readonly<{ address: string; functionName: string }>> = [];
@@ -69,7 +75,8 @@ function fakeClient(overrides: readonly Override[] = []) {
     [`${pool}:fee`]: 3000n,
   };
   for (const override of overrides) {
-    values[`${override.address ?? adapter}:${override.functionName}`] = override.value;
+    values[`${override.address ?? adapter}:${override.functionName}`] =
+      override.value;
   }
 
   return {
@@ -111,8 +118,7 @@ describe("Day 9 immutable graduated V3 candidate verification", () => {
     const { client, calls } = fakeClient();
 
     const result = (await verify(module, client)) as
-      | Readonly<{ poolAddress: string; feeTier: number }>
-      | undefined;
+      Readonly<{ poolAddress: string; feeTier: number }> | undefined;
 
     expect(result?.poolAddress).toBe(pool);
     expect(result?.feeTier).toBe(3000);
@@ -139,7 +145,9 @@ describe("Day 9 immutable graduated V3 candidate verification", () => {
 
   it("fails closed for immutable adapter identity mismatch", async () => {
     const module = await loadVerificationModule();
-    const { client } = fakeClient([{ functionName: "configHash", value: `0x${"cd".repeat(32)}` }]);
+    const { client } = fakeClient([
+      { functionName: "configHash", value: `0x${"cd".repeat(32)}` },
+    ]);
 
     await expect(verify(module, client)).rejects.toThrow(
       "graduated adapter identity mismatch",

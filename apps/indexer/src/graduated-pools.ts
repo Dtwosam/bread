@@ -8,7 +8,9 @@ import { poolAddressFromId } from "../../../packages/protocol-sdk/src/v3-pool.js
 type UnknownRow = Readonly<Record<string, unknown>>;
 
 type ReadContractClient = Readonly<{
-  readContract: (request: Readonly<Record<string, unknown>>) => Promise<unknown>;
+  readContract: (
+    request: Readonly<Record<string, unknown>>,
+  ) => Promise<unknown>;
 }>;
 
 type VerificationContext = Readonly<{
@@ -134,12 +136,14 @@ async function read(
   });
 }
 
-export async function verifyGraduatedV3Candidate(input: Readonly<{
-  client: ReadContractClient;
-  context: VerificationContext;
-  launch: VerificationLaunch;
-  completion: VerificationCompletion;
-}>): Promise<GraduatedPoolRegistryEntry> {
+export async function verifyGraduatedV3Candidate(
+  input: Readonly<{
+    client: ReadContractClient;
+    context: VerificationContext;
+    launch: VerificationLaunch;
+    completion: VerificationCompletion;
+  }>,
+): Promise<GraduatedPoolRegistryEntry> {
   const { client, context, launch, completion } = input;
   const dependencies = context.graduatedTrading;
 
@@ -153,7 +157,10 @@ export async function verifyGraduatedV3Candidate(input: Readonly<{
 
   const tokenAddress = address(launch.tokenAddress, "token address");
   const curveAddress = address(launch.curveAddress, "curve address");
-  const coordinator = address(launch.graduationCoordinator, "coordinator address");
+  const coordinator = address(
+    launch.graduationCoordinator,
+    "coordinator address",
+  );
   const adapter = address(launch.graduationAdapter, "adapter address");
   const quoteAsset = address(context.quoteAsset, "quote asset");
   const expectedFactory = address(dependencies.factory, "factory address");
@@ -208,11 +215,13 @@ export async function verifyGraduatedV3Candidate(input: Readonly<{
     throw new Error("graduated adapter identity mismatch");
   }
 
-  const factoryPool = await read(client, expectedFactory, v3FactoryAbi, "getPool", [
-    quoteAsset,
-    tokenAddress,
-    fee,
-  ]);
+  const factoryPool = await read(
+    client,
+    expectedFactory,
+    v3FactoryAbi,
+    "getPool",
+    [quoteAsset, tokenAddress, fee],
+  );
   if (!sameAddress(factoryPool, poolAddress)) {
     throw new Error("graduated pool identity mismatch");
   }
