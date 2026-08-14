@@ -20,7 +20,7 @@ type CacheIdentityModule = Readonly<{
 }>;
 
 async function loadModule(): Promise<CacheIdentityModule> {
-  return (await import("../../packages/types/src/cache-identity.js")) as CacheIdentityModule;
+  return (await import("../../packages/types/src/index.js")) as CacheIdentityModule;
 }
 
 const factoryA = "0x1111111111111111111111111111111111111111" as Address;
@@ -30,7 +30,9 @@ const token = "0xABCDEFabcdefABCDEFabcdefABCDEFabcdefABCD" as Address;
 describe("Day 9 shared projection-cache identity", () => {
   it("owns one explicit cache schema marker separate from event decoder schema", async () => {
     const module = await loadModule();
-    expect(module.BREAD_PROJECTION_CACHE_SCHEMA_VERSION).toBe("bread-projection-v1");
+    expect(module.BREAD_PROJECTION_CACHE_SCHEMA_VERSION).toBe(
+      "bread-projection-v1",
+    );
   });
 
   it("makes stack-feed identity factory-specific for the same chain and stack version", async () => {
@@ -83,19 +85,36 @@ describe("Day 9 shared projection-cache identity", () => {
     expect(generationKey).toBeTypeOf("function");
 
     expect(() =>
-      stackChannel?.({ chainId: 0, stackVersion: "v3", factoryAddress: factoryA }),
+      stackChannel?.({
+        chainId: 0,
+        stackVersion: "v3",
+        factoryAddress: factoryA,
+      }),
     ).toThrow();
     expect(() =>
-      stackChannel?.({ chainId: 5_042_002, stackVersion: "", factoryAddress: factoryA }),
+      stackChannel?.({
+        chainId: 5_042_002,
+        stackVersion: "",
+        factoryAddress: factoryA,
+      }),
     ).toThrow();
     expect(() =>
-      tokenChannel?.({ chainId: 5_042_002, tokenAddress: "0x1234" as Address }),
+      tokenChannel?.({
+        chainId: 5_042_002,
+        tokenAddress: "0x1234" as Address,
+      }),
     ).toThrow();
     expect(() =>
-      generationKey?.({ schemaVersion: "", channel: "token:5042002:bad" }),
+      generationKey?.({
+        schemaVersion: "",
+        channel: "token:5042002:bad",
+      }),
     ).toThrow();
     expect(() =>
-      generationKey?.({ schemaVersion: "bread-projection-v1", channel: "" }),
+      generationKey?.({
+        schemaVersion: "bread-projection-v1",
+        channel: "",
+      }),
     ).toThrow();
   });
 });
