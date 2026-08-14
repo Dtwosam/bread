@@ -72,5 +72,5 @@ jobs:
           tests/day9/post-graduation-v3-indexing-db.test.ts
       - name: Run repository typecheck
         run: pnpm typecheck
-      - name: Run repository build
-        run: pnpm build
+      - name: Build A1 affected workspaces
+        run: pnpm --filter @bread/db build && pnpm --filter @bread/indexer build
