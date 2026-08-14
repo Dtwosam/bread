@@ -168,7 +168,9 @@ export function createFeeAdminGraduationReducer(
         ? event.payload.token.toLowerCase()
         : undefined;
     const verifiedVenue =
-      token === undefined ? undefined : input.verifiedGraduatedVenues?.get(token);
+      token === undefined
+        ? undefined
+        : input.verifiedGraduatedVenues?.get(token);
     await applyFeeAdminGraduationProjection(
       db,
       event,
