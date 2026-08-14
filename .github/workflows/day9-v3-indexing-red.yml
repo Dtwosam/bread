@@ -31,6 +31,7 @@ jobs:
           tests/day9/post-graduation-v3-boundaries.test.ts
           tests/day9/graduated-v3-registry.test.ts
           tests/day9/graduated-v3-verification.test.ts
+          tests/day9/graduated-v3-discovery.test.ts
 
   postgres-red:
     runs-on: ubuntu-latest
@@ -85,6 +86,7 @@ jobs:
           tests/day9/v3-pool-id.test.ts
           tests/day9/graduated-v3-registry.test.ts
           tests/day9/graduated-v3-verification.test.ts
+          tests/day9/graduated-v3-discovery.test.ts
       - name: Run repository typecheck
         run: pnpm typecheck
       - name: Build affected workspaces
