@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const RUN_DB = process.env.BREAD_DB_INTEGRATION === "1";
+const describeDb = RUN_DB ? describe : describe.skip;
 const address = (nibble: string) => `0x${nibble.repeat(40)}`;
 const hash = (nibble: string) => `0x${nibble.repeat(64)}`;
 
@@ -49,7 +50,7 @@ const sentinelColumns = `
   latest_log_index
 `;
 
-describe.skipIf(!RUN_DB)("Day 9 venue-neutral V3 trade PostgreSQL projection", () => {
+describeDb("Day 9 venue-neutral V3 trade PostgreSQL projection", () => {
   const schemaName = `day9_v3_trade_projection_${process.pid}`;
   let adminPool: TestPool;
   let pool: TestPool;

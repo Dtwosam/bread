@@ -49,9 +49,7 @@ type V3TradeProjection = CommonTradeProjection &
     grossCurveQuoteOut: null;
   }>;
 
-export type CanonicalTradeProjection =
-  | CurveTradeProjection
-  | V3TradeProjection;
+export type CanonicalTradeProjection = CurveTradeProjection | V3TradeProjection;
 
 type LaunchRow = Readonly<{
   initial_supply: string | null;
