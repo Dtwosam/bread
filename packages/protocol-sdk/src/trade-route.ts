@@ -77,18 +77,21 @@ function integerField(
   label: string,
 ): number {
   const value = field(record, name, index);
-  if (typeof value !== "number" && typeof value !== "bigint")
+  if (typeof value !== "number" && typeof value !== "bigint") {
     throw new Error(`invalid canonical ${label}`);
+  }
   const numeric = Number(value);
-  if (!Number.isSafeInteger(numeric) || numeric < 0)
+  if (!Number.isSafeInteger(numeric) || numeric < 0) {
     throw new Error(`invalid canonical ${label}`);
+  }
   return numeric;
 }
 
 function bigintValue(value: unknown, label: string): bigint {
   if (typeof value === "bigint") return value;
-  if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0)
+  if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) {
     return BigInt(value);
+  }
   throw new Error(`invalid canonical ${label}`);
 }
 
@@ -126,8 +129,9 @@ export async function resolveCanonicalTradeRoute(
   } as never);
 
   const launchToken = addressField(launch, "token", 0, "launch token");
-  if (!sameAddress(launchToken, token))
+  if (!sameAddress(launchToken, token)) {
     throw new Error("canonical launch token mismatch");
+  }
 
   const curve = addressField(launch, "curve", 1, "launch curve");
   const coordinator = addressField(
@@ -142,177 +146,194 @@ export async function resolveCanonicalTradeRoute(
     9,
     "graduation adapter",
   );
-  const snapshottedAdapterConfigHash = bytes32Field(
+  const adapterFamily = integerField(
     launch,
-    "adapterConfigHash",
+    "graduationAdapterFamily",
     10,
-    "adapter config hash",
+    "graduation adapter family",
+  );
+  const launchConfigHash = bytes32Field(
+    launch,
+    "graduationConfigHash",
+    11,
+    "graduation config hash",
   );
 
-  if (!sameAddress(coordinator, context.addresses.graduationCoordinator)) {
-    throw new Error("canonical launch coordinator mismatch");
-  }
+  const graduation = await read<StructLike>(client, {
+    address: coordinator,
+    abi: breadAbiRegistry.coordinator,
+    functionName: "getGraduation",
+    args: [token],
+  } as never);
+  const phase = integerField(graduation, "phase", 0, "graduation phase");
 
-  const [phaseRaw, readyRaw] = await Promise.all([
-    read<unknown>(client, {
-      address: context.addresses.graduationCoordinator,
-      abi: breadAbiRegistry.graduationCoordinator,
-      functionName: "phaseOf",
-      args: [token],
-    } as never),
-    read<unknown>(client, {
+  if (phase === 0) {
+    const ready = await read<boolean>(client, {
       address: curve,
       abi: breadAbiRegistry.curve,
       functionName: "readyToGraduate",
-    } as never),
-  ]);
-
-  const phase = integerField([phaseRaw], "phase", 0, "graduation phase");
-  const readyToGraduate = readyRaw === true;
-
-  if (phase === 0) {
-    if (readyToGraduate) {
-      throw new Error("graduation pending; canonical route unavailable");
-    }
+      args: [],
+    } as never);
+    if (ready !== false) throw new Error("graduation is pending");
     return { kind: "CURVE", curve };
   }
-  if (phase === 1) {
-    throw new Error("graduation pending; canonical route unavailable");
+  if (phase === 1) throw new Error("graduation is pending");
+  if (phase === 3) throw new Error("graduation is unavailable");
+  if (phase !== 2) throw new Error(`unsupported graduation phase: ${phase}`);
+
+  if (adapterFamily !== V3_FAMILY) {
+    throw new Error("graduated route is not UNISWAP_V3");
   }
-  if (phase === 3) {
-    throw new Error("rescued launch has no canonical public trading route");
-  }
-  if (phase !== 2) {
-    throw new Error("invalid canonical graduation phase");
+  const dependencies = context.graduatedTrading;
+  if (dependencies === undefined || dependencies.family !== "UNISWAP_V3") {
+    throw new Error("graduated V3 dependencies are unavailable");
   }
 
-  const graduated = context.graduatedTrading;
-  if (graduated === undefined)
-    throw new Error("canonical graduated trading dependencies are unavailable");
-  if (graduated.kind !== "UNISWAP_V3")
-    throw new Error("unsupported canonical graduated trading family");
-  if (!sameAddress(adapter, graduated.adapter))
-    throw new Error("canonical launch graduation adapter mismatch");
-
-  const [adapterConfigHash, familyRaw, factory, positionManager, feeRaw] = await Promise.all([
-    read<Hex32>(client, {
-      address: adapter,
-      abi: v3FactoryBoundDependencyAbi,
-      functionName: "adapterConfigHash",
-    } as never),
-    read<unknown>(client, {
+  const [
+    liveFamily,
+    liveCoordinator,
+    liveConfigHash,
+    liveUsdc,
+    livePositionManager,
+    liveFactory,
+    liveFee,
+  ] = await Promise.all([
+    read<number | bigint>(client, {
       address: adapter,
       abi: graduatedV3AdapterAbi,
       functionName: "family",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: v3FactoryBoundDependencyAbi,
-      functionName: "factory",
+      abi: graduatedV3AdapterAbi,
+      functionName: "coordinator",
+    } as never),
+    read<Hex32>(client, {
+      address: adapter,
+      abi: graduatedV3AdapterAbi,
+      functionName: "configHash",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: v3FactoryBoundDependencyAbi,
+      abi: graduatedV3AdapterAbi,
+      functionName: "usdc",
+    } as never),
+    read<Address>(client, {
+      address: adapter,
+      abi: graduatedV3AdapterAbi,
       functionName: "positionManager",
     } as never),
-    read<unknown>(client, {
+    read<Address>(client, {
       address: adapter,
-      abi: v3FactoryBoundDependencyAbi,
+      abi: graduatedV3AdapterAbi,
+      functionName: "v3Factory",
+    } as never),
+    read<number | bigint>(client, {
+      address: adapter,
+      abi: graduatedV3AdapterAbi,
       functionName: "fee",
     } as never),
   ]);
 
-  const family = integerField([familyRaw], "family", 0, "V3 adapter family");
-  const fee = integerField([feeRaw], "fee", 0, "V3 fee");
-  if (family !== V3_FAMILY) throw new Error("unsupported canonical graduation family");
-  if (adapterConfigHash.toLowerCase() !== snapshottedAdapterConfigHash)
-    throw new Error("canonical V3 adapter config hash mismatch");
-  if (!sameAddress(factory, graduated.factory))
-    throw new Error("canonical V3 factory mismatch");
-  if (!sameAddress(positionManager, graduated.positionManager))
-    throw new Error("canonical V3 position manager mismatch");
-  if (fee !== graduated.fee) throw new Error("canonical V3 fee mismatch");
+  const liveFamilyNumber = Number(liveFamily);
+  const fee = Number(liveFee);
+  if (
+    liveFamilyNumber !== V3_FAMILY ||
+    !sameAddress(liveCoordinator, coordinator) ||
+    liveConfigHash.toLowerCase() !== launchConfigHash.toLowerCase() ||
+    !sameAddress(liveUsdc, context.quoteAsset) ||
+    !sameAddress(liveFactory, dependencies.factory) ||
+    !sameAddress(livePositionManager, dependencies.positionManager) ||
+    !Number.isSafeInteger(fee) ||
+    fee <= 0
+  ) {
+    throw new Error("graduated adapter identity mismatch");
+  }
 
-  const [poolId, pool, quoteAsset, token0, token1, poolFeeRaw, liquidityRaw] = await Promise.all([
-    read<Hex32>(client, {
-      address: context.addresses.graduationCoordinator,
-      abi: breadAbiRegistry.graduationCoordinator,
-      functionName: "poolIdOf",
-      args: [token],
+  const recordedPositionManager = addressField(
+    graduation,
+    "positionManager",
+    6,
+    "graduation position manager",
+  );
+  if (!sameAddress(recordedPositionManager, dependencies.positionManager)) {
+    throw new Error("graduated adapter identity mismatch");
+  }
+
+  const [routerFactory, quoterFactory] = await Promise.all([
+    read<Address>(client, {
+      address: dependencies.swapRouter,
+      abi: v3FactoryBoundDependencyAbi,
+      functionName: "factory",
     } as never),
     read<Address>(client, {
-      address: factory,
-      abi: v3FactoryAbi,
-      functionName: "getPool",
-      args: [token, context.usdc, fee],
+      address: dependencies.quoter,
+      abi: v3FactoryBoundDependencyAbi,
+      functionName: "factory",
     } as never),
-    Promise.resolve(context.usdc),
+  ]);
+  if (!sameAddress(routerFactory, dependencies.factory)) {
+    throw new Error("swap router factory mismatch");
+  }
+  if (!sameAddress(quoterFactory, dependencies.factory)) {
+    throw new Error("quoter factory mismatch");
+  }
+
+  const pool = poolAddressFromId(field(graduation, "poolId", 5));
+  const factoryPool = await read<Address>(client, {
+    address: dependencies.factory,
+    abi: v3FactoryAbi,
+    functionName: "getPool",
+    args: [context.quoteAsset, token, fee],
+  } as never);
+  if (!sameAddress(factoryPool, pool)) {
+    throw new Error("graduated pool identity mismatch");
+  }
+
+  const [token0, token1, poolFee, liquidity] = await Promise.all([
     read<Address>(client, {
-      address: poolAddressFromId(await read<Hex32>(client, {
-        address: context.addresses.graduationCoordinator,
-        abi: breadAbiRegistry.graduationCoordinator,
-        functionName: "poolIdOf",
-        args: [token],
-      } as never)),
+      address: pool,
       abi: v3PoolAbi,
       functionName: "token0",
     } as never),
     read<Address>(client, {
-      address: poolAddressFromId(await read<Hex32>(client, {
-        address: context.addresses.graduationCoordinator,
-        abi: breadAbiRegistry.graduationCoordinator,
-        functionName: "poolIdOf",
-        args: [token],
-      } as never)),
+      address: pool,
       abi: v3PoolAbi,
       functionName: "token1",
     } as never),
-    read<unknown>(client, {
-      address: poolAddressFromId(await read<Hex32>(client, {
-        address: context.addresses.graduationCoordinator,
-        abi: breadAbiRegistry.graduationCoordinator,
-        functionName: "poolIdOf",
-        args: [token],
-      } as never)),
+    read<number | bigint>(client, {
+      address: pool,
       abi: v3PoolAbi,
       functionName: "fee",
     } as never),
-    read<unknown>(client, {
-      address: poolAddressFromId(await read<Hex32>(client, {
-        address: context.addresses.graduationCoordinator,
-        abi: breadAbiRegistry.graduationCoordinator,
-        functionName: "poolIdOf",
-        args: [token],
-      } as never)),
+    read<bigint | number>(client, {
+      address: pool,
       abi: v3PoolAbi,
       functionName: "liquidity",
     } as never),
   ]);
 
-  const expectedPool = poolAddressFromId(poolId);
-  if (!sameAddress(pool, expectedPool)) throw new Error("canonical V3 pool mismatch");
-  const poolFee = integerField([poolFeeRaw], "fee", 0, "V3 pool fee");
-  const liquidity = bigintValue(liquidityRaw, "V3 pool liquidity");
-  if (poolFee !== fee) throw new Error("canonical V3 pool fee mismatch");
-  if (liquidity <= 0n) throw new Error("canonical V3 pool has no active liquidity");
-
-  const tokenPair = [token0.toLowerCase(), token1.toLowerCase()].sort();
-  const expectedPair = [token.toLowerCase(), quoteAsset.toLowerCase()].sort();
-  if (tokenPair[0] !== expectedPair[0] || tokenPair[1] !== expectedPair[1]) {
-    throw new Error("canonical V3 pool pair mismatch");
+  const pairMatches =
+    (sameAddress(token0, context.quoteAsset) && sameAddress(token1, token)) ||
+    (sameAddress(token0, token) && sameAddress(token1, context.quoteAsset));
+  if (!pairMatches || Number(poolFee) !== fee) {
+    throw new Error("graduated pool identity mismatch");
+  }
+  if (bigintValue(liquidity, "graduated pool liquidity") <= BigInt(0)) {
+    throw new Error("graduated pool has no active liquidity");
   }
 
   return {
     kind: "V3_POOL",
     token,
-    quoteAsset,
-    pool: expectedPool,
+    quoteAsset: context.quoteAsset,
+    pool,
     fee,
-    factory,
-    positionManager,
-    swapRouter: graduated.swapRouter,
-    swapRouterKind: graduated.swapRouterKind,
-    quoter: graduated.quoter,
-    quoterKind: graduated.quoterKind,
+    factory: dependencies.factory,
+    positionManager: dependencies.positionManager,
+    swapRouter: dependencies.swapRouter,
+    swapRouterKind: dependencies.swapRouterKind,
+    quoter: dependencies.quoter,
+    quoterKind: dependencies.quoterKind,
   };
 }
