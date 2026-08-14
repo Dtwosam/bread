@@ -17,7 +17,11 @@ import type { LaunchSnapshot } from "./normalize.js";
 import type { NormalizedTrade } from "./trades.js";
 
 type ReducerEventIdentity = Readonly<{
-  identity: Readonly<{ chainId: number; transactionHash: string; logIndex: number }>;
+  identity: Readonly<{
+    chainId: number;
+    transactionHash: string;
+    logIndex: number;
+  }>;
 }>;
 
 function eventKey(event: ReducerEventIdentity): string {
@@ -77,7 +81,8 @@ export function createLaunchReducer(
       launchLogIndex: snapshot.launchLogIndex,
     });
 
-    const remainingSellableTokens = snapshot.initialSupply - snapshot.reservedTokensBaseline;
+    const remainingSellableTokens =
+      snapshot.initialSupply - snapshot.reservedTokensBaseline;
     await tx.insert(launchState).values({
       chainId: snapshot.chainId,
       tokenAddress: snapshot.tokenAddress,
