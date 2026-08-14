@@ -7,6 +7,7 @@ import {
   type IndexerProtocolContext,
   type ReconciliationLaunchStateRow,
 } from '../../../packages/db/src/index.js';
+import { readReconciliationGraduatedVenues } from '../../../packages/db/src/repositories/graduation-reconciliation.js';
 import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
 import type {
   ReconciliationCheck,
@@ -57,6 +58,17 @@ export type ReconciliationChainReader = Readonly<{
     positionId: bigint | null;
     positionLocked: boolean;
     tokenSupplyLocked: bigint;
+    graduatedVenueKind?: string | null;
+    graduatedVenueAddress?: string | null;
+    graduatedVenueFeeTier?: number | null;
+    graduatedVenueQuoteIsToken0?: boolean | null;
+    graduationCompletedBlock?: bigint | null;
+    graduationCompletedTransactionIndex?: number | null;
+    graduationCompletedLogIndex?: number | null;
+    venueKind?: string | null;
+    venueAddress?: string | null;
+    venueFeeTier?: number | null;
+    quoteIsToken0?: boolean | null;
   }>>;
   readChainConfig: () => Promise<Readonly<{
     chainId: number;
@@ -198,6 +210,15 @@ function normalizeHash(value: string | null): string | null {
   return value === null ? null : value.toLowerCase();
 }
 
+function optionalAddressMatches(projected: string | null | undefined, authoritative: string | null | undefined): boolean {
+  if (authoritative === undefined) return true;
+  return (projected ?? null)?.toLowerCase() === (authoritative ?? null)?.toLowerCase();
+}
+
+function optionalValueMatches<T>(projected: T | null | undefined, authoritative: T | null | undefined): boolean {
+  return authoritative === undefined || (projected ?? null) === (authoritative ?? null);
+}
+
 export function buildRebuildReport(input: RebuildReportInput): RebuildReport {
   if (!Number.isSafeInteger(input.canonicalEventCount) || input.canonicalEventCount < 0) {
     throw new Error('rebuild report canonicalEventCount must be a non-negative safe integer');
@@ -232,7 +253,14 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
   const startedAt = new Date().toISOString();
   if (input.checkedBlock < input.context.deploymentStartBlock) throw new Error('reconciliation block precedes deployment start');
   const repository = new RebuildRepository(input.db);
-  const snapshot = await repository.reconciliationSnapshot(protocolContext(input.context));
+  const reconciliationContext = protocolContext(input.context);
+  const [snapshot, graduatedVenueRows] = await Promise.all([
+    repository.reconciliationSnapshot(reconciliationContext),
+    readReconciliationGraduatedVenues(input.db, reconciliationContext),
+  ]);
+  const graduatedVenues = new Map(
+    graduatedVenueRows.map((row) => [row.tokenAddress.toLowerCase(), row]),
+  );
   const checks: ReconciliationCheck[] = [];
 
   const launchRange = {
@@ -350,6 +378,11 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
   for (const launch of snapshot.launches) {
     const authoritative = await input.chain.readGraduationState({ tokenAddress: launch.tokenAddress, blockNumber: input.checkedBlock });
     const projected = states.get(launch.tokenAddress.toLowerCase());
+    const projectedVenue = graduatedVenues.get(launch.tokenAddress.toLowerCase());
+    const authoritativeVenueKind = authoritative.graduatedVenueKind ?? authoritative.venueKind;
+    const authoritativeVenueAddress = authoritative.graduatedVenueAddress ?? authoritative.venueAddress;
+    const authoritativeVenueFeeTier = authoritative.graduatedVenueFeeTier ?? authoritative.venueFeeTier;
+    const authoritativeQuoteIsToken0 = authoritative.graduatedVenueQuoteIsToken0 ?? authoritative.quoteIsToken0;
     graduationExpected.push({ token: launch.tokenAddress, ...authoritative });
     graduationActual.push({
       token: launch.tokenAddress,
@@ -360,6 +393,13 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       positionId: projected?.positionId ?? null,
       positionLocked: projected?.positionLocked ?? null,
       tokenSupplyLocked: projected?.tokenSupplyLocked ?? 0n,
+      graduatedVenueKind: projectedVenue?.graduatedVenueKind ?? null,
+      graduatedVenueAddress: projectedVenue?.graduatedVenueAddress ?? null,
+      graduatedVenueFeeTier: projectedVenue?.graduatedVenueFeeTier ?? null,
+      graduatedVenueQuoteIsToken0: projectedVenue?.graduatedVenueQuoteIsToken0 ?? null,
+      graduationCompletedBlock: projectedVenue?.graduationCompletedBlock ?? null,
+      graduationCompletedTransactionIndex: projectedVenue?.graduationCompletedTransactionIndex ?? null,
+      graduationCompletedLogIndex: projectedVenue?.graduationCompletedLogIndex ?? null,
     });
     if (
       !projected ||
@@ -369,7 +409,14 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
       (projected.poolId ?? null)?.toLowerCase() !== (authoritative.poolId ?? null)?.toLowerCase() ||
       (projected.positionId ?? null) !== authoritative.positionId ||
       projected.positionLocked !== authoritative.positionLocked ||
-      (projected.tokenSupplyLocked ?? 0n) !== authoritative.tokenSupplyLocked
+      (projected.tokenSupplyLocked ?? 0n) !== authoritative.tokenSupplyLocked ||
+      !optionalValueMatches(projectedVenue?.graduatedVenueKind, authoritativeVenueKind) ||
+      !optionalAddressMatches(projectedVenue?.graduatedVenueAddress, authoritativeVenueAddress) ||
+      !optionalValueMatches(projectedVenue?.graduatedVenueFeeTier, authoritativeVenueFeeTier) ||
+      !optionalValueMatches(projectedVenue?.graduatedVenueQuoteIsToken0, authoritativeQuoteIsToken0) ||
+      !optionalValueMatches(projectedVenue?.graduationCompletedBlock, authoritative.graduationCompletedBlock) ||
+      !optionalValueMatches(projectedVenue?.graduationCompletedTransactionIndex, authoritative.graduationCompletedTransactionIndex) ||
+      !optionalValueMatches(projectedVenue?.graduationCompletedLogIndex, authoritative.graduationCompletedLogIndex)
     ) graduationMatch = false;
   }
   checks.push(check(
@@ -377,7 +424,7 @@ export async function reconcileStack(input: ReconcileStackInput): Promise<Reconc
     graduationMatch,
     graduationExpected,
     graduationActual,
-    'Coordinator/locker phase, swept amounts, pool/position identity and lock projection must match authoritative graduation state.',
+    'Coordinator/locker phase, swept amounts, pool/position identity, lock state, and authoritative graduated venue/completion identity must match the projection.',
   ));
 
   const expectedHashes = snapshot.stack?.runtimeCodeHashes ?? null;
