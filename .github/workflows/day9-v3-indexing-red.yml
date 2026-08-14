@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  reducer-format-dump:
+  reducer-format-diff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -24,12 +24,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Format reducer with repository Prettier
         run: pnpm exec prettier --write apps/indexer/src/reducers.ts
-      - name: Print formatted reducer as base64
-        run: |
-          echo REDUCER_BASE64_BEGIN
-          base64 -w0 apps/indexer/src/reducers.ts
-          echo
-          echo REDUCER_BASE64_END
+      - name: Print exact reducer formatting diff
+        run: git --no-pager diff --no-color -- apps/indexer/src/reducers.ts
       - name: Verify formatted reducer
         run: pnpm exec prettier --check apps/indexer/src/reducers.ts
       - name: Typecheck formatted tree
