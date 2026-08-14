@@ -69,6 +69,7 @@ export type GraduatedPoolRegistryEntry = Readonly<{
   curveAddress: string;
   poolAddress: string;
   feeTier: number;
+  quoteIsToken0: boolean;
   completion: Readonly<{
     blockNumber: bigint;
     transactionIndex: number;
@@ -144,6 +145,13 @@ function feeTier(value: unknown): number {
   const fee = safeInteger(value, "fee tier");
   if (fee > 0xffffff) throw new Error("invalid graduated V3 registry fee tier");
   return fee;
+}
+
+function quoteIsToken0(value: unknown): boolean {
+  if (typeof value !== "boolean") {
+    throw new Error("invalid graduated V3 registry quote token order");
+  }
+  return value;
 }
 
 async function read(
@@ -269,6 +277,7 @@ export async function verifyGraduatedV3Candidate(
     curveAddress,
     poolAddress,
     feeTier: fee,
+    quoteIsToken0: sameAddress(token0, quoteAsset),
     completion: {
       blockNumber: blockNumber(completion.blockNumber),
       transactionIndex: safeInteger(
@@ -291,6 +300,7 @@ function entryFromRow(row: UnknownRow): GraduatedPoolRegistryEntry {
     curveAddress: address(row.curveAddress, "curve address"),
     poolAddress: address(row.graduatedVenueAddress, "pool address"),
     feeTier: feeTier(row.graduatedVenueFeeTier),
+    quoteIsToken0: quoteIsToken0(row.graduatedVenueQuoteIsToken0),
     completion: {
       blockNumber: blockNumber(row.graduationCompletedBlock),
       transactionIndex: safeInteger(
@@ -315,6 +325,7 @@ function sameEntry(
     left.curveAddress === right.curveAddress &&
     left.poolAddress === right.poolAddress &&
     left.feeTier === right.feeTier &&
+    left.quoteIsToken0 === right.quoteIsToken0 &&
     left.completion.blockNumber === right.completion.blockNumber &&
     left.completion.transactionIndex === right.completion.transactionIndex &&
     left.completion.logIndex === right.completion.logIndex

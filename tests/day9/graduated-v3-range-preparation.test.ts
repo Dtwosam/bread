@@ -73,6 +73,7 @@ function persistedRow() {
     graduatedVenueKind: "UNISWAP_V3",
     graduatedVenueAddress: persistedPool,
     graduatedVenueFeeTier: 3000,
+    graduatedVenueQuoteIsToken0: true,
     graduationCompletedBlock: 80n,
     graduationCompletedTransactionIndex: 1,
     graduationCompletedLogIndex: 2,

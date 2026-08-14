@@ -13,6 +13,7 @@ export type VerifiedGraduatedVenueProjection = Readonly<{
   tokenAddress: string;
   poolAddress: string;
   feeTier: number;
+  quoteIsToken0: boolean;
   completion: Readonly<{
     blockNumber: bigint;
     transactionIndex: number;
@@ -50,6 +51,7 @@ function verifiedVenueForEvent(
     !Number.isSafeInteger(verifiedVenue.feeTier) ||
     verifiedVenue.feeTier <= 0 ||
     verifiedVenue.feeTier > 0xffffff ||
+    typeof verifiedVenue.quoteIsToken0 !== "boolean" ||
     verifiedVenue.completion.blockNumber !== event.blockNumber ||
     verifiedVenue.completion.transactionIndex !== event.transactionIndex ||
     verifiedVenue.completion.logIndex !== event.identity.logIndex
@@ -81,6 +83,7 @@ export async function applyFeeAdminGraduationProjection(
       graduated_venue_kind = ${canonicalVenue.venueKind},
       graduated_venue_address = ${canonicalVenue.poolAddress},
       graduated_venue_fee_tier = ${canonicalVenue.feeTier},
+      graduated_venue_quote_is_token0 = ${canonicalVenue.quoteIsToken0},
       graduation_completed_transaction_index = ${canonicalVenue.completion.transactionIndex},
       updated_at = now()
     WHERE chain_id = ${event.identity.chainId}

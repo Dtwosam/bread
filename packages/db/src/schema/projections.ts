@@ -106,6 +106,7 @@ export const launchState = pgTable(
     graduatedVenueKind: text("graduated_venue_kind"),
     graduatedVenueAddress: text("graduated_venue_address"),
     graduatedVenueFeeTier: integer("graduated_venue_fee_tier"),
+    graduatedVenueQuoteIsToken0: boolean("graduated_venue_quote_is_token0"),
     retryState: jsonb("retry_state").$type<Record<string, unknown>>(),
     trackedQuote: amount("tracked_quote"),
     trackedTokens: amount("tracked_tokens"),

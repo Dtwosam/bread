@@ -80,6 +80,13 @@ async function readMigrationSql(): Promise<readonly string[]> {
       ),
       "utf8",
     ),
+    readFile(
+      new URL(
+        "../drizzle/0007_day9_graduated_v3_token_order.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
   ]);
   return migrationSqlPromise;
 }
