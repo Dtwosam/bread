@@ -48,11 +48,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Start exact Bread development infrastructure
         run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
-      - name: Run PostgreSQL curve venue persistence RED
+      - name: Run PostgreSQL V3 persistence tests
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
-        run: pnpm exec vitest run tests/day9/post-graduation-v3-indexing-db.test.ts
+        run: >-
+          pnpm exec vitest run
+          tests/day9/post-graduation-v3-indexing-db.test.ts
+          tests/day9/graduated-v3-persistence-db.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
@@ -81,6 +84,7 @@ jobs:
           packages/db/src/schema/projections.ts
           tests/day9/post-graduation-v3-indexing.test.ts
           tests/day9/post-graduation-v3-indexing-db.test.ts
+          tests/day9/graduated-v3-persistence-db.test.ts
           packages/protocol-sdk/src/index.ts
           packages/protocol-sdk/src/v3-abi.ts
           packages/protocol-sdk/src/v3-pool.ts
