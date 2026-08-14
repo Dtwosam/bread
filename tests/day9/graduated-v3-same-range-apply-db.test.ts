@@ -336,7 +336,10 @@ describeDb("Day 9 same-range graduated V3 applyRange orchestration", () => {
     });
     expect(journal).toEqual([
       expect.objectContaining({ event_name: "Transfer", log_index: 4 }),
-      expect.objectContaining({ event_name: "GraduationCompleted", log_index: 5 }),
+      expect.objectContaining({
+        event_name: "GraduationCompleted",
+        log_index: 5,
+      }),
       expect.objectContaining({
         event_name: "Swap",
         contract_role: "V3_POOL",
