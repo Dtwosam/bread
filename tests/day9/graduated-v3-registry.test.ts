@@ -41,6 +41,7 @@ describe("Day 9 canonical graduated V3 registry", () => {
     expect(schema.graduatedVenueKind).toBeDefined();
     expect(schema.graduatedVenueAddress).toBeDefined();
     expect(schema.graduatedVenueFeeTier).toBeDefined();
+    expect(schema.graduationCompletedTransactionIndex).toBeDefined();
   });
 
   it("builds an exact token/pool registry from canonical persisted rows", async () => {
