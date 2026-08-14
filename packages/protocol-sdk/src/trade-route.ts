@@ -3,6 +3,7 @@ import { getAddress, parseAbi, type PublicClient } from 'viem';
 import type { Address, Hex32 } from '../../types/src/index.js';
 import { breadAbiRegistry } from './abi/generated.js';
 import type { ProtocolContext } from './context.js';
+import { poolAddressFromId } from './v3-pool.js';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address;
 const V3_FAMILY = 2;
@@ -88,17 +89,6 @@ function bigintValue(value: unknown, label: string): bigint {
 
 function sameAddress(a: Address | string, b: Address | string): boolean {
   return a.toLowerCase() === b.toLowerCase();
-}
-
-function poolAddressFromId(value: unknown): Address {
-  if (typeof value !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(value)) {
-    throw new Error('invalid canonical graduated pool id');
-  }
-  const encodedPrefix = value.slice(2, 26);
-  if (!/^0{24}$/.test(encodedPrefix)) throw new Error('invalid canonical graduated pool id');
-  const pool = `0x${value.slice(-40)}`;
-  if (pool.toLowerCase() === ZERO_ADDRESS) throw new Error('invalid canonical graduated pool id');
-  return getAddress(pool).toLowerCase() as Address;
 }
 
 async function read<T = unknown>(
