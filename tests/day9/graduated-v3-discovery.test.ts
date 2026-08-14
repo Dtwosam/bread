@@ -27,23 +27,23 @@ type RegistryEntry = Readonly<{
 }>;
 
 type DiscoveryModule = Readonly<{
-  discoverGraduatedV3SwapLogs?: (input: Readonly<{
-    client: Readonly<{
-      getLogs: (
-        request: Readonly<Record<string, unknown>>,
-      ) => Promise<readonly RpcLog[]>;
-    }>;
-    chainId: number;
-    entries: readonly RegistryEntry[];
-    fromBlock: bigint;
-    toBlock: bigint;
-  }>) => Promise<readonly RpcLog[]>;
+  discoverGraduatedV3SwapLogs?: (
+    input: Readonly<{
+      client: Readonly<{
+        getLogs: (
+          request: Readonly<Record<string, unknown>>,
+        ) => Promise<readonly RpcLog[]>;
+      }>;
+      chainId: number;
+      entries: readonly RegistryEntry[];
+      fromBlock: bigint;
+      toBlock: bigint;
+    }>,
+  ) => Promise<readonly RpcLog[]>;
 }>;
 
 async function loadDiscoveryModule(): Promise<DiscoveryModule> {
-  return (await import(
-    "../../apps/indexer/src/graduated-pools.js"
-  )) as DiscoveryModule;
+  return (await import("../../apps/indexer/src/graduated-pools.js")) as DiscoveryModule;
 }
 
 function address(value: number): string {
