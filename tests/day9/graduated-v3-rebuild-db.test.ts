@@ -218,7 +218,8 @@ function readClient() {
           graduationConfigHash,
         };
       }
-      if (target === factory && fn === "stackVersion") return context.stackVersion;
+      if (target === factory && fn === "stackVersion")
+        return context.stackVersion;
       if (target === curve) {
         const values: Record<string, unknown> = {
           token,
@@ -276,7 +277,9 @@ function readClient() {
     },
     getTransaction: async (request: Readonly<{ hash: Hex32 }>) => {
       if (request.hash.toLowerCase() === dustTx.toLowerCase()) {
-        throw new Error("journal-only dust must not perform transaction lookup");
+        throw new Error(
+          "journal-only dust must not perform transaction lookup",
+        );
       }
       if (request.hash.toLowerCase() !== completionTx.toLowerCase()) {
         throw new Error(`unexpected transaction lookup ${request.hash}`);
@@ -463,13 +466,9 @@ describeDb("Day 9 graduated V3 deterministic rebuild", () => {
         loadRange: async (fromBlock: bigint, toBlock: bigint) => ({
           fromBlock,
           toBlock,
-          toBlockHash:
-            toBlock === 120n ? completionBlockHash : dustBlockHash,
+          toBlockHash: toBlock === 120n ? completionBlockHash : dustBlockHash,
           toBlockTimestamp: 1_786_262_400n + (toBlock - 100n),
-          logs:
-            fromBlock === 100n
-              ? [...launchLogs, completionLog]
-              : [],
+          logs: fromBlock === 100n ? [...launchLogs, completionLog] : [],
         }),
         verifyRebuildTarget: async () => ({
           targetMode: "LOCAL_TEST" as const,
