@@ -262,6 +262,10 @@ export async function applyRange(input: ApplyRangeInput) {
 
   return {
     ...result,
+    checkpoint: {
+      blockNumber: input.toBlock,
+      blockHash: input.toBlockHash,
+    },
     projectionCacheChannels: [...projectionCacheChannels],
   };
 }
