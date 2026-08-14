@@ -1,26 +1,30 @@
-import { IndexerRepository, ReadRepository, type BreadDb } from '../../../packages/db/src/index.js';
-import { listGraduatedV3RegistryRows } from '../../../packages/db/src/repositories/graduated-v3-read.js';
-import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
-import type { Hex32 } from '../../../packages/types/src/index.js';
+import {
+  IndexerRepository,
+  ReadRepository,
+  type BreadDb,
+} from "../../../packages/db/src/index.js";
+import { listGraduatedV3RegistryRows } from "../../../packages/db/src/repositories/graduated-v3-read.js";
+import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
+import type { Hex32 } from "../../../packages/types/src/index.js";
 
-import type { LogClient, RpcLog } from './discovery.js';
+import type { LogClient, RpcLog } from "./discovery.js";
 import {
   buildGraduatedPoolRegistry,
   discoverGraduatedV3SwapLogs,
   type GraduatedPoolRegistryEntry,
-} from './graduated-pools.js';
-import { normalizeTransactionLogs, type ChainReadClient } from './normalize.js';
+} from "./graduated-pools.js";
+import { normalizeTransactionLogs, type ChainReadClient } from "./normalize.js";
 import {
   createFeeAdminGraduationReducer,
   createHolderReducer,
   createLaunchReducer,
   createTradeReducer,
-} from './reducers.js';
-import { normalizeGraduatedV3SwapLogs } from './v3-swaps.js';
+} from "./reducers.js";
+import { normalizeGraduatedV3SwapLogs } from "./v3-swaps.js";
 
 type ApplyRangeClient = ChainReadClient &
   Readonly<{
-    getLogs?: LogClient['getLogs'];
+    getLogs?: LogClient["getLogs"];
     getTransaction?: (request: Readonly<{ hash: Hex32 }>) => Promise<
       Readonly<{
         hash?: unknown;
@@ -32,9 +36,9 @@ type ApplyRangeClient = ChainReadClient &
 
 type V3RangeClient = ChainReadClient &
   Readonly<{
-    getLogs: LogClient['getLogs'];
-    getTransaction: NonNullable<ApplyRangeClient['getTransaction']>;
-    getBlock: NonNullable<ChainReadClient['getBlock']>;
+    getLogs: LogClient["getLogs"];
+    getTransaction: NonNullable<ApplyRangeClient["getTransaction"]>;
+    getBlock: NonNullable<ChainReadClient["getBlock"]>;
   }>;
 
 export type ApplyRangeInput = Readonly<{
@@ -50,11 +54,13 @@ export type ApplyRangeInput = Readonly<{
 
 function requireV3RangeClient(client: ApplyRangeClient): V3RangeClient {
   if (
-    typeof client.getLogs !== 'function' ||
-    typeof client.getTransaction !== 'function' ||
-    typeof client.getBlock !== 'function'
+    typeof client.getLogs !== "function" ||
+    typeof client.getTransaction !== "function" ||
+    typeof client.getBlock !== "function"
   ) {
-    throw new Error('graduated V3 indexing requires getLogs, getTransaction, and getBlock');
+    throw new Error(
+      "graduated V3 indexing requires getLogs, getTransaction, and getBlock",
+    );
   }
   return client as V3RangeClient;
 }
@@ -83,8 +89,10 @@ function compareCanonicalOrder(
     identity: Readonly<{ logIndex: number }>;
   }>,
 ): number {
-  if (left.blockNumber !== right.blockNumber) return left.blockNumber < right.blockNumber ? -1 : 1;
-  if (left.transactionIndex !== right.transactionIndex) return left.transactionIndex - right.transactionIndex;
+  if (left.blockNumber !== right.blockNumber)
+    return left.blockNumber < right.blockNumber ? -1 : 1;
+  if (left.transactionIndex !== right.transactionIndex)
+    return left.transactionIndex - right.transactionIndex;
   return left.identity.logIndex - right.identity.logIndex;
 }
 
@@ -111,12 +119,18 @@ export async function applyRange(input: ApplyRangeInput) {
     factoryAddress: input.context.factoryAddress,
   });
   let persistedV3Entries: readonly GraduatedPoolRegistryEntry[] = [];
-  let v3Events = [] as Awaited<ReturnType<typeof normalizeGraduatedV3SwapLogs>>['events'];
-  let v3Trades = [] as Awaited<ReturnType<typeof normalizeGraduatedV3SwapLogs>>['trades'];
+  let v3Events = [] as Awaited<
+    ReturnType<typeof normalizeGraduatedV3SwapLogs>
+  >["events"];
+  let v3Trades = [] as Awaited<
+    ReturnType<typeof normalizeGraduatedV3SwapLogs>
+  >["trades"];
 
   if (persistedV3Rows.length > 0) {
-    if (input.context.graduatedTrading?.family !== 'UNISWAP_V3') {
-      throw new Error('persisted graduated V3 registry requires UNISWAP_V3 context');
+    if (input.context.graduatedTrading?.family !== "UNISWAP_V3") {
+      throw new Error(
+        "persisted graduated V3 registry requires UNISWAP_V3 context",
+      );
     }
     const v3Client = requireV3RangeClient(input.client);
     const registry = buildGraduatedPoolRegistry(persistedV3Rows);
@@ -142,7 +156,9 @@ export async function applyRange(input: ApplyRangeInput) {
 
   const launchProtocolAddresses = new Map<string, readonly string[]>();
   for (const launch of knownLaunches) {
-    launchProtocolAddresses.set(launch.tokenAddress.toLowerCase(), [launch.curveAddress]);
+    launchProtocolAddresses.set(launch.tokenAddress.toLowerCase(), [
+      launch.curveAddress,
+    ]);
   }
   for (const snapshot of normalized.launchSnapshots.values()) {
     launchProtocolAddresses.set(snapshot.tokenAddress.toLowerCase(), [
@@ -152,7 +168,11 @@ export async function applyRange(input: ApplyRangeInput) {
     ]);
   }
   for (const entry of persistedV3Entries) {
-    appendLaunchProtocolAddress(launchProtocolAddresses, entry.tokenAddress, entry.poolAddress);
+    appendLaunchProtocolAddress(
+      launchProtocolAddresses,
+      entry.tokenAddress,
+      entry.poolAddress,
+    );
   }
 
   const repository = new IndexerRepository(input.db, [
