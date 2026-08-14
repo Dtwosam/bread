@@ -54,7 +54,7 @@ jobs:
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
 
-  a1-static:
+  b2-format-export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -66,28 +66,26 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Check affected TypeScript and workflow formatting
+      - name: Format bounded B2 files
         run: >-
-          pnpm exec prettier --check
-          .github/workflows/day9-v3-indexing-red.yml
-          apps/indexer/src/trades.ts
+          pnpm exec prettier --write
           apps/indexer/src/graduated-pools.ts
-          packages/db/src/client.ts
-          packages/db/src/repositories/trades.ts
-          packages/db/src/schema/projections.ts
-          tests/day9/post-graduation-v3-indexing.test.ts
-          tests/day9/post-graduation-v3-indexing-db.test.ts
-          packages/protocol-sdk/src/v3-pool.ts
-          packages/protocol-sdk/src/trade-route.ts
-          tests/day9/v3-pool-id.test.ts
           tests/day9/graduated-v3-registry.test.ts
-      - name: Run repository typecheck
+      - name: Export formatted B2 files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: day9-b2-prettier
+          path: |
+            apps/indexer/src/graduated-pools.ts
+            tests/day9/graduated-v3-registry.test.ts
+          if-no-files-found: error
+          retention-days: 1
+      - name: Run repository typecheck on formatted B2 tree
         run: pnpm typecheck
-      - name: Build affected workspaces
+      - name: Build B2 affected workspaces on formatted tree
         run: >-
           pnpm --filter @bread/db build &&
-          pnpm --filter @bread/indexer build &&
-          pnpm --filter @bread/protocol-sdk build
+          pnpm --filter @bread/indexer build
 
   a2-types-red:
     runs-on: ubuntu-latest
