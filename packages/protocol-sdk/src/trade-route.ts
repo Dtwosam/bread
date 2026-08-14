@@ -1,15 +1,15 @@
 import { getAddress, type PublicClient } from "viem";
 
 import type { Address, Hex32 } from "../../types/src/index.js";
-import { breadAbiRegistry } from "./abi/generated.js";
+import { breadAbiRegistry } from "./abi/generated.ts";
 import type { ProtocolContext } from "./context.js";
 import {
   graduatedV3AdapterAbi,
   v3FactoryAbi,
   v3FactoryBoundDependencyAbi,
   v3PoolAbi,
-} from "./v3-abi.js";
-import { poolAddressFromId } from "./v3-pool.js";
+} from "./v3-abi.ts";
+import { poolAddressFromId } from "./v3-pool.ts";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const V3_FAMILY = 2;
@@ -142,189 +142,177 @@ export async function resolveCanonicalTradeRoute(
     9,
     "graduation adapter",
   );
-  const adapterFamily = integerField(
+  const snapshottedAdapterConfigHash = bytes32Field(
     launch,
-    "graduationAdapterFamily",
+    "adapterConfigHash",
     10,
-    "graduation adapter family",
-  );
-  const launchConfigHash = bytes32Field(
-    launch,
-    "graduationConfigHash",
-    11,
-    "graduation config hash",
+    "adapter config hash",
   );
 
-  const graduation = await read<StructLike>(client, {
-    address: coordinator,
-    abi: breadAbiRegistry.coordinator,
-    functionName: "getGraduation",
-    args: [token],
-  } as never);
-  const phase = integerField(graduation, "phase", 0, "graduation phase");
+  if (!sameAddress(coordinator, context.addresses.graduationCoordinator)) {
+    throw new Error("canonical launch coordinator mismatch");
+  }
 
-  if (phase === 0) {
-    const ready = await read<boolean>(client, {
+  const [phaseRaw, readyRaw] = await Promise.all([
+    read<unknown>(client, {
+      address: context.addresses.graduationCoordinator,
+      abi: breadAbiRegistry.graduationCoordinator,
+      functionName: "phaseOf",
+      args: [token],
+    } as never),
+    read<unknown>(client, {
       address: curve,
       abi: breadAbiRegistry.curve,
       functionName: "readyToGraduate",
-      args: [],
-    } as never);
-    if (ready !== false) throw new Error("graduation is pending");
+    } as never),
+  ]);
+
+  const phase = integerField([phaseRaw], "phase", 0, "graduation phase");
+  const readyToGraduate = readyRaw === true;
+
+  if (phase === 0) {
+    if (readyToGraduate) {
+      throw new Error("graduation pending; canonical route unavailable");
+    }
     return { kind: "CURVE", curve };
   }
-  if (phase === 1) throw new Error("graduation is pending");
-  if (phase === 3) throw new Error("graduation is unavailable");
-  if (phase !== 2) throw new Error(`unsupported graduation phase: ${phase}`);
-
-  if (adapterFamily !== V3_FAMILY)
-    throw new Error("graduated route is not UNISWAP_V3");
-  const dependencies = context.graduatedTrading;
-  if (dependencies === undefined || dependencies.family !== "UNISWAP_V3") {
-    throw new Error("graduated V3 dependencies are unavailable");
+  if (phase === 1) {
+    throw new Error("graduation pending; canonical route unavailable");
+  }
+  if (phase === 3) {
+    throw new Error("rescued launch has no canonical public trading route");
+  }
+  if (phase !== 2) {
+    throw new Error("invalid canonical graduation phase");
   }
 
-  const [
-    liveFamily,
-    liveCoordinator,
-    liveConfigHash,
-    liveUsdc,
-    livePositionManager,
-    liveFactory,
-    liveFee,
-  ] = await Promise.all([
-    read<number | bigint>(client, {
+  const graduated = context.graduatedTrading;
+  if (graduated === undefined)
+    throw new Error("canonical graduated trading dependencies are unavailable");
+  if (graduated.kind !== "UNISWAP_V3")
+    throw new Error("unsupported canonical graduated trading family");
+  if (!sameAddress(adapter, graduated.adapter))
+    throw new Error("canonical launch graduation adapter mismatch");
+
+  const [adapterConfigHash, familyRaw, factory, positionManager, feeRaw] = await Promise.all([
+    read<Hex32>(client, {
+      address: adapter,
+      abi: v3FactoryBoundDependencyAbi,
+      functionName: "adapterConfigHash",
+    } as never),
+    read<unknown>(client, {
       address: adapter,
       abi: graduatedV3AdapterAbi,
       functionName: "family",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: graduatedV3AdapterAbi,
-      functionName: "coordinator",
-    } as never),
-    read<Hex32>(client, {
-      address: adapter,
-      abi: graduatedV3AdapterAbi,
-      functionName: "configHash",
+      abi: v3FactoryBoundDependencyAbi,
+      functionName: "factory",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: graduatedV3AdapterAbi,
-      functionName: "usdc",
-    } as never),
-    read<Address>(client, {
-      address: adapter,
-      abi: graduatedV3AdapterAbi,
+      abi: v3FactoryBoundDependencyAbi,
       functionName: "positionManager",
     } as never),
-    read<Address>(client, {
+    read<unknown>(client, {
       address: adapter,
-      abi: graduatedV3AdapterAbi,
-      functionName: "v3Factory",
-    } as never),
-    read<number | bigint>(client, {
-      address: adapter,
-      abi: graduatedV3AdapterAbi,
+      abi: v3FactoryBoundDependencyAbi,
       functionName: "fee",
     } as never),
   ]);
 
-  const liveFamilyNumber = Number(liveFamily);
-  const fee = Number(liveFee);
-  if (
-    liveFamilyNumber !== V3_FAMILY ||
-    !sameAddress(liveCoordinator, coordinator) ||
-    liveConfigHash.toLowerCase() !== launchConfigHash.toLowerCase() ||
-    !sameAddress(liveUsdc, context.quoteAsset) ||
-    !sameAddress(liveFactory, dependencies.factory) ||
-    !sameAddress(livePositionManager, dependencies.positionManager) ||
-    !Number.isSafeInteger(fee) ||
-    fee <= 0
-  ) {
-    throw new Error("graduated adapter identity mismatch");
-  }
+  const family = integerField([familyRaw], "family", 0, "V3 adapter family");
+  const fee = integerField([feeRaw], "fee", 0, "V3 fee");
+  if (family !== V3_FAMILY) throw new Error("unsupported canonical graduation family");
+  if (adapterConfigHash.toLowerCase() !== snapshottedAdapterConfigHash)
+    throw new Error("canonical V3 adapter config hash mismatch");
+  if (!sameAddress(factory, graduated.factory))
+    throw new Error("canonical V3 factory mismatch");
+  if (!sameAddress(positionManager, graduated.positionManager))
+    throw new Error("canonical V3 position manager mismatch");
+  if (fee !== graduated.fee) throw new Error("canonical V3 fee mismatch");
 
-  const recordedPositionManager = addressField(
-    graduation,
-    "positionManager",
-    6,
-    "graduation position manager",
-  );
-  if (!sameAddress(recordedPositionManager, dependencies.positionManager)) {
-    throw new Error("graduated adapter identity mismatch");
-  }
-
-  const [routerFactory, quoterFactory] = await Promise.all([
-    read<Address>(client, {
-      address: dependencies.swapRouter,
-      abi: v3FactoryBoundDependencyAbi,
-      functionName: "factory",
+  const [poolId, pool, quoteAsset, token0, token1, poolFeeRaw, liquidityRaw] = await Promise.all([
+    read<Hex32>(client, {
+      address: context.addresses.graduationCoordinator,
+      abi: breadAbiRegistry.graduationCoordinator,
+      functionName: "poolIdOf",
+      args: [token],
     } as never),
     read<Address>(client, {
-      address: dependencies.quoter,
-      abi: v3FactoryBoundDependencyAbi,
-      functionName: "factory",
+      address: factory,
+      abi: v3FactoryAbi,
+      functionName: "getPool",
+      args: [token, context.usdc, fee],
     } as never),
-  ]);
-  if (!sameAddress(routerFactory, dependencies.factory))
-    throw new Error("swap router factory mismatch");
-  if (!sameAddress(quoterFactory, dependencies.factory))
-    throw new Error("quoter factory mismatch");
-
-  const pool = poolAddressFromId(field(graduation, "poolId", 5));
-  const factoryPool = await read<Address>(client, {
-    address: dependencies.factory,
-    abi: v3FactoryAbi,
-    functionName: "getPool",
-    args: [context.quoteAsset, token, fee],
-  } as never);
-  if (!sameAddress(factoryPool, pool))
-    throw new Error("graduated pool identity mismatch");
-
-  const [token0, token1, poolFee, liquidity] = await Promise.all([
+    Promise.resolve(context.usdc),
     read<Address>(client, {
-      address: pool,
+      address: poolAddressFromId(await read<Hex32>(client, {
+        address: context.addresses.graduationCoordinator,
+        abi: breadAbiRegistry.graduationCoordinator,
+        functionName: "poolIdOf",
+        args: [token],
+      } as never)),
       abi: v3PoolAbi,
       functionName: "token0",
     } as never),
     read<Address>(client, {
-      address: pool,
+      address: poolAddressFromId(await read<Hex32>(client, {
+        address: context.addresses.graduationCoordinator,
+        abi: breadAbiRegistry.graduationCoordinator,
+        functionName: "poolIdOf",
+        args: [token],
+      } as never)),
       abi: v3PoolAbi,
       functionName: "token1",
     } as never),
-    read<number | bigint>(client, {
-      address: pool,
+    read<unknown>(client, {
+      address: poolAddressFromId(await read<Hex32>(client, {
+        address: context.addresses.graduationCoordinator,
+        abi: breadAbiRegistry.graduationCoordinator,
+        functionName: "poolIdOf",
+        args: [token],
+      } as never)),
       abi: v3PoolAbi,
       functionName: "fee",
     } as never),
-    read<bigint | number>(client, {
-      address: pool,
+    read<unknown>(client, {
+      address: poolAddressFromId(await read<Hex32>(client, {
+        address: context.addresses.graduationCoordinator,
+        abi: breadAbiRegistry.graduationCoordinator,
+        functionName: "poolIdOf",
+        args: [token],
+      } as never)),
       abi: v3PoolAbi,
       functionName: "liquidity",
     } as never),
   ]);
 
-  const pairMatches =
-    (sameAddress(token0, context.quoteAsset) && sameAddress(token1, token)) ||
-    (sameAddress(token0, token) && sameAddress(token1, context.quoteAsset));
-  if (!pairMatches || Number(poolFee) !== fee)
-    throw new Error("graduated pool identity mismatch");
-  if (bigintValue(liquidity, "graduated pool liquidity") <= BigInt(0)) {
-    throw new Error("graduated pool has no active liquidity");
+  const expectedPool = poolAddressFromId(poolId);
+  if (!sameAddress(pool, expectedPool)) throw new Error("canonical V3 pool mismatch");
+  const poolFee = integerField([poolFeeRaw], "fee", 0, "V3 pool fee");
+  const liquidity = bigintValue(liquidityRaw, "V3 pool liquidity");
+  if (poolFee !== fee) throw new Error("canonical V3 pool fee mismatch");
+  if (liquidity <= 0n) throw new Error("canonical V3 pool has no active liquidity");
+
+  const tokenPair = [token0.toLowerCase(), token1.toLowerCase()].sort();
+  const expectedPair = [token.toLowerCase(), quoteAsset.toLowerCase()].sort();
+  if (tokenPair[0] !== expectedPair[0] || tokenPair[1] !== expectedPair[1]) {
+    throw new Error("canonical V3 pool pair mismatch");
   }
 
   return {
     kind: "V3_POOL",
     token,
-    quoteAsset: context.quoteAsset,
-    pool,
+    quoteAsset,
+    pool: expectedPool,
     fee,
-    factory: dependencies.factory,
-    positionManager: dependencies.positionManager,
-    swapRouter: dependencies.swapRouter,
-    swapRouterKind: dependencies.swapRouterKind,
-    quoter: dependencies.quoter,
-    quoterKind: dependencies.quoterKind,
+    factory,
+    positionManager,
+    swapRouter: graduated.swapRouter,
+    swapRouterKind: graduated.swapRouterKind,
+    quoter: graduated.quoter,
+    quoterKind: graduated.quoterKind,
   };
 }
