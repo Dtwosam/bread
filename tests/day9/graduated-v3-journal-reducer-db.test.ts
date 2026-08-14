@@ -263,7 +263,7 @@ describeDb("Day 9 V3 Swap journal and priced-trade reducer", () => {
         (SELECT count(*)::int FROM trades) AS trade_count,
         (SELECT count(*)::int FROM market_candles) AS candles,
         (SELECT trade_count::text FROM token_metrics
-         WHERE chain_id=$1 AND token_address=$2) AS metric_trade_count,
+         WHERE chain_id=$1 AND token_address=$3) AS metric_trade_count,
         (SELECT trade_count::text FROM creator_rollups
          WHERE chain_id=$1 AND creator_address=$2 AND token_address=$3) AS creator_trade_count`,
       [chainId, creator, token],
