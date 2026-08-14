@@ -38,6 +38,19 @@ jobs:
           tests/day7/production-gates.test.ts
           tests/day8/frontend-security-attacks.test.tsx
       - name: Build production web with the accepted CSP boundary
-        run: pnpm --filter @bread/web build
+        shell: bash
+        run: |
+          set -uo pipefail
+          log="$RUNNER_TEMP/day8-frontend-security-build.log"
+          pnpm --filter @bread/web build 2>&1 | tee "$log"
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            message="$(tail -n 80 "$log")"
+            message="${message//'%'/'%25'}"
+            message="${message//$'\r'/'%0D'}"
+            message="${message//$'\n'/'%0A'}"
+            echo "::error title=Bread web production build failure::$message"
+            exit "$status"
+          fi
       - name: Verify build leaves tracked workspace clean
         run: git diff --exit-code
