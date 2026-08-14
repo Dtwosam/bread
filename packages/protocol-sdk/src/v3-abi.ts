@@ -1,4 +1,4 @@
-import { parseAbi } from "viem";
+import { parseAbi, parseAbiItem } from "viem";
 
 export const graduatedV3AdapterAbi = parseAbi([
   "function family() view returns (uint8)",
@@ -24,3 +24,7 @@ export const v3PoolAbi = parseAbi([
   "function fee() view returns (uint24)",
   "function liquidity() view returns (uint128)",
 ]);
+
+export const v3SwapEvent = parseAbiItem(
+  "event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)",
+);
