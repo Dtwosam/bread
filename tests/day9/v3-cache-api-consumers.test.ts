@@ -1,8 +1,20 @@
 import { readFile } from "node:fs/promises";
-import Fastify from "fastify";
+import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 
 import type { Address } from "../../packages/types/src/index.js";
+
+const requireFromApi = createRequire(
+  new URL("../../apps/api/package.json", import.meta.url),
+);
+const Fastify = requireFromApi("fastify") as (
+  options?: Readonly<Record<string, unknown>>,
+) => {
+  inject: (input: Readonly<{ method: string; url: string }>) => Promise<{
+    statusCode: number;
+  }>;
+  close: () => Promise<void>;
+};
 
 const factory = "0x1111111111111111111111111111111111111111" as Address;
 const quoteAsset = "0x2222222222222222222222222222222222222222" as Address;
@@ -24,7 +36,7 @@ describe("Day 9 shared projection-cache API consumers", () => {
     const app = Fastify({ logger: false });
     const channels: string[] = [];
 
-    registerFeedRoute(app, {
+    registerFeedRoute(app as never, {
       repository: {
         listNewLaunches: async () => [],
         listTokenMetrics: async () => [],
@@ -52,7 +64,10 @@ describe("Day 9 shared projection-cache API consumers", () => {
       now: () => new Date("2026-08-14T20:00:00.000Z"),
     } as never);
 
-    const response = await app.inject({ method: "GET", url: "/v1/feed?view=new&limit=1" });
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/feed?view=new&limit=1",
+    });
     expect(response.statusCode).toBe(200);
     expect(channels).toEqual([
       `stack:${context.chainId}:${context.stackVersion}:${factory}:feed`,
