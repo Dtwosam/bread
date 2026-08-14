@@ -74,3 +74,23 @@ jobs:
         run: pnpm typecheck
       - name: Build A1 affected workspaces
         run: pnpm --filter @bread/db build && pnpm --filter @bread/indexer build
+
+  a2-types-red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Check A2 type-test formatting
+        run: pnpm exec prettier --check tests/day9/post-graduation-v3-types.test.ts
+      - name: Compile shared venue/API type contract
+        run: >-
+          pnpm exec tsc --noEmit --strict --skipLibCheck
+          --target ES2022 --module NodeNext --moduleResolution NodeNext
+          tests/day9/post-graduation-v3-types.test.ts
