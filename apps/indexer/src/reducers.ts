@@ -10,27 +10,34 @@ import {
   type HolderProjectionContext,
   type IndexerProtocolContext,
   type ProjectionReducer,
-} from '../../../packages/db/src/index.js';
+} from "../../../packages/db/src/index.js";
 
-import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
-import type { LaunchSnapshot } from './normalize.js';
-import type { NormalizedTrade } from './trades.js';
+import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
+import type { LaunchSnapshot } from "./normalize.js";
+import type { NormalizedTrade } from "./trades.js";
 
 type ReducerEventIdentity = Readonly<{
-  identity: Readonly<{ chainId: number; transactionHash: string; logIndex: number }>;
+  identity: Readonly<{
+    chainId: number;
+    transactionHash: string;
+    logIndex: number;
+  }>;
 }>;
 
 function eventKey(event: ReducerEventIdentity): string {
   return `${event.identity.chainId}:${event.identity.transactionHash.toLowerCase()}:${event.identity.logIndex}`;
 }
 
-export function createLaunchReducer(snapshots: ReadonlyMap<string, LaunchSnapshot>): ProjectionReducer {
+export function createLaunchReducer(
+  snapshots: ReadonlyMap<string, LaunchSnapshot>,
+): ProjectionReducer {
   return async (transaction, event) => {
-    if (event.eventName !== 'LaunchCreated') return;
+    if (event.eventName !== "LaunchCreated") return;
     const snapshot = snapshots.get(eventKey(event));
-    if (!snapshot) throw new Error(`missing normalized launch snapshot for ${eventKey(event)}`);
+    if (!snapshot)
+      throw new Error(`missing normalized launch snapshot for ${eventKey(event)}`);
     if (snapshot.reservedTokensBaseline > snapshot.initialSupply) {
-      throw new Error('launch reserved token baseline exceeds initial supply');
+      throw new Error("launch reserved token baseline exceeds initial supply");
     }
 
     const tx = transaction as {
@@ -72,28 +79,29 @@ export function createLaunchReducer(snapshots: ReadonlyMap<string, LaunchSnapsho
       launchLogIndex: snapshot.launchLogIndex,
     });
 
-    const remainingSellableTokens = snapshot.initialSupply - snapshot.reservedTokensBaseline;
+    const remainingSellableTokens =
+      snapshot.initialSupply - snapshot.reservedTokensBaseline;
     await tx.insert(launchState).values({
       chainId: snapshot.chainId,
       tokenAddress: snapshot.tokenAddress,
-      mode: 'ACTIVE',
+      mode: "ACTIVE",
       quoteReserve: snapshot.phantomQuote.toString(10),
       tokenReserve: snapshot.initialSupply.toString(10),
       remainingSellableTokens: remainingSellableTokens.toString(10),
-      trackedSoldInventory: '0',
+      trackedSoldInventory: "0",
       readyToGraduate: remainingSellableTokens === 0n,
-      graduationPhase: 'NOT_GRADUATED',
-      trackedQuote: '0',
+      graduationPhase: "NOT_GRADUATED",
+      trackedQuote: "0",
       trackedTokens: snapshot.initialSupply.toString(10),
-      quoteFeeBalance: '0',
-      creatorTaxBalance: '0',
-      realQuoteReserve: '0',
+      quoteFeeBalance: "0",
+      creatorTaxBalance: "0",
+      realQuoteReserve: "0",
       virtualQuoteReserve: snapshot.phantomQuote.toString(10),
       graduationAdapter: snapshot.graduationAdapter,
-      sweptUsdcAmount: '0',
-      sweptTokenAmount: '0',
+      sweptUsdcAmount: "0",
+      sweptTokenAmount: "0",
       positionLocked: false,
-      tokenSupplyLocked: '0',
+      tokenSupplyLocked: "0",
       latestBlockNumber: snapshot.launchBlockNumber.toString(10),
       latestTransactionHash: snapshot.launchTransactionHash,
       latestLogIndex: snapshot.launchLogIndex,
@@ -101,15 +109,21 @@ export function createLaunchReducer(snapshots: ReadonlyMap<string, LaunchSnapsho
   };
 }
 
-export function createTradeReducer(normalizedTrades: readonly NormalizedTrade[]): ProjectionReducer {
-  const byEvent = new Map(normalizedTrades.map((trade) => [
-    `${trade.id.chainId}:${trade.id.transactionHash.toLowerCase()}:${trade.id.logIndex}`,
-    trade,
-  ]));
+export function createTradeReducer(
+  normalizedTrades: readonly NormalizedTrade[],
+): ProjectionReducer {
+  const byEvent = new Map(
+    normalizedTrades.map((trade) => [
+      `${trade.id.chainId}:${trade.id.transactionHash.toLowerCase()}:${trade.id.logIndex}`,
+      trade,
+    ]),
+  );
 
   return async (transaction, event) => {
-    const isCurveTrade = event.eventName === 'CurveBuy' || event.eventName === 'CurveSell';
-    const isV3Swap = event.eventName === 'Swap' && event.contractRole === 'V3_POOL';
+    const isCurveTrade =
+      event.eventName === "CurveBuy" || event.eventName === "CurveSell";
+    const isV3Swap =
+      event.eventName === "Swap" && event.contractRole === "V3_POOL";
     if (!isCurveTrade && !isV3Swap) return;
 
     const trade = byEvent.get(eventKey(event));
@@ -125,7 +139,9 @@ export function createTradeReducer(normalizedTrades: readonly NormalizedTrade[])
   };
 }
 
-export function createFeeAdminGraduationReducer(input: Readonly<{ context: ProtocolContext }>): ProjectionReducer {
+export function createFeeAdminGraduationReducer(
+  input: Readonly<{ context: ProtocolContext }>,
+): ProjectionReducer {
   const projectionContext: IndexerProtocolContext = {
     chainId: input.context.chainId,
     stackVersion: input.context.stackVersion,
@@ -149,7 +165,9 @@ export function createHolderReducer(input: Readonly<{
 }>): ProjectionReducer {
   const baseProtocolAddresses = [
     input.context.factoryAddress,
-    ...Object.values(input.context.addresses).filter((value): value is AddressLike => typeof value === 'string'),
+    ...Object.values(input.context.addresses).filter(
+      (value): value is AddressLike => typeof value === "string",
+    ),
   ];
   const projectionContext: HolderProjectionContext = {
     chainId: input.context.chainId,
@@ -157,7 +175,11 @@ export function createHolderReducer(input: Readonly<{
     launchProtocolAddresses: input.launchProtocolAddresses,
   };
   return async (transaction, event) => {
-    await applyHolderTransferProjection(transaction as BreadDb, event, projectionContext);
+    await applyHolderTransferProjection(
+      transaction as BreadDb,
+      event,
+      projectionContext,
+    );
   };
 }
 
