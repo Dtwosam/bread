@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { IndexerProtocolContext } from "../../packages/db/src/index.js";
 import { replayOverlap } from "../../apps/indexer/src/replay.js";
 
-const address = (value: number) =>
-  `0x${value.toString(16).padStart(40, "0")}`;
+const address = (value: number) => `0x${value.toString(16).padStart(40, "0")}`;
 const hash = (value: number) => `0x${value.toString(16).padStart(64, "0")}`;
 
 const context: IndexerProtocolContext = {
@@ -25,10 +24,12 @@ type ApplyResult = Readonly<{
 
 type PublishHook = (result: ApplyResult) => Promise<void>;
 
-async function publishHook(input: Readonly<{
-  redis: Readonly<{ incr: (key: string) => Promise<number> }>;
-  schemaVersion: string;
-}>): Promise<PublishHook | undefined> {
+async function publishHook(
+  input: Readonly<{
+    redis: Readonly<{ incr: (key: string) => Promise<number> }>;
+    schemaVersion: string;
+  }>,
+): Promise<PublishHook | undefined> {
   const runner =
     (await import("../../apps/indexer/src/lan/indexer-runner.js")) as Readonly<
       Record<string, unknown>

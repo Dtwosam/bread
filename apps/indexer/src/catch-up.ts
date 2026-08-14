@@ -1,9 +1,9 @@
-import type { IndexerProtocolContext } from '../../../packages/db/src/index.js';
+import type { IndexerProtocolContext } from "../../../packages/db/src/index.js";
 import {
   replayOverlap,
   type LoadedReplayRange,
   type ReplayApplyResult,
-} from './replay.js';
+} from "./replay.js";
 
 export type IndexerCheckpoint = Readonly<{
   blockNumber: bigint;
@@ -38,11 +38,16 @@ function requirePositiveBigint(value: bigint, label: string): bigint {
 }
 
 function requirePositiveInteger(value: number, label: string): number {
-  if (!Number.isInteger(value) || value < 1) throw new Error(`${label} must be a positive integer`);
+  if (!Number.isInteger(value) || value < 1)
+    throw new Error(`${label} must be a positive integer`);
   return value;
 }
 
-function boundedTarget(checkpoint: bigint, observedHead: bigint, maxBatchBlocks: bigint): bigint {
+function boundedTarget(
+  checkpoint: bigint,
+  observedHead: bigint,
+  maxBatchBlocks: bigint,
+): bigint {
   const candidate = checkpoint + maxBatchBlocks;
   return candidate < observedHead ? candidate : observedHead;
 }
@@ -56,21 +61,29 @@ function boundedTarget(checkpoint: bigint, observedHead: bigint, maxBatchBlocks:
 export async function runIndexerCatchUp<TApply extends ReplayApplyResult>(
   input: CatchUpInput<TApply>,
 ): Promise<IndexerCatchUpResult> {
-  const maxBatchBlocks = requirePositiveBigint(input.maxBatchBlocks, 'maxBatchBlocks');
-  const maxCycles = requirePositiveInteger(input.maxCycles, 'maxCycles');
-  if (input.overlapBlocks < 0n) throw new Error('overlapBlocks must be non-negative');
+  const maxBatchBlocks = requirePositiveBigint(
+    input.maxBatchBlocks,
+    "maxBatchBlocks",
+  );
+  const maxCycles = requirePositiveInteger(input.maxCycles, "maxCycles");
+  if (input.overlapBlocks < 0n)
+    throw new Error("overlapBlocks must be non-negative");
 
   let checkpoint = input.initialCheckpoint;
   let observedHeadBlock = await input.observeHeadBlock();
   if (observedHeadBlock < checkpoint.blockNumber) {
-    throw new Error('observed head regressed below committed checkpoint');
+    throw new Error("observed head regressed below committed checkpoint");
   }
 
   let cycles = 0;
   let degradedPostCommitCycles = 0;
   while (checkpoint.blockNumber < observedHeadBlock && cycles < maxCycles) {
     const priorCheckpoint = checkpoint;
-    const targetBlock = boundedTarget(priorCheckpoint.blockNumber, observedHeadBlock, maxBatchBlocks);
+    const targetBlock = boundedTarget(
+      priorCheckpoint.blockNumber,
+      observedHeadBlock,
+      maxBatchBlocks,
+    );
 
     const replay = await replayOverlap({
       context: input.context,
@@ -82,14 +95,16 @@ export async function runIndexerCatchUp<TApply extends ReplayApplyResult>(
       applyRange: input.applyRange,
       publish: input.publish,
     });
-    if (replay.postCommit === 'DEGRADED') degradedPostCommitCycles += 1;
+    if (replay.postCommit === "DEGRADED") degradedPostCommitCycles += 1;
 
     const committed = await input.readCommittedCheckpoint();
     if (committed.blockNumber < priorCheckpoint.blockNumber) {
-      throw new Error('indexer catch-up regressed committed checkpoint');
+      throw new Error("indexer catch-up regressed committed checkpoint");
     }
     if (committed.blockNumber < targetBlock) {
-      throw new Error('indexer catch-up replay did not advance committed checkpoint to the requested target');
+      throw new Error(
+        "indexer catch-up replay did not advance committed checkpoint to the requested target",
+      );
     }
 
     checkpoint = committed;
@@ -97,10 +112,12 @@ export async function runIndexerCatchUp<TApply extends ReplayApplyResult>(
 
     const nextObservedHead = await input.observeHeadBlock();
     if (nextObservedHead < checkpoint.blockNumber) {
-      throw new Error('observed head regressed below committed checkpoint during catch-up');
+      throw new Error(
+        "observed head regressed below committed checkpoint during catch-up",
+      );
     }
     if (nextObservedHead < observedHeadBlock) {
-      throw new Error('observed head regressed during catch-up');
+      throw new Error("observed head regressed during catch-up");
     }
     observedHeadBlock = nextObservedHead;
   }

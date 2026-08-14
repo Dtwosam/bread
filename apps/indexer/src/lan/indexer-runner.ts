@@ -1,42 +1,53 @@
-import { createRequire } from 'node:module';
+import { createRequire } from "node:module";
 
-import { createBreadDb, migrateBreadDb, ReadRepository } from '../../../../packages/db/src/index.js';
+import {
+  createBreadDb,
+  migrateBreadDb,
+  ReadRepository,
+} from "../../../../packages/db/src/index.js";
 import {
   BREAD_PROJECTION_CACHE_SCHEMA_VERSION,
   projectionCacheGenerationKey,
-} from '../../../../packages/types/src/index.js';
-import { applyRange } from '../apply-range.js';
-import { runIndexerCatchUp, type IndexerCheckpoint } from '../catch-up.js';
-import { discoverRange } from '../discovery.js';
+} from "../../../../packages/types/src/index.js";
+import { applyRange } from "../apply-range.js";
+import { runIndexerCatchUp, type IndexerCheckpoint } from "../catch-up.js";
+import { discoverRange } from "../discovery.js";
 import {
   PostCommitDegradedError,
   PostCommitPublisher,
-} from '../post-commit.js';
+} from "../post-commit.js";
 import {
   createArcProviderSafeReadClient,
   createArcReadClient,
   observeHeadBlock,
-} from './chain-client.js';
-import { resolveBreadRuntimeContext, resolveRuntimeInfrastructure } from './runtime-context.js';
+} from "./chain-client.js";
+import {
+  resolveBreadRuntimeContext,
+  resolveRuntimeInfrastructure,
+} from "./runtime-context.js";
 
-const requireFromDb = createRequire(new URL('../../../../packages/db/package.json', import.meta.url));
-const { Pool } = requireFromDb('pg') as {
+const requireFromDb = createRequire(
+  new URL("../../../../packages/db/package.json", import.meta.url),
+);
+const { Pool } = requireFromDb("pg") as {
   Pool: new (config: Record<string, unknown>) => {
     query: (text: string) => Promise<unknown>;
     end: () => Promise<void>;
   };
 };
-const requireFromIndexer = createRequire(new URL('../../package.json', import.meta.url));
+const requireFromIndexer = createRequire(
+  new URL("../../package.json", import.meta.url),
+);
 
 type RuntimeRedisClient = Readonly<{
   isReady: boolean;
-  on: (event: 'error', listener: (error: unknown) => void) => unknown;
+  on: (event: "error", listener: (error: unknown) => void) => unknown;
   connect: () => Promise<unknown>;
   incr: (key: string) => Promise<number>;
   destroy: () => void;
 }>;
 
-const { createClient } = requireFromIndexer('redis') as {
+const { createClient } = requireFromIndexer("redis") as {
   createClient: (input: Readonly<{ url: string }>) => RuntimeRedisClient;
 };
 
@@ -57,7 +68,7 @@ type ProjectionCachePostCommitResult = Readonly<{
 }>;
 
 export type ProjectionCacheInvalidationResult = Readonly<{
-  status: 'PUBLISHED' | 'DEGRADED';
+  status: "PUBLISHED" | "DEGRADED";
   invalidatedChannels: readonly string[];
   failedChannels: readonly string[];
 }>;
@@ -69,7 +80,7 @@ type ProjectionCacheInvalidationInput =
       channels: readonly string[];
     }>
   | Readonly<{
-      publisher: Pick<PostCommitPublisher, 'publish'>;
+      publisher: Pick<PostCommitPublisher, "publish">;
       insertedEventIds: readonly string[];
       channels: readonly string[];
       checkpoint: Readonly<{ blockNumber: bigint; blockHash: string }>;
@@ -96,7 +107,7 @@ export async function publishProjectionCacheInvalidations(
       offset + MAX_PROJECTION_CACHE_INVALIDATION_BATCH,
     );
 
-    if ('publisher' in input) {
+    if ("publisher" in input) {
       try {
         await input.publisher.publish({
           insertedEventIds: input.insertedEventIds,
@@ -106,9 +117,15 @@ export async function publishProjectionCacheInvalidations(
         invalidatedChannels.push(...batch);
       } catch (error) {
         if (error instanceof PostCommitDegradedError) {
-          const failed = new Set(error.failures.map((failure) => failure.channel));
-          failedChannels.push(...batch.filter((channel) => failed.has(channel)));
-          invalidatedChannels.push(...batch.filter((channel) => !failed.has(channel)));
+          const failed = new Set(
+            error.failures.map((failure) => failure.channel),
+          );
+          failedChannels.push(
+            ...batch.filter((channel) => failed.has(channel)),
+          );
+          invalidatedChannels.push(
+            ...batch.filter((channel) => !failed.has(channel)),
+          );
         } else {
           failedChannels.push(...batch);
         }
@@ -141,16 +158,18 @@ export async function publishProjectionCacheInvalidations(
   }
 
   return {
-    status: failedChannels.length === 0 ? 'PUBLISHED' : 'DEGRADED',
+    status: failedChannels.length === 0 ? "PUBLISHED" : "DEGRADED",
     invalidatedChannels,
     failedChannels,
   };
 }
 
-export function createProjectionCachePublishHook(input: Readonly<{
-  redis: ProjectionCacheInvalidationRedis;
-  schemaVersion: string;
-}>) {
+export function createProjectionCachePublishHook(
+  input: Readonly<{
+    redis: ProjectionCacheInvalidationRedis;
+    schemaVersion: string;
+  }>,
+) {
   const publisher = new PostCommitPublisher({
     invalidate: (channel) =>
       input.redis.incr(
@@ -166,7 +185,7 @@ export function createProjectionCachePublishHook(input: Readonly<{
     const channels = result.projectionCacheChannels ?? [];
     if (channels.length === 0) return;
     if (!result.checkpoint) {
-      throw new Error('projection cache post-commit checkpoint is missing');
+      throw new Error("projection cache post-commit checkpoint is missing");
     }
 
     const publication = await publishProjectionCacheInvalidations({
@@ -175,7 +194,7 @@ export function createProjectionCachePublishHook(input: Readonly<{
       channels,
       checkpoint: result.checkpoint,
     });
-    if (publication.status === 'DEGRADED') {
+    if (publication.status === "DEGRADED") {
       throw new Error(
         `projection cache invalidation degraded across ${publication.failedChannels.length} channel(s)`,
       );
@@ -195,7 +214,8 @@ function positiveIntegerFromEnv(name: string, fallback: number): number {
   const raw = process.env[name]?.trim();
   if (!raw) return fallback;
   const parsed = Number.parseInt(raw, 10);
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive integer`);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0)
+    throw new Error(`${name} must be a positive integer`);
   return parsed;
 }
 
@@ -216,7 +236,7 @@ export async function runBreadIndexerCatchUp() {
 
   const pool = new Pool({ connectionString: infrastructure.databaseUrl });
   const redisClient = createClient({ url: infrastructure.redisUrl });
-  redisClient.on('error', () => undefined);
+  redisClient.on("error", () => undefined);
   let redisConnectError: string | undefined;
   try {
     await redisClient.connect();
@@ -230,7 +250,7 @@ export async function runBreadIndexerCatchUp() {
         throw new Error(
           redisConnectError
             ? `Redis unavailable: ${redisConnectError}`
-            : 'Redis unavailable',
+            : "Redis unavailable",
         );
       }
       return redisClient.incr(key);
@@ -242,7 +262,7 @@ export async function runBreadIndexerCatchUp() {
   });
 
   try {
-    await pool.query('SELECT 1');
+    await pool.query("SELECT 1");
     await migrateBreadDb(pool as never);
     const db = createBreadDb(pool);
     const repository = new ReadRepository(db);
@@ -281,7 +301,10 @@ export async function runBreadIndexerCatchUp() {
         context.stackVersion,
         context.factoryAddress,
       );
-      return launches.flatMap((launch) => [launch.tokenAddress, launch.curveAddress]);
+      return launches.flatMap((launch) => [
+        launch.tokenAddress,
+        launch.curveAddress,
+      ]);
     };
 
     const initialCheckpoint = await readCommittedCheckpoint();
@@ -292,9 +315,18 @@ export async function runBreadIndexerCatchUp() {
       observeHeadBlock: observeHeadBlock(client),
       readCommittedCheckpoint,
       getBlockHash,
-      overlapBlocks: positiveBigintFromEnv('BREAD_INDEXER_OVERLAP_BLOCKS', DEFAULT_OVERLAP_BLOCKS),
-      maxBatchBlocks: positiveBigintFromEnv('BREAD_INDEXER_MAX_BATCH_BLOCKS', DEFAULT_MAX_BATCH_BLOCKS),
-      maxCycles: Number.parseInt(process.env.BREAD_INDEXER_MAX_CYCLES?.trim() || '10000', 10),
+      overlapBlocks: positiveBigintFromEnv(
+        "BREAD_INDEXER_OVERLAP_BLOCKS",
+        DEFAULT_OVERLAP_BLOCKS,
+      ),
+      maxBatchBlocks: positiveBigintFromEnv(
+        "BREAD_INDEXER_MAX_BATCH_BLOCKS",
+        DEFAULT_MAX_BATCH_BLOCKS,
+      ),
+      maxCycles: Number.parseInt(
+        process.env.BREAD_INDEXER_MAX_CYCLES?.trim() || "10000",
+        10,
+      ),
       loadRange: async (fromBlock: bigint, toBlock: bigint) => {
         const logs = await discoverRange(
           client as never,
@@ -324,10 +356,12 @@ export async function runBreadIndexerCatchUp() {
           logs: range.logs as never,
         });
         if (
-          process.env.BREAD_LAN_INDEXER_MAIN === '1' ||
-          process.env.BREAD_LAN_INDEXER_CONTINUOUS === '1'
+          process.env.BREAD_LAN_INDEXER_MAIN === "1" ||
+          process.env.BREAD_LAN_INDEXER_CONTINUOUS === "1"
         ) {
-          process.stdout.write(`BREAD_INDEXER_PROGRESS checkpoint=${String(range.toBlock)}\n`);
+          process.stdout.write(
+            `BREAD_INDEXER_PROGRESS checkpoint=${String(range.toBlock)}\n`,
+          );
         }
         return applied;
       },
@@ -341,7 +375,7 @@ export async function runBreadIndexerCatchUp() {
 
 export async function runBreadIndexerContinuously() {
   const intervalMs = positiveIntegerFromEnv(
-    'BREAD_LAN_INDEXER_CONTINUOUS_INTERVAL_MS',
+    "BREAD_LAN_INDEXER_CONTINUOUS_INTERVAL_MS",
     DEFAULT_CONTINUOUS_INTERVAL_MS,
   );
 
@@ -354,14 +388,14 @@ export async function runBreadIndexerContinuously() {
   }
 }
 
-if (process.env.BREAD_LAN_INDEXER_CONTINUOUS === '1') {
+if (process.env.BREAD_LAN_INDEXER_CONTINUOUS === "1") {
   runBreadIndexerContinuously().catch((error: unknown) => {
     process.stderr.write(
       `BREAD_INDEXER_FAILED ${error instanceof Error ? error.message : String(error)}\n`,
     );
     process.exitCode = 1;
   });
-} else if (process.env.BREAD_LAN_INDEXER_MAIN === '1') {
+} else if (process.env.BREAD_LAN_INDEXER_MAIN === "1") {
   runBreadIndexerCatchUp()
     .then((result) => {
       process.stdout.write(
