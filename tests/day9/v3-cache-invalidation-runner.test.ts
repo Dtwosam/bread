@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { IndexerProtocolContext } from "../../packages/db/src/index.js";
 import { replayOverlap } from "../../apps/indexer/src/replay.js";
 
-const address = (value: number) => `0x${value.toString(16).padStart(40, "0")}`;
+const address = (value: number) =>
+  `0x${value.toString(16).padStart(40, "0")}`;
 const hash = (value: number) => `0x${value.toString(16).padStart(64, "0")}`;
 
 const context: IndexerProtocolContext = {
@@ -19,6 +20,7 @@ const context: IndexerProtocolContext = {
 type ApplyResult = Readonly<{
   insertedEventIds: readonly string[];
   projectionCacheChannels: readonly string[];
+  checkpoint: Readonly<{ blockNumber: bigint; blockHash: string }>;
 }>;
 
 type PublishHook = (result: ApplyResult) => Promise<void>;
@@ -27,9 +29,10 @@ async function publishHook(input: Readonly<{
   redis: Readonly<{ incr: (key: string) => Promise<number> }>;
   schemaVersion: string;
 }>): Promise<PublishHook | undefined> {
-  const runner = (await import(
-    "../../apps/indexer/src/lan/indexer-runner.js"
-  )) as Readonly<Record<string, unknown>>;
+  const runner =
+    (await import("../../apps/indexer/src/lan/indexer-runner.js")) as Readonly<
+      Record<string, unknown>
+    >;
   const factory = runner.createProjectionCachePublishHook;
   expect(factory).toBeTypeOf("function");
   if (typeof factory !== "function") return undefined;
@@ -62,6 +65,7 @@ describe("Day 9 indexer runtime V3 cache invalidation wiring", () => {
         return {
           insertedEventIds: [`${context.chainId}:${hash(1)}:0`],
           projectionCacheChannels: [`token:${context.chainId}:${address(3)}`],
+          checkpoint: { blockNumber: 101n, blockHash: hash(101) },
         };
       },
       publish: hook,
@@ -117,12 +121,15 @@ describe("Day 9 indexer runtime V3 cache invalidation wiring", () => {
       applyRange: async () => ({
         insertedEventIds: [`${context.chainId}:${hash(2)}:0`],
         projectionCacheChannels: [`token:${context.chainId}:${address(4)}`],
+        checkpoint: { blockNumber: 101n, blockHash: hash(101) },
       }),
       publish: hook,
     });
 
     expect(result.postCommit).toBe("DEGRADED");
-    expect(result.postCommitError).toContain("projection cache invalidation degraded");
+    expect(result.postCommitError).toContain(
+      "projection cache invalidation degraded",
+    );
     expect(result.applyResult.insertedEventIds).toHaveLength(1);
   });
 });
