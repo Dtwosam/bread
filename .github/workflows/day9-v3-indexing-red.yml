@@ -105,6 +105,7 @@ jobs:
           apps/indexer/src/lan/indexer-runner.ts
           apps/indexer/src/post-commit.ts
           apps/indexer/src/reconcile.ts
+          apps/indexer/src/reconciliation-scanner.ts
           apps/indexer/src/trades.ts
           apps/indexer/src/reducers.ts
           apps/indexer/src/graduated-pools.ts
