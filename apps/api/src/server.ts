@@ -7,6 +7,7 @@ import {
   type BreadDb,
 } from '../../../packages/db/src/index.js';
 import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
+import { BREAD_PROJECTION_CACHE_SCHEMA_VERSION } from '../../../packages/types/src/index.js';
 
 import { BreadCache, type CacheRedis } from './cache.js';
 import { BoundedReadGate, ReadCapacityExceededError, boundRepository, type ReadCapacityConfig } from './capacity.js';
@@ -65,7 +66,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
   const repository = boundRepository(new ReadRepository(input.db), gate);
   const creatorRepository = boundRepository(new CreatorRepository(input.db), gate);
   const searchRepository = boundRepository(new SearchRepository(input.db), gate);
-  const cache = new BreadCache({ redis, schemaVersion: 'day6-v1' });
+  const cache = new BreadCache({
+    redis,
+    schemaVersion: BREAD_PROJECTION_CACHE_SCHEMA_VERSION,
+  });
   const limiter = new IsolatedRateLimiter({
     redis,
     policies: input.rateLimits ?? DEFAULT_RATE_LIMITS,
