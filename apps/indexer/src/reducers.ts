@@ -2,6 +2,7 @@ import {
   applyCanonicalTradeProjection,
   applyFeeAdminGraduationProjection,
   applyHolderTransferProjection,
+  incrementCreatorTradeCountForToken,
   launches,
   launchState,
   projectCreatorTradeCount,
@@ -135,10 +136,18 @@ export function createTradeReducer(
       throw new Error(`missing normalized trade for ${eventKey(event)}`);
     }
 
-    await applyCanonicalTradeProjection(transaction as BreadDb, {
+    const db = transaction as BreadDb;
+    await applyCanonicalTradeProjection(db, {
       ...trade,
       stackVersion: event.stackVersion,
     });
+    if (trade.venueKind === "UNISWAP_V3") {
+      await incrementCreatorTradeCountForToken(db, {
+        chainId: trade.id.chainId,
+        tokenAddress: trade.token,
+        blockNumber: trade.blockNumber,
+      });
+    }
   };
 }
 
