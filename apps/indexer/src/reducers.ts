@@ -10,6 +10,7 @@ import {
   type HolderProjectionContext,
   type IndexerProtocolContext,
   type ProjectionReducer,
+  type VerifiedGraduatedVenueProjection,
 } from "../../../packages/db/src/index.js";
 
 import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
@@ -142,7 +143,13 @@ export function createTradeReducer(
 }
 
 export function createFeeAdminGraduationReducer(
-  input: Readonly<{ context: ProtocolContext }>,
+  input: Readonly<{
+    context: ProtocolContext;
+    verifiedGraduatedVenues?: ReadonlyMap<
+      string,
+      VerifiedGraduatedVenueProjection
+    >;
+  }>,
 ): ProjectionReducer {
   const projectionContext: IndexerProtocolContext = {
     chainId: input.context.chainId,
@@ -155,7 +162,19 @@ export function createFeeAdminGraduationReducer(
   };
   return async (transaction, event) => {
     const db = transaction as BreadDb;
-    await applyFeeAdminGraduationProjection(db, event, projectionContext);
+    const token =
+      event.eventName === "GraduationCompleted" &&
+      typeof event.payload.token === "string"
+        ? event.payload.token.toLowerCase()
+        : undefined;
+    const verifiedVenue =
+      token === undefined ? undefined : input.verifiedGraduatedVenues?.get(token);
+    await applyFeeAdminGraduationProjection(
+      db,
+      event,
+      projectionContext,
+      verifiedVenue,
+    );
     await projectCurveGraduationProgress(db, event);
     await projectCreatorTradeCount(db, event);
   };
