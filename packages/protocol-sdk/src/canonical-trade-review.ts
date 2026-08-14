@@ -8,15 +8,15 @@ import {
   readTradeReviewSnapshot,
   type BuyTradeReview,
   type SellTradeReview,
-} from './trade-review.js';
+} from './trade-review.ts';
 import {
   resolveCanonicalTradeRoute,
   type CanonicalTradeRoute,
-} from './trade-route.js';
+} from './trade-route.ts';
 import {
   readV3TradeReview,
   type V3TradeReview,
-} from './v3-trading.js';
+} from './v3-trading.ts';
 
 export type CanonicalTradeAction = 'BUY' | 'SELL';
 export type CanonicalTradeReview =
