@@ -1,6 +1,13 @@
 export type { Address, CanonicalLogIdentity, ChainId, Hex, Hex32 } from "./identity.js";
 export { canonicalEventId } from "./identity.js";
 
+export {
+  BREAD_PROJECTION_CACHE_SCHEMA_VERSION,
+  projectionCacheGenerationKey,
+  stackFeedProjectionCacheChannel,
+  tokenProjectionCacheChannel,
+} from "./cache-identity.js";
+
 export type {
   BreadCanonicalEventName,
   BreadContractRole,
