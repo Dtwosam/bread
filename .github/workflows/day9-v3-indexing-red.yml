@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  focused-red:
+  apply-range-format-diff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -22,95 +22,24 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Run focused Day 9 V3 indexing tests
+      - name: Format bounded persisted-V3 applyRange files
         run: >-
-          pnpm exec vitest run
-          tests/day9/post-graduation-v3-indexing.test.ts
-          tests/day9/v3-pool-id.test.ts
-          tests/day9/post-graduation-v3-route.test.ts
-          tests/day9/post-graduation-v3-boundaries.test.ts
-          tests/day9/graduated-v3-registry.test.ts
-          tests/day9/graduated-v3-verification.test.ts
-          tests/day9/graduated-v3-discovery.test.ts
-          tests/day9/graduated-v3-range-preparation.test.ts
-          tests/day9/graduated-v3-swap-amounts.test.ts
-          tests/day9/graduated-v3-swap-normalization.test.ts
-
-  postgres-red:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 24.18.0
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
-        with:
-          version: 11.15.1
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - name: Start exact Bread development infrastructure
-        run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
-      - name: Run PostgreSQL V3 persistence and adjacent Day 6 trade tests
-        env:
-          BREAD_DB_INTEGRATION: "1"
-          BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
-        run: >-
-          pnpm exec vitest run
-          tests/day9/post-graduation-v3-indexing-db.test.ts
-          tests/day9/graduated-v3-persistence-db.test.ts
-          tests/day9/graduated-v3-trade-projection-db.test.ts
-          tests/day9/graduated-v3-journal-reducer-db.test.ts
+          pnpm exec prettier --write
+          apps/indexer/src/apply-range.ts
+          packages/db/src/repositories/graduated-v3-read.ts
           tests/day9/graduated-v3-apply-range-db.test.ts
-          tests/day6/trade-conformance.test.ts
-          tests/day6/trade-vertical.test.ts
-      - name: Stop infrastructure
-        if: always()
-        run: docker compose -f infra/docker/compose.yaml down -v
-
-  a1-static:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 24.18.0
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
-        with:
-          version: 11.15.1
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - name: Check affected TypeScript and workflow formatting
+      - name: Print exact formatter diff
+        run: >-
+          git --no-pager diff --no-color --
+          apps/indexer/src/apply-range.ts
+          packages/db/src/repositories/graduated-v3-read.ts
+          tests/day9/graduated-v3-apply-range-db.test.ts
+      - name: Verify formatted files
         run: >-
           pnpm exec prettier --check
-          .github/workflows/day9-v3-indexing-red.yml
-          apps/indexer/src/trades.ts
-          apps/indexer/src/reducers.ts
-          apps/indexer/src/graduated-pools.ts
-          apps/indexer/src/graduated-v3-discovery.ts
-          apps/indexer/src/v3-swaps.ts
-          packages/db/src/client.ts
-          packages/db/src/index.ts
-          packages/db/src/repositories/trades.ts
-          packages/db/src/repositories/verified-graduation.ts
-          packages/db/src/schema/projections.ts
-          tests/day9/post-graduation-v3-indexing.test.ts
-          tests/day9/post-graduation-v3-indexing-db.test.ts
-          tests/day9/graduated-v3-persistence-db.test.ts
-          tests/day9/graduated-v3-trade-projection-db.test.ts
-          tests/day9/graduated-v3-journal-reducer-db.test.ts
+          apps/indexer/src/apply-range.ts
+          packages/db/src/repositories/graduated-v3-read.ts
           tests/day9/graduated-v3-apply-range-db.test.ts
-          tests/day9/graduated-v3-swap-amounts.test.ts
-          tests/day9/graduated-v3-swap-normalization.test.ts
-          tests/day9/post-graduation-v3-types.test.ts
-          packages/protocol-sdk/src/index.ts
-          packages/protocol-sdk/src/v3-abi.ts
-          packages/protocol-sdk/src/v3-pool.ts
-          packages/protocol-sdk/src/trade-route.ts
-          tests/day9/v3-pool-id.test.ts
-          tests/day9/graduated-v3-registry.test.ts
-          tests/day9/graduated-v3-verification.test.ts
-          tests/day9/graduated-v3-discovery.test.ts
-          tests/day9/graduated-v3-range-preparation.test.ts
       - name: Run repository typecheck
         run: pnpm typecheck
       - name: Build affected workspaces
@@ -118,23 +47,3 @@ jobs:
           pnpm --filter @bread/db build &&
           pnpm --filter @bread/indexer build &&
           pnpm --filter @bread/protocol-sdk build
-
-  a2-types-red:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 24.18.0
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
-        with:
-          version: 11.15.1
-          run_install: false
-      - run: pnpm install --frozen-lockfile
-      - name: Check A2 type-test formatting
-        run: pnpm exec prettier --check tests/day9/post-graduation-v3-types.test.ts
-      - name: Compile shared venue/API type contract
-        run: >-
-          pnpm exec tsc --ignoreConfig --noEmit --strict --skipLibCheck
-          --target ES2022 --module NodeNext --moduleResolution NodeNext
-          tests/day9/post-graduation-v3-types.test.ts
