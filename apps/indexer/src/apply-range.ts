@@ -9,7 +9,12 @@ import {
   listGraduatedV3RegistryRows,
 } from "../../../packages/db/src/repositories/graduated-v3-read.js";
 import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
-import type { Hex32 } from "../../../packages/types/src/index.js";
+import {
+  canonicalEventId,
+  stackFeedProjectionCacheChannel,
+  tokenProjectionCacheChannel,
+  type Hex32,
+} from "../../../packages/types/src/index.js";
 
 import type { LogClient, RpcLog } from "./discovery.js";
 import {
@@ -227,7 +232,7 @@ export async function applyRange(input: ApplyRangeInput) {
     }),
     createHolderReducer({ context: input.context, launchProtocolAddresses }),
   ]);
-  return repository.applyCanonicalRange({
+  const result = await repository.applyCanonicalRange({
     context: input.context,
     fromBlock: input.fromBlock,
     toBlock: input.toBlock,
@@ -235,4 +240,28 @@ export async function applyRange(input: ApplyRangeInput) {
     toBlockTimestamp: input.toBlockTimestamp,
     events: [...normalized.events, ...v3Events].sort(compareCanonicalOrder),
   });
+
+  const insertedEventIds = new Set(result.insertedEventIds);
+  const projectionCacheChannels = new Set<string>();
+  for (const trade of v3Trades) {
+    if (!insertedEventIds.has(canonicalEventId(trade.id))) continue;
+    projectionCacheChannels.add(
+      stackFeedProjectionCacheChannel({
+        chainId: input.context.chainId,
+        stackVersion: input.context.stackVersion,
+        factoryAddress: input.context.factoryAddress,
+      }),
+    );
+    projectionCacheChannels.add(
+      tokenProjectionCacheChannel({
+        chainId: input.context.chainId,
+        tokenAddress: trade.token,
+      }),
+    );
+  }
+
+  return {
+    ...result,
+    projectionCacheChannels: [...projectionCacheChannels],
+  };
 }
