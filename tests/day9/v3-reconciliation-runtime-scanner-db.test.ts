@@ -303,4 +303,66 @@ describeDb("Day 9 REC-06 runtime canonical event scanner", () => {
       ),
     ).toBe(false);
   });
+
+  it("fails closed on an unknown event emitted by a canonical Bread address", async () => {
+    const dbModule = await import("../../packages/db/src/index.ts");
+    const indexerModule =
+      (await import("../../apps/indexer/src/index.ts")) as Readonly<
+        Record<string, unknown>
+      >;
+    const createScanner =
+      indexerModule.createReconciliationCanonicalEventScanner;
+    expect(createScanner).toBeTypeOf("function");
+    if (typeof createScanner !== "function") return;
+
+    const unknownCoordinatorLog: FixtureLog = {
+      address: coordinator,
+      blockNumber: 112n,
+      blockHash: block112Hash,
+      transactionHash: hash("e"),
+      transactionIndex: 0,
+      logIndex: 9,
+      eventName: "UnexpectedCoordinatorEvent",
+      args: {},
+      topics: [topic0],
+      data: "0x",
+    };
+    const client = {
+      readContract: async () => {
+        throw new Error("scanner must not re-verify persisted V3 identity");
+      },
+      getBlock: async (request: Readonly<Record<string, unknown>>) => ({
+        timestamp: 1_786_262_400n + BigInt(String(request.blockNumber)),
+      }),
+      getLogs: async (request: Readonly<Record<string, unknown>>) => {
+        const values = Array.isArray(request.address)
+          ? request.address.map((value) => String(value).toLowerCase())
+          : [String(request.address).toLowerCase()];
+        if (values.includes(poolAddress)) return [];
+        if (values.includes(coordinator)) {
+          return [completionLog, unknownCoordinatorLog];
+        }
+        return [];
+      },
+    };
+
+    const scanner = (
+      createScanner as (
+        input: Readonly<Record<string, unknown>>,
+      ) => (
+        fromBlock: bigint,
+        toBlock: bigint,
+      ) => Promise<
+        readonly Readonly<{ transactionHash: string; logIndex: number }>[]
+      >
+    )({
+      db: dbModule.createBreadDb(pool),
+      client,
+      context,
+    });
+
+    await expect(scanner(110n, 120n)).rejects.toThrow(
+      "unknown GRADUATION_COORDINATOR event",
+    );
+  });
 });
