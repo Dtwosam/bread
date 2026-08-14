@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { launchState } from "../../packages/db/src/schema/projections.js";
 
 type RegistryModule = Readonly<{
-  buildGraduatedPoolRegistry?: (rows: readonly Record<string, unknown>[]) => unknown;
+  buildGraduatedPoolRegistry?: (
+    rows: readonly Record<string, unknown>[],
+  ) => unknown;
 }>;
 
 async function loadRegistryModule(): Promise<RegistryModule> {
@@ -53,7 +55,10 @@ describe("Day 9 canonical graduated V3 registry", () => {
       row(tokenB, curveB, poolB),
     ]) as
       | Readonly<{
-          byToken: ReadonlyMap<string, Readonly<{ poolAddress: string; feeTier: number }>>;
+          byToken: ReadonlyMap<
+            string,
+            Readonly<{ poolAddress: string; feeTier: number }>
+          >;
           byPool: ReadonlyMap<string, Readonly<{ tokenAddress: string }>>;
         }>
       | undefined;

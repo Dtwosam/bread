@@ -30,11 +30,7 @@ function address(value: unknown, label: string): string {
 }
 
 function safeInteger(value: unknown, label: string): number {
-  if (
-    typeof value !== "number" ||
-    !Number.isSafeInteger(value) ||
-    value < 0
-  ) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
     throw new Error(`invalid graduated V3 registry ${label}`);
   }
   return value;
