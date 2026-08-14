@@ -73,6 +73,13 @@ async function readMigrationSql(): Promise<readonly string[]> {
       new URL("../drizzle/0005_day9_v3_trade_venues.sql", import.meta.url),
       "utf8",
     ),
+    readFile(
+      new URL(
+        "../drizzle/0006_day9_graduated_v3_registry.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
   ]);
   return migrationSqlPromise;
 }

@@ -71,6 +71,7 @@ jobs:
           pnpm exec prettier --check
           .github/workflows/day9-v3-indexing-red.yml
           apps/indexer/src/trades.ts
+          apps/indexer/src/graduated-pools.ts
           packages/db/src/client.ts
           packages/db/src/repositories/trades.ts
           packages/db/src/schema/projections.ts
