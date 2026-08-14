@@ -8,6 +8,9 @@ export type NormalizedTrade = Readonly<{
   curve: Address;
   actor: Address;
   recipient: Address;
+  venueKind: 'BREAD_CURVE' | 'UNISWAP_V3';
+  venueAddress: Address;
+  venueFeeTier: number | null;
   offeredQuote: bigint;
   quoteAmount: bigint;
   tokenAmount: bigint;
@@ -165,6 +168,9 @@ export function correlateCanonicalTrades(input: Readonly<{
         curve,
         actor,
         recipient,
+        venueKind: 'BREAD_CURVE',
+        venueAddress: curve,
+        venueFeeTier: null,
         offeredQuote: spent + (refund?.refund ?? 0n),
         quoteAmount: spent,
         tokenAmount,
@@ -208,6 +214,9 @@ export function correlateCanonicalTrades(input: Readonly<{
         curve,
         actor,
         recipient,
+        venueKind: 'BREAD_CURVE',
+        venueAddress: curve,
+        venueFeeTier: null,
         offeredQuote: 0n,
         quoteAmount: gross,
         tokenAmount,

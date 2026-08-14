@@ -54,13 +54,14 @@ async function readMigrationSql(): Promise<readonly string[]> {
     readFile(new URL('../drizzle/0002_day6_trade_vertical.sql', import.meta.url), 'utf8'),
     readFile(new URL('../drizzle/0003_day6_fees_admin_graduation.sql', import.meta.url), 'utf8'),
     readFile(new URL('../drizzle/0004_day6_holders_portfolio.sql', import.meta.url), 'utf8'),
+    readFile(new URL('../drizzle/0005_day9_v3_trade_venues.sql', import.meta.url), 'utf8'),
   ]);
   return migrationSqlPromise;
 }
 
 /**
- * Day-6 migrations are intentionally repeatable. Every migration uses
- * idempotent CREATE/ALTER forms so a fresh or already-initialized read
+ * Bread read-model migrations are intentionally repeatable. Every migration
+ * uses idempotent CREATE/ALTER forms so a fresh or already-initialized read
  * database converges without destructive financial-state mutation.
  */
 export async function migrateBreadDb(pool: BreadPgPool): Promise<void> {

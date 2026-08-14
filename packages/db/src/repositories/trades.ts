@@ -10,6 +10,9 @@ export type CanonicalTradeProjection = Readonly<{
   curve: string;
   actor: string;
   recipient: string;
+  venueKind?: 'BREAD_CURVE' | 'UNISWAP_V3';
+  venueAddress?: string;
+  venueFeeTier?: number | null;
   offeredQuote: bigint;
   quoteAmount: bigint;
   tokenAmount: bigint;
@@ -267,9 +270,14 @@ async function projectMetrics(db: BreadDb, trade: CanonicalTradeProjection): Pro
 }
 
 export async function applyCanonicalTradeProjection(db: BreadDb, trade: CanonicalTradeProjection): Promise<void> {
+  const venueKind = trade.venueKind ?? 'BREAD_CURVE';
+  const venueAddress = (trade.venueAddress ?? trade.curve).toLowerCase();
+  const venueFeeTier = trade.venueFeeTier ?? null;
+
   const inserted = await db.execute(sql`
     INSERT INTO trades (
       chain_id, transaction_hash, log_index, token_address, curve_address,
+      venue_kind, venue_address, venue_fee_tier,
       side, trader_address, recipient_address,
       base_amount, quote_amount, fee_amount, tax_amount,
       block_number, block_timestamp, transaction_index, stack_version,
@@ -279,6 +287,7 @@ export async function applyCanonicalTradeProjection(db: BreadDb, trade: Canonica
     ) VALUES (
       ${trade.id.chainId}, ${trade.id.transactionHash.toLowerCase()}, ${trade.id.logIndex},
       ${trade.token.toLowerCase()}, ${trade.curve.toLowerCase()},
+      ${venueKind}, ${venueAddress}, ${venueFeeTier},
       ${trade.side}, ${trade.actor.toLowerCase()}, ${trade.recipient.toLowerCase()},
       ${decimal(trade.tokenAmount)}, ${decimal(trade.quoteAmount)}, ${decimal(trade.baseFee)}, ${decimal(trade.creatorTax)},
       ${decimal(trade.blockNumber)}, ${decimal(trade.blockTimestamp)}, ${trade.transactionIndex}, ${trade.stackVersion},
