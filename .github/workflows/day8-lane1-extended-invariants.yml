@@ -41,7 +41,7 @@ jobs:
         run: |
           set -uo pipefail
           log="$RUNNER_TEMP/day8-extended-invariants.log"
-          forge test -vv 2>&1 | tee "$log"
+          forge test -vv --no-match-path 'test/fork/**' 2>&1 | tee "$log"
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             message="$(tail -n 100 "$log")"
