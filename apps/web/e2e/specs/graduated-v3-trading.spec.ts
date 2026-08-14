@@ -51,7 +51,7 @@ test('graduated token buys and sells through Router02 without reopening its curv
   test.skip(testInfo.project.name !== 'desktop-chromium', 'Day 9 deterministic graduated trade proof is desktop Chromium.');
 
   await page.goto(`/token/${GRADUATED_TOKEN}`);
-  await expect(page.getByRole('heading', { name: 'Graduated Bread' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bread Locked' })).toBeVisible();
 
   const trade = page.getByRole('complementary', { name: 'Trade' });
   await trade.getByRole('button', { name: 'Connect wallet' }).click();
@@ -81,7 +81,7 @@ test('graduated token buys and sells through Router02 without reopening its curv
   for (const transaction of wallet.submittedTransactions) expectCanonicalV3Target(transaction);
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Graduated Bread' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bread Locked' })).toBeVisible();
   const afterReload = await walletSnapshot(page);
   expect(afterReload.submittedTransactions).toHaveLength(0);
   expect(rpcState.unknownCalls).toEqual([]);
