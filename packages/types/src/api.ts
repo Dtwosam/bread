@@ -1,7 +1,11 @@
-import type { Hex32 } from './identity.js';
+import type { Hex32 } from "./identity.js";
+import type {
+  TradeExecutionPriceSource,
+  TradeVenueKind,
+} from "./trading.js";
 
-export type FreshnessStatus = 'FRESH' | 'LAGGING' | 'REBUILDING' | 'DEGRADED';
-export type CacheState = 'HIT' | 'MISS' | 'BYPASS' | 'UNAVAILABLE';
+export type FreshnessStatus = "FRESH" | "LAGGING" | "REBUILDING" | "DEGRADED";
+export type CacheState = "HIT" | "MISS" | "BYPASS" | "UNAVAILABLE";
 
 export type FreshnessMeta = Readonly<{
   chainId: number;
@@ -10,7 +14,7 @@ export type FreshnessMeta = Readonly<{
   indexedThroughBlockHash: Hex32;
   indexedThroughBlockTimestamp: string;
   servedAt: string;
-  source: 'bread-indexer';
+  source: "bread-indexer";
   status: FreshnessStatus;
   observedHeadBlock?: string;
   lagBlocks?: string;
@@ -144,7 +148,7 @@ export type IndexedCurveStateSummary = Readonly<{
 
 export type IndexedTokenDetail = Omit<
   IndexedFeedItem,
-  'deployerAddress' | 'creatorFeeRecipient' | 'graduationAdapterFamily'
+  "deployerAddress" | "creatorFeeRecipient" | "graduationAdapterFamily"
 > &
   Readonly<{
     deployerAddress: string | null;
@@ -166,6 +170,11 @@ export type IndexedTokenTrade = Readonly<{
   curveAddress: string;
   actor: string;
   recipient: string;
+  venue: Readonly<{
+    kind: TradeVenueKind;
+    address: string;
+    feeTier: string | null;
+  }>;
   tokenAmount: string;
   quoteAmount: string;
   baseFee: string;
@@ -181,7 +190,7 @@ export type IndexedTokenTrade = Readonly<{
   executionPrice: Readonly<{
     numerator: string | null;
     denominator: string | null;
-    source: 'CURVE_EXECUTION';
+    source: TradeExecutionPriceSource;
   }>;
   blockNumber: string;
   blockTimestamp: string | null;

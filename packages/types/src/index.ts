@@ -1,12 +1,17 @@
-export type { Address, CanonicalLogIdentity, ChainId, Hex, Hex32 } from './identity.js';
-export { canonicalEventId } from './identity.js';
+export type { Address, CanonicalLogIdentity, ChainId, Hex, Hex32 } from "./identity.js";
+export { canonicalEventId } from "./identity.js";
 
 export type {
   BreadCanonicalEventName,
   BreadContractRole,
   DecodedBreadEvent,
   EventDisposition,
-} from './events.js';
+} from "./events.js";
+
+export type {
+  TradeExecutionPriceSource,
+  TradeVenueKind,
+} from "./trading.js";
 
 export type {
   ApiError,
@@ -25,7 +30,7 @@ export type {
   IndexedTokenHolders,
   IndexedTokenTrade,
   IndexedTradeMetricsSummary,
-} from './api.js';
+} from "./api.js";
 
 export type {
   IndexedAvailableValue,
@@ -34,10 +39,10 @@ export type {
   IndexedPortfolio,
   IndexedPortfolioHolding,
   IndexedUnavailableValue,
-} from './portfolio.js';
+} from "./portfolio.js";
 
 export type {
   ReconciliationCheck,
   ReconciliationCheckId,
   ReconciliationReport,
-} from './reconciliation.js';
+} from "./reconciliation.js";
