@@ -92,6 +92,7 @@ jobs:
           apps/indexer/src/v3-swaps.ts
           packages/db/src/client.ts
           packages/db/src/index.ts
+          packages/db/src/repositories/creator-trade-count.ts
           packages/db/src/repositories/graduated-v3-read.ts
           packages/db/src/repositories/trades.ts
           packages/db/src/repositories/verified-graduation.ts
