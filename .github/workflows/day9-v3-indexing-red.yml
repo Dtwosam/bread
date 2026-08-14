@@ -50,7 +50,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Start exact Bread development infrastructure
         run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
-      - name: Run PostgreSQL V3 persistence and adjacent Day 6 trade tests
+      - name: Run PostgreSQL V3 persistence and adjacent Day 6 trade/portfolio tests
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
@@ -62,8 +62,10 @@ jobs:
           tests/day9/graduated-v3-journal-reducer-db.test.ts
           tests/day9/graduated-v3-apply-range-db.test.ts
           tests/day9/graduated-v3-same-range-apply-db.test.ts
+          tests/day9/graduated-v3-portfolio-db.test.ts
           tests/day6/trade-conformance.test.ts
           tests/day6/trade-vertical.test.ts
+          tests/day6/holders-portfolio.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
@@ -104,6 +106,7 @@ jobs:
           tests/day9/graduated-v3-journal-reducer-db.test.ts
           tests/day9/graduated-v3-apply-range-db.test.ts
           tests/day9/graduated-v3-same-range-apply-db.test.ts
+          tests/day9/graduated-v3-portfolio-db.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
           tests/day9/post-graduation-v3-types.test.ts
@@ -122,7 +125,8 @@ jobs:
         run: >-
           pnpm --filter @bread/db build &&
           pnpm --filter @bread/indexer build &&
-          pnpm --filter @bread/protocol-sdk build
+          pnpm --filter @bread/protocol-sdk build &&
+          pnpm --filter @bread/api build
 
   a2-types-red:
     runs-on: ubuntu-latest
