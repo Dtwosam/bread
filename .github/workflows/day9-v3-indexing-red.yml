@@ -50,7 +50,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Start exact Bread development infrastructure
         run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
-      - name: Run PostgreSQL V3 persistence tests
+      - name: Run PostgreSQL V3 persistence and adjacent Day 6 trade tests
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
@@ -58,6 +58,9 @@ jobs:
           pnpm exec vitest run
           tests/day9/post-graduation-v3-indexing-db.test.ts
           tests/day9/graduated-v3-persistence-db.test.ts
+          tests/day9/graduated-v3-trade-projection-db.test.ts
+          tests/day6/trade-conformance.test.ts
+          tests/day6/trade-vertical.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
@@ -90,8 +93,10 @@ jobs:
           tests/day9/post-graduation-v3-indexing.test.ts
           tests/day9/post-graduation-v3-indexing-db.test.ts
           tests/day9/graduated-v3-persistence-db.test.ts
+          tests/day9/graduated-v3-trade-projection-db.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
+          tests/day9/post-graduation-v3-types.test.ts
           packages/protocol-sdk/src/index.ts
           packages/protocol-sdk/src/v3-abi.ts
           packages/protocol-sdk/src/v3-pool.ts
@@ -123,7 +128,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Check A2 type-test formatting
         run: pnpm exec prettier --check tests/day9/post-graduation-v3-types.test.ts
-      - name: Compile shared venue/API type contract
+      - name: Compile shared venue/API and DB projection type contract
         run: >-
           pnpm exec tsc --ignoreConfig --noEmit --strict --skipLibCheck
           --target ES2022 --module NodeNext --moduleResolution NodeNext
