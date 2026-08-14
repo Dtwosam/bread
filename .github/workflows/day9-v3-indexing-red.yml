@@ -56,7 +56,7 @@ jobs:
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
 
-  b4-format-diff:
+  a1-static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -68,11 +68,7 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Format only the B4 test in the CI workspace
-        run: pnpm exec prettier --write tests/day9/graduated-v3-discovery.test.ts
-      - name: Print exact B4 formatting diff
-        run: git diff -- tests/day9/graduated-v3-discovery.test.ts
-      - name: Check all affected files after bounded formatting
+      - name: Check affected TypeScript and workflow formatting
         run: >-
           pnpm exec prettier --check
           .github/workflows/day9-v3-indexing-red.yml
@@ -92,9 +88,9 @@ jobs:
           tests/day9/graduated-v3-registry.test.ts
           tests/day9/graduated-v3-verification.test.ts
           tests/day9/graduated-v3-discovery.test.ts
-      - name: Run repository typecheck on formatted B4 tree
+      - name: Run repository typecheck
         run: pnpm typecheck
-      - name: Build affected workspaces on formatted B4 tree
+      - name: Build affected workspaces
         run: >-
           pnpm --filter @bread/db build &&
           pnpm --filter @bread/indexer build &&
