@@ -146,12 +146,13 @@ describe.skipIf(!RUN_DB)(
     it("atomically stores the already-verified V3 venue tuple and exact completion position", async () => {
       const dbModule = await import("../../packages/db/src/index.ts");
       const db = dbModule.createBreadDb(pool);
-      const projection = dbModule.applyFeeAdminGraduationProjection as unknown as (
-        db: unknown,
-        event: unknown,
-        context: unknown,
-        verifiedVenue?: unknown,
-      ) => Promise<void>;
+      const projection =
+        dbModule.applyFeeAdminGraduationProjection as unknown as (
+          db: unknown,
+          event: unknown,
+          context: unknown,
+          verifiedVenue?: unknown,
+        ) => Promise<void>;
 
       await projection(
         db,
@@ -192,20 +193,16 @@ describe.skipIf(!RUN_DB)(
     it("fails closed before persistence when the verified completion position does not match the event", async () => {
       const dbModule = await import("../../packages/db/src/index.ts");
       const db = dbModule.createBreadDb(pool);
-      const projection = dbModule.applyFeeAdminGraduationProjection as unknown as (
-        db: unknown,
-        event: unknown,
-        context: unknown,
-        verifiedVenue?: unknown,
-      ) => Promise<void>;
+      const projection =
+        dbModule.applyFeeAdminGraduationProjection as unknown as (
+          db: unknown,
+          event: unknown,
+          context: unknown,
+          verifiedVenue?: unknown,
+        ) => Promise<void>;
 
       await expect(
-        projection(
-          db,
-          graduationCompletedEvent(),
-          context,
-          verifiedVenue(9),
-        ),
+        projection(db, graduationCompletedEvent(), context, verifiedVenue(9)),
       ).rejects.toThrow("verified graduated venue identity mismatch");
 
       const result = await pool.query(
