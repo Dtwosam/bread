@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 
 import type { BreadDb } from "../client.js";
 
-export type CanonicalTradeProjection = Readonly<{
+type CommonTradeProjection = Readonly<{
   id: Readonly<{ chainId: number; transactionHash: string; logIndex: number }>;
   stackVersion: string;
   side: "BUY" | "SELL";
@@ -10,27 +10,48 @@ export type CanonicalTradeProjection = Readonly<{
   curve: string;
   actor: string;
   recipient: string;
-  venueKind?: "BREAD_CURVE" | "UNISWAP_V3";
-  venueAddress?: string;
-  venueFeeTier?: number | null;
-  offeredQuote: bigint;
   quoteAmount: bigint;
   tokenAmount: bigint;
   baseFee: bigint;
   creatorTax: bigint;
   openingTaxBps: bigint;
   openingTax: bigint;
-  launchBuyExempt: boolean;
-  refund: bigint;
-  netCurveInput: bigint;
-  netQuoteOut: bigint;
-  grossCurveQuoteOut: bigint;
   executionPriceNumerator: bigint;
   executionPriceDenominator: bigint;
   blockNumber: bigint;
   blockTimestamp: bigint;
   transactionIndex: number;
 }>;
+
+type CurveTradeProjection = CommonTradeProjection &
+  Readonly<{
+    venueKind?: "BREAD_CURVE";
+    venueAddress?: string;
+    venueFeeTier?: null;
+    offeredQuote: bigint;
+    launchBuyExempt: boolean;
+    refund: bigint;
+    netCurveInput: bigint;
+    netQuoteOut: bigint;
+    grossCurveQuoteOut: bigint;
+  }>;
+
+type V3TradeProjection = CommonTradeProjection &
+  Readonly<{
+    venueKind: "UNISWAP_V3";
+    venueAddress: string;
+    venueFeeTier: number;
+    offeredQuote: null;
+    launchBuyExempt: null;
+    refund: null;
+    netCurveInput: null;
+    netQuoteOut: null;
+    grossCurveQuoteOut: null;
+  }>;
+
+export type CanonicalTradeProjection =
+  | CurveTradeProjection
+  | V3TradeProjection;
 
 type LaunchRow = Readonly<{
   initial_supply: string | null;
@@ -57,6 +78,8 @@ type AggregateRow = Readonly<{
   unique_traders_24h: string;
 }>;
 
+type TradeExecutionSource = "CURVE_EXECUTION" | "V3_SWAP_EXECUTION";
+
 function rows<T>(result: unknown): T[] {
   const candidate = result as { rows?: T[] };
   return Array.isArray(candidate?.rows) ? candidate.rows : [];
@@ -73,13 +96,23 @@ function decimal(value: bigint): string {
   return value.toString(10);
 }
 
+function decimalNullable(value: bigint | null): string | null {
+  return value === null ? null : decimal(value);
+}
+
 function bucketStart(timestamp: bigint, intervalSeconds: bigint): bigint {
   return (timestamp / intervalSeconds) * intervalSeconds;
 }
 
+function isCurveTrade(
+  trade: CanonicalTradeProjection,
+): trade is CurveTradeProjection {
+  return trade.venueKind !== "UNISWAP_V3";
+}
+
 async function projectCurveState(
   db: BreadDb,
-  trade: CanonicalTradeProjection,
+  trade: CurveTradeProjection,
 ): Promise<void> {
   const launchResult = await db.execute(sql`
     SELECT initial_supply, reserved_tokens_baseline, phantom_quote
@@ -234,6 +267,7 @@ async function projectCandles(
 async function projectMetrics(
   db: BreadDb,
   trade: CanonicalTradeProjection,
+  executionSource: TradeExecutionSource,
 ): Promise<void> {
   const fiveMinutesAgo =
     trade.blockTimestamp > 300n ? trade.blockTimestamp - 300n : 0n;
@@ -272,7 +306,7 @@ async function projectMetrics(
       ${trade.id.chainId}, ${trade.token.toLowerCase()},
       NULL, NULL, NULL,
       ${aggregate.total_trade_count}, ${aggregate.total_quote_volume}, ${decimal(trade.blockNumber)},
-      ${decimal(trade.executionPriceNumerator)}, ${decimal(trade.executionPriceDenominator)}, 'CURVE_EXECUTION',
+      ${decimal(trade.executionPriceNumerator)}, ${decimal(trade.executionPriceDenominator)}, ${executionSource},
       ${aggregate.quote_volume_5m}, ${aggregate.quote_volume_1h}, ${aggregate.quote_volume_24h},
       ${aggregate.trade_count_1h}, ${aggregate.trade_count_24h}, ${aggregate.unique_traders_1h}, ${aggregate.unique_traders_24h},
       ${trade.transactionIndex}, ${trade.id.logIndex}, now()
@@ -302,7 +336,7 @@ export async function applyCanonicalTradeProjection(
   trade: CanonicalTradeProjection,
 ): Promise<void> {
   const venueKind = trade.venueKind ?? "BREAD_CURVE";
-  const venueAddress = (trade.venueAddress ?? trade.curve).toLowerCase();
+  const venueAddress = trade.venueAddress.toLowerCase();
   const venueFeeTier = trade.venueFeeTier ?? null;
 
   const inserted = await db.execute(sql`
@@ -322,8 +356,8 @@ export async function applyCanonicalTradeProjection(
       ${trade.side}, ${trade.actor.toLowerCase()}, ${trade.recipient.toLowerCase()},
       ${decimal(trade.tokenAmount)}, ${decimal(trade.quoteAmount)}, ${decimal(trade.baseFee)}, ${decimal(trade.creatorTax)},
       ${decimal(trade.blockNumber)}, ${decimal(trade.blockTimestamp)}, ${trade.transactionIndex}, ${trade.stackVersion},
-      ${decimal(trade.offeredQuote)}, ${decimal(trade.openingTaxBps)}, ${decimal(trade.openingTax)}, ${trade.launchBuyExempt},
-      ${decimal(trade.refund)}, ${decimal(trade.netCurveInput)}, ${decimal(trade.netQuoteOut)}, ${decimal(trade.grossCurveQuoteOut)},
+      ${decimalNullable(trade.offeredQuote)}, ${decimal(trade.openingTaxBps)}, ${decimal(trade.openingTax)}, ${trade.launchBuyExempt},
+      ${decimalNullable(trade.refund)}, ${decimalNullable(trade.netCurveInput)}, ${decimalNullable(trade.netQuoteOut)}, ${decimalNullable(trade.grossCurveQuoteOut)},
       ${decimal(trade.executionPriceNumerator)}, ${decimal(trade.executionPriceDenominator)}
     )
     ON CONFLICT (chain_id, transaction_hash, log_index) DO NOTHING
@@ -334,7 +368,11 @@ export async function applyCanonicalTradeProjection(
       "canonical trade projection already exists without journal dedupe",
     );
 
-  await projectCurveState(db, trade);
+  if (isCurveTrade(trade)) await projectCurveState(db, trade);
   await projectCandles(db, trade);
-  await projectMetrics(db, trade);
+  await projectMetrics(
+    db,
+    trade,
+    venueKind === "UNISWAP_V3" ? "V3_SWAP_EXECUTION" : "CURVE_EXECUTION",
+  );
 }
