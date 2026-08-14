@@ -351,7 +351,9 @@ export function buildGraduatedPoolRegistry(
   return buildRegistryFromEntries(rows.map(entryFromRow));
 }
 
-function completionFromEvent(event: PreparedRangeEvent): VerificationCompletion {
+function completionFromEvent(
+  event: PreparedRangeEvent,
+): VerificationCompletion {
   return {
     contractAddress: event.contractAddress,
     token: address(event.payload.token, "GraduationCompleted token"),
@@ -399,7 +401,9 @@ export async function prepareGraduatedV3Range(
       events: readonly PreparedRangeEvent[];
       launchSnapshots: ReadonlyMap<string, VerificationLaunch>;
     }>;
-    readLaunch: (tokenAddress: string) => Promise<VerificationLaunch | undefined>;
+    readLaunch: (
+      tokenAddress: string,
+    ) => Promise<VerificationLaunch | undefined>;
     fromBlock: bigint;
     toBlock: bigint;
   }>,
