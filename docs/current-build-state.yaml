@@ -1,7 +1,7 @@
-schema_version: 1.59
+schema_version: 1.60
 project: Bread
 source_pack_expected: v1.5-day5-preflight-consolidated
-updated_at: 2026-08-13
+updated_at: 2026-08-14
 
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
@@ -17,8 +17,8 @@ completed_checkpoints:
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "Post-graduation V3 indexing continuity TDD RED execution blocked; architecture/read-consumer/registry/same-range ordering refinements are docs-only; physical/current branded-device reconciliation and exact-head external CI also remain open"
-active_gate: POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED
+active_lane: "Automated Day-9 V3 indexing/rebuild/reconcile, service rollback, production build, Chromium desktop/mobile E2E and Chromium/Firefox/WebKit release matrix are PASS at verified code head 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e; required remaining physical/current branded-device execution remains open"
+active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 
 project_source_state:
   pack: v1.5-day5-preflight-consolidated
@@ -31,18 +31,17 @@ project_source_state:
   current_ratified_pack: v1.5-day5-preflight-consolidated
 
 history_preservation:
-  prior_state_schema_version: 1.58
-  prior_state_git_commit: bf6b875d27d8feb3d4af781378154ce92dec934a
-  prior_state_blob_sha: cdf92c88efa7f3a7d11d475b04c28f45d4337dae
+  prior_state_schema_version: 1.59
+  prior_state_git_commit: 403de1f1f248bbd0681ef085a96b3728e85ded2d
+  prior_state_blob_sha: 4758876fb54588af845553b57a90f60b948d698d
   note: >-
-    v1.59 preserves the complete v1.58 Day-9 blocked state and records only additional docs/read-only findings reached while the required repository RED remained unexecutable: read-consumer continuity, zero-output V3 Swap journal-only semantics, rebuildable graduated-venue registry ownership, factory-scoped cache identity, same-range graduation/pool discovery and holder-ordering requirements, and the stronger observation that Bread Actions produced no successful runs on Aug 12 or Aug 13 while observed new runs terminated startup_failure before jobs. One attempted additional RED-only cache-identity test write was blocked by the GitHub/OpenAI safety control and was not retried through another write path; it is not repository state. No production V3 indexing code is authorized or claimed, no internal harness is repository evidence, and no Day-9 PASS, RC tag, Day-10 start, production economics freeze, Arc-mainnet DEX selection, physical-device waiver or exact-head CI PASS is declared.
+    v1.60 preserves the complete v1.59 Day-9 history and replaces only facts that are now disproven by executed repository evidence. GitHub Actions is executing normally again; the approved post-graduation V3 indexing continuity work progressed through observed RED -> minimal GREEN slices and is closed through deterministic rebuild/reconcile, REC-04 venue identity, REC-06 retained V3 Swap identity, fail-before-commit malformed/conflicting evidence, runtime canonical-event scanning, post-commit cache continuity and downstream route/read-model checks. Exact-head automated release evidence at code head 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e includes the broad V3 final regression, service rollback, Chromium desktop/mobile journeys and Chromium/Firefox/WebKit release matrix. Day 9 remains incomplete because required physical/current branded-device rows are still open. No Day-9 PASS, RC tag, Day-10 start, production economics freeze, Arc-mainnet DEX selection, physical-device waiver or unrestricted-public-money claim is declared.
 
 integration_baseline:
-  id: DAY9-ARC-TESTNET-PUBLIC-LIFECYCLE-SAFE-RECOVERY-AND-ANDROID-GRADUATION-RECOVERY-PASS-PHYSICAL-CI-PENDING
+  id: DAY9-ARC-TESTNET-AUTOMATED-RELEASE-MATRIX-PASS-PHYSICAL-DEVICE-GATE-OPEN
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
   active_branch: day9/synthra-arc-testnet-v3-candidate
   active_pr: 93
-  current_docs_only_head_before_state_update: 8483b85943bbbde94c8a231feafb0db5b83c0106
   day9_live_arc_deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
   day9_live_arc_smoke_recovery_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
   day9_safe_recovery_execution_head: bb04ee1574be298fe4e45b1a2de7e07310638514
@@ -57,12 +56,18 @@ integration_baseline:
   post_graduation_v3_read_consumer_head: 5c786acfeeb68e786abbd05aa92ba7133595a0d9
   post_graduation_v3_registry_cache_isolation_head: 0007107f4931cc44c6c032b0005f7e0a08864ec9
   post_graduation_v3_same_range_ordering_head: 8483b85943bbbde94c8a231feafb0db5b83c0106
-  status: DAY_9_ANDROID_GRADUATION_RECOVERY_PASS_POST_GRADUATION_V3_INDEXING_TDD_RED_EXECUTION_BLOCKED_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
+  post_graduation_v3_slice_f_closeout_head: 2ab65729a47211384bba7a1e8af67fe16d04c4d7
+  automated_release_matrix_verified_head: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
+  automated_v3_final_regression_run: 31847654814
+  automated_service_rollback_run: 31847657797
+  automated_chromium_e2e_run: 31847657870
+  automated_release_browser_matrix_run: 31847657841
+  status: DAY_9_AUTOMATED_RELEASE_MATRIX_PASS_PHYSICAL_DEVICE_GATE_OPEN
 
 day8_scope:
-  lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201
+  lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201_AND_CURRENT_HIGH_INTENSITY_RECHECK_PASS
   lane2: STATIC_SECURITY_TRIAGE_PASS_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
-  lane3: FRONTEND_SECURITY_ADVERSARIAL_PASS
+  lane3: FRONTEND_SECURITY_ADVERSARIAL_PASS_CURRENT_PRODUCTION_WEB_BUILD_PASS
   lane4: FAILURE_RECOVERY_INJECTION_PASS
   lane5: HOT_LAUNCH_BOT_CACHE_RPC_INDEXER_DB_CAPACITY_PASS
   forbidden_change_review: PASS_NO_SOLIDITY_ECONOMICS_CUSTODY_SIGNING_ABI_ADDRESS_MAINNET_OR_LOCKFILE_CHANGE
@@ -71,17 +76,16 @@ day9_scope:
   task1_environment_reconciliation: PASS
   task2_rehearsal_readiness: PASS_FAIL_CLOSED
   task3_clean_local_rehearsal: PASS_NON_CANONICAL
-  task4_service_rollback: PASS
+  task4_service_rollback: PASS_EXACT_HEAD_GITHUB_ACTIONS_RUN_31847657797
   task5_recovery_drills: PASS_REAL_SAFE_THRESHOLD_RECOVERY_RETAINED_EVIDENCE
-  task6_browser_engine_matrix: PASS_AUTOMATED_WITH_PHYSICAL_EXTERNAL
+  task6_browser_engine_matrix: PASS_EXACT_HEAD_CHROMIUM_FIREFOX_WEBKIT_WITH_PHYSICAL_REMAINDER
   task7_live_arc_gate: PUBLIC_LIFECYCLE_SMOKE_PASS
-  task8_final_rc_verdict: NOT_RERUN_AFTER_ANDROID_GRADUATION_RECOVERY
-  exact_head_integration_matrix: PRIOR_PASS_LOCAL_AT_RETAINED_HEAD_CURRENT_INDEXING_HEAD_NOT_VERIFIED
+  task8_final_rc_verdict: BLOCKED_PHYSICAL_DEVICE_ONLY
+  exact_head_integration_matrix: PASS_GITHUB_ACTIONS_HEAD_5A8A6AB49C0F4DD6CD41F200792665AE26A1168E
   physical_android_auto_graduation_recovery: PASS_EXISTING_BTST_PERMISSIONLESS_SWEEP_CREATE_POOL_PERMANENT_LOCK_ZERO_RESIDUE
-  post_graduation_v3_indexing_continuity: IN_PROGRESS_RED_ONLY_TEST_COMMITTED_RED_NOT_EXECUTED_NO_PRODUCTION_GREEN_DESIGN_AND_IMPACT_MAP_REFINED
-  additional_red_cache_identity_write: BLOCKED_BY_GITHUB_OPENAI_SAFETY_CONTROL_NOT_RETRIED_NOT_REPOSITORY_STATE
+  post_graduation_v3_indexing_continuity: PASS_RED_GREEN_DETERMINISTIC_REBUILD_REC04_REC06_RUNTIME_SCANNER_CACHE_AND_DOWNSTREAM_CONTINUITY
   production_change_note: >-
-    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. The Safe recovery drill exercised only the existing testnet Protocol Admin owner set and restored it exactly. The Android graduation repair changed only the existing browser transaction/recovery owner and tests; no Solidity/protocol/economics/deployment/authority configuration changed. The current V3 indexing-continuity blocked window has added only approved planning/state documentation, source-compatible security/correctness addenda, PR handoff metadata and the previously committed RED-only test; no production indexing code, Solidity/protocol/economics/deployment/authority change, Arc mainnet DEX selection, unrestricted public-money authorization, server custody or alternate financial ledger has been introduced.
+    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. The Safe recovery drill exercised only the existing testnet Protocol Admin owner set and restored it exactly. The Android graduation repair changed only the existing browser transaction/recovery owner and tests; no Solidity/protocol/economics/deployment/authority configuration changed. The V3 indexing-continuity implementation preserved one canonical trade ledger, fresh chain-authoritative write routing, exact verified-pool discovery and rebuild/reconcile ownership; it did not introduce server custody, an alternate financial ledger, production economics, Arc-mainnet DEX selection or unrestricted-public-money authorization.
 
 day9_live_arc:
   dex_dependency:
@@ -193,20 +197,20 @@ day9_live_arc:
     manual_cast_send_sweep_used: false
 
 day9_verdict:
-  result: DAY_9_INCOMPLETE_POST_GRADUATION_V3_INDEXING_PHYSICAL_DEVICE_AND_EXTERNAL_CI_GATES_OPEN
-  exact_head_local_release_matrix: PRIOR_PASS_NOT_CURRENT_HEAD
+  result: DAY_9_INCOMPLETE_PHYSICAL_DEVICE_GATE_OPEN
+  exact_head_local_release_matrix: PASS_RETAINED_HISTORICAL_HEAD
   exact_head_local_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
-  exact_head_external_ci: UNAVAILABLE_STARTUP_FAILURE_ZERO_JOBS
-  post_graduation_v3_indexing: IN_PROGRESS_RED_COMMITTED_NOT_EXECUTED_NO_PRODUCTION_GREEN
+  exact_head_external_ci: PASS_GITHUB_ACTIONS_AUTOMATED_AT_5A8A6AB49C0F4DD6CD41F200792665AE26A1168E
+  post_graduation_v3_indexing: PASS_RED_GREEN_CLOSED
   empty_environment_to_usable_launchpad: PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
-  rollback: PASS
-  reconcile: PASS_RETAINED_PRIOR_HEAD_V3_EXTENSION_NOT_YET_IMPLEMENTED
+  rollback: PASS_EXACT_HEAD_RUN_31847657797
+  reconcile: PASS_V3_DETERMINISTIC_REBUILD_REC04_REC06
   supported_matrix: PHYSICAL_CURRENT_DEVICE_COMPLETION_REQUIRED
   canonical_arc_testnet_deployment: PASS_VERIFIED
   public_arc_testnet_lifecycle_smoke: PASS
   recovery_drills: PASS_REAL_SAFE_THRESHOLD_RECOVERY_RETAINED_EVIDENCE
   physical_android_auto_graduation_recovery: PASS
-  browser_engine_matrix: PASS_RETAINED_PRIOR_HEAD
+  browser_engine_matrix: PASS_EXACT_HEAD_RUN_31847657841
   physical_device_matrix: EXTERNAL_EXECUTION_PARTIAL_REMAINDER
   wallet_browser_matrix: NO_FIRST_CLASS_WALLET_BROWSER_CLAIM
   live_arc_broadcast_performed: true
@@ -249,16 +253,20 @@ verification:
   day9_physical_android_position_id: 266664
   day9_physical_android_permanent_lock_owner: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
   day9_physical_android_graduation_residue_zero: true
-  day9_exact_head_release_matrix: PRIOR_PASS_LOCAL_NOT_CURRENT_HEAD
-  day9_exact_head_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
-  day9_exact_head_release_matrix_evidence: docs/evidence/day9-exact-head-local-release-matrix.md
-  day9_exact_head_browser_matrix_result: PRIOR_PASS_76_TESTS_40_PASSED_36_TASK_OWNERSHIP_SKIPS_0_FAILED
-  day9_webkit_accessibility_repairs: PASS_RETAINED_PRIOR_HEAD_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
+  day9_exact_head_release_matrix: PASS_GITHUB_ACTIONS_AUTOMATED_CODE_HEAD
+  day9_exact_head_release_matrix_verified_head: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
+  day9_exact_head_release_matrix_evidence: docs/evidence/day9-release-candidate-rehearsal.md
+  day9_v3_final_regression: PASS_RUN_31847654814
+  day9_service_rollback: PASS_RUN_31847657797
+  day9_chromium_desktop_mobile_e2e: PASS_RUN_31847657870
+  day9_release_browser_matrix: PASS_RUN_31847657841
+  day9_exact_head_browser_matrix_result: PASS_CHROMIUM_FIREFOX_WEBKIT_AND_MOBILE_CHROMIUM_AUTOMATION
+  day9_webkit_accessibility_repairs: PASS_RETAINED_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
   post_graduation_v3_indexing_design: docs/superpowers/specs/2026-08-13-post-graduation-v3-trade-indexing-design.md
   post_graduation_v3_indexing_plan: docs/superpowers/plans/2026-08-13-post-graduation-v3-trade-indexing.md
   post_graduation_v3_indexing_red_test: tests/day9/post-graduation-v3-indexing.test.ts
-  post_graduation_v3_indexing_red_test_status: COMMITTED_NOT_EXECUTED
-  post_graduation_v3_indexing_production_green_status: NOT_STARTED_TDD_GATE_CLOSED
+  post_graduation_v3_indexing_red_test_status: EXECUTED_RED_THEN_GREEN_CLOSED
+  post_graduation_v3_indexing_production_green_status: PASS
   post_graduation_v3_indexing_determinism_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-trade-indexing-determinism-addendum.md
   post_graduation_v3_zero_output_swap_addendum: docs/superpowers/specs/2026-08-13-post-graduation-v3-zero-output-swap-semantics-addendum.md
   post_graduation_v3_read_consumer_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-read-consumer-continuity-addendum.md
@@ -266,13 +274,11 @@ verification:
   post_graduation_v3_same_range_ordering_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-same-range-graduation-holder-addendum.md
   post_graduation_v3_same_range_discovery_rule: BREAD_TWO_PASS_THEN_VERIFIED_EXACT_POOL_POST_NORMALIZATION_DISCOVERY_PRESERVE_SAME_BLOCK_POST_COMPLETION_SWAPS
   post_graduation_v3_holder_same_range_rule: VERIFIED_POOL_MUST_BE_IN_PROTOCOL_ADDRESS_SET_BEFORE_REDUCERS_PROCESS_EARLIER_GRADUATION_TX_TRANSFERS
-  github_actions_current_state: STARTUP_FAILURE_BEFORE_JOB_CREATION
-  github_actions_exact_head_jobs_created: 0
-  github_actions_exact_head_classification: UNAVAILABLE_NOT_EXECUTED_NOT_A_TEST_FAILURE
-  github_actions_control_probe: OLD_KNOWN_GOOD_CI_JOB_RERUN_ACCEPTED_THEN_STARTUP_FAILURE_ZERO_JOBS
-  github_actions_repository_scope_observation: AUG12_AND_AUG13_NO_SUCCESSFUL_BREAD_ACTIONS_RUNS_OBSERVED_NEW_RUNS_STARTUP_FAILURE_ZERO_JOBS
-  github_actions_policy_endpoint: CONNECTOR_403_NOT_READABLE
-  vercel_current_state: BUILD_RATE_LIMIT_EXTERNAL_CHECKS_NOT_EXACT_HEAD_EVIDENCE
+  github_actions_current_state: EXECUTING_NORMALLY
+  github_actions_exact_head_jobs_created: true
+  github_actions_exact_head_classification: PASS_AUTOMATED_RELEASE_SURFACE_AT_5A8A6AB49C0F4DD6CD41F200792665AE26A1168E
+  github_actions_previous_unavailability_note: "Aug-12/Aug-13 startup_failure observations are retained as history only and are no longer current state"
+  vercel_current_state: NOT_REQUIRED_AS_SUBSTITUTE_WHILE_GITHUB_ACTIONS_EXECUTES
 
 blockers:
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -289,9 +295,7 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 day9_blockers:
-  - POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-  - DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED
 
 day9_cleared_blockers:
   - ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED
@@ -300,6 +304,8 @@ day9_cleared_blockers:
   - BREAD_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_REQUIRED
   - DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED
   - PHYSICAL_ANDROID_AUTO_GRADUATION_REGRESSION
+  - POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED
+  - DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED
 
 day9_implementation_prerequisites_repaired:
   mobile_wallet_connectivity: PASS_WALLETCONNECT_ALONGSIDE_INJECTED
@@ -308,21 +314,17 @@ day9_implementation_prerequisites_repaired:
   executable_lan_runtime_composition_reason: "no .listen() existed anywhere; real API/indexer could not be launched and no single-origin web+API composition existed"
   canonical_stack_version_derivation: 0xc862a0ec7e5eb592f1a77b4971552b79f65528b1f1addf97fdfc42b8f774e063
   canonical_stack_version_proof: RECONCILES_WITH_MANIFEST_ECONOMICS_CONFIG_HASH
-  prior_classification_note: "PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED was partly premature while these two prerequisites were missing"
+  prior_classification_note: "PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED was partly premature while these two prerequisites were missing; those prerequisites are now repaired"
 
 day9_blocker_scope:
-  POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED: "approved design, implementation plan and source-compatible refinements are durable; the first Slice-A RED-only test is committed, but the real repository test has not executed because GitHub Actions cannot create jobs and no equivalent connected exact-checkout runner is available. Production indexing GREEN remains TDD-gated. The additional cache-identity RED draft was blocked by safety control and is not repository state. Internal/sandbox draft harnesses are not repository evidence."
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; physical Android Chrome now also has retained real-device automatic-graduation failure/recovery evidence through POOL_CREATED and permanent lock, but that does not by itself complete every required Android checklist row. Required iOS Safari, any still-unexecuted representative physical Android Chrome checklist steps, and current branded Edge remain external; engine emulation is not relabeled."
-  DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED: "the prior local release and focused Android graduation repair verification remain retained at their exact historical heads, but no GitHub Actions CI has executed at the current V3-indexing candidate head. New Aug-12/Aug-13 Bread Actions observations contain no successful runs and observed current-head runs terminate startup_failure before jobs; a bounded rerun of an older previously-successful real ci job also converted to startup_failure with zero executable jobs. This is execution unavailability, not a code/test PASS or FAIL. Prior local/Vercel evidence does not substitute for current exact-head CI."
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; physical Android Chrome has retained real-device automatic-graduation failure/recovery evidence through POOL_CREATED and permanent lock, but that does not complete every required Android checklist row. Required iOS Safari, still-unexecuted representative physical Android Chrome checklist steps, and current branded Edge remain external; engine emulation is not relabeled and no wallet brand is promoted without complete claimed-path execution."
 
 next_action: >-
-  Do not begin Day 10. Keep production V3 indexing GREEN closed until the already committed tests/day9/post-graduation-v3-indexing.test.ts can execute in the real repository and fail for the intended missing venue/schema behavior. When execution returns: first run that committed RED unchanged; if it fails for the intended reason, add and execute the focused existing-curve venue-persistence RED before the minimal A1 schema/normalizer/repository GREEN, then add/execute the separate A2 shared-type/API RED before public venue serialization GREEN. Continue registry/discovery/V3 normalization/projection/cache/rebuild work only through subsequent RED -> GREEN slices. Same-range implementation must preserve Bread two-pass discovery, pre-resolve/verify V3 completion identities before reducer construction, query only exact verified pools including the completion block, include the verified pool in holder protocol-address classification before earlier graduation-transaction Transfers are reduced, and persist the verified venue tuple atomically with GraduationCompleted. Preserve the retained public Arc Testnet lifecycle, reversible 2-of-3 Safe recovery, macOS Safari evidence and physical Android graduation-recovery PASS. Required remaining physical/current branded-device coverage and genuinely executed exact-head CI remain open. Do not relabel internal draft harnesses, blocked writes, partial physical evidence or zero-job Actions as PASS, and do not create an RC tag.
+  Do not begin Day 10. Preserve the automated code-bearing candidate evidence at 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e and complete only the remaining non-waivable physical/current branded-device matrix: physical iOS Safari, the remaining representative Android Chrome checklist rows, and current branded Microsoft Edge. Do not relabel Chromium/WebKit emulation, partial Android evidence or unexecuted wallet-browser paths as physical PASS. After those external rows are genuinely executed and evidenced, rerun the final Day-9 release gate and exact-head release matrix on one immutable candidate. Only then may Day 9 be marked complete and an RC tag be considered. No Day-10 start, production economics freeze, Arc-mainnet DEX selection or unrestricted-public-money release is authorized by this state.
 
 do_not_do:
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10, enable unrestricted public-money release, or claim Day-9 PASS while any non-waivable Day-9 end gate is open."
-  - "Do not write production V3 indexing GREEN code before the committed Slice-A repository test has been observed RED for the intended missing behavior."
-  - "Do not bypass or retry a GitHub/OpenAI safety-blocked repository write through a different write path merely to land the same change."
   - "Do not deploy a second Bread Arc Testnet stack; the verified stack starting at block 56448201 is canonical for this Day-9 rehearsal."
   - "Do not create a second public smoke launch; token 0x9dc6c650929b641f93269a3b6d7d5237297d938b / position 265870 is the canonical Day-9 public lifecycle evidence."
   - "Do not rerun the completed Safe owner rotation; retained evidence in docs/evidence/day9-safe-threshold-recovery.json is the canonical Day-9 threshold recovery proof."
