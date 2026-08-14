@@ -1,0 +1,54 @@
+name: day9-scanner-format
+
+on:
+  push:
+    branches:
+      - day9/synthra-arc-testnet-v3-candidate
+
+permissions:
+  contents: write
+
+jobs:
+  format-scanner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+      - name: Guard formatter echo commit
+        id: guard
+        run: |
+          if [ "$(git log -1 --pretty=%B)" = "style(day9): format REC-06 scanner surface" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+        if: steps.guard.outputs.skip != 'true'
+      - name: Format scanner surface
+        if: steps.guard.outputs.skip != 'true'
+        run: >-
+          pnpm exec prettier --write
+          apps/indexer/src/index.ts
+          apps/indexer/src/reconciliation-scanner.ts
+      - name: Commit exact formatter output
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          if git diff --quiet -- apps/indexer/src/index.ts apps/indexer/src/reconciliation-scanner.ts; then
+            echo "No formatting changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/indexer/src/index.ts apps/indexer/src/reconciliation-scanner.ts
+          git commit -m "style(day9): format REC-06 scanner surface"
+          git push origin HEAD:day9/synthra-arc-testnet-v3-candidate
