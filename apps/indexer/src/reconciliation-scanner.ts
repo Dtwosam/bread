@@ -4,8 +4,17 @@ import {
   type IndexerProtocolContext,
 } from "../../../packages/db/src/index.js";
 import { readReconciliationGraduatedVenues } from "../../../packages/db/src/repositories/graduation-reconciliation.js";
-import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
-import type { Address } from "../../../packages/types/src/index.js";
+import {
+  classifyBreadLog,
+  createBreadStackAbiBinding,
+  decodeBreadLog,
+  type ProtocolContext,
+} from "../../../packages/protocol-sdk/src/index.js";
+import type {
+  Address,
+  BreadContractRole,
+  Hex,
+} from "../../../packages/types/src/index.js";
 
 import { discoverRange, type LogClient, type RpcLog } from "./discovery.js";
 import { discoverGraduatedV3SwapLogs } from "./graduated-v3-discovery.js";
@@ -88,6 +97,61 @@ function canonicalKey(chainId: number, log: RpcLog): string {
   return `${chainId}:${log.transactionHash.toLowerCase()}:${log.logIndex}`;
 }
 
+function breadRoles(
+  context: ProtocolContext,
+  launches: readonly Readonly<{ tokenAddress: string; curveAddress: string }>[],
+): Map<string, BreadContractRole> {
+  const roles = new Map<string, BreadContractRole>([
+    [context.factoryAddress.toLowerCase(), "FACTORY"],
+    [context.addresses.feePolicy.toLowerCase(), "FEE_POLICY"],
+    [context.addresses.feeEscrow.toLowerCase(), "FEE_ESCROW"],
+    [context.addresses.emergencyController.toLowerCase(), "EMERGENCY_CONTROLLER"],
+    [context.addresses.coordinator.toLowerCase(), "GRADUATION_COORDINATOR"],
+    [context.addresses.locker.toLowerCase(), "LOCKER"],
+  ]);
+  for (const launch of launches) {
+    roles.set(address(launch.tokenAddress, "launch token"), "LAUNCH_TOKEN");
+    roles.set(address(launch.curveAddress, "launch curve"), "CURVE");
+  }
+  return roles;
+}
+
+function canonicalBreadLogs(
+  logs: readonly RpcLog[],
+  context: ProtocolContext,
+  roles: ReadonlyMap<string, BreadContractRole>,
+): readonly RpcLog[] {
+  const binding = createBreadStackAbiBinding(context.stackVersion);
+  return logs.filter((log) => {
+    const role = roles.get(log.address.toLowerCase());
+    if (!role) throw new Error(`unregistered Bread log address: ${log.address}`);
+
+    let eventName: string;
+    let disposition: ReturnType<typeof classifyBreadLog>;
+    if (log.eventName !== undefined) {
+      eventName = log.eventName;
+      disposition = classifyBreadLog(role, eventName);
+    } else {
+      if (log.topics.length === 0) throw new Error("known Bread log is missing topic0");
+      const decoded = decodeBreadLog({
+        binding,
+        stackVersion: context.stackVersion,
+        role,
+        topics: log.topics as readonly Hex[],
+        data: log.data as Hex,
+      });
+      eventName = decoded.eventName;
+      disposition = decoded.disposition;
+    }
+
+    if (disposition === "KNOWN_IGNORED") return false;
+    if (disposition === "UNKNOWN") {
+      throw new Error(`unknown ${role} event: ${eventName}`);
+    }
+    return true;
+  });
+}
+
 export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
   const context = indexerContext(input.context);
 
@@ -116,12 +180,17 @@ export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
       ]),
     );
 
-    const breadLogs = await discoverRange(
+    const discoveredBreadLogs = await discoverRange(
       input.client,
       input.context,
       knownLaunchAddresses,
       fromBlock,
       toBlock,
+    );
+    const breadLogs = canonicalBreadLogs(
+      discoveredBreadLogs,
+      input.context,
+      breadRoles(input.context, launches),
     );
 
     const venues = await readReconciliationGraduatedVenues(input.db, context);
