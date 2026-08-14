@@ -1,0 +1,93 @@
+name: day9-scanner-normalization-red
+
+on:
+  push:
+    branches:
+      - day9/synthra-arc-testnet-v3-candidate
+
+permissions:
+  contents: write
+
+jobs:
+  add-normalization-red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+      - name: Add fail-closed unknown Bread-event regression
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/day9/v3-reconciliation-runtime-scanner-db.test.ts')
+          text = path.read_text()
+          marker = '\n});\n'
+          if not text.endswith(marker):
+              raise SystemExit('scanner test closing anchor changed')
+          test = r'''
+
+  it("fails closed on an unknown event emitted by a canonical Bread address", async () => {
+    const dbModule = await import("../../packages/db/src/index.ts");
+    const indexerModule = (await import(
+      "../../apps/indexer/src/index.ts"
+    )) as Readonly<Record<string, unknown>>;
+    const createScanner = indexerModule.createReconciliationCanonicalEventScanner;
+    expect(createScanner).toBeTypeOf("function");
+    if (typeof createScanner !== "function") return;
+
+    const unknownTx = hash("e");
+    const unknownCoordinatorLog: FixtureLog = {
+      address: coordinator,
+      blockNumber: 112n,
+      blockHash: block112Hash,
+      transactionHash: unknownTx,
+      transactionIndex: 0,
+      logIndex: 9,
+      eventName: "UnexpectedCoordinatorEvent",
+      args: {},
+      topics: [topic0],
+      data: "0x",
+    };
+    const client = {
+      readContract: async () => {
+        throw new Error("scanner must not re-verify persisted V3 identity");
+      },
+      getBlock: async (request: Readonly<Record<string, unknown>>) => ({
+        timestamp: 1_786_262_400n + BigInt(String(request.blockNumber)),
+      }),
+      getLogs: async (request: Readonly<Record<string, unknown>>) => {
+        const values = Array.isArray(request.address)
+          ? request.address.map((value) => String(value).toLowerCase())
+          : [String(request.address).toLowerCase()];
+        if (values.includes(poolAddress)) return [];
+        if (values.includes(coordinator)) {
+          return [completionLog, unknownCoordinatorLog];
+        }
+        return [];
+      },
+    };
+    const scanner = (
+      createScanner as (input: Readonly<Record<string, unknown>>) => (
+        fromBlock: bigint,
+        toBlock: bigint,
+      ) => Promise<readonly Readonly<{ transactionHash: string; logIndex: number }>[]>
+    )({
+      db: dbModule.createBreadDb(pool),
+      client,
+      context,
+    });
+
+    await expect(scanner(110n, 120n)).rejects.toThrow(
+      "unknown GRADUATION_COORDINATOR event",
+    );
+  });'''
+          text = text[:-len(marker)] + test + marker
+          path.write_text(text)
+          PY
+      - name: Commit tests-only RED
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/day9/v3-reconciliation-runtime-scanner-db.test.ts
+          git commit -m "test(day9): require canonical scanner Bread normalization"
+          git push origin HEAD:day9/synthra-arc-testnet-v3-candidate
