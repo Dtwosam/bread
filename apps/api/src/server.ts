@@ -1,26 +1,35 @@
-import Fastify from 'fastify';
+import Fastify from "fastify";
 
 import {
   CreatorRepository,
   ReadRepository,
   SearchRepository,
   type BreadDb,
-} from '../../../packages/db/src/index.js';
-import type { ProtocolContext } from '../../../packages/protocol-sdk/src/index.js';
-import { BREAD_PROJECTION_CACHE_SCHEMA_VERSION } from '../../../packages/types/src/index.js';
+} from "../../../packages/db/src/index.js";
+import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
+import { BREAD_PROJECTION_CACHE_SCHEMA_VERSION } from "../../../packages/types/src/index.js";
 
-import { BreadCache, type CacheRedis } from './cache.js';
-import { BoundedReadGate, ReadCapacityExceededError, boundRepository, type ReadCapacityConfig } from './capacity.js';
-import { buildFreshness } from './freshness.js';
-import { IsolatedRateLimiter, type RateLimitPolicy, type RateLimitRedis } from './rate-limit.js';
-import { registerCreatorRoute } from './routes/creators.js';
-import { registerFeedRoute } from './routes/feed.js';
-import { registerHoldersRoute } from './routes/holders.js';
-import { registerPortfolioRoute } from './routes/portfolio.js';
-import { registerSearchRoute } from './routes/search.js';
-import { registerStatusRoute } from './routes/status.js';
-import { registerTokenRoute } from './routes/token.js';
-import { registerTradesRoute } from './routes/trades.js';
+import { BreadCache, type CacheRedis } from "./cache.js";
+import {
+  BoundedReadGate,
+  ReadCapacityExceededError,
+  boundRepository,
+  type ReadCapacityConfig,
+} from "./capacity.js";
+import { buildFreshness } from "./freshness.js";
+import {
+  IsolatedRateLimiter,
+  type RateLimitPolicy,
+  type RateLimitRedis,
+} from "./rate-limit.js";
+import { registerCreatorRoute } from "./routes/creators.js";
+import { registerFeedRoute } from "./routes/feed.js";
+import { registerHoldersRoute } from "./routes/holders.js";
+import { registerPortfolioRoute } from "./routes/portfolio.js";
+import { registerSearchRoute } from "./routes/search.js";
+import { registerStatusRoute } from "./routes/status.js";
+import { registerTokenRoute } from "./routes/token.js";
+import { registerTradesRoute } from "./routes/trades.js";
 
 type ApiRedis = CacheRedis & RateLimitRedis;
 
@@ -30,14 +39,16 @@ const DEFAULT_CAPACITY: ReadCapacityConfig = {
   dbQueueTimeoutMs: 250,
 };
 
-const DEFAULT_RATE_LIMITS: Readonly<Record<'feed' | 'search', RateLimitPolicy>> = {
+const DEFAULT_RATE_LIMITS: Readonly<
+  Record<"feed" | "search", RateLimitPolicy>
+> = {
   feed: { maxRequests: 500, windowMs: 1_000 },
   search: { maxRequests: 30, windowMs: 1_000 },
 };
 
 function unavailableRedis(): ApiRedis {
   const unavailable = async () => {
-    throw new Error('Redis unavailable');
+    throw new Error("Redis unavailable");
   };
   return {
     get: unavailable,
@@ -55,7 +66,7 @@ export type CreateBreadApiInput = Readonly<{
   now?: () => Date;
   redis?: ApiRedis;
   capacity?: ReadCapacityConfig;
-  rateLimits?: Readonly<Record<'feed' | 'search', RateLimitPolicy>>;
+  rateLimits?: Readonly<Record<"feed" | "search", RateLimitPolicy>>;
 }>;
 
 export function createBreadApi(input: CreateBreadApiInput) {
@@ -64,8 +75,14 @@ export function createBreadApi(input: CreateBreadApiInput) {
   const redis = input.redis ?? unavailableRedis();
   const gate = new BoundedReadGate(input.capacity ?? DEFAULT_CAPACITY);
   const repository = boundRepository(new ReadRepository(input.db), gate);
-  const creatorRepository = boundRepository(new CreatorRepository(input.db), gate);
-  const searchRepository = boundRepository(new SearchRepository(input.db), gate);
+  const creatorRepository = boundRepository(
+    new CreatorRepository(input.db),
+    gate,
+  );
+  const searchRepository = boundRepository(
+    new SearchRepository(input.db),
+    gate,
+  );
   const cache = new BreadCache({
     redis,
     schemaVersion: BREAD_PROJECTION_CACHE_SCHEMA_VERSION,
@@ -82,9 +99,14 @@ export function createBreadApi(input: CreateBreadApiInput) {
       input.context.stackVersion,
       input.context.factoryAddress,
     );
-    if (!checkpoint) throw new Error('indexer checkpoint unavailable');
+    if (!checkpoint) throw new Error("indexer checkpoint unavailable");
     const observedHead = await input.observedHeadBlock();
-    return buildFreshness(input.context.chainId, checkpoint, observedHead, now());
+    return buildFreshness(
+      input.context.chainId,
+      checkpoint,
+      observedHead,
+      now(),
+    );
   };
 
   const deps = {
@@ -92,7 +114,7 @@ export function createBreadApi(input: CreateBreadApiInput) {
     context: input.context,
     freshness,
     cache,
-    feedRateLimit: (subject: string) => limiter.take('feed', subject),
+    feedRateLimit: (subject: string) => limiter.take("feed", subject),
     now,
   } as const;
   registerStatusRoute(app, deps);
@@ -110,16 +132,19 @@ export function createBreadApi(input: CreateBreadApiInput) {
     repository: searchRepository,
     context: input.context,
     freshness,
-    rateLimit: (subject: string) => limiter.take('search', subject),
+    rateLimit: (subject: string) => limiter.take("search", subject),
   });
 
   app.setErrorHandler((error, request, reply) => {
-    request.log.error({ err: error, requestId: request.id }, 'Bread read API request failed');
+    request.log.error(
+      { err: error, requestId: request.id },
+      "Bread read API request failed",
+    );
     if (error instanceof ReadCapacityExceededError) {
       void reply.code(503).send({
         error: {
-          code: 'READ_CAPACITY_EXCEEDED',
-          message: 'Bread read capacity is temporarily saturated.',
+          code: "READ_CAPACITY_EXCEEDED",
+          message: "Bread read capacity is temporarily saturated.",
           requestId: request.id,
         },
       });
@@ -127,8 +152,8 @@ export function createBreadApi(input: CreateBreadApiInput) {
     }
     void reply.code(500).send({
       error: {
-        code: 'READ_API_FAILURE',
-        message: 'Bread read API could not serve this request.',
+        code: "READ_API_FAILURE",
+        message: "Bread read API could not serve this request.",
         requestId: request.id,
       },
     });

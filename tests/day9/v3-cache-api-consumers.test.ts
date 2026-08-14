@@ -32,37 +32,43 @@ const context = {
 
 describe("Day 9 shared projection-cache API consumers", () => {
   it("uses the factory-aware shared stack-feed channel in the live feed route", async () => {
-    const { registerFeedRoute } = await import("../../apps/api/src/routes/feed.js");
+    const { registerFeedRoute } =
+      await import("../../apps/api/src/routes/feed.js");
     const app = Fastify({ logger: false });
     const channels: string[] = [];
 
-    registerFeedRoute(app as never, {
-      repository: {
-        listNewLaunches: async () => [],
-        listTokenMetrics: async () => [],
-      },
-      context,
-      freshness: async () => ({
-        chainId: context.chainId,
-        indexedThroughBlock: "100",
-        observedHeadBlock: "100",
-        lagBlocks: "0",
-        status: "FRESH",
-        source: "bread-indexer",
-        servedAt: "2026-08-14T20:00:00.000Z",
-      }),
-      cache: {
-        getOrLoad: async <T>(input: Readonly<{
-          channel: string;
-          key: string;
-          load: () => Promise<T>;
-        }>) => {
-          channels.push(input.channel);
-          return { value: await input.load(), cache: "MISS" as const };
+    registerFeedRoute(
+      app as never,
+      {
+        repository: {
+          listNewLaunches: async () => [],
+          listTokenMetrics: async () => [],
         },
-      },
-      now: () => new Date("2026-08-14T20:00:00.000Z"),
-    } as never);
+        context,
+        freshness: async () => ({
+          chainId: context.chainId,
+          indexedThroughBlock: "100",
+          observedHeadBlock: "100",
+          lagBlocks: "0",
+          status: "FRESH",
+          source: "bread-indexer",
+          servedAt: "2026-08-14T20:00:00.000Z",
+        }),
+        cache: {
+          getOrLoad: async <T>(
+            input: Readonly<{
+              channel: string;
+              key: string;
+              load: () => Promise<T>;
+            }>,
+          ) => {
+            channels.push(input.channel);
+            return { value: await input.load(), cache: "MISS" as const };
+          },
+        },
+        now: () => new Date("2026-08-14T20:00:00.000Z"),
+      } as never,
+    );
 
     const response = await app.inject({
       method: "GET",
@@ -81,7 +87,9 @@ describe("Day 9 shared projection-cache API consumers", () => {
       "utf8",
     );
     expect(source).toContain("projectionCacheGenerationKey");
-    expect(source).not.toContain("`bread:generation:${this.input.schemaVersion}:");
+    expect(source).not.toContain(
+      "`bread:generation:${this.input.schemaVersion}:",
+    );
   });
 
   it("makes createBreadApi use the projection-cache schema marker rather than the event decoder schema", async () => {
