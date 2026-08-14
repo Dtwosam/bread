@@ -139,8 +139,7 @@ describe("Day 9 immutable graduated V3 candidate verification", () => {
     ]);
 
     const result = (await verify(module, client)) as
-      | Readonly<{ quoteIsToken0: boolean }>
-      | undefined;
+      Readonly<{ quoteIsToken0: boolean }> | undefined;
 
     expect(result?.quoteIsToken0).toBe(false);
   });
