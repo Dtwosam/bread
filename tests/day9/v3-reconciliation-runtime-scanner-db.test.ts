@@ -234,10 +234,12 @@ describeDb("Day 9 REC-06 runtime canonical event scanner", () => {
 
   it("scans canonical Bread events plus exact post-completion V3 Swap identities including dust", async () => {
     const dbModule = await import("../../packages/db/src/index.ts");
-    const indexerModule = (await import(
-      "../../apps/indexer/src/index.ts"
-    )) as Readonly<Record<string, unknown>>;
-    const createScanner = indexerModule.createReconciliationCanonicalEventScanner;
+    const indexerModule =
+      (await import("../../apps/indexer/src/index.ts")) as Readonly<
+        Record<string, unknown>
+      >;
+    const createScanner =
+      indexerModule.createReconciliationCanonicalEventScanner;
     expect(createScanner).toBeTypeOf("function");
     if (typeof createScanner !== "function") return;
 
@@ -265,10 +267,14 @@ describeDb("Day 9 REC-06 runtime canonical event scanner", () => {
     };
 
     const scanner = (
-      createScanner as (input: Readonly<Record<string, unknown>>) => (
+      createScanner as (
+        input: Readonly<Record<string, unknown>>,
+      ) => (
         fromBlock: bigint,
         toBlock: bigint,
-      ) => Promise<readonly Readonly<{ transactionHash: string; logIndex: number }>[]>
+      ) => Promise<
+        readonly Readonly<{ transactionHash: string; logIndex: number }>[]
+      >
     )({
       db: dbModule.createBreadDb(pool),
       client,

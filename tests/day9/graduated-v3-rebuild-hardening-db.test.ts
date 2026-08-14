@@ -208,7 +208,9 @@ async function seedStackRegistry(pool: TestPool): Promise<void> {
   );
 }
 
-function readClient(input: Readonly<{ malformedSwap?: boolean; conflictingPool?: boolean }> = {}) {
+function readClient(
+  input: Readonly<{ malformedSwap?: boolean; conflictingPool?: boolean }> = {},
+) {
   return {
     readContract: async (request: Readonly<Record<string, unknown>>) => {
       const fn = String(request.functionName);
@@ -229,7 +231,8 @@ function readClient(input: Readonly<{ malformedSwap?: boolean; conflictingPool?:
           graduationConfigHash,
         };
       }
-      if (target === factory && fn === "stackVersion") return context.stackVersion;
+      if (target === factory && fn === "stackVersion")
+        return context.stackVersion;
       if (target === curve) {
         const values: Record<string, unknown> = {
           token,
@@ -268,7 +271,9 @@ function readClient(input: Readonly<{ malformedSwap?: boolean; conflictingPool?:
         [`${adapter}:positionManager`]: positionManager,
         [`${adapter}:v3Factory`]: dexFactory,
         [`${adapter}:fee`]: 3000n,
-        [`${dexFactory}:getPool`]: input.conflictingPool ? conflictingPool : poolAddress,
+        [`${dexFactory}:getPool`]: input.conflictingPool
+          ? conflictingPool
+          : poolAddress,
         [`${poolAddress}:token0`]: quoteAsset,
         [`${poolAddress}:token1`]: token,
         [`${poolAddress}:fee`]: 3000n,
@@ -277,7 +282,9 @@ function readClient(input: Readonly<{ malformedSwap?: boolean; conflictingPool?:
       if (key in v3Values) return v3Values[key];
       throw new Error(`unexpected read ${target}.${fn}`);
     },
-    getLogs: async () => [input.malformedSwap ? swapLog(1n, 1n) : swapLog(500n, -50n)],
+    getLogs: async () => [
+      input.malformedSwap ? swapLog(1n, 1n) : swapLog(500n, -50n),
+    ],
     getTransaction: async () => ({
       hash: completionTx,
       blockNumber: 120n,
@@ -460,16 +467,19 @@ describeDb("Day 9 graduated V3 rebuild hardening", () => {
   it.each([
     ["malformed same-sign Swap", { malformedSwap: true }],
     ["conflicting factory pool identity", { conflictingPool: true }],
-  ])("aborts %s before any selected range state is committed", async (_label, options) => {
-    await expect(rebuild(readClient(options))).rejects.toThrow();
-    expect(await selectedReadModelCounts(pool)).toMatchObject({
-      launches: 0,
-      state: 0,
-      journal: 0,
-      trades: 0,
-      candles: 0,
-      metrics: 0,
-      checkpoints: 0,
-    });
-  });
+  ])(
+    "aborts %s before any selected range state is committed",
+    async (_label, options) => {
+      await expect(rebuild(readClient(options))).rejects.toThrow();
+      expect(await selectedReadModelCounts(pool)).toMatchObject({
+        launches: 0,
+        state: 0,
+        journal: 0,
+        trades: 0,
+        candles: 0,
+        metrics: 0,
+        checkpoints: 0,
+      });
+    },
+  );
 });

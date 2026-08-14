@@ -1,4 +1,8 @@
-import { ReadRepository, type BreadDb, type IndexerProtocolContext } from "../../../packages/db/src/index.js";
+import {
+  ReadRepository,
+  type BreadDb,
+  type IndexerProtocolContext,
+} from "../../../packages/db/src/index.js";
 import { readReconciliationGraduatedVenues } from "../../../packages/db/src/repositories/graduation-reconciliation.js";
 import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
 import type { Address } from "../../../packages/types/src/index.js";
@@ -129,7 +133,9 @@ export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
       const tokenAddress = address(venue.tokenAddress, "V3 token");
       const curveAddress = curveByToken.get(tokenAddress);
       if (curveAddress === undefined) {
-        throw new Error("reconciliation V3 venue has no selected launch identity");
+        throw new Error(
+          "reconciliation V3 venue has no selected launch identity",
+        );
       }
       if (
         venue.graduatedVenueAddress === null ||
@@ -176,7 +182,9 @@ export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
       const key = canonicalKey(context.chainId, log);
       const existing = byIdentity.get(key);
       if (existing && !sameCanonicalLog(existing, log)) {
-        throw new Error(`contradictory reconciliation canonical log identity: ${key}`);
+        throw new Error(
+          `contradictory reconciliation canonical log identity: ${key}`,
+        );
       }
       byIdentity.set(key, existing ?? log);
     }
