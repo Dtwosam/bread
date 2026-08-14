@@ -31,7 +31,9 @@ export function createLaunchReducer(
     if (event.eventName !== "LaunchCreated") return;
     const snapshot = snapshots.get(eventKey(event));
     if (!snapshot)
-      throw new Error(`missing normalized launch snapshot for ${eventKey(event)}`);
+      throw new Error(
+        `missing normalized launch snapshot for ${eventKey(event)}`,
+      );
     if (snapshot.reservedTokensBaseline > snapshot.initialSupply) {
       throw new Error("launch reserved token baseline exceeds initial supply");
     }
@@ -154,10 +156,12 @@ export function createFeeAdminGraduationReducer(
   };
 }
 
-export function createHolderReducer(input: Readonly<{
-  context: ProtocolContext;
-  launchProtocolAddresses?: ReadonlyMap<string, readonly string[]>;
-}>): ProjectionReducer {
+export function createHolderReducer(
+  input: Readonly<{
+    context: ProtocolContext;
+    launchProtocolAddresses?: ReadonlyMap<string, readonly string[]>;
+  }>,
+): ProjectionReducer {
   const baseProtocolAddresses = [
     input.context.factoryAddress,
     ...Object.values(input.context.addresses).filter(
