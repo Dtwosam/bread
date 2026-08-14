@@ -97,6 +97,9 @@ jobs:
           apps/api/src/routes/feed.ts
           apps/api/src/routes/portfolio.ts
           apps/indexer/src/apply-range.ts
+          apps/indexer/src/catch-up.ts
+          apps/indexer/src/lan/indexer-runner.ts
+          apps/indexer/src/post-commit.ts
           apps/indexer/src/trades.ts
           apps/indexer/src/reducers.ts
           apps/indexer/src/graduated-pools.ts
@@ -120,6 +123,8 @@ jobs:
           tests/day9/graduated-v3-portfolio-db.test.ts
           tests/day9/v3-cache-invalidation-apply-range-db.test.ts
           tests/day9/v3-cache-invalidation-publisher.test.ts
+          tests/day9/v3-cache-runtime-composition.test.ts
+          tests/day9/v3-cache-invalidation-runner.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
           tests/day9/v3-cache-identity.test.ts
