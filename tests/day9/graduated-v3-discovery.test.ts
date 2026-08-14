@@ -41,7 +41,9 @@ type DiscoveryModule = Readonly<{
 }>;
 
 async function loadDiscoveryModule(): Promise<DiscoveryModule> {
-  return (await import("../../apps/indexer/src/graduated-pools.js")) as DiscoveryModule;
+  return (await import(
+    "../../apps/indexer/src/graduated-pools.js"
+  )) as DiscoveryModule;
 }
 
 function address(value: number): string {
@@ -96,7 +98,9 @@ function log(
 
 async function discover(
   module: DiscoveryModule,
-  input: Parameters<NonNullable<DiscoveryModule["discoverGraduatedV3SwapLogs"]>>[0],
+  input: Parameters<
+    NonNullable<DiscoveryModule["discoverGraduatedV3SwapLogs"]>
+  >[0],
 ) {
   expect(module.discoverGraduatedV3SwapLogs).toBeTypeOf("function");
   return module.discoverGraduatedV3SwapLogs?.(input);
@@ -131,7 +135,10 @@ describe("Day 9 bounded exact graduated V3 Swap discovery", () => {
     expect(requests).toHaveLength(2);
     expect(requests.map((request) => request.fromBlock)).toEqual([100n, 110n]);
     expect(requests.every((request) => request.toBlock === 120n)).toBe(true);
-    expect(JSON.stringify(requests)).not.toContain(entries[2].poolAddress);
+    const queriedAddresses = requests.flatMap(
+      (request) => request.address as readonly string[],
+    );
+    expect(queriedAddresses).not.toContain(entries[2].poolAddress);
     expect(result?.map((item) => item.address)).toEqual([
       entries[0].poolAddress,
       entries[1].poolAddress,
@@ -203,7 +210,9 @@ describe("Day 9 bounded exact graduated V3 Swap discovery", () => {
 
   it("chunks exact pool addresses deterministically at the existing provider-safe bound", async () => {
     const module = await loadDiscoveryModule();
-    const entries = Array.from({ length: 65 }, (_, index) => entry(index + 1, 1n)).reverse();
+    const entries = Array.from({ length: 65 }, (_, index) =>
+      entry(index + 1, 1n),
+    ).reverse();
     const requests: Array<Readonly<Record<string, unknown>>> = [];
 
     await discover(module, {
@@ -220,8 +229,8 @@ describe("Day 9 bounded exact graduated V3 Swap discovery", () => {
     });
 
     expect(requests).toHaveLength(2);
-    expect((requests[0].address as readonly string[])).toHaveLength(64);
-    expect((requests[1].address as readonly string[])).toHaveLength(1);
+    expect(requests[0].address as readonly string[]).toHaveLength(64);
+    expect(requests[1].address as readonly string[]).toHaveLength(1);
     const queried = requests.flatMap(
       (request) => request.address as readonly string[],
     );
