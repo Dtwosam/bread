@@ -118,11 +118,31 @@ describe("Day 9 immutable graduated V3 candidate verification", () => {
     const { client, calls } = fakeClient();
 
     const result = (await verify(module, client)) as
-      Readonly<{ poolAddress: string; feeTier: number }> | undefined;
+      | Readonly<{
+          poolAddress: string;
+          feeTier: number;
+          quoteIsToken0: boolean;
+        }>
+      | undefined;
 
     expect(result?.poolAddress).toBe(pool);
     expect(result?.feeTier).toBe(3000);
+    expect(result?.quoteIsToken0).toBe(true);
     expect(calls.some((call) => call.functionName === "liquidity")).toBe(false);
+  });
+
+  it("retains verified ordering when the quote asset is token1", async () => {
+    const module = await loadVerificationModule();
+    const { client } = fakeClient([
+      { address: pool, functionName: "token0", value: token },
+      { address: pool, functionName: "token1", value: usdc },
+    ]);
+
+    const result = (await verify(module, client)) as
+      | Readonly<{ quoteIsToken0: boolean }>
+      | undefined;
+
+    expect(result?.quoteIsToken0).toBe(false);
   });
 
   it("fails closed for launch/completion authority mismatch", async () => {
