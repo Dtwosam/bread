@@ -49,12 +49,14 @@ jobs:
         run: |
           set -euo pipefail
           test -f docs/evidence/day9-release-candidate-rehearsal.md
-          grep -Fq 'DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_PHYSICAL_MATRIX_AND_EXTERNAL_CI' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_PHYSICAL_MATRIX_ONLY' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'EMPTY_ENVIRONMENT_TO_USABLE_LAUNCHPAD = PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'POST_GRADUATION_V3_INDEXING_REBUILD_RECONCILE = PASS' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'ROLLBACK = PASS' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'RECONCILE = PASS' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'RECOVERY_DRILLS = PASS_REAL_SAFE_THRESHOLD_RECOVERY' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'SUPPORTED_MATRIX = BLOCKED_EXTERNAL_EXECUTION_REQUIRED' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'EXACT_HEAD_GITHUB_ACTIONS_AUTOMATED_RELEASE = PASS_AT_5a8a6ab49c0f4dd6cd41f200792665ae26a1168e' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'RC_TAG_CREATED = false' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED' docs/current-build-state.yaml
           grep -Fq 'day9_started: true' docs/current-build-state.yaml
@@ -85,7 +87,8 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq '| iOS Safari | EXTERNAL_EXECUTION_REQUIRED |' docs/evidence/day9-browser-device-wallet-matrix.md
-          grep -Fq '| Android Chrome physical | EXTERNAL_EXECUTION_REQUIRED |' docs/evidence/day9-browser-device-wallet-matrix.md
+          grep -Fq '| Android Chrome physical | PARTIAL_PASS_EXTERNAL_USER_EXECUTION |' docs/evidence/day9-browser-device-wallet-matrix.md
+          grep -Fq 'remaining full physical representative Android Chrome checklist' docs/evidence/day9-browser-device-wallet-matrix.md
           grep -Fq '| Desktop Edge | EXTERNAL_EXECUTION_REQUIRED |' docs/evidence/day9-browser-device-wallet-matrix.md
           grep -Fq 'NO_FIRST_CLASS_WALLET_BROWSER_CLAIM' docs/evidence/day9-browser-device-wallet-matrix.md
       - name: Prove no Day-9 RC PASS tag exists while blocked
