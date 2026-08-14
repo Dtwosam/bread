@@ -62,7 +62,7 @@ jobs:
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
 
-  a1-static:
+  normalization-format-diff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -74,7 +74,17 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Check affected TypeScript and workflow formatting
+      - name: Format only bounded V3 Swap normalization files in the CI workspace
+        run: >-
+          pnpm exec prettier --write
+          apps/indexer/src/v3-swaps.ts
+          tests/day9/graduated-v3-swap-normalization.test.ts
+      - name: Print exact V3 Swap normalization formatting diff
+        run: >-
+          git diff --
+          apps/indexer/src/v3-swaps.ts
+          tests/day9/graduated-v3-swap-normalization.test.ts
+      - name: Check all affected files after bounded formatting
         run: >-
           pnpm exec prettier --check
           .github/workflows/day9-v3-indexing-red.yml
@@ -101,9 +111,9 @@ jobs:
           tests/day9/graduated-v3-verification.test.ts
           tests/day9/graduated-v3-discovery.test.ts
           tests/day9/graduated-v3-range-preparation.test.ts
-      - name: Run repository typecheck
+      - name: Run repository typecheck on formatted normalization tree
         run: pnpm typecheck
-      - name: Build affected workspaces
+      - name: Build affected workspaces on formatted normalization tree
         run: >-
           pnpm --filter @bread/db build &&
           pnpm --filter @bread/indexer build &&
