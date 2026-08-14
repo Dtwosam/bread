@@ -65,7 +65,7 @@ jobs:
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
 
-  red-format-diff:
+  green-format-diff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -77,10 +77,16 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Format only the new venue-neutral projection RED in CI workspace
-        run: pnpm exec prettier --write tests/day9/graduated-v3-trade-projection-db.test.ts
-      - name: Print exact venue-neutral projection RED formatting diff
-        run: git diff -- tests/day9/graduated-v3-trade-projection-db.test.ts
+      - name: Format only bounded venue-neutral projection files in CI workspace
+        run: >-
+          pnpm exec prettier --write
+          packages/db/src/repositories/trades.ts
+          tests/day9/graduated-v3-trade-projection-db.test.ts
+      - name: Print exact venue-neutral projection formatting diff
+        run: >-
+          git diff --
+          packages/db/src/repositories/trades.ts
+          tests/day9/graduated-v3-trade-projection-db.test.ts
       - name: Check all affected files after bounded formatting
         run: >-
           pnpm exec prettier --check
@@ -110,12 +116,19 @@ jobs:
           tests/day9/graduated-v3-verification.test.ts
           tests/day9/graduated-v3-discovery.test.ts
           tests/day9/graduated-v3-range-preparation.test.ts
+      - name: Run repository typecheck on formatted venue-neutral projection tree
+        run: pnpm typecheck
+      - name: Build affected workspaces on formatted venue-neutral projection tree
+        run: >-
+          pnpm --filter @bread/db build &&
+          pnpm --filter @bread/indexer build &&
+          pnpm --filter @bread/protocol-sdk build
 
   a2-types-red:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@49933ea5288ca8642d1e84afbd3f7d6820020
         with:
           node-version: 24.18.0
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
@@ -125,9 +138,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Check A2 type-test formatting
         run: pnpm exec prettier --check tests/day9/post-graduation-v3-types.test.ts
-      - name: Compile shared venue/API and DB projection type contract
+      - name: Compile shared venue/API type contract
         run: >-
           pnpm exec tsc --ignoreConfig --noEmit --strict --skipLibCheck
-          --types node
           --target ES2022 --module NodeNext --moduleResolution NodeNext
           tests/day9/post-graduation-v3-types.test.ts
