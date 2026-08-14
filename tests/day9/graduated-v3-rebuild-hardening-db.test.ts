@@ -355,7 +355,7 @@ function chainReader() {
 async function marketDigest(pool: TestPool): Promise<string> {
   const result = await pool.query(
     `SELECT md5(jsonb_build_object(
-      'candles', COALESCE((SELECT jsonb_agg(to_jsonb(c) ORDER BY interval, bucket_start)
+      'candles', COALESCE((SELECT jsonb_agg(to_jsonb(c) ORDER BY interval_seconds, bucket_start)
         FROM market_candles c WHERE chain_id=$1 AND token_address=$2), '[]'::jsonb),
       'metrics', COALESCE((SELECT jsonb_agg(to_jsonb(m) - 'updated_at' ORDER BY token_address)
         FROM token_metrics m WHERE chain_id=$1 AND token_address=$2), '[]'::jsonb)
