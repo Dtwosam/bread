@@ -65,6 +65,7 @@ jobs:
           tests/day9/graduated-v3-apply-range-db.test.ts
           tests/day9/graduated-v3-same-range-apply-db.test.ts
           tests/day9/graduated-v3-portfolio-db.test.ts
+          tests/day9/v3-cache-invalidation-apply-range-db.test.ts
           tests/day6/trade-conformance.test.ts
           tests/day6/trade-vertical.test.ts
           tests/day6/holders-portfolio.test.ts
@@ -114,6 +115,7 @@ jobs:
           tests/day9/graduated-v3-apply-range-db.test.ts
           tests/day9/graduated-v3-same-range-apply-db.test.ts
           tests/day9/graduated-v3-portfolio-db.test.ts
+          tests/day9/v3-cache-invalidation-apply-range-db.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
           tests/day9/v3-cache-identity.test.ts
