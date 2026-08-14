@@ -1,0 +1,29 @@
+name: day9-publisher-prettier-probe
+
+on:
+  push:
+    branches:
+      - day9/synthra-arc-testnet-v3-candidate
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prettier-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: cp tests/day9/v3-cache-invalidation-publisher.test.ts /tmp/before.ts
+      - run: pnpm exec prettier --write tests/day9/v3-cache-invalidation-publisher.test.ts
+      - name: Print exact diff
+        run: diff -u /tmp/before.ts tests/day9/v3-cache-invalidation-publisher.test.ts || true
+      - run: pnpm exec prettier --check tests/day9/v3-cache-invalidation-publisher.test.ts
