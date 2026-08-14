@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 type RangeModule = Readonly<{
-  prepareGraduatedV3Range?: (input: Readonly<Record<string, unknown>>) => Promise<unknown>;
+  prepareGraduatedV3Range?: (
+    input: Readonly<Record<string, unknown>>,
+  ) => Promise<unknown>;
 }>;
 
 async function loadRangeModule(): Promise<RangeModule> {
@@ -110,7 +112,10 @@ function client() {
   };
 }
 
-async function prepare(module: RangeModule, input: Readonly<Record<string, unknown>>) {
+async function prepare(
+  module: RangeModule,
+  input: Readonly<Record<string, unknown>>,
+) {
   expect(module.prepareGraduatedV3Range).toBeTypeOf("function");
   return module.prepareGraduatedV3Range?.(input);
 }
@@ -140,17 +145,25 @@ describe("Day 9 same-range graduated V3 preparation", () => {
           registry: Readonly<{
             byToken: ReadonlyMap<string, Readonly<{ poolAddress: string }>>;
           }>;
-          sameRangeVerified: readonly Readonly<{ tokenAddress: string; poolAddress: string }>[];
+          sameRangeVerified: readonly Readonly<{
+            tokenAddress: string;
+            poolAddress: string;
+          }>[];
         }>
       | undefined;
 
     expect(readLaunchCalls).toBe(0);
     expect(result?.registry.byToken.get(token)?.poolAddress).toBe(pool);
-    expect(result?.registry.byToken.get(persistedToken)?.poolAddress).toBe(persistedPool);
+    expect(result?.registry.byToken.get(persistedToken)?.poolAddress).toBe(
+      persistedPool,
+    );
     expect(result?.sameRangeVerified).toEqual([
       expect.objectContaining({ tokenAddress: token, poolAddress: pool }),
     ]);
-    expect(chain.logRequests.map((request) => request.fromBlock)).toEqual([100n, 110n]);
+    expect(chain.logRequests.map((request) => request.fromBlock)).toEqual([
+      100n,
+      110n,
+    ]);
   });
 
   it("uses the persisted launch snapshot for an existing token that graduates in the current range", async () => {
@@ -201,7 +214,9 @@ describe("Day 9 same-range graduated V3 preparation", () => {
         fromBlock: 100n,
         toBlock: 120n,
       }),
-    ).rejects.toThrow("missing canonical launch snapshot for GraduationCompleted");
+    ).rejects.toThrow(
+      "missing canonical launch snapshot for GraduationCompleted",
+    );
     expect(chain.logRequests).toHaveLength(0);
   });
 });
