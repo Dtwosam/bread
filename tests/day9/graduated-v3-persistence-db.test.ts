@@ -81,6 +81,7 @@ function verifiedVenue(transactionIndex = 4) {
     tokenAddress: token,
     poolAddress,
     feeTier: 3000,
+    quoteIsToken0: true,
     completion: {
       blockNumber: 105n,
       transactionIndex,
@@ -168,6 +169,7 @@ describe.skipIf(!RUN_DB)(
           graduated_venue_kind,
           graduated_venue_address,
           graduated_venue_fee_tier,
+          to_jsonb(launch_state)->>'graduated_venue_quote_is_token0' AS graduated_venue_quote_is_token0,
           graduation_completed_block::text,
           graduation_completed_transaction_index,
           graduation_completed_log_index
@@ -183,6 +185,7 @@ describe.skipIf(!RUN_DB)(
           graduated_venue_kind: "UNISWAP_V3",
           graduated_venue_address: poolAddress,
           graduated_venue_fee_tier: 3000,
+          graduated_venue_quote_is_token0: "true",
           graduation_completed_block: "105",
           graduation_completed_transaction_index: 4,
           graduation_completed_log_index: 7,
