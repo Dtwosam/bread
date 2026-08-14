@@ -1,3 +1,5 @@
+import { projectionCacheGenerationKey } from '../../../packages/types/src/index.js';
+
 export type CacheRedisSetOptions = Readonly<{
   NX?: boolean;
   PX?: number;
@@ -74,7 +76,10 @@ export class BreadCache {
   }
 
   private generationKey(channel: string): string {
-    return `bread:generation:${this.input.schemaVersion}:${boundedPart(channel, MAX_CHANNEL_LENGTH, 'cache channel')}`;
+    return projectionCacheGenerationKey({
+      schemaVersion: this.input.schemaVersion,
+      channel: boundedPart(channel, MAX_CHANNEL_LENGTH, 'cache channel'),
+    });
   }
 
   private valueKey(channel: string, generation: string, key: string): string {
