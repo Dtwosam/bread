@@ -116,7 +116,11 @@ async function normalize(
   return module.normalizeGraduatedV3SwapLogs?.(input);
 }
 
-function baseInput(client: unknown, logs: readonly unknown[], quoteIsToken0 = true) {
+function baseInput(
+  client: unknown,
+  logs: readonly unknown[],
+  quoteIsToken0 = true,
+) {
   return {
     client,
     chainId,
@@ -265,10 +269,9 @@ describe("Day 9 graduated V3 Swap normalization", () => {
     await expect(
       normalize(
         module,
-        baseInput(
-          chainClient({ transactionHash: hash("c") }).value,
-          [swapLog(8, 125n, -50n)],
-        ),
+        baseInput(chainClient({ transactionHash: hash("c") }).value, [
+          swapLog(8, 125n, -50n),
+        ]),
       ),
     ).rejects.toThrow("V3 Swap transaction hash mismatch");
 
@@ -285,10 +288,9 @@ describe("Day 9 graduated V3 Swap normalization", () => {
     await expect(
       normalize(
         module,
-        baseInput(
-          chainClient({ from: zeroAddress }).value,
-          [swapLog(8, 125n, -50n)],
-        ),
+        baseInput(chainClient({ from: zeroAddress }).value, [
+          swapLog(8, 125n, -50n),
+        ]),
       ),
     ).rejects.toThrow("V3 Swap transaction sender is not an address");
   });

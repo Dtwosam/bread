@@ -2,11 +2,7 @@ import { decodeEventLog } from "viem";
 
 import type { CanonicalIndexedEvent } from "../../../packages/db/src/index.js";
 import { v3SwapEvent } from "../../../packages/protocol-sdk/src/v3-abi.js";
-import type {
-  Address,
-  Hex,
-  Hex32,
-} from "../../../packages/types/src/index.js";
+import type { Address, Hex, Hex32 } from "../../../packages/types/src/index.js";
 
 import type { RpcLog } from "./discovery.js";
 import type { GraduatedPoolRegistryEntry } from "./graduated-pools.js";
@@ -65,9 +61,7 @@ export type NormalizedGraduatedV3Swaps = Readonly<{
 }>;
 
 type V3SwapReadClient = Readonly<{
-  getTransaction: (
-    request: Readonly<{ hash: Hex32 }>,
-  ) => Promise<
+  getTransaction: (request: Readonly<{ hash: Hex32 }>) => Promise<
     Readonly<{
       hash?: unknown;
       blockNumber?: unknown;
@@ -212,7 +206,9 @@ export function classifyV3SwapAmounts(
   throw new Error("invalid canonical V3 Swap signed amounts");
 }
 
-function normalizeSwapArgs(value: Readonly<Record<string, unknown>>): V3SwapArgs {
+function normalizeSwapArgs(
+  value: Readonly<Record<string, unknown>>,
+): V3SwapArgs {
   return {
     sender: requiredAddress(value.sender, "V3 Swap sender"),
     recipient: requiredAddress(value.recipient, "V3 Swap recipient"),
@@ -226,7 +222,8 @@ function normalizeSwapArgs(value: Readonly<Record<string, unknown>>): V3SwapArgs
 
 function decodeSwapArgs(log: RpcLog): V3SwapArgs {
   if (log.eventName !== undefined) {
-    if (log.eventName !== "Swap") throw new Error("invalid canonical V3 Swap log");
+    if (log.eventName !== "Swap")
+      throw new Error("invalid canonical V3 Swap log");
     return normalizeSwapArgs(log.args ?? {});
   }
 
