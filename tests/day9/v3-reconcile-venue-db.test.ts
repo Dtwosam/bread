@@ -5,10 +5,8 @@ import type { ProtocolContext } from "../../packages/protocol-sdk/src/context.js
 
 const RUN_DB = process.env.BREAD_DB_INTEGRATION === "1";
 const describeDb = RUN_DB ? describe : describe.skip;
-const address = (value: number) =>
-  `0x${value.toString(16).padStart(40, "0")}`;
-const hash = (value: number) =>
-  `0x${value.toString(16).padStart(64, "0")}`;
+const address = (value: number) => `0x${value.toString(16).padStart(40, "0")}`;
+const hash = (value: number) => `0x${value.toString(16).padStart(64, "0")}`;
 
 const factory = address(1);
 const quoteAsset = address(2);
@@ -76,7 +74,9 @@ const runtimeHashes = {
   graduationAdapter: hash(9),
 };
 
-function chainReader(input?: Readonly<{ venueAddress?: string; includeSwap?: boolean }>) {
+function chainReader(
+  input?: Readonly<{ venueAddress?: string; includeSwap?: boolean }>,
+) {
   const venueAddress = input?.venueAddress ?? poolAddress;
   const includeSwap = input?.includeSwap ?? true;
   const runtimeByAddress: Record<string, string> = {
@@ -318,9 +318,9 @@ describeDb("Day 9 graduated V3 reconciliation continuity", () => {
 
   it("REC-06 includes retained V3 Swap journal identity, including journal-only dust evidence", async () => {
     const passing = await reconcile(chainReader());
-    expect(
-      passing.checks.find((check) => check.id === "REC-06")?.status,
-    ).toBe("PASS");
+    expect(passing.checks.find((check) => check.id === "REC-06")?.status).toBe(
+      "PASS",
+    );
 
     const missingSwap = await reconcile(chainReader({ includeSwap: false }));
     expect(
