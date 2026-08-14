@@ -108,9 +108,15 @@ export function createTradeReducer(normalizedTrades: readonly NormalizedTrade[])
   ]));
 
   return async (transaction, event) => {
-    if (event.eventName !== 'CurveBuy' && event.eventName !== 'CurveSell') return;
+    const isCurveTrade = event.eventName === 'CurveBuy' || event.eventName === 'CurveSell';
+    const isV3Swap = event.eventName === 'Swap' && event.contractRole === 'V3_POOL';
+    if (!isCurveTrade && !isV3Swap) return;
+
     const trade = byEvent.get(eventKey(event));
-    if (!trade) throw new Error(`missing normalized trade for ${eventKey(event)}`);
+    if (!trade) {
+      if (isV3Swap) return;
+      throw new Error(`missing normalized trade for ${eventKey(event)}`);
+    }
 
     await applyCanonicalTradeProjection(transaction as BreadDb, {
       ...trade,
