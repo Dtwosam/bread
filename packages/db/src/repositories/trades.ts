@@ -336,7 +336,7 @@ export async function applyCanonicalTradeProjection(
   trade: CanonicalTradeProjection,
 ): Promise<void> {
   const venueKind = trade.venueKind ?? "BREAD_CURVE";
-  const venueAddress = trade.venueAddress.toLowerCase();
+  const venueAddress = (trade.venueAddress ?? trade.curve).toLowerCase();
   const venueFeeTier = trade.venueFeeTier ?? null;
 
   const inserted = await db.execute(sql`
