@@ -114,11 +114,15 @@ for (const token of [
   "indexedThroughBlockHash:",
   "indexedThroughBlockTimestamp:",
   "servedAt:",
-  "source: 'bread-indexer';",
   "status: FreshnessStatus;",
 ]) {
   requireText(apiTypes, token, "FreshnessMeta");
 }
+requirePattern(
+  apiTypes,
+  /source:\s*["']bread-indexer["'];/,
+  "FreshnessMeta source",
+);
 
 const migration = await readRequired(
   "packages/db/drizzle/0001_day6_read_stack.sql",
