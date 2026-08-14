@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
+import { stackFeedProjectionCacheChannel } from '../../../../packages/types/src/index.js';
 import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
 import {
   decodeNewFeedCursor,
@@ -133,7 +134,11 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
     const cacheKey = `view=${view}&limit=${parsedLimit}&cursor=${query.cursor ?? ''}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
-          channel: `stack:${deps.context.chainId}:${deps.context.stackVersion}:feed`,
+          channel: stackFeedProjectionCacheChannel({
+            chainId: deps.context.chainId,
+            stackVersion: deps.context.stackVersion,
+            factoryAddress: deps.context.factoryAddress,
+          }),
           key: cacheKey,
           load,
         })
