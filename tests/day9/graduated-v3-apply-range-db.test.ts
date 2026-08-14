@@ -5,6 +5,7 @@ import type { ProtocolContext } from "../../packages/protocol-sdk/src/context.js
 import type { Address, Hex32 } from "../../packages/types/src/index.js";
 
 const RUN_DB = process.env.BREAD_DB_INTEGRATION === "1";
+const describeDb = RUN_DB ? describe : describe.skip;
 const address = (nibble: string) => `0x${nibble.repeat(40)}` as Address;
 const hash = (nibble: string) => `0x${nibble.repeat(64)}` as Hex32;
 
@@ -79,11 +80,16 @@ const swapLog = {
 };
 
 type TestPool = {
-  query: (text: string, values?: readonly unknown[]) => Promise<{ rows: unknown[] }>;
+  query: (
+    text: string,
+    values?: readonly unknown[],
+  ) => Promise<{ rows: unknown[] }>;
   end: () => Promise<void>;
 };
 
-const requireFromDb = createRequire(new URL("../../packages/db/package.json", import.meta.url));
+const requireFromDb = createRequire(
+  new URL("../../packages/db/package.json", import.meta.url),
+);
 const { Pool } = requireFromDb("pg") as {
   Pool: new (config: Record<string, unknown>) => TestPool;
 };
@@ -133,7 +139,7 @@ async function seedPersistedGraduatedLaunch(pool: TestPool): Promise<void> {
   );
 }
 
-describe.skipIf(!RUN_DB)("Day 9 persisted graduated V3 applyRange orchestration", () => {
+describeDb("Day 9 persisted graduated V3 applyRange orchestration", () => {
   const schemaName = `day9_v3_apply_range_${process.pid}`;
   let adminPool: TestPool;
   let pool: TestPool;
@@ -146,7 +152,10 @@ describe.skipIf(!RUN_DB)("Day 9 persisted graduated V3 applyRange orchestration"
     await adminPool.query("SELECT 1");
     await adminPool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`);
     await adminPool.query(`CREATE SCHEMA ${schemaName}`);
-    pool = new Pool({ connectionString, options: `-c search_path=${schemaName}` });
+    pool = new Pool({
+      connectionString,
+      options: `-c search_path=${schemaName}`,
+    });
   });
 
   afterAll(async () => {
@@ -178,7 +187,9 @@ describe.skipIf(!RUN_DB)("Day 9 persisted graduated V3 applyRange orchestration"
       db,
       client: {
         readContract: async () => {
-          throw new Error("persisted verified V3 identity must not be reread every range");
+          throw new Error(
+            "persisted verified V3 identity must not be reread every range",
+          );
         },
         getLogs: async (request: Readonly<Record<string, unknown>>) => {
           logRequests.push(request);
