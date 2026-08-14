@@ -1,37 +1,18 @@
-import { getAddress, parseAbi, type PublicClient } from "viem";
+import { getAddress, type PublicClient } from "viem";
 
 import type { Address, Hex32 } from "../../types/src/index.js";
 import { breadAbiRegistry } from "./abi/generated.js";
 import type { ProtocolContext } from "./context.js";
+import {
+  graduatedV3AdapterAbi,
+  v3FactoryAbi,
+  v3FactoryBoundDependencyAbi,
+  v3PoolAbi,
+} from "./v3-abi.js";
 import { poolAddressFromId } from "./v3-pool.js";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const V3_FAMILY = 2;
-
-const graduationAdapterAbi = parseAbi([
-  "function family() view returns (uint8)",
-  "function coordinator() view returns (address)",
-  "function configHash() view returns (bytes32)",
-  "function usdc() view returns (address)",
-  "function positionManager() view returns (address)",
-  "function v3Factory() view returns (address)",
-  "function fee() view returns (uint24)",
-]);
-
-const factoryLikeAbi = parseAbi([
-  "function getPool(address tokenA,address tokenB,uint24 fee) view returns (address pool)",
-]);
-
-const factoryBoundDependencyAbi = parseAbi([
-  "function factory() view returns (address)",
-]);
-
-const poolAbi = parseAbi([
-  "function token0() view returns (address)",
-  "function token1() view returns (address)",
-  "function fee() view returns (uint24)",
-  "function liquidity() view returns (uint128)",
-]);
 
 export type CanonicalTradeRoute =
   | Readonly<{ kind: "CURVE"; curve: Address }>
@@ -214,37 +195,37 @@ export async function resolveCanonicalTradeRoute(
   ] = await Promise.all([
     read<number | bigint>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "family",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "coordinator",
     } as never),
     read<Hex32>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "configHash",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "usdc",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "positionManager",
     } as never),
     read<Address>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "v3Factory",
     } as never),
     read<number | bigint>(client, {
       address: adapter,
-      abi: graduationAdapterAbi,
+      abi: graduatedV3AdapterAbi,
       functionName: "fee",
     } as never),
   ]);
@@ -277,12 +258,12 @@ export async function resolveCanonicalTradeRoute(
   const [routerFactory, quoterFactory] = await Promise.all([
     read<Address>(client, {
       address: dependencies.swapRouter,
-      abi: factoryBoundDependencyAbi,
+      abi: v3FactoryBoundDependencyAbi,
       functionName: "factory",
     } as never),
     read<Address>(client, {
       address: dependencies.quoter,
-      abi: factoryBoundDependencyAbi,
+      abi: v3FactoryBoundDependencyAbi,
       functionName: "factory",
     } as never),
   ]);
@@ -294,7 +275,7 @@ export async function resolveCanonicalTradeRoute(
   const pool = poolAddressFromId(field(graduation, "poolId", 5));
   const factoryPool = await read<Address>(client, {
     address: dependencies.factory,
-    abi: factoryLikeAbi,
+    abi: v3FactoryAbi,
     functionName: "getPool",
     args: [context.quoteAsset, token, fee],
   } as never);
@@ -304,22 +285,22 @@ export async function resolveCanonicalTradeRoute(
   const [token0, token1, poolFee, liquidity] = await Promise.all([
     read<Address>(client, {
       address: pool,
-      abi: poolAbi,
+      abi: v3PoolAbi,
       functionName: "token0",
     } as never),
     read<Address>(client, {
       address: pool,
-      abi: poolAbi,
+      abi: v3PoolAbi,
       functionName: "token1",
     } as never),
     read<number | bigint>(client, {
       address: pool,
-      abi: poolAbi,
+      abi: v3PoolAbi,
       functionName: "fee",
     } as never),
     read<bigint | number>(client, {
       address: pool,
-      abi: poolAbi,
+      abi: v3PoolAbi,
       functionName: "liquidity",
     } as never),
   ]);
