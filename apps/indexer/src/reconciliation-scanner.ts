@@ -4,21 +4,16 @@ import {
   type IndexerProtocolContext,
 } from "../../../packages/db/src/index.js";
 import { readReconciliationGraduatedVenues } from "../../../packages/db/src/repositories/graduation-reconciliation.js";
-import {
-  classifyBreadLog,
-  createBreadStackAbiBinding,
-  decodeBreadLog,
-  type ProtocolContext,
-} from "../../../packages/protocol-sdk/src/index.js";
-import type {
-  Address,
-  BreadContractRole,
-  Hex,
-} from "../../../packages/types/src/index.js";
+import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
+import type { Address } from "../../../packages/types/src/index.js";
 
 import { discoverRange, type LogClient, type RpcLog } from "./discovery.js";
 import { discoverGraduatedV3SwapLogs } from "./graduated-v3-discovery.js";
 import type { GraduatedPoolRegistryEntry } from "./graduated-pools.js";
+import {
+  normalizeTransactionLogs,
+  type ChainReadClient,
+} from "./normalize.js";
 
 export type ReconciliationCanonicalEventIdentity = Readonly<{
   transactionHash: string;
@@ -27,8 +22,17 @@ export type ReconciliationCanonicalEventIdentity = Readonly<{
 
 type ScannerInput = Readonly<{
   db: BreadDb;
-  client: LogClient;
+  client: LogClient & ChainReadClient;
   context: ProtocolContext;
+}>;
+
+type CanonicalScanLog = Readonly<{
+  transactionHash: string;
+  logIndex: number;
+  blockNumber: bigint;
+  blockHash: string;
+  transactionIndex: number;
+  address: string;
 }>;
 
 function indexerContext(context: ProtocolContext): IndexerProtocolContext {
@@ -73,7 +77,7 @@ function nonnegativeInteger(value: unknown, label: string): number {
   return value;
 }
 
-function compareLogs(left: RpcLog, right: RpcLog): number {
+function compareLogs(left: CanonicalScanLog, right: CanonicalScanLog): number {
   if (left.blockNumber !== right.blockNumber) {
     return left.blockNumber < right.blockNumber ? -1 : 1;
   }
@@ -84,7 +88,10 @@ function compareLogs(left: RpcLog, right: RpcLog): number {
   return left.transactionHash.localeCompare(right.transactionHash);
 }
 
-function sameCanonicalLog(left: RpcLog, right: RpcLog): boolean {
+function sameCanonicalLog(
+  left: CanonicalScanLog,
+  right: CanonicalScanLog,
+): boolean {
   return (
     left.address.toLowerCase() === right.address.toLowerCase() &&
     left.blockNumber === right.blockNumber &&
@@ -93,63 +100,19 @@ function sameCanonicalLog(left: RpcLog, right: RpcLog): boolean {
   );
 }
 
-function canonicalKey(chainId: number, log: RpcLog): string {
+function canonicalKey(chainId: number, log: CanonicalScanLog): string {
   return `${chainId}:${log.transactionHash.toLowerCase()}:${log.logIndex}`;
 }
 
-function breadRoles(
-  context: ProtocolContext,
-  launches: readonly Readonly<{ tokenAddress: string; curveAddress: string }>[],
-): Map<string, BreadContractRole> {
-  const roles = new Map<string, BreadContractRole>([
-    [context.factoryAddress.toLowerCase(), "FACTORY"],
-    [context.addresses.feePolicy.toLowerCase(), "FEE_POLICY"],
-    [context.addresses.feeEscrow.toLowerCase(), "FEE_ESCROW"],
-    [context.addresses.emergencyController.toLowerCase(), "EMERGENCY_CONTROLLER"],
-    [context.addresses.coordinator.toLowerCase(), "GRADUATION_COORDINATOR"],
-    [context.addresses.locker.toLowerCase(), "LOCKER"],
-  ]);
-  for (const launch of launches) {
-    roles.set(address(launch.tokenAddress, "launch token"), "LAUNCH_TOKEN");
-    roles.set(address(launch.curveAddress, "launch curve"), "CURVE");
-  }
-  return roles;
-}
-
-function canonicalBreadLogs(
-  logs: readonly RpcLog[],
-  context: ProtocolContext,
-  roles: ReadonlyMap<string, BreadContractRole>,
-): readonly RpcLog[] {
-  const binding = createBreadStackAbiBinding(context.stackVersion);
-  return logs.filter((log) => {
-    const role = roles.get(log.address.toLowerCase());
-    if (!role) throw new Error(`unregistered Bread log address: ${log.address}`);
-
-    let eventName: string;
-    let disposition: ReturnType<typeof classifyBreadLog>;
-    if (log.eventName !== undefined) {
-      eventName = log.eventName;
-      disposition = classifyBreadLog(role, eventName);
-    } else {
-      if (log.topics.length === 0) throw new Error("known Bread log is missing topic0");
-      const decoded = decodeBreadLog({
-        binding,
-        stackVersion: context.stackVersion,
-        role,
-        topics: log.topics as readonly Hex[],
-        data: log.data as Hex,
-      });
-      eventName = decoded.eventName;
-      disposition = decoded.disposition;
-    }
-
-    if (disposition === "KNOWN_IGNORED") return false;
-    if (disposition === "UNKNOWN") {
-      throw new Error(`unknown ${role} event: ${eventName}`);
-    }
-    return true;
-  });
+function rpcScanLog(log: RpcLog): CanonicalScanLog {
+  return {
+    transactionHash: log.transactionHash,
+    logIndex: log.logIndex,
+    blockNumber: log.blockNumber,
+    blockHash: log.blockHash,
+    transactionIndex: log.transactionIndex,
+    address: log.address,
+  };
 }
 
 export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
@@ -180,17 +143,29 @@ export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
       ]),
     );
 
-    const discoveredBreadLogs = await discoverRange(
+    const breadLogs = await discoverRange(
       input.client,
       input.context,
       knownLaunchAddresses,
       fromBlock,
       toBlock,
     );
-    const breadLogs = canonicalBreadLogs(
-      discoveredBreadLogs,
-      input.context,
-      breadRoles(input.context, launches),
+    const normalizedBread = await normalizeTransactionLogs({
+      client: input.client,
+      context: input.context,
+      knownLaunches: launches,
+      logs: breadLogs,
+      toBlock,
+    });
+    const breadCanonicalLogs: CanonicalScanLog[] = normalizedBread.events.map(
+      (event) => ({
+        transactionHash: event.identity.transactionHash,
+        logIndex: event.identity.logIndex,
+        blockNumber: event.blockNumber,
+        blockHash: event.blockHash,
+        transactionIndex: event.transactionIndex,
+        address: event.contractAddress,
+      }),
     );
 
     const venues = await readReconciliationGraduatedVenues(input.db, context);
@@ -246,8 +221,11 @@ export function createReconciliationCanonicalEventScanner(input: ScannerInput) {
       toBlock,
     });
 
-    const byIdentity = new Map<string, RpcLog>();
-    for (const log of [...breadLogs, ...v3Logs]) {
+    const byIdentity = new Map<string, CanonicalScanLog>();
+    for (const log of [
+      ...breadCanonicalLogs,
+      ...v3Logs.map((log) => rpcScanLog(log)),
+    ]) {
       const key = canonicalKey(context.chainId, log);
       const existing = byIdentity.get(key);
       if (existing && !sameCanonicalLog(existing, log)) {
