@@ -87,8 +87,15 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Check A2 type-test formatting
-        run: pnpm exec prettier --check tests/day9/post-graduation-v3-types.test.ts
+      - name: Format A2 type test in runner workspace
+        run: pnpm exec prettier --write tests/day9/post-graduation-v3-types.test.ts
+      - name: Export formatted A2 type test
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: day9-a2-types-prettier
+          path: tests/day9/post-graduation-v3-types.test.ts
+          if-no-files-found: error
+          retention-days: 1
       - name: Compile shared venue/API type contract
         run: >-
           pnpm exec tsc --noEmit --strict --skipLibCheck
