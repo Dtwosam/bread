@@ -13,6 +13,7 @@ export type IndexerCheckpoint = Readonly<{
 export type IndexerCatchUpResult = Readonly<{
   caughtUp: boolean;
   cycles: number;
+  degradedPostCommitCycles: number;
   checkpoint: IndexerCheckpoint;
   observedHeadBlock: bigint;
 }>;
@@ -66,11 +67,12 @@ export async function runIndexerCatchUp<TApply extends ReplayApplyResult>(
   }
 
   let cycles = 0;
+  let degradedPostCommitCycles = 0;
   while (checkpoint.blockNumber < observedHeadBlock && cycles < maxCycles) {
     const priorCheckpoint = checkpoint;
     const targetBlock = boundedTarget(priorCheckpoint.blockNumber, observedHeadBlock, maxBatchBlocks);
 
-    await replayOverlap({
+    const replay = await replayOverlap({
       context: input.context,
       checkpoint: priorCheckpoint,
       getBlockHash: input.getBlockHash,
@@ -80,6 +82,7 @@ export async function runIndexerCatchUp<TApply extends ReplayApplyResult>(
       applyRange: input.applyRange,
       publish: input.publish,
     });
+    if (replay.postCommit === 'DEGRADED') degradedPostCommitCycles += 1;
 
     const committed = await input.readCommittedCheckpoint();
     if (committed.blockNumber < priorCheckpoint.blockNumber) {
@@ -105,6 +108,7 @@ export async function runIndexerCatchUp<TApply extends ReplayApplyResult>(
   return {
     caughtUp: checkpoint.blockNumber >= observedHeadBlock,
     cycles,
+    degradedPostCommitCycles,
     checkpoint,
     observedHeadBlock,
   };
