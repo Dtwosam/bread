@@ -47,3 +47,5 @@ jobs:
             tests/day9/graduated-v3-rebuild-hardening-db.test.ts
           git commit -m "style(day9): format V3 Slice F"
           git push origin HEAD:day9/synthra-arc-testnet-v3-candidate
+
+# one-shot formatter; remove after exact output lands
