@@ -60,6 +60,7 @@ jobs:
           tests/day9/graduated-v3-persistence-db.test.ts
           tests/day9/graduated-v3-trade-projection-db.test.ts
           tests/day9/graduated-v3-journal-reducer-db.test.ts
+          tests/day9/graduated-v3-apply-range-db.test.ts
           tests/day6/trade-conformance.test.ts
           tests/day6/trade-vertical.test.ts
       - name: Stop infrastructure
@@ -97,6 +98,7 @@ jobs:
           tests/day9/graduated-v3-persistence-db.test.ts
           tests/day9/graduated-v3-trade-projection-db.test.ts
           tests/day9/graduated-v3-journal-reducer-db.test.ts
+          tests/day9/graduated-v3-apply-range-db.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
           tests/day9/post-graduation-v3-types.test.ts
