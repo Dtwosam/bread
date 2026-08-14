@@ -72,27 +72,41 @@ export function registerPortfolioRoute(app: FastifyInstance, deps: BreadReadRout
         walletAddress,
         holdings: rows.map((row) => {
           const graduated = isGraduated(row.graduationPhase, row.graduationState);
+          const hasCompleteIndexedPrice =
+            row.lastPriceNumerator !== null && row.lastPriceDenominator !== null;
           const hasIndexedCurvePrice =
-            !graduated &&
-            row.lastPriceNumerator !== null &&
-            row.lastPriceDenominator !== null &&
-            row.lastPriceSource === 'CURVE_EXECUTION';
+            !graduated && hasCompleteIndexedPrice && row.lastPriceSource === 'CURVE_EXECUTION';
+          const hasIndexedV3Price =
+            graduated && hasCompleteIndexedPrice && row.lastPriceSource === 'V3_SWAP_EXECUTION';
 
-          const price = graduated
-            ? { status: 'UNAVAILABLE' as const, reason: 'NO_RATIFIED_LIVE_DEX_PRICE_SOURCE' as const }
-            : hasIndexedCurvePrice
+          const price = hasIndexedCurvePrice
+            ? {
+                status: 'AVAILABLE' as const,
+                source: 'CURVE_EXECUTION' as const,
+                numerator: row.lastPriceNumerator as string,
+                denominator: row.lastPriceDenominator as string,
+              }
+            : hasIndexedV3Price
               ? {
                   status: 'AVAILABLE' as const,
-                  source: 'CURVE_EXECUTION' as const,
+                  source: 'V3_SWAP_EXECUTION' as const,
                   numerator: row.lastPriceNumerator as string,
                   denominator: row.lastPriceDenominator as string,
                 }
-              : { status: 'UNAVAILABLE' as const, reason: 'NO_INDEXED_CURVE_PRICE' as const };
+              : {
+                  status: 'UNAVAILABLE' as const,
+                  reason: graduated
+                    ? ('NO_RATIFIED_LIVE_DEX_PRICE_SOURCE' as const)
+                    : ('NO_INDEXED_CURVE_PRICE' as const),
+                };
 
-          const currentValue = hasIndexedCurvePrice
+          const hasIndexedPrice = hasIndexedCurvePrice || hasIndexedV3Price;
+          const currentValue = hasIndexedPrice
             ? {
                 status: 'AVAILABLE' as const,
-                source: 'INDEXED_CURVE_EXECUTION' as const,
+                source: hasIndexedV3Price
+                  ? ('V3_SWAP_EXECUTION' as const)
+                  : ('INDEXED_CURVE_EXECUTION' as const),
                 numerator: (BigInt(row.balance) * BigInt(row.lastPriceNumerator as string)).toString(10),
                 denominator: row.lastPriceDenominator as string,
               }
