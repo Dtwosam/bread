@@ -57,7 +57,7 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     ]) {
       expect(panel).toContain(label);
     }
-    expect(experience).toContain('prepareTradeReview');
+    expect(experience).toContain('readCanonicalTradeReview');
     expect(experience).toContain('executeTradeLifecycle');
     expect(controller).toContain('ensurePreparedTransactionAllowance');
     expect(controller).toContain('prepareTradeForSignature');
