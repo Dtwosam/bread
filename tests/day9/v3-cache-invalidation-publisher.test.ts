@@ -62,10 +62,7 @@ describe("Day 9 post-commit projection cache invalidation publisher", () => {
       ]);
       expect(result).toEqual({
         status: "PUBLISHED",
-        invalidatedChannels: [
-          "stack:5:v1:0xaaa:feed",
-          "token:5:0xbbb",
-        ],
+        invalidatedChannels: ["stack:5:v1:0xaaa:feed", "token:5:0xbbb"],
         failedChannels: [],
       });
     },
