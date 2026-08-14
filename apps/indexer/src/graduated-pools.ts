@@ -1,4 +1,46 @@
+import {
+  graduatedV3AdapterAbi,
+  v3FactoryAbi,
+  v3PoolAbi,
+} from "../../../packages/protocol-sdk/src/v3-abi.js";
+import { poolAddressFromId } from "../../../packages/protocol-sdk/src/v3-pool.js";
+
 type UnknownRow = Readonly<Record<string, unknown>>;
+
+type ReadContractClient = Readonly<{
+  readContract: (request: Readonly<Record<string, unknown>>) => Promise<unknown>;
+}>;
+
+type VerificationContext = Readonly<{
+  chainId: number;
+  quoteAsset: string;
+  graduatedTrading?: Readonly<{
+    family: "UNISWAP_V3";
+    factory: string;
+    positionManager: string;
+  }>;
+}>;
+
+type VerificationLaunch = Readonly<{
+  chainId: number;
+  tokenAddress: string;
+  curveAddress: string;
+  graduationCoordinator: string;
+  graduationAdapter: string;
+  graduationAdapterFamily: number;
+  graduationConfigHash: string;
+}>;
+
+type VerificationCompletion = Readonly<{
+  contractAddress: string;
+  token: string;
+  adapter: string;
+  poolId: unknown;
+  positionManager: string;
+  blockNumber: bigint;
+  transactionIndex: number;
+  logIndex: number;
+}>;
 
 export type GraduatedPoolRegistryEntry = Readonly<{
   chainId: number;
@@ -29,11 +71,37 @@ function address(value: unknown, label: string): string {
   return value.toLowerCase();
 }
 
+function sameAddress(left: unknown, right: unknown): boolean {
+  return (
+    typeof left === "string" &&
+    typeof right === "string" &&
+    left.toLowerCase() === right.toLowerCase()
+  );
+}
+
+function bytes32(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(value)) {
+    throw new Error(`invalid graduated V3 ${label}`);
+  }
+  return value.toLowerCase();
+}
+
 function safeInteger(value: unknown, label: string): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
     throw new Error(`invalid graduated V3 registry ${label}`);
   }
   return value;
+}
+
+function exactInteger(value: unknown, label: string): number {
+  if (typeof value !== "number" && typeof value !== "bigint") {
+    throw new Error(`invalid graduated V3 ${label}`);
+  }
+  const numeric = Number(value);
+  if (!Number.isSafeInteger(numeric) || numeric < 0) {
+    throw new Error(`invalid graduated V3 ${label}`);
+  }
+  return numeric;
 }
 
 function blockNumber(value: unknown): bigint {
@@ -49,6 +117,133 @@ function feeTier(value: unknown): number {
   const fee = safeInteger(value, "fee tier");
   if (fee > 0xffffff) throw new Error("invalid graduated V3 registry fee tier");
   return fee;
+}
+
+async function read(
+  client: ReadContractClient,
+  addressValue: string,
+  abi: readonly unknown[],
+  functionName: string,
+  args?: readonly unknown[],
+): Promise<unknown> {
+  return client.readContract({
+    address: addressValue,
+    abi,
+    functionName,
+    ...(args === undefined ? {} : { args }),
+  });
+}
+
+export async function verifyGraduatedV3Candidate(input: Readonly<{
+  client: ReadContractClient;
+  context: VerificationContext;
+  launch: VerificationLaunch;
+  completion: VerificationCompletion;
+}>): Promise<GraduatedPoolRegistryEntry> {
+  const { client, context, launch, completion } = input;
+  const dependencies = context.graduatedTrading;
+
+  if (
+    launch.chainId !== context.chainId ||
+    launch.graduationAdapterFamily !== 2 ||
+    dependencies?.family !== "UNISWAP_V3"
+  ) {
+    throw new Error("graduated launch is not UNISWAP_V3");
+  }
+
+  const tokenAddress = address(launch.tokenAddress, "token address");
+  const curveAddress = address(launch.curveAddress, "curve address");
+  const coordinator = address(launch.graduationCoordinator, "coordinator address");
+  const adapter = address(launch.graduationAdapter, "adapter address");
+  const quoteAsset = address(context.quoteAsset, "quote asset");
+  const expectedFactory = address(dependencies.factory, "factory address");
+  const expectedPositionManager = address(
+    dependencies.positionManager,
+    "position manager address",
+  );
+  const launchConfigHash = bytes32(
+    launch.graduationConfigHash,
+    "launch config hash",
+  );
+
+  if (
+    !sameAddress(completion.contractAddress, coordinator) ||
+    !sameAddress(completion.token, tokenAddress) ||
+    !sameAddress(completion.adapter, adapter) ||
+    !sameAddress(completion.positionManager, expectedPositionManager)
+  ) {
+    throw new Error("graduation completion identity mismatch");
+  }
+
+  const poolAddress = poolAddressFromId(completion.poolId);
+  const [
+    liveFamily,
+    liveCoordinator,
+    liveConfigHash,
+    liveUsdc,
+    livePositionManager,
+    liveFactory,
+    liveFee,
+  ] = await Promise.all([
+    read(client, adapter, graduatedV3AdapterAbi, "family"),
+    read(client, adapter, graduatedV3AdapterAbi, "coordinator"),
+    read(client, adapter, graduatedV3AdapterAbi, "configHash"),
+    read(client, adapter, graduatedV3AdapterAbi, "usdc"),
+    read(client, adapter, graduatedV3AdapterAbi, "positionManager"),
+    read(client, adapter, graduatedV3AdapterAbi, "v3Factory"),
+    read(client, adapter, graduatedV3AdapterAbi, "fee"),
+  ]);
+  const fee = exactInteger(liveFee, "adapter fee");
+
+  if (
+    exactInteger(liveFamily, "adapter family") !== 2 ||
+    !sameAddress(liveCoordinator, coordinator) ||
+    bytes32(liveConfigHash, "adapter config hash") !== launchConfigHash ||
+    !sameAddress(liveUsdc, quoteAsset) ||
+    !sameAddress(livePositionManager, expectedPositionManager) ||
+    !sameAddress(liveFactory, expectedFactory) ||
+    fee <= 0 ||
+    fee > 0xffffff
+  ) {
+    throw new Error("graduated adapter identity mismatch");
+  }
+
+  const factoryPool = await read(client, expectedFactory, v3FactoryAbi, "getPool", [
+    quoteAsset,
+    tokenAddress,
+    fee,
+  ]);
+  if (!sameAddress(factoryPool, poolAddress)) {
+    throw new Error("graduated pool identity mismatch");
+  }
+
+  const [token0, token1, poolFee] = await Promise.all([
+    read(client, poolAddress, v3PoolAbi, "token0"),
+    read(client, poolAddress, v3PoolAbi, "token1"),
+    read(client, poolAddress, v3PoolAbi, "fee"),
+  ]);
+  const pairMatches =
+    (sameAddress(token0, quoteAsset) && sameAddress(token1, tokenAddress)) ||
+    (sameAddress(token0, tokenAddress) && sameAddress(token1, quoteAsset));
+  if (!pairMatches || exactInteger(poolFee, "pool fee") !== fee) {
+    throw new Error("graduated pool identity mismatch");
+  }
+
+  return {
+    chainId: context.chainId,
+    tokenAddress,
+    curveAddress,
+    poolAddress,
+    feeTier: fee,
+    completion: {
+      blockNumber: blockNumber(completion.blockNumber),
+      transactionIndex: safeInteger(
+        completion.transactionIndex,
+        "completion transaction index",
+      ),
+      logIndex: safeInteger(completion.logIndex, "completion log index"),
+    },
+  };
 }
 
 function entryFromRow(row: UnknownRow): GraduatedPoolRegistryEntry {

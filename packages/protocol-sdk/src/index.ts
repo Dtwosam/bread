@@ -86,3 +86,10 @@ export {
 export { decodeBreadError, type DecodedBreadError } from './errors.js';
 
 export { breadAbiRegistry } from './abi/generated.js';
+export {
+  graduatedV3AdapterAbi,
+  v3FactoryAbi,
+  v3FactoryBoundDependencyAbi,
+  v3PoolAbi,
+} from './v3-abi.js';
+export { poolAddressFromId } from './v3-pool.js';
