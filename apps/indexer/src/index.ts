@@ -103,6 +103,10 @@ export {
   RpcProviderCircuitOpenError,
 } from './rpc-failover.js';
 export { rebuildStack, reconcileStack } from './reconcile.js';
+export {
+  createReconciliationCanonicalEventScanner,
+  type ReconciliationCanonicalEventIdentity,
+} from './reconciliation-scanner.js';
 export type {
   RebuildRange,
   RebuildStackInput,
