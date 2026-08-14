@@ -106,18 +106,21 @@ describe("Day 9 graduated V3 Swap signed amount classification", () => {
     [-1n, -1n],
     [-1n, 0n],
     [0n, -1n],
-  ])("fails closed for invalid signed amount pair (%s, %s)", async (amount0, amount1) => {
-    await expect(
-      classify({
-        tokenAddress: token,
-        quoteAsset: usdc,
-        token0: usdc,
-        token1: token,
-        amount0,
-        amount1,
-      }),
-    ).rejects.toThrow("invalid canonical V3 Swap signed amounts");
-  });
+  ])(
+    "fails closed for invalid signed amount pair (%s, %s)",
+    async (amount0, amount1) => {
+      await expect(
+        classify({
+          tokenAddress: token,
+          quoteAsset: usdc,
+          token0: usdc,
+          token1: token,
+          amount0,
+          amount1,
+        }),
+      ).rejects.toThrow("invalid canonical V3 Swap signed amounts");
+    },
+  );
 
   it("fails closed when verified TOKEN/USDC ordering is not exact", async () => {
     await expect(
