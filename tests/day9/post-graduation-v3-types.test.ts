@@ -1,4 +1,4 @@
-import type { CanonicalTradeProjection } from "../../packages/db/src/index.js";
+import type { CanonicalTradeProjection } from "../../packages/db/src/repositories/trades.js";
 import type {
   IndexedTokenTrade,
   TradeExecutionPriceSource,
