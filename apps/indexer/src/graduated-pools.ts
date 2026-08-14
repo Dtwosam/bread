@@ -1,11 +1,14 @@
-export { discoverGraduatedV3SwapLogs } from "./graduated-v3-discovery.js";
-
 import {
   graduatedV3AdapterAbi,
   v3FactoryAbi,
   v3PoolAbi,
 } from "../../../packages/protocol-sdk/src/v3-abi.js";
 import { poolAddressFromId } from "../../../packages/protocol-sdk/src/v3-pool.js";
+
+import type { LogClient, RpcLog } from "./discovery.js";
+import { discoverGraduatedV3SwapLogs } from "./graduated-v3-discovery.js";
+
+export { discoverGraduatedV3SwapLogs };
 
 type UnknownRow = Readonly<Record<string, unknown>>;
 
@@ -14,6 +17,8 @@ type ReadContractClient = Readonly<{
     request: Readonly<Record<string, unknown>>,
   ) => Promise<unknown>;
 }>;
+
+type RangeClient = ReadContractClient & LogClient;
 
 type VerificationContext = Readonly<{
   chainId: number;
@@ -46,6 +51,18 @@ type VerificationCompletion = Readonly<{
   logIndex: number;
 }>;
 
+type PreparedRangeEvent = Readonly<{
+  identity: Readonly<{
+    chainId: number;
+    logIndex: number;
+  }>;
+  blockNumber: bigint;
+  transactionIndex: number;
+  contractAddress: string;
+  eventName: string;
+  payload: Readonly<Record<string, unknown>>;
+}>;
+
 export type GraduatedPoolRegistryEntry = Readonly<{
   chainId: number;
   tokenAddress: string;
@@ -62,6 +79,12 @@ export type GraduatedPoolRegistryEntry = Readonly<{
 export type GraduatedPoolRegistry = Readonly<{
   byToken: ReadonlyMap<string, GraduatedPoolRegistryEntry>;
   byPool: ReadonlyMap<string, GraduatedPoolRegistryEntry>;
+}>;
+
+export type PreparedGraduatedV3Range = Readonly<{
+  registry: GraduatedPoolRegistry;
+  sameRangeVerified: readonly GraduatedPoolRegistryEntry[];
+  swapLogs: readonly RpcLog[];
 }>;
 
 function address(value: unknown, label: string): string {
@@ -302,14 +325,13 @@ function conflict(): never {
   throw new Error("conflicting graduated V3 registry identity");
 }
 
-export function buildGraduatedPoolRegistry(
-  rows: readonly UnknownRow[],
+function buildRegistryFromEntries(
+  entries: readonly GraduatedPoolRegistryEntry[],
 ): GraduatedPoolRegistry {
   const byToken = new Map<string, GraduatedPoolRegistryEntry>();
   const byPool = new Map<string, GraduatedPoolRegistryEntry>();
 
-  for (const row of rows) {
-    const entry = entryFromRow(row);
+  for (const entry of entries) {
     const existingToken = byToken.get(entry.tokenAddress);
     const existingPool = byPool.get(entry.poolAddress);
 
@@ -321,4 +343,110 @@ export function buildGraduatedPoolRegistry(
   }
 
   return { byToken, byPool };
+}
+
+export function buildGraduatedPoolRegistry(
+  rows: readonly UnknownRow[],
+): GraduatedPoolRegistry {
+  return buildRegistryFromEntries(rows.map(entryFromRow));
+}
+
+function completionFromEvent(event: PreparedRangeEvent): VerificationCompletion {
+  return {
+    contractAddress: event.contractAddress,
+    token: address(event.payload.token, "GraduationCompleted token"),
+    adapter: address(event.payload.adapter, "GraduationCompleted adapter"),
+    poolId: event.payload.poolId,
+    positionManager: address(
+      event.payload.positionManager,
+      "GraduationCompleted position manager",
+    ),
+    blockNumber: event.blockNumber,
+    transactionIndex: event.transactionIndex,
+    logIndex: event.identity.logIndex,
+  };
+}
+
+function compareCompletionEvents(
+  left: PreparedRangeEvent,
+  right: PreparedRangeEvent,
+): number {
+  if (left.blockNumber !== right.blockNumber) {
+    return left.blockNumber < right.blockNumber ? -1 : 1;
+  }
+  if (left.transactionIndex !== right.transactionIndex) {
+    return left.transactionIndex - right.transactionIndex;
+  }
+  return left.identity.logIndex - right.identity.logIndex;
+}
+
+function sameRangeLaunchSnapshot(
+  snapshots: ReadonlyMap<string, VerificationLaunch>,
+  tokenAddress: string,
+): VerificationLaunch | undefined {
+  for (const snapshot of snapshots.values()) {
+    if (sameAddress(snapshot.tokenAddress, tokenAddress)) return snapshot;
+  }
+  return undefined;
+}
+
+export async function prepareGraduatedV3Range(
+  input: Readonly<{
+    client: RangeClient;
+    context: VerificationContext;
+    persistedRows: readonly UnknownRow[];
+    normalized: Readonly<{
+      events: readonly PreparedRangeEvent[];
+      launchSnapshots: ReadonlyMap<string, VerificationLaunch>;
+    }>;
+    readLaunch: (tokenAddress: string) => Promise<VerificationLaunch | undefined>;
+    fromBlock: bigint;
+    toBlock: bigint;
+  }>,
+): Promise<PreparedGraduatedV3Range> {
+  const persistedEntries = input.persistedRows.map(entryFromRow);
+  const completionEvents = input.normalized.events
+    .filter((event) => event.eventName === "GraduationCompleted")
+    .sort(compareCompletionEvents);
+  const sameRangeVerified: GraduatedPoolRegistryEntry[] = [];
+
+  for (const event of completionEvents) {
+    if (event.identity.chainId !== input.context.chainId) {
+      throw new Error("graduation completion chain mismatch");
+    }
+    const completion = completionFromEvent(event);
+    const launch =
+      sameRangeLaunchSnapshot(
+        input.normalized.launchSnapshots,
+        completion.token,
+      ) ?? (await input.readLaunch(completion.token));
+    if (!launch) {
+      throw new Error(
+        "missing canonical launch snapshot for GraduationCompleted",
+      );
+    }
+
+    sameRangeVerified.push(
+      await verifyGraduatedV3Candidate({
+        client: input.client,
+        context: input.context,
+        launch,
+        completion,
+      }),
+    );
+  }
+
+  const registry = buildRegistryFromEntries([
+    ...persistedEntries,
+    ...sameRangeVerified,
+  ]);
+  const swapLogs = await discoverGraduatedV3SwapLogs({
+    client: input.client,
+    chainId: input.context.chainId,
+    entries: [...registry.byToken.values()],
+    fromBlock: input.fromBlock,
+    toBlock: input.toBlock,
+  });
+
+  return { registry, sameRangeVerified, swapLogs };
 }
