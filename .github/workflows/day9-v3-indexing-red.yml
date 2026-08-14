@@ -35,6 +35,7 @@ jobs:
           tests/day9/graduated-v3-range-preparation.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
+          tests/day9/v3-cache-identity.test.ts
 
   postgres-red:
     runs-on: ubuntu-latest
@@ -110,6 +111,7 @@ jobs:
           tests/day9/graduated-v3-portfolio-db.test.ts
           tests/day9/graduated-v3-swap-amounts.test.ts
           tests/day9/graduated-v3-swap-normalization.test.ts
+          tests/day9/v3-cache-identity.test.ts
           tests/day9/post-graduation-v3-types.test.ts
           packages/protocol-sdk/src/index.ts
           packages/protocol-sdk/src/v3-abi.ts
@@ -124,6 +126,7 @@ jobs:
         run: pnpm typecheck
       - name: Build affected workspaces
         run: >-
+          pnpm --filter @bread/types build &&
           pnpm --filter @bread/db build &&
           pnpm --filter @bread/indexer build &&
           pnpm --filter @bread/protocol-sdk build &&
