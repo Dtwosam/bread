@@ -4,19 +4,25 @@ import type { Address } from "../../packages/types/src/index.js";
 
 type CacheIdentityModule = Readonly<{
   BREAD_PROJECTION_CACHE_SCHEMA_VERSION?: string;
-  tokenProjectionCacheChannel?: (input: Readonly<{
-    chainId: number;
-    tokenAddress: Address;
-  }>) => string;
-  stackFeedProjectionCacheChannel?: (input: Readonly<{
-    chainId: number;
-    stackVersion: string;
-    factoryAddress: Address;
-  }>) => string;
-  projectionCacheGenerationKey?: (input: Readonly<{
-    schemaVersion: string;
-    channel: string;
-  }>) => string;
+  tokenProjectionCacheChannel?: (
+    input: Readonly<{
+      chainId: number;
+      tokenAddress: Address;
+    }>,
+  ) => string;
+  stackFeedProjectionCacheChannel?: (
+    input: Readonly<{
+      chainId: number;
+      stackVersion: string;
+      factoryAddress: Address;
+    }>,
+  ) => string;
+  projectionCacheGenerationKey?: (
+    input: Readonly<{
+      schemaVersion: string;
+      channel: string;
+    }>,
+  ) => string;
 }>;
 
 async function loadModule(): Promise<CacheIdentityModule> {
