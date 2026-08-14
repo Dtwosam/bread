@@ -10,10 +10,7 @@ import type { Address } from "../../../packages/types/src/index.js";
 import { discoverRange, type LogClient, type RpcLog } from "./discovery.js";
 import { discoverGraduatedV3SwapLogs } from "./graduated-v3-discovery.js";
 import type { GraduatedPoolRegistryEntry } from "./graduated-pools.js";
-import {
-  normalizeTransactionLogs,
-  type ChainReadClient,
-} from "./normalize.js";
+import { normalizeTransactionLogs, type ChainReadClient } from "./normalize.js";
 
 export type ReconciliationCanonicalEventIdentity = Readonly<{
   transactionHash: string;
