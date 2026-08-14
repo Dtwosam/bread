@@ -60,29 +60,17 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Format the bounded A1 file set
+      - name: Check A1 TypeScript and workflow formatting
         run: >-
-          pnpm exec prettier --write
+          pnpm exec prettier --check
+          .github/workflows/day9-v3-indexing-red.yml
           apps/indexer/src/trades.ts
           packages/db/src/client.ts
           packages/db/src/repositories/trades.ts
           packages/db/src/schema/projections.ts
           tests/day9/post-graduation-v3-indexing.test.ts
           tests/day9/post-graduation-v3-indexing-db.test.ts
-      - name: Export formatted A1 files
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: day9-a1-prettier
-          path: |
-            apps/indexer/src/trades.ts
-            packages/db/src/client.ts
-            packages/db/src/repositories/trades.ts
-            packages/db/src/schema/projections.ts
-            tests/day9/post-graduation-v3-indexing.test.ts
-            tests/day9/post-graduation-v3-indexing-db.test.ts
-          if-no-files-found: error
-          retention-days: 1
-      - name: Run repository typecheck on formatted A1 tree
+      - name: Run repository typecheck
         run: pnpm typecheck
-      - name: Run repository build on formatted A1 tree
+      - name: Run repository build
         run: pnpm build
