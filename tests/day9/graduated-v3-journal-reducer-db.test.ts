@@ -15,6 +15,7 @@ const curve = address("4");
 const poolAddress = address("5");
 const actor = address("6");
 const recipient = address("7");
+const creator = address("9");
 const transactionHash = hash("a");
 const blockHash = hash("b");
 const topic0 = hash("c");
@@ -130,7 +131,23 @@ describeDb("Day 9 V3 Swap journal and priced-trade reducer", () => {
 
   beforeEach(async () => {
     await pool.query(
-      "TRUNCATE event_journal, trades, market_candles, token_metrics, indexer_checkpoints, protocol_stacks CASCADE",
+      "TRUNCATE event_journal, trades, market_candles, token_metrics, creator_rollups, launches, indexer_checkpoints, protocol_stacks CASCADE",
+    );
+    await pool.query(
+      `INSERT INTO launches (
+        chain_id, token_address, curve_address, stack_version, factory_address,
+        creator_fee_recipient, launch_block_number, launch_transaction_hash, launch_log_index
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1)`,
+      [
+        chainId,
+        token,
+        curve,
+        stackVersion,
+        factory,
+        creator,
+        blockNumber.toString(10),
+        hash("d"),
+      ],
     );
   });
 
@@ -221,6 +238,22 @@ describeDb("Day 9 V3 Swap journal and priced-trade reducer", () => {
       },
     ]);
 
+    const creatorRollup = await pool.query(
+      `SELECT trade_count::text AS trade_count,
+              accrued_fees::text AS accrued_fees,
+              claimed_fees::text AS claimed_fees
+       FROM creator_rollups
+       WHERE chain_id=$1 AND creator_address=$2 AND token_address=$3`,
+      [chainId, creator, token],
+    );
+    expect(creatorRollup.rows).toEqual([
+      {
+        trade_count: "1",
+        accrued_fees: "0",
+        claimed_fees: "0",
+      },
+    ]);
+
     const replay = await repository.applyCanonicalRange(input);
     expect(replay.insertedEventIds).toEqual([]);
 
@@ -230,8 +263,10 @@ describeDb("Day 9 V3 Swap journal and priced-trade reducer", () => {
         (SELECT count(*)::int FROM trades) AS trade_count,
         (SELECT count(*)::int FROM market_candles) AS candles,
         (SELECT trade_count::text FROM token_metrics
-         WHERE chain_id=$1 AND token_address=$2) AS metric_trade_count`,
-      [chainId, token],
+         WHERE chain_id=$1 AND token_address=$2) AS metric_trade_count,
+        (SELECT trade_count::text FROM creator_rollups
+         WHERE chain_id=$1 AND creator_address=$2 AND token_address=$3) AS creator_trade_count`,
+      [chainId, creator, token],
     );
     expect(afterReplay.rows).toEqual([
       {
@@ -239,6 +274,7 @@ describeDb("Day 9 V3 Swap journal and priced-trade reducer", () => {
         trade_count: 1,
         candles: 3,
         metric_trade_count: "1",
+        creator_trade_count: "1",
       },
     ]);
   });
