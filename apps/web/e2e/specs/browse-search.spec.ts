@@ -1,4 +1,4 @@
-import { ACTIVE_TOKEN, PENDING_TOKEN } from '../fixtures/constants';
+import { ACTIVE_TOKEN, E2E_DEPLOYER, PENDING_TOKEN } from '../fixtures/constants';
 import { expect, test, walletSnapshot } from '../fixtures/browser';
 
 test('disconnected users browse Explore and token detail without raw RPC', async ({
@@ -100,8 +100,15 @@ test('Explore filters and Search preserve contract identity plus keyboard contai
   await expect(results).toHaveCount(2);
   const activeResult = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
   const pendingResult = dialog.locator(`a[href="/token/${PENDING_TOKEN}"]`);
-  await expect(activeResult).toContainText(ACTIVE_TOKEN);
-  await expect(pendingResult).toContainText(PENDING_TOKEN);
+  const activeShort = `${ACTIVE_TOKEN.slice(0, 6)}…${ACTIVE_TOKEN.slice(-4)}`;
+  const pendingShort = `${PENDING_TOKEN.slice(0, 6)}…${PENDING_TOKEN.slice(-4)}`;
+  const creatorShort = `${E2E_DEPLOYER.slice(0, 6)}…${E2E_DEPLOYER.slice(-4)}`;
+  await expect(activeResult).toContainText(activeShort);
+  await expect(pendingResult).toContainText(pendingShort);
+  await expect(activeResult).not.toContainText(ACTIVE_TOKEN);
+  await expect(pendingResult).not.toContainText(PENDING_TOKEN);
+  await expect(activeResult.getByText(`by${creatorShort}`)).toBeVisible();
+  await expect(pendingResult.getByText(`by${creatorShort}`)).toBeVisible();
 
   await close.focus();
   await page.keyboard.press('Shift+Tab');
