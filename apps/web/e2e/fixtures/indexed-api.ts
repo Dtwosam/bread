@@ -293,7 +293,10 @@ function creator(): IndexedCreatorOverview {
 
 function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknown {
   const url = new URL(requestUrl);
-  if (url.pathname === '/v1/feed') return envelope(state, [activeFeed, pendingFeed, graduatedFeed]);
+  if (url.pathname === '/v1/feed') {
+    const view = url.searchParams.get('view') ?? 'new';
+    return envelope(state, view === 'graduated' ? [graduatedFeed] : [activeFeed, pendingFeed, graduatedFeed]);
+  }
   if (url.pathname === '/v1/search') {
     const query = url.searchParams.get('q')?.toLowerCase();
     return envelope(state, query === ACTIVE_TOKEN.toLowerCase() ? exactActiveSearchResults : searchResults);
