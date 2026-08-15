@@ -236,10 +236,14 @@
 }
 
 .bread-progress-track {
-  height: 5px;
+  height: 6px;
   overflow: hidden;
   border-radius: 9999px;
   background: var(--bread-surface-3);
+}
+
+.bread-token-card .bread-progress-track {
+  height: 5px;
 }
 
 .bread-progress-value {
@@ -300,7 +304,7 @@
   margin-top: 4px;
   color: var(--bread-text-secondary);
   font-size: 13px;
-  line-height: 18px;
+  line-height: 19px;
 }
 
 .bread-search-field input {
