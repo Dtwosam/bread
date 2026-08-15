@@ -1,6 +1,6 @@
-schema_version: 1.68
+schema_version: 1.69
 project: Bread
-updated_at: 2026-08-15T20:09:00+01:00
+updated_at: 2026-08-15T20:16:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -23,7 +23,7 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Lane 1 — foundations"
+active_lane: "UI/UX v2.2 Lane 2 — global shell/navigation"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_ui_gate: UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
 day9_started: true
@@ -48,7 +48,9 @@ completed_checkpoints:
   - "Lane 1 slice 2: shared CreatorAttribution RED 6795dd1 -> GREEN 5c996cf; focused workflow 31902113415 PASS and root CI 31902113406 PASS"
   - "Lane 1 slice 3: runtime CSS token surface RED 7adaf4e -> GREEN b0e6c88; focused workflow 31902360616 PASS and root CI 31902360622 PASS"
   - "Lane 1 slice 4: focus-visible and motion primitives RED 621da8a -> GREEN ca2209a; state compatibility ac9588a; focused workflow 31902811181 PASS, root CI 31902811220 PASS, Day-9 truthfulness 31902811146 PASS"
-  - "Lane 1 slice 5: responsive PageContainer RED 986b71c -> GREEN 4353eb1; canonical Figma component set 3:22; focused workflow 31903141574 PASS, root CI 31903141535 PASS, Day-9 truthfulness 31903141507 PASS, primary browser 31903141543 PASS"
+  - "Lane 1 slice 5: responsive PageContainer RED 986b71c -> GREEN 4353eb1; canonical Figma component set 3:22; focused workflow 31903141574 PASS, root CI 31903141535 PASS, Day-9 truthfulness 31903141507 PASS, primary browser 31903141543 PASS, release browser matrix 31903141605 PASS"
+  - "Lane 1 slice 6: icon presentation boundary RED 1446d73 -> GREEN 0358b4d; canonical Figma component set 4:22; focused workflow 31903431651 PASS, root CI 31903431616 PASS, Day-9 truthfulness 31903431715 PASS, primary browser 31903431717 PASS"
+  - "UI/UX v2.2 Lane 1 — Foundations: PASS on accepted implementation head 0358b4d6b3e3d31baf23c18b92d743382e41b025"
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -60,7 +62,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 4353eb1cc03231d488b1e6fe0fea4b14881a6f0d
+  ui_accepted_head_before_this_state_sync: 0358b4d6b3e3d31baf23c18b92d743382e41b025
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -118,6 +120,13 @@ verification:
   ui_lane1_page_container_root_ci: PASS_RUN_31903141535
   ui_lane1_page_container_day9_truthfulness: PASS_RUN_31903141507
   ui_lane1_page_container_primary_browser: PASS_RUN_31903141543
+  ui_lane1_page_container_release_browser: PASS_RUN_31903141605
+  ui_lane1_icon_red: FAIL_EXPECTED_RUN_31903344006
+  ui_lane1_icon_green_candidate: 0358b4d6b3e3d31baf23c18b92d743382e41b025
+  ui_lane1_icon_focused_green: PASS_RUN_31903431651
+  ui_lane1_icon_root_ci: PASS_RUN_31903431616
+  ui_lane1_icon_day9_truthfulness: PASS_RUN_31903431715
+  ui_lane1_icon_primary_browser: PASS_RUN_31903431717
 
 lan_acceptance:
   status: PASS
@@ -151,17 +160,19 @@ ui_ux_v2_2:
   figma_components_page: "01 Components"
   figma_foundations_visual_validation: PASS
   figma_page_container_component_set: "3:22"
+  figma_icon_component_set: "4:22"
   ui_worktree_created: false
   ui_branch_created: true
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Lane 1 — Foundations"
+  current_lane: "Lane 2 — Global shell/navigation"
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
     - EXACT_V2_2_RUNTIME_CSS_TOKEN_SURFACE
     - FOCUS_VISIBLE_AND_MOTION_PRIMITIVES
     - RESPONSIVE_PAGE_CONTAINER
+    - ICON_PRESENTATION_BOUNDARY
   implementation_order:
     - "Lane 0 — current UI conformance audit / frozen impact map"
     - "Lane 1 — foundations"
@@ -212,10 +223,10 @@ decisions_since_last_state:
   - "LAN functional acceptance PASS recorded from BREAD_LAN_ACCEPTANCE_READY without touching the running environment."
   - "Dedicated remote UI implementation branch and draft PR #94 established from the source-hygiene descendant of the Day-9 head."
   - "Canonical Figma foundations/components established and visually validated before production Lane-1 code."
-  - "Exact theme tokens, CreatorAttribution, runtime CSS tokens, focus/motion primitives, and responsive PageContainer are accepted with RED evidence plus focused/root/browser/truthfulness regressions."
+  - "Lane 1 foundations are accepted: exact theme/runtime tokens, CreatorAttribution, focus/motion, responsive PageContainer, and dependency-free icon presentation boundary all passed their RED->GREEN focused/root/browser evidence."
 
 next_action: >-
-  Continue Lane 1 with the next independently reviewable foundation behavior under 06D RED -> GREEN discipline: implement source-exact icon sizing/canonical-set rules as a reusable presentation boundary without changing navigation/page composition. Preserve v2.2 sizes of 16px normal, 18px primary control, 20px navigation, and 24px rare prominent action. Do not introduce a casual dependency upgrade merely for icons; first preserve or establish the canonical icon boundary in @bread/ui, then let Lane 2 consume it. Verify focused UI-foundation tests, source-conformance, root CI, and adjacent browser regressions before acceptance. Keep /tmp/bread-synthra-fork-proof untouched.
+  Begin Lane 2 from the accepted Lane-1 baseline. First establish canonical editable Figma shell compositions from the written v2.2 specification for desktop, tablet, and mobile before production shell code. Then execute Lane 2 as bounded RED -> GREEN slices, starting with the source-exact primary navigation data/order + active-state contract only: desktop Bread logo -> Explore -> Trending -> Create -> Portfolio, with Search, watchlist, and Wallet/Network remaining shell consumers rather than invented route semantics; mobile bottom primary destinations Explore, Trending, Create, Portfolio, with More only if a real secondary-route need exists. Do not combine the whole shell into one task. After navigation contract acceptance, continue desktop header, tablet behavior, mobile top bar, mobile bottom navigation, search trigger/Cmd+K, wallet/network context, and live activity strip as separate integrated slices. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof, its LAN/indexer process, containers, database, checkpoint or acceptance evidence."
