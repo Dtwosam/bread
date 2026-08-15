@@ -112,6 +112,7 @@ function feedItem(input: {
     launchTransactionHash: LAUNCH_TX_HASH,
     launchLogIndex: 0,
     holderCount: '42',
+    graduatedVenueKind: input.progressState === 'GRADUATED' ? 'UNISWAP_V3' : null,
     metrics: {
       lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
       quoteVolume: { m5: '12000000', h1: '75000000', h24: '450000000' },
