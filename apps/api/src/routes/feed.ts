@@ -148,6 +148,7 @@ export function registerFeedRoute(
           );
           return {
             ...serializeLaunch(launch),
+            holderCount: metricRow?.holderCount?.toString(10) ?? null,
             metrics: serializeTradeMetrics(metricRow),
             progress: serializeGraduationProgress(metricRow),
           };
