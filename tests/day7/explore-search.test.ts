@@ -70,6 +70,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
         tokenAddress: VALID_ADDRESS,
         deployerAddress: CREATOR_ADDRESS,
         holderCount: '42',
+        graduatedVenueKind: null,
         name: 'Bread',
         symbol: 'BRD',
         metrics: {
@@ -88,6 +89,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
       price: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
       volume24h: '5000000',
       holderCount: '42',
+      graduatedVenueKind: null,
       priceChange24h: null,
       progress: { bps: 6250, percent: 62.5, state: 'CURVE_ACTIVE' },
     });
@@ -98,6 +100,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
       tokenAddress: VALID_ADDRESS,
       deployerAddress: CREATOR_ADDRESS,
       holderCount: '1',
+      graduatedVenueKind: null,
       name: 'Fresh Bread',
       symbol: 'FRESH',
       metrics: null,
@@ -124,6 +127,18 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(tokenRouteSource).toContain('holderCount: metrics?.holderCount?.toString(10) ?? null');
   });
 
+  it('batch-loads canonical graduated venue state for feed cards without per-card state reads', () => {
+    const typeSource = readFileSync(new URL('../../packages/types/src/api.ts', import.meta.url), 'utf8');
+    const readSource = readFileSync(new URL('../../packages/db/src/repositories/read.ts', import.meta.url), 'utf8');
+    const feedRouteSource = readFileSync(new URL('../../apps/api/src/routes/feed.ts', import.meta.url), 'utf8');
+
+    expect(typeSource).toContain('graduatedVenueKind: string | null;');
+    expect(readSource).toContain('async listLaunchStates(chainId: number, tokenAddresses: readonly string[])');
+    expect(feedRouteSource).toContain('listLaunchStates(');
+    expect(feedRouteSource).not.toContain('getLaunchState(');
+    expect(feedRouteSource).toContain('graduatedVenueKind: stateRow?.graduatedVenueKind ?? null');
+  });
+
   it('renders the authoritative indexed creator wallet directly below TokenCard identity', () => {
     const source = readFileSync(new URL('../../apps/web/components/token-card.tsx', import.meta.url), 'utf8');
     expect(source).toContain('CreatorAttribution');
@@ -139,6 +154,14 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(source).toContain('<dt>Holders</dt>');
     expect(source).toContain("{model.holderCount ?? '—'}");
     expect(source).not.toContain('Indexed price ratio');
+  });
+
+  it('replaces the baked bar with canonical venue state for graduated cards', () => {
+    const source = readFileSync(new URL('../../apps/web/components/token-card.tsx', import.meta.url), 'utf8');
+    expect(source).toContain("model.progress?.state === 'GRADUATED'");
+    expect(source).toContain('Graduated');
+    expect(source).toContain("UNISWAP_V3: 'Uniswap V3'");
+    expect(source).toContain('bread-token-card__graduated');
   });
 
   it('uses the v2.2 five-pixel brand-butter baked-progress treatment without shrinking shared progress', () => {
