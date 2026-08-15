@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from 'next/font/google';
 
 import { MobileNavigation, Navigation } from '@bread/ui';
 import '@bread/ui/theme.css';
+import { LiveActivityStripStatus } from '../components/live-activity-strip-status';
 import { PrimaryMobileNavigation, PrimaryNavigation } from '../components/primary-navigation';
 import { Providers } from '../components/providers';
 import { SearchSurface } from '../components/search-surface';
@@ -62,6 +63,10 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 <WalletButton />
               </div>
             </header>
+
+            <div className="bread-live-strip-region">
+              <LiveActivityStripStatus />
+            </div>
 
             <div className="bread-mobile-top">
               <a className="bread-brand" href="/explore" aria-label="Bread home">
