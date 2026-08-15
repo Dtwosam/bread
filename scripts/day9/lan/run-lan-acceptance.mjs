@@ -36,6 +36,7 @@ const REDIS_URL = process.env.BREAD_REDIS_URL?.trim() || 'redis://127.0.0.1:6379
 const API_PORT = Number.parseInt(process.env.BREAD_API_PORT?.trim() || '4010', 10);
 const WEB_PORT = Number.parseInt(process.env.BREAD_WEB_PORT?.trim() || '4020', 10);
 const LAN_PORT = Number.parseInt(process.env.BREAD_LAN_PORT?.trim() || '4000', 10);
+const RESET_STATE = process.env.BREAD_LAN_RESET_STATE?.trim() === '1';
 
 const children = [];
 let proxyServer;
@@ -130,7 +131,11 @@ async function teardown() {
   if (proxyServer) await new Promise((done) => proxyServer.close(() => done()));
   await terminateAll(children).catch(() => undefined);
   if (startedInfrastructure) {
-    await run('docker', ['compose', '-f', compose, 'down', '-v'], { stdio: 'ignore' }).catch(() => undefined);
+    // Keep the named Postgres volume so a bounded provider failure, operator
+    // interruption or later physical-device session can resume from the last
+    // transactionally committed/chain-verified indexer checkpoint. Redis is
+    // intentionally ephemeral and carries no financial source of truth.
+    await run('docker', ['compose', '-f', compose, 'down'], { stdio: 'ignore' }).catch(() => undefined);
   }
 }
 
@@ -152,6 +157,10 @@ async function main() {
   const tsx = resolve(repositoryRoot, 'node_modules/.bin/tsx');
 
   log('== 1-2. Bounded local infrastructure ==');
+  if (RESET_STATE) {
+    log('  reset requested: removing prior LAN acceptance state');
+    await run('docker', ['compose', '-f', compose, 'down', '-v'], { stdio: 'ignore' }).catch(() => undefined);
+  }
   await run('docker', ['compose', '-f', compose, 'up', '-d', '--wait', '--wait-timeout', '90']);
   startedInfrastructure = true;
 
@@ -232,6 +241,7 @@ async function main() {
   log(`  LAN origin for physical devices: http://${lanIp}:${LAN_PORT}`);
   log(`  indexed API through same origin: http://${lanIp}:${LAN_PORT}/v1/status`);
   log('  Postgres/Redis/API/web remain loopback-only.');
+  log('  Committed Postgres catch-up state is preserved on ordinary teardown.');
   log('');
   log('  Press Ctrl-C to tear down.');
 }
