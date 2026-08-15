@@ -118,6 +118,17 @@ describe('Day 7 Explore/Search interaction contract', () => {
     );
   });
 
+  it('keeps TokenCard hover restrained and suppresses card motion for reduced-motion users', () => {
+    const source = readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8');
+    expect(source).toMatch(
+      /\.bread-token-card:hover\s*\{[^}]*transform:\s*translateY\(-1px\);/s,
+    );
+    expect(source).not.toMatch(/\.bread-token-card:hover\s*\{[^}]*scale\s*\(/s);
+    expect(source).toMatch(
+      /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.bread-token-card:hover,\s*\.bread-token-card:active\s*\{[^}]*transform:\s*none;/s,
+    );
+  });
+
   it('keeps Explore/Search rendering free of per-card API or raw-RPC fanout', () => {
     for (const path of [
       '../../apps/web/components/token-card.tsx',
