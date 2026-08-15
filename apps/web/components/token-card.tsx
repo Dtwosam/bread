@@ -25,20 +25,25 @@ export function TokenCard({ item }: Readonly<{ item: IndexedFeedCardFields }>) {
 
       <CreatorAttribution creatorAddress={model.creatorAddress} />
 
-      <dl className="bread-token-card__metrics">
+      <dl className="bread-token-card__market">
         <div>
-          <dt>Indexed price ratio</dt>
-          <dd className="bread-technical bread-financial-value">
-            {model.price ? `${model.price.numerator} / ${model.price.denominator}` : '—'}
-          </dd>
+          <dt>Market cap</dt>
+          <dd className="bread-financial-value">—</dd>
         </div>
+        <div>
+          <dt>24h change</dt>
+          <dd className="bread-financial-value">—</dd>
+        </div>
+      </dl>
+
+      <dl className="bread-token-card__metrics">
         <div>
           <dt>24h volume</dt>
           <dd className="bread-financial-value">{formatUsdcBaseUnits(model.volume24h)}</dd>
         </div>
         <div>
-          <dt>24h change</dt>
-          <dd>—</dd>
+          <dt>Holders</dt>
+          <dd className="bread-financial-value">{model.holderCount ?? '—'}</dd>
         </div>
       </dl>
 
