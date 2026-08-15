@@ -53,6 +53,7 @@ export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefin
       denominator: row.lastPriceDenominator.toString(10),
       source: row.lastPriceSource,
     },
+    holderCount: row.holderCount?.toString(10) ?? null,
     quoteVolume: {
       m5: row.quoteVolume5m?.toString(10) ?? null,
       h1: row.quoteVolume1h?.toString(10) ?? null,
