@@ -1,3 +1,5 @@
+import { CreatorAttribution } from '@bread/ui';
+
 import {
   formatUsdcBaseUnits,
   shortAddress,
@@ -20,6 +22,8 @@ export function TokenCard({ item }: Readonly<{ item: IndexedFeedCardFields }>) {
           {shortAddress(model.tokenAddress)}
         </code>
       </div>
+
+      <CreatorAttribution creatorAddress={model.creatorAddress} />
 
       <dl className="bread-token-card__metrics">
         <div>
