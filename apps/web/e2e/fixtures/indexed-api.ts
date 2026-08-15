@@ -203,15 +203,24 @@ const tokenDetails = new Map<string, IndexedTokenDetail>([
   [GRADUATED_TOKEN.toLowerCase(), detail(graduatedFeed, 'GRADUATED')],
 ]);
 
-const searchResults: readonly IndexedSearchResult[] = [activeFeed, pendingFeed].map((item) => ({
-  tokenAddress: item.tokenAddress,
-  curveAddress: item.curveAddress,
-  deployerAddress: item.deployerAddress,
-  creatorFeeRecipient: item.creatorFeeRecipient,
-  name: item.name,
-  symbol: item.symbol,
-  matchKind: 'NAME',
-}));
+function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchResult {
+  return {
+    tokenAddress: item.tokenAddress,
+    curveAddress: item.curveAddress,
+    deployerAddress: item.deployerAddress,
+    creatorFeeRecipient: item.creatorFeeRecipient,
+    name: item.name,
+    symbol: item.symbol,
+    matchKind,
+  };
+}
+
+const activeSearchResult = searchResult(activeFeed, 'NAME');
+const pendingSearchResult = searchResult(pendingFeed, 'NAME');
+const searchResults: readonly IndexedSearchResult[] = [activeSearchResult, pendingSearchResult];
+const exactActiveSearchResults: readonly IndexedSearchResult[] = [
+  { ...activeSearchResult, matchKind: 'CONTRACT' },
+];
 
 const trades: readonly IndexedTokenTrade[] = [];
 
@@ -285,7 +294,10 @@ function creator(): IndexedCreatorOverview {
 function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknown {
   const url = new URL(requestUrl);
   if (url.pathname === '/v1/feed') return envelope(state, [activeFeed, pendingFeed, graduatedFeed]);
-  if (url.pathname === '/v1/search') return envelope(state, searchResults);
+  if (url.pathname === '/v1/search') {
+    const query = url.searchParams.get('q')?.toLowerCase();
+    return envelope(state, query === ACTIVE_TOKEN.toLowerCase() ? exactActiveSearchResults : searchResults);
+  }
   if (url.pathname === `/v1/portfolio/${E2E_WALLET}`) return envelope(state, portfolio());
   if (url.pathname === `/v1/creators/${E2E_WALLET}`) return envelope(state, creator());
 
