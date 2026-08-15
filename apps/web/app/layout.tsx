@@ -63,14 +63,14 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               </div>
             </header>
 
-            <div className="bread-live-strip-region">
-              <LiveActivityStripStatus />
-            </div>
-
             <div className="bread-mobile-top">
               <BreadBrand />
               <SearchSurface compact />
               <WalletButton />
+            </div>
+
+            <div className="bread-live-strip-region">
+              <LiveActivityStripStatus />
             </div>
 
             {children}
