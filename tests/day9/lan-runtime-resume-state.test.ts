@@ -13,10 +13,17 @@ describe("Day 9 LAN acceptance persisted catch-up state", () => {
     );
 
     expect(orchestrator).toContain("BREAD_LAN_RESET_STATE");
-    expect(orchestrator).toContain("reset requested: removing prior LAN acceptance state");
-    expect(orchestrator).toContain("['compose', '-f', compose, 'down']");
-    expect(orchestrator).not.toContain(
+    expect(orchestrator).toContain(
+      "reset requested: removing prior LAN acceptance state",
+    );
+    expect(orchestrator).toContain(
       "['compose', '-f', compose, 'down', '-v']",
     );
+
+    const teardown = orchestrator.match(
+      /async function teardown\(\) \{([\s\S]*?)\n\}/,
+    );
+    expect(teardown?.[1]).toContain("['compose', '-f', compose, 'down']");
+    expect(teardown?.[1]).not.toContain("'-v'");
   });
 });
