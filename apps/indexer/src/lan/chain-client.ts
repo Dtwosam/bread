@@ -1,18 +1,20 @@
-import { setTimeout as delay } from 'node:timers/promises';
+import { setTimeout as delay } from "node:timers/promises";
 
-import { createPublicClient, defineChain, http, type PublicClient } from 'viem';
+import { createPublicClient, defineChain, http, type PublicClient } from "viem";
 
-import type { NetworkManifest } from '../../../../packages/config/src/index.js';
-import type { LogClient, RpcLog } from '../discovery.js';
+import type { NetworkManifest } from "../../../../packages/config/src/index.js";
+import type { LogClient, RpcLog } from "../discovery.js";
 
-export type ArcRpcLimitKind = 'RATE_LIMIT' | 'REQUEST_LIMIT';
+export type ArcRpcLimitKind = "RATE_LIMIT" | "REQUEST_LIMIT";
 
 export class ArcLogReadBudgetExceededError extends Error {
-  readonly code = 'ARC_LOG_READ_BUDGET_EXCEEDED' as const;
+  readonly code = "ARC_LOG_READ_BUDGET_EXCEEDED" as const;
 
   constructor(readonly providerCause: unknown) {
-    super('Arc log read exceeded its bounded RPC attempt budget', { cause: providerCause });
-    this.name = 'ArcLogReadBudgetExceededError';
+    super("Arc log read exceeded its bounded RPC attempt budget", {
+      cause: providerCause,
+    });
+    this.name = "ArcLogReadBudgetExceededError";
   }
 }
 
@@ -41,12 +43,14 @@ type ResolvedProviderSafeReadOptions = Readonly<{
 }>;
 
 function nonnegativeInteger(value: number, label: string): number {
-  if (!Number.isInteger(value) || value < 0) throw new Error(`${label} must be a non-negative integer`);
+  if (!Number.isInteger(value) || value < 0)
+    throw new Error(`${label} must be a non-negative integer`);
   return value;
 }
 
 function positiveInteger(value: number, label: string): number {
-  if (!Number.isInteger(value) || value < 1) throw new Error(`${label} must be a positive integer`);
+  if (!Number.isInteger(value) || value < 1)
+    throw new Error(`${label} must be a positive integer`);
   return value;
 }
 
@@ -56,23 +60,26 @@ function resolveProviderSafeReadOptions(
   return {
     maxRateLimitRetries: nonnegativeInteger(
       options.maxRateLimitRetries ?? 4,
-      'maxRateLimitRetries',
+      "maxRateLimitRetries",
     ),
     // A bounded live Arc-Testnet diagnostic proved the same 512-block log
     // request succeeds when calls are spaced by three seconds. This remains a
     // retry cooldown only; it is not treated as a claimed throughput limit.
-    baseBackoffMs: positiveInteger(options.baseBackoffMs ?? 3_000, 'baseBackoffMs'),
+    baseBackoffMs: positiveInteger(
+      options.baseBackoffMs ?? 3_000,
+      "baseBackoffMs",
+    ),
     // A transport timeout or failed fetch is transient but must never be
     // converted into range splitting or an unbounded retry loop. Retry the
     // exact same logical read a small bounded number of times, then fail closed
     // if Arc remains unavailable.
     maxTransientRetries: nonnegativeInteger(
       options.maxTransientRetries ?? 2,
-      'maxTransientRetries',
+      "maxTransientRetries",
     ),
     transientBackoffMs: positiveInteger(
       options.transientBackoffMs ?? 1_000,
-      'transientBackoffMs',
+      "transientBackoffMs",
     ),
     // Arc does not publish a usable public-RPC request-rate ceiling. Serialize
     // reads and maintain a modest proactive gap so Bread does not create a
@@ -81,10 +88,16 @@ function resolveProviderSafeReadOptions(
     // policy.
     minimumIntervalMs: nonnegativeInteger(
       options.minimumIntervalMs ?? 500,
-      'minimumIntervalMs',
+      "minimumIntervalMs",
     ),
-    maxSplitDepth: nonnegativeInteger(options.maxSplitDepth ?? 8, 'maxSplitDepth'),
-    maxRpcAttempts: positiveInteger(options.maxRpcAttempts ?? 32, 'maxRpcAttempts'),
+    maxSplitDepth: nonnegativeInteger(
+      options.maxSplitDepth ?? 8,
+      "maxSplitDepth",
+    ),
+    maxRpcAttempts: positiveInteger(
+      options.maxRpcAttempts ?? 32,
+      "maxRpcAttempts",
+    ),
     sleep: options.sleep ?? (async (ms: number) => delay(ms)),
     now: options.now ?? Date.now,
   };
@@ -95,7 +108,12 @@ function errorChain(error: unknown): readonly unknown[] {
   const seen = new Set<object>();
   let current = error;
 
-  while (current && typeof current === 'object' && chain.length < 8 && !seen.has(current)) {
+  while (
+    current &&
+    typeof current === "object" &&
+    chain.length < 8 &&
+    !seen.has(current)
+  ) {
     seen.add(current);
     chain.push(current);
     current = (current as { cause?: unknown }).cause;
@@ -108,10 +126,14 @@ function errorText(error: unknown): string {
   return errorChain(error)
     .flatMap((entry) => {
       const candidate = entry as Record<string, unknown>;
-      return [candidate.name, candidate.message, candidate.shortMessage, candidate.details]
-        .filter((value): value is string => typeof value === 'string');
+      return [
+        candidate.name,
+        candidate.message,
+        candidate.shortMessage,
+        candidate.details,
+      ].filter((value): value is string => typeof value === "string");
     })
-    .join(' ')
+    .join(" ")
     .toLowerCase();
 }
 
@@ -121,16 +143,24 @@ function errorText(error: unknown): string {
  * explicit provider rate-limit detail must win. Bread must never respond to
  * throttling by splitting one request into more requests.
  */
-export function classifyArcRpcLimitError(error: unknown): ArcRpcLimitKind | null {
+export function classifyArcRpcLimitError(
+  error: unknown,
+): ArcRpcLimitKind | null {
   const text = errorText(error);
-  if (/(rate[ -]?limit|too many requests|http 429|status 429)/i.test(text)) return 'RATE_LIMIT';
+  if (/(rate[ -]?limit|too many requests|http 429|status 429)/i.test(text))
+    return "RATE_LIMIT";
 
   const limited = errorChain(error).some((entry) => {
     const candidate = entry as Record<string, unknown>;
-    return candidate.code === -32005 || candidate.name === 'LimitExceededRpcError';
+    return (
+      candidate.code === -32005 || candidate.name === "LimitExceededRpcError"
+    );
   });
-  if (limited || /request exceeds defined limit|request limit exceeded/i.test(text)) {
-    return 'REQUEST_LIMIT';
+  if (
+    limited ||
+    /request exceeds defined limit|request limit exceeded/i.test(text)
+  ) {
+    return "REQUEST_LIMIT";
   }
 
   return null;
@@ -149,8 +179,9 @@ function blockBounds(request: Readonly<Record<string, unknown>>): Readonly<{
 }> | null {
   const fromBlock = request.fromBlock;
   const toBlock = request.toBlock;
-  if (typeof fromBlock !== 'bigint' || typeof toBlock !== 'bigint') return null;
-  if (toBlock < fromBlock) throw new Error('Arc log request range end precedes start');
+  if (typeof fromBlock !== "bigint" || typeof toBlock !== "bigint") return null;
+  if (toBlock < fromBlock)
+    throw new Error("Arc log request range end precedes start");
   return { fromBlock, toBlock };
 }
 
@@ -188,16 +219,22 @@ class ArcRpcRateGate {
         try {
           return await operation();
         } catch (error) {
-          if (classifyArcRpcLimitError(error) === 'RATE_LIMIT') {
-            if (rateLimitRetries >= this.options.maxRateLimitRetries) throw error;
-            await this.options.sleep(this.options.baseBackoffMs * 2 ** rateLimitRetries);
+          if (classifyArcRpcLimitError(error) === "RATE_LIMIT") {
+            if (rateLimitRetries >= this.options.maxRateLimitRetries)
+              throw error;
+            await this.options.sleep(
+              this.options.baseBackoffMs * 2 ** rateLimitRetries,
+            );
             rateLimitRetries += 1;
             continue;
           }
 
           if (isArcTransientTransportError(error)) {
-            if (transientRetries >= this.options.maxTransientRetries) throw error;
-            await this.options.sleep(this.options.transientBackoffMs * 2 ** transientRetries);
+            if (transientRetries >= this.options.maxTransientRetries)
+              throw error;
+            await this.options.sleep(
+              this.options.transientBackoffMs * 2 ** transientRetries,
+            );
             transientRetries += 1;
             continue;
           }
@@ -231,7 +268,9 @@ function createProviderSafeLogReader(
       ): Promise<readonly RpcLog[]> => {
         if (attempts >= options.maxRpcAttempts) {
           throw new ArcLogReadBudgetExceededError(
-            new Error(`attempt budget ${options.maxRpcAttempts} exhausted before next eth_getLogs call`),
+            new Error(
+              `attempt budget ${options.maxRpcAttempts} exhausted before next eth_getLogs call`,
+            ),
           );
         }
         attempts += 1;
@@ -240,26 +279,36 @@ function createProviderSafeLogReader(
           return await gate.run(() => raw.getLogs(currentRequest));
         } catch (error) {
           const kind = classifyArcRpcLimitError(error);
-          if (kind !== 'REQUEST_LIMIT') throw error;
+          if (kind !== "REQUEST_LIMIT") throw error;
 
           const bounds = blockBounds(currentRequest);
           if (
-            bounds === null
-            || bounds.fromBlock === bounds.toBlock
-            || splitDepth >= options.maxSplitDepth
-            || attempts >= options.maxRpcAttempts
+            bounds === null ||
+            bounds.fromBlock === bounds.toBlock ||
+            splitDepth >= options.maxSplitDepth ||
+            attempts >= options.maxRpcAttempts
           ) {
-            if (attempts >= options.maxRpcAttempts) throw new ArcLogReadBudgetExceededError(error);
+            if (attempts >= options.maxRpcAttempts)
+              throw new ArcLogReadBudgetExceededError(error);
             throw error;
           }
 
-          const midpoint = bounds.fromBlock + (bounds.toBlock - bounds.fromBlock) / 2n;
+          const midpoint =
+            bounds.fromBlock + (bounds.toBlock - bounds.fromBlock) / 2n;
           const left = await read(
-            { ...currentRequest, fromBlock: bounds.fromBlock, toBlock: midpoint },
+            {
+              ...currentRequest,
+              fromBlock: bounds.fromBlock,
+              toBlock: midpoint,
+            },
             splitDepth + 1,
           );
           const right = await read(
-            { ...currentRequest, fromBlock: midpoint + 1n, toBlock: bounds.toBlock },
+            {
+              ...currentRequest,
+              fromBlock: midpoint + 1n,
+              toBlock: bounds.toBlock,
+            },
             splitDepth + 1,
           );
           return [...left, ...right];
@@ -299,15 +348,20 @@ export function createArcProviderSafeReadClient<T extends object>(
 ): T {
   const resolved = resolveProviderSafeReadOptions(options);
   const gate = new ArcRpcRateGate(resolved);
-  const logReader = createProviderSafeLogReader(raw as unknown as LogClient, gate, resolved);
+  const logReader = createProviderSafeLogReader(
+    raw as unknown as LogClient,
+    gate,
+    resolved,
+  );
 
   return new Proxy(raw, {
     get(target, property, receiver) {
       const value = Reflect.get(target, property, receiver);
-      if (typeof value !== 'function') return value;
+      if (typeof value !== "function") return value;
 
-      if (property === 'getLogs') {
-        return (request: Readonly<Record<string, unknown>>) => logReader.getLogs(request);
+      if (property === "getLogs") {
+        return (request: Readonly<Record<string, unknown>>) =>
+          logReader.getLogs(request);
       }
 
       return (...args: readonly unknown[]) =>
@@ -325,10 +379,11 @@ export function createArcProviderSafeReadClient<T extends object>(
  * provider-wide Bread gate above is the sole retry owner for this runtime.
  */
 export function createArcReadClient(network: NetworkManifest): PublicClient {
-  if (network.chainId === null) throw new Error('canonical network manifest has no chainId');
+  if (network.chainId === null)
+    throw new Error("canonical network manifest has no chainId");
   const rpcUrls = network.rpc;
   if (!Array.isArray(rpcUrls) || rpcUrls.length === 0) {
-    throw new Error('canonical network manifest carries no RPC endpoint');
+    throw new Error("canonical network manifest carries no RPC endpoint");
   }
 
   const chain = defineChain({
