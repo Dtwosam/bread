@@ -1,6 +1,6 @@
-schema_version: 1.69
+schema_version: 1.70
 project: Bread
-updated_at: 2026-08-15T20:16:00+01:00
+updated_at: 2026-08-15T20:23:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -30,27 +30,12 @@ day9_started: true
 day9_rc_tag_created: false
 
 completed_checkpoints:
-  - "1-6I: specification checkpoints complete per Project Sources"
-  - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
-  - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
-  - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
-  - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
-  - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
-  - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
-  - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS_DURABLE"
-  - "Day 6: SDK_INDEXER_API_INTEGRATED_PASS_DURABLE"
-  - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
-  - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
-  - "Project Source Pack v1.6: PROJECT_SOURCE_PACK_RATIFIED = v1.6-pre-rc-ui-ux-v2.2"
-  - "Day 9 LAN functional acceptance: PASS — BREAD_LAN_ACCEPTANCE_READY"
-  - "UI v2.2 Figma foundations/components canonical editable source established and visually validated"
-  - "Lane 1 slice 1: exact v2.2 theme token contract RED 0b44473 -> GREEN 9cf15bc; state-compatibility correction verified by root CI 31901898791"
-  - "Lane 1 slice 2: shared CreatorAttribution RED 6795dd1 -> GREEN 5c996cf; focused workflow 31902113415 PASS and root CI 31902113406 PASS"
-  - "Lane 1 slice 3: runtime CSS token surface RED 7adaf4e -> GREEN b0e6c88; focused workflow 31902360616 PASS and root CI 31902360622 PASS"
-  - "Lane 1 slice 4: focus-visible and motion primitives RED 621da8a -> GREEN ca2209a; state compatibility ac9588a; focused workflow 31902811181 PASS, root CI 31902811220 PASS, Day-9 truthfulness 31902811146 PASS"
-  - "Lane 1 slice 5: responsive PageContainer RED 986b71c -> GREEN 4353eb1; canonical Figma component set 3:22; focused workflow 31903141574 PASS, root CI 31903141535 PASS, Day-9 truthfulness 31903141507 PASS, primary browser 31903141543 PASS, release browser matrix 31903141605 PASS"
-  - "Lane 1 slice 6: icon presentation boundary RED 1446d73 -> GREEN 0358b4d; canonical Figma component set 4:22; focused workflow 31903431651 PASS, root CI 31903431616 PASS, Day-9 truthfulness 31903431715 PASS, primary browser 31903431717 PASS"
-  - "UI/UX v2.2 Lane 1 — Foundations: PASS on accepted implementation head 0358b4d6b3e3d31baf23c18b92d743382e41b025"
+  - "Days 1-8 integrated accepted baselines remain retained and closed except demonstrated regressions."
+  - "Project Source Pack v1.6 ratified; 04B/04C retired; 04A/04D remain controlling."
+  - "Day 9 LAN functional acceptance PASS — BREAD_LAN_ACCEPTANCE_READY."
+  - "UI/UX v2.2 Lane 1 — Foundations PASS at 0358b4d6b3e3d31baf23c18b92d743382e41b025."
+  - "Lane 2 canonical Starter-compatible Figma shell compositions established in section 6:2: desktop 6:3, tablet 6:28, mobile 6:53."
+  - "Lane 2A primary navigation order + active-state contract: RED d87db48/e96ab0e -> package GREEN 0b2e20e -> integrated GREEN 855c6c7; focused 31904010726 PASS, root CI 31904010762 PASS, Day-9 truthfulness 31904010703 PASS, primary browser 31904010857 PASS, frontend-security 31904010770 PASS."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -62,7 +47,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 0358b4d6b3e3d31baf23c18b92d743382e41b025
+  ui_accepted_head_before_this_state_sync: 855c6c7c0f08eb2bf03acb26e871f3ff9edf32f6
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -84,49 +69,25 @@ repository:
   day10_started: false
   ui_implementation_branch_created: true
   local_ui_worktree_created: false
-  local_ui_worktree_limitation: "No repository checkout is mounted in this ChatGPT runtime; remote GitHub branch isolation is established, but a literal local git worktree cannot be materialized here."
 
 verification:
-  root_ci_current_pr_head: PASS_RUN_31894437375
-  day9_final_rc_truthfulness_current_pr_head: PASS_RUN_31894437405_PHYSICAL_BLOCKER_RETAINED
-  day9_lan_provider_runtime_current_pr_head: PASS_RUN_31894437319
-  automated_v3_final_regression: PASS_RUN_31847654814
-  automated_service_rollback: PASS_RUN_31847657797
-  automated_chromium_desktop_mobile_e2e: PASS_RUN_31847657870
-  automated_release_browser_matrix: PASS_RUN_31847657841
+  retained_day9_root_ci: PASS_RUN_31894437375
+  retained_day9_final_rc_truthfulness: PASS_RUN_31894437405_PHYSICAL_BLOCKER_RETAINED
+  retained_day9_lan_provider_runtime: PASS_RUN_31894437319
+  retained_service_rollback: PASS_RUN_31847657797
+  retained_release_browser_matrix: PASS_RUN_31847657841
   physical_android_auto_graduation_recovery: PASS_RETAINED_PARTIAL_DEVICE_EVIDENCE
   bread_day9_rc1_tag_lookup: NOT_FOUND
   day9_verdict: INCOMPLETE
-  ui_lane1_slice1_red: FAIL_EXPECTED_RUN_31901626270
-  ui_lane1_slice1_focused_green: PASS_RUN_31901670876
-  ui_lane1_state_compatibility_root_ci: PASS_RUN_31901898791
-  ui_lane1_state_compatibility_focused: PASS_RUN_31901898804
-  ui_lane1_creator_attribution_red: FAIL_EXPECTED_RUN_31902014634
-  ui_lane1_creator_attribution_focused_green: PASS_RUN_31902113415
-  ui_lane1_creator_attribution_root_ci: PASS_RUN_31902113406
-  ui_lane1_runtime_css_red: FAIL_EXPECTED_RUN_31902301384
-  ui_lane1_runtime_css_focused_green: PASS_RUN_31902360616
-  ui_lane1_runtime_css_root_ci: PASS_RUN_31902360622
-  ui_lane1_focus_motion_red: FAIL_EXPECTED_RUN_31902466071
-  ui_lane1_focus_motion_green_candidate: ca2209a4e4b5deb089936703f93b9732a4cf6cce
-  ui_lane1_focus_motion_state_compatibility: ac9588a42cdca402b7821da49c7b920acba5132a
-  ui_lane1_focus_motion_focused_green: PASS_RUN_31902811181
-  ui_lane1_focus_motion_root_ci: PASS_RUN_31902811220
-  ui_lane1_focus_motion_day9_truthfulness: PASS_RUN_31902811146
-  ui_lane1_focus_motion_primary_browser: PASS_RUN_31902811226
-  ui_lane1_page_container_red: FAIL_EXPECTED_RUN_31903017447
-  ui_lane1_page_container_green_candidate: 4353eb1cc03231d488b1e6fe0fea4b14881a6f0d
-  ui_lane1_page_container_focused_green: PASS_RUN_31903141574
-  ui_lane1_page_container_root_ci: PASS_RUN_31903141535
-  ui_lane1_page_container_day9_truthfulness: PASS_RUN_31903141507
-  ui_lane1_page_container_primary_browser: PASS_RUN_31903141543
-  ui_lane1_page_container_release_browser: PASS_RUN_31903141605
-  ui_lane1_icon_red: FAIL_EXPECTED_RUN_31903344006
-  ui_lane1_icon_green_candidate: 0358b4d6b3e3d31baf23c18b92d743382e41b025
-  ui_lane1_icon_focused_green: PASS_RUN_31903431651
-  ui_lane1_icon_root_ci: PASS_RUN_31903431616
-  ui_lane1_icon_day9_truthfulness: PASS_RUN_31903431715
-  ui_lane1_icon_primary_browser: PASS_RUN_31903431717
+  lane1_foundations: PASS_AT_0358b4d6b3e3d31baf23c18b92d743382e41b025
+  lane2a_navigation_red: FAIL_EXPECTED_RUN_31903741347
+  lane2a_navigation_package_green: 0b2e20e8f43ebc9b1737d4c9bc310aaa95aaeb57
+  lane2a_navigation_integrated_green: 855c6c7c0f08eb2bf03acb26e871f3ff9edf32f6
+  lane2a_focused_green: PASS_RUN_31904010726
+  lane2a_root_ci: PASS_RUN_31904010762
+  lane2a_day9_truthfulness: PASS_RUN_31904010703
+  lane2a_primary_browser: PASS_RUN_31904010857
+  lane2a_frontend_security: PASS_RUN_31904010770
 
 lan_acceptance:
   status: PASS
@@ -136,10 +97,6 @@ lan_acceptance:
   catchup_cycles: 639
   degraded_post_commit_cycles: 0
   subsequent_progress_checkpoint: 57159858
-  api_loopback: http://127.0.0.1:4010
-  web_loopback: http://127.0.0.1:4020
-  bounded_lan_origin: http://10.207.2.95:4000
-  same_origin_status: http://10.207.2.95:4000/v1/status
   production_next_build: PASS
   readiness_marker: BREAD_LAN_ACCEPTANCE_READY
   path: /tmp/bread-synthra-fork-proof
@@ -153,16 +110,17 @@ ui_ux_v2_2:
   production_implementation: AUTHORIZED_IN_ISOLATED_UI_LANE
   figma_required: true
   figma_free_starter_compatible: true
-  figma_started: true
   figma_file_key: DsjM9F9yt0WZRhyKGHOvCl
   figma_file_name: "Bread UI/UX v2.2 — Canonical Design System"
   figma_foundations_page: "00 Foundations"
   figma_components_page: "01 Components"
-  figma_foundations_visual_validation: PASS
   figma_page_container_component_set: "3:22"
   figma_icon_component_set: "4:22"
-  ui_worktree_created: false
-  ui_branch_created: true
+  figma_shell_section: "6:2"
+  figma_shell_desktop: "6:3"
+  figma_shell_tablet: "6:28"
+  figma_shell_mobile: "6:53"
+  figma_starter_page_limit_handling: "PASS — shell compositions kept in existing editable Components page; no paid-tier dependency introduced."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
   current_lane: "Lane 2 — Global shell/navigation"
@@ -173,19 +131,8 @@ ui_ux_v2_2:
     - FOCUS_VISIBLE_AND_MOTION_PRIMITIVES
     - RESPONSIVE_PAGE_CONTAINER
     - ICON_PRESENTATION_BOUNDARY
-  implementation_order:
-    - "Lane 0 — current UI conformance audit / frozen impact map"
-    - "Lane 1 — foundations"
-    - "Lane 2 — global shell/navigation"
-    - "Lane 3 — Explore/discovery"
-    - "Lane 4 — Search"
-    - "Lane 5 — token/trading"
-    - "Lane 6 — graduated token"
-    - "Lane 7 — Create"
-    - "Lane 8 — Portfolio/watchlist"
-    - "Lane 9 — Creator dashboard/claims"
-    - "Lane 10 — degraded/loading/error/recovery states"
-    - "Lane 11 — responsive/accessibility/performance closure"
+  accepted_shell_behaviors:
+    - PRIMARY_NAVIGATION_ORDER_AND_ACTIVE_STATE
 
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
@@ -197,39 +144,24 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge still require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Ratified redesign must be implemented lane-by-lane with canonical Figma, tests, rendered QA, 04D performance/accessibility gates, affected 06I regressions and exact-head evidence before Day-9 RC."
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; do not claim exact-current Pons parity"
-  PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
-  BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
-  PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
-  ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
-
-deployments:
-  network: ARC_TESTNET_CHAIN_5042002
-  arc_testnet_stack_status: VERIFIED_RETAINED
-  deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-  deployment_start_block: 56448201
-  production_money_claim: false
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Continue ratified redesign lane-by-lane with canonical Figma, tests, browser QA, 04D gates, affected 06I regressions and exact-head evidence."
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
+  PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
+  BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
+  PONS_AUDIT_FINDINGS: "Continuing security watch; independent Bread review remains required."
+  ARC_MAINNET_VALUES: "Official-publication mainnet deployment gate; do not invent values."
 
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
+  figma: CANONICAL_FREE_STARTER_COMPATIBLE_DESIGN_SOURCE_ACTIVE
   vercel: CONNECTED_BUT_NOT_SUBSTITUTE_FOR_GITHUB_CI
-  figma: CANONICAL_FREE_STARTER_COMPATIBLE_FOUNDATIONS_ESTABLISHED
-
-decisions_since_last_state:
-  - "PROJECT_SOURCE_PACK_RATIFIED = v1.6-pre-rc-ui-ux-v2.2; only 04B/04C retire."
-  - "04A/04D and earlier non-conflicting protocol/security ratifications remain controlling."
-  - "LAN functional acceptance PASS recorded from BREAD_LAN_ACCEPTANCE_READY without touching the running environment."
-  - "Dedicated remote UI implementation branch and draft PR #94 established from the source-hygiene descendant of the Day-9 head."
-  - "Canonical Figma foundations/components established and visually validated before production Lane-1 code."
-  - "Lane 1 foundations are accepted: exact theme/runtime tokens, CreatorAttribution, focus/motion, responsive PageContainer, and dependency-free icon presentation boundary all passed their RED->GREEN focused/root/browser evidence."
 
 next_action: >-
-  Begin Lane 2 from the accepted Lane-1 baseline. First establish canonical editable Figma shell compositions from the written v2.2 specification for desktop, tablet, and mobile before production shell code. Then execute Lane 2 as bounded RED -> GREEN slices, starting with the source-exact primary navigation data/order + active-state contract only: desktop Bread logo -> Explore -> Trending -> Create -> Portfolio, with Search, watchlist, and Wallet/Network remaining shell consumers rather than invented route semantics; mobile bottom primary destinations Explore, Trending, Create, Portfolio, with More only if a real secondary-route need exists. Do not combine the whole shell into one task. After navigation contract acceptance, continue desktop header, tablet behavior, mobile top bar, mobile bottom navigation, search trigger/Cmd+K, wallet/network context, and live activity strip as separate integrated slices. Keep /tmp/bread-synthra-fork-proof untouched.
+  Continue Lane 2 one independently reviewable behavior at a time. Next: desktop header composition/geometry only. Under RED -> GREEN, enforce a 64px sticky desktop header, 1440px standard inner max width, 32px desktop gutters, stable Bread brand + accepted primary navigation + flexible Search + watchlist-icon slot + Wallet/Network ordering, with no width-changing live counters. Do not implement watchlist data/state in this slice; Lane 8 owns watchlist content. The shell control may expose only the source-required watchlist access surface without inventing persistence/data semantics. Keep tablet/mobile behavior, Cmd/Ctrl+K, wallet/network state changes, and live strip as later separate Lane-2 slices. Verify focused shell tests, adjacent desktop/mobile browser regression, source conformance, root CI, and Day-9 truthfulness before acceptance. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
-  - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof, its LAN/indexer process, containers, database, checkpoint or acceptance evidence."
+  - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
