@@ -111,9 +111,9 @@ function feedItem(input: {
     launchBlockNumber: '900',
     launchTransactionHash: LAUNCH_TX_HASH,
     launchLogIndex: 0,
+    holderCount: '42',
     metrics: {
       lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
-      holderCount: '42',
       quoteVolume: { m5: '12000000', h1: '75000000', h24: '450000000' },
       tradeCount: { h1: '24', h24: '140' },
       uniqueTraders: { h1: '17', h24: '86' },
