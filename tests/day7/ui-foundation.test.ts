@@ -163,6 +163,41 @@ describe('Bread UI/UX v2.2 public web design foundation', () => {
     expect(css).toContain('max-width: var(--bread-explore-max-width);');
   });
 
+  it('provides one canonical icon presentation boundary with source-exact role sizes', () => {
+    expect(exports).toHaveProperty('Icon');
+    const Icon = exports.Icon as ((props: Record<string, unknown>) => unknown) | undefined;
+    expect(typeof Icon).toBe('function');
+
+    const normal = Icon?.({ children: 'glyph' }) as ElementLike | undefined;
+    const primary = Icon?.({ children: 'glyph', size: 'primary-control' }) as ElementLike | undefined;
+    const navigation = Icon?.({ children: 'glyph', size: 'navigation' }) as ElementLike | undefined;
+    const prominent = Icon?.({ children: 'glyph', size: 'prominent-action', label: 'Action' }) as ElementLike | undefined;
+
+    expect(normal?.props?.className).toBe('bread-icon bread-icon--normal');
+    expect(normal?.props?.['aria-hidden']).toBe(true);
+    expect(primary?.props?.className).toBe('bread-icon bread-icon--primary-control');
+    expect(navigation?.props?.className).toBe('bread-icon bread-icon--navigation');
+    expect(prominent?.props?.className).toBe('bread-icon bread-icon--prominent-action');
+    expect(prominent?.props?.role).toBe('img');
+    expect(prominent?.props?.['aria-label']).toBe('Action');
+
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+    for (const token of [
+      '--bread-icon-normal: 16px;',
+      '--bread-icon-primary-control: 18px;',
+      '--bread-icon-navigation: 20px;',
+      '--bread-icon-prominent-action: 24px;',
+    ]) expect(css).toContain(token);
+    expect(css).toContain('.bread-icon--normal');
+    expect(css).toContain('width: var(--bread-icon-normal);');
+    expect(css).toContain('.bread-icon--primary-control');
+    expect(css).toContain('width: var(--bread-icon-primary-control);');
+    expect(css).toContain('.bread-icon--navigation');
+    expect(css).toContain('width: var(--bread-icon-navigation);');
+    expect(css).toContain('.bread-icon--prominent-action');
+    expect(css).toContain('width: var(--bread-icon-prominent-action);');
+  });
+
   it('provides one shared secondary CreatorAttribution primitive', () => {
     expect(exports).toHaveProperty('CreatorAttribution');
     const CreatorAttribution = exports.CreatorAttribution as ((props: Record<string, unknown>) => unknown) | undefined;
