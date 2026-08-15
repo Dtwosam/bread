@@ -1,6 +1,6 @@
-schema_version: 1.72
+schema_version: 1.73
 project: Bread
-updated_at: 2026-08-15T21:16:00+01:00
+updated_at: 2026-08-15T21:31:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -40,6 +40,7 @@ completed_checkpoints:
   - "Canonical Figma shell continuity repaired from frozen written v2.2 + approved visual reference: editable shell-only target node 7:2, header 7:3, live strip 7:28; no Lane-3 page composition invented."
   - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7; focused 31905629819 PASS, root CI 31905629721 PASS, primary browser/screenshot 31905629698 PASS, frontend-security 31905629722 PASS, Day-9 truthfulness 31905629753 PASS."
   - "Lane 2 visual correction — truthful live activity strip: RED 750affd -> accepted GREEN 0829cf18c438ff7adcf31f41fddbf5a906bc9e50. Shared component owns stable bread-live-strip root + data-status state and shared theme owns 40px single-surface styling; web shell owns placement only. Focused 31906372671 PASS, root CI 31906372499 PASS, primary browser/screenshot 31906372472 PASS, frontend-security 31906372424 PASS, Explore/Search 31906372516 PASS, wallet/network 31906372540 PASS, Day-9 truthfulness 31906372506 PASS. Exact-head 1586x992 artifact 9252476635 shows truthful Checking live updates and no fabricated market metrics."
+  - "Lane 2 visual correction — Bread-specific brand mark: RED efd66d34fc83073b3da45fbef475a9192af69a44 -> accepted GREEN 439ee0103b84d05aa5042942cc03ece9d50f1372. One shared BreadBrand primitive now serves desktop/mobile with the canonical decorative 36x36 brand-butter •ᴗ• mark before BREAD. Focused 31906702590 PASS, root CI 31906702566 PASS, primary browser/screenshot 31906702585 PASS, frontend-security 31906702690 PASS, Explore/Search 31906702584 PASS, wallet/network 31906702501 PASS, production gates 31906702605 PASS, Day-9 truthfulness 31906702643 PASS. Exact-head 1586x992 artifact 9252564854 confirms the mark without geometry regression."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -51,7 +52,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 0829cf18c438ff7adcf31f41fddbf5a906bc9e50
+  ui_accepted_head_before_this_state_sync: 439ee0103b84d05aa5042942cc03ece9d50f1372
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -112,7 +113,18 @@ verification:
   lane2_live_strip_wallet_network: PASS_RUN_31906372540
   lane2_live_strip_day9_truthfulness: PASS_RUN_31906372506
   visual_reference_capture_0829cf18_artifact: 9252476635
-  visual_reference_capture_0829cf18_digest: sha256:b0004446582306161e1eaf6bac9d5674560d7f817994f432010d080ec0b82d7e
+  lane2_brand_red: efd66d34fc83073b3da45fbef475a9192af69a44
+  lane2_brand_green: 439ee0103b84d05aa5042942cc03ece9d50f1372
+  lane2_brand_focused_green: PASS_RUN_31906702590
+  lane2_brand_root_ci: PASS_RUN_31906702566
+  lane2_brand_primary_browser: PASS_RUN_31906702585
+  lane2_brand_frontend_security: PASS_RUN_31906702690
+  lane2_brand_explore_search: PASS_RUN_31906702584
+  lane2_brand_wallet_network: PASS_RUN_31906702501
+  lane2_brand_production_gates: PASS_RUN_31906702605
+  lane2_brand_day9_truthfulness: PASS_RUN_31906702643
+  visual_reference_capture_439ee010_artifact: 9252564854
+  visual_reference_capture_439ee010_digest: sha256:e75c7ec4863bb588442e0e8ade8e907594f24b57617b2c6d6a73d41938625af8
 
 lan_acceptance:
   status: PASS
@@ -144,7 +156,7 @@ ui_ux_v2_2:
   figma_reconciled_live_strip_node: "7:28"
   figma_continuity_note: "Earlier recorded shell node IDs were not present on fresh metadata readback; canonical shell-only target was rebuilt from frozen written v2.2 plus approved reference without inventing Lane-3 page composition."
   figma_mcp_status: STARTER_PLAN_CALL_LIMIT_REACHED_DURING_RECONCILIATION
-  figma_sync_debt: "Any subsequent source-compatible shell correction must be synchronized back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the visual QA bar."
+  figma_sync_debt: "Brand mark and any subsequent source-compatible shell correction must be synchronized back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the visual QA bar."
   temporary_visual_conformance_path: "Written v2.2 + approved visual reference + established canonical Figma node 7:2 + exact-head Playwright rendered evidence."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
@@ -161,8 +173,8 @@ ui_ux_v2_2:
     - DESKTOP_HEADER_COMPOSITION_AND_GEOMETRY
     - DECORATIVE_CANONICAL_NAVIGATION_ICON_CHARACTER
     - TRUTHFUL_LIVE_ACTIVITY_STRIP_DESKTOP
+    - SHARED_BREAD_BRAND_MARK
   visual_findings_open:
-    - BRAND_MASCOT_MARK_MISSING_FROM_RENDERED_HEADER
     - SEARCH_SHORTCUT_AND_SEARCH_ICON_PENDING_DEDICATED_LANE2_SLICE
     - MOBILE_LIVE_STRIP_CURRENTLY_HIDDEN_BUT_V2_2_REQUIRES_COMPACT_36PX_STRIP
     - MOBILE_TOP_BOTTOM_NAV_CHARACTER_AND_390X844_RENDERED_RECONCILIATION_PENDING
@@ -199,7 +211,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Continue Lane 2 visual-reference reconciliation with one independently reviewable RED -> GREEN slice: restore the Bread-specific brand mark in the shared global shell without changing product semantics. The frozen approved reference and canonical Figma header show a 36x36 brand-butter mascot/mark immediately before the BREAD wordmark; written v2.2 permits the mascot sparingly in the logo. Reuse one source-owned BreadBrand primitive for desktop and mobile rather than duplicating markup. Keep the mark decorative/non-semantic, preserve the 64px desktop and 56px mobile shell contracts, source spacing/radius tokens, current 1440px max-width/gutter rules, and existing primary navigation/search/watchlist/wallet geometry. First add a focused failing test proving the mark is absent, verify the intended RED, then implement the minimum GREEN. Run focused shell tests, root CI, Explore/Search + wallet/network + frontend-security regressions, primary rendered-browser capture at 1586x992, and Day-9 truthfulness. Do not begin Lane 3. Keep /tmp/bread-synthra-fork-proof untouched. Figma synchronization is deferred only because the Starter MCP call limit is currently reached; do not alter the frozen target around that limitation.
+  Continue Lane 2 visual-reference reconciliation with one independently reviewable RED -> GREEN Search-shell slice. Written v2.2 requires desktop Ctrl+K/Cmd+K access and the approved reference/canonical Figma search trigger carries a restrained search-glyph character. Preserve the existing Search accessible name, modal focus return, Escape/focus-trap behavior, two-character/address-safe query rules, centered 520px geometry and mobile one-tap access. First add a focused failing test proving the global shortcut and decorative normal-size search icon are absent, verify intended RED, then implement the minimum SearchSurface-owned GREEN without changing search ranking/data semantics. Run focused Explore/Search + shell tests, root CI, wallet/network + frontend-security + production regressions, exact-head 1586x992 rendered capture and Day-9 truthfulness before acceptance. Do not begin Lane 3. Keep /tmp/bread-synthra-fork-proof untouched. Figma synchronization remains deferred only because the Starter MCP call limit is reached.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
