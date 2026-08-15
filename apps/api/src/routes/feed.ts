@@ -154,10 +154,15 @@ export function registerFeedRoute(
           if (!("graduationCompletedBlock" in last) || !("graduationCompletedLogIndex" in last)) {
             throw new Error("Graduated-feed row is missing completion cursor state");
           }
+          const graduationCompletedBlock = last.graduationCompletedBlock;
+          const graduationCompletedLogIndex = last.graduationCompletedLogIndex;
+          if (typeof graduationCompletedBlock !== "bigint" || typeof graduationCompletedLogIndex !== "number") {
+            throw new Error("Graduated-feed row has invalid completion cursor state");
+          }
           nextCursor = encodeGraduatedFeedCursor({
             version: GRADUATED_FEED_CURSOR_VERSION,
-            graduationCompletedBlock: last.graduationCompletedBlock.toString(10),
-            graduationCompletedLogIndex: last.graduationCompletedLogIndex,
+            graduationCompletedBlock: graduationCompletedBlock.toString(10),
+            graduationCompletedLogIndex,
             tokenAddress: last.tokenAddress,
           });
         } else {
