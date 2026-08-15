@@ -130,6 +130,65 @@ describe('Bread UI/UX v2.2 public web design foundation', () => {
     });
   });
 
+  it('exposes the exact ratified v2.2 runtime CSS variable surface', () => {
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+
+    for (const token of [
+      '--bread-warning: #f79009;',
+      '--bread-warning-soft: #35240d;',
+      '--bread-brand-butter: #f4c35d;',
+      '--bread-brand-butter-hover: #ffd477;',
+      '--bread-brand-butter-soft: #2b2210;',
+      '--bread-brand-lavender: #a98bfa;',
+      '--bread-brand-lavender-soft: #211a35;',
+      '--bread-brand-mint: #47d7b0;',
+      '--bread-brand-mint-soft: #102b26;',
+      '--bread-space-0: 0px;',
+      '--bread-space-4: 4px;',
+      '--bread-space-8: 8px;',
+      '--bread-space-12: 12px;',
+      '--bread-space-16: 16px;',
+      '--bread-space-20: 20px;',
+      '--bread-space-24: 24px;',
+      '--bread-space-32: 32px;',
+      '--bread-space-40: 40px;',
+      '--bread-space-48: 48px;',
+      '--bread-space-64: 64px;',
+      '--bread-gutter-mobile: 16px;',
+      '--bread-gutter-tablet: 24px;',
+      '--bread-gutter-desktop: 32px;',
+      '--bread-max-width: 1440px;',
+      '--bread-explore-max-width: 1600px;',
+      '--bread-trade-rail: 360px;',
+      '--bread-filter-rail: 232px;',
+      '--bread-header-desktop: 64px;',
+      '--bread-live-strip-desktop: 40px;',
+      '--bread-live-strip-mobile: 36px;',
+      '--bread-topbar-mobile: 56px;',
+      '--bread-bottomnav-mobile: 64px;',
+      '--bread-motion-instant: 80ms;',
+      '--bread-motion-fast: 120ms;',
+      '--bread-motion-standard: 180ms;',
+      '--bread-motion-enter: 220ms;',
+      '--bread-motion-sheet: 260ms;',
+      '--bread-easing: cubic-bezier(0.2, 0, 0, 1);',
+    ]) {
+      expect(css).toContain(token);
+    }
+  });
+
+  it('keeps literal color values inside the root token definition rather than component rules', () => {
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+    const rootEnd = css.indexOf('\n}\n');
+    expect(rootEnd).toBeGreaterThan(0);
+    const componentCss = css.slice(rootEnd + 3);
+
+    expect(componentCss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(componentCss).toContain('.bread-button--buy');
+    expect(componentCss).toContain('.bread-button--sell');
+    expect(componentCss).toContain('color: var(--bread-bg-primary)');
+  });
+
   it('provides one shared secondary CreatorAttribution primitive', () => {
     expect(exports).toHaveProperty('CreatorAttribution');
     const CreatorAttribution = exports.CreatorAttribution as
