@@ -43,6 +43,7 @@ type TrendingRawRow = Readonly<{
   launchBlockNumber: string;
   launchTransactionHash: string;
   launchLogIndex: number;
+  createdAt: Date;
   quoteVolume1h: string;
   uniqueTraders1h: string;
   tradeCount1h: string;
@@ -179,6 +180,7 @@ export class TrendingRepository {
         l.launch_block_number::text AS "launchBlockNumber",
         l.launch_transaction_hash AS "launchTransactionHash",
         l.launch_log_index AS "launchLogIndex",
+        l.created_at AS "createdAt",
         r.quote_volume_1h::text AS "quoteVolume1h",
         r.unique_traders_1h::text AS "uniqueTraders1h",
         r.trade_count_1h::text AS "tradeCount1h",
