@@ -69,11 +69,11 @@ describe('Day 7 Explore/Search interaction contract', () => {
       toTokenCardModel({
         tokenAddress: VALID_ADDRESS,
         deployerAddress: CREATOR_ADDRESS,
+        holderCount: '42',
         name: 'Bread',
         symbol: 'BRD',
         metrics: {
           lastPrice: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
-          holderCount: '42',
           quoteVolume: { m5: '1000000', h1: '2000000', h24: '5000000' },
           tradeCount: { h1: '3', h24: '9' },
           uniqueTraders: { h1: '2', h24: '5' },
@@ -93,11 +93,35 @@ describe('Day 7 Explore/Search interaction contract', () => {
     });
   });
 
-  it('wires canonical holder count through the shared feed DTO and API serializer', () => {
+  it('keeps canonical holder count available before a token has trade metrics', () => {
+    const model = toTokenCardModel({
+      tokenAddress: VALID_ADDRESS,
+      deployerAddress: CREATOR_ADDRESS,
+      holderCount: '1',
+      name: 'Fresh Bread',
+      symbol: 'FRESH',
+      metrics: null,
+      progress: { progressBps: '0', state: 'CURVE_ACTIVE' },
+    } as IndexedFeedCardFields);
+
+    expect(model.holderCount).toBe('1');
+    expect(model.price).toBeNull();
+  });
+
+  it('wires canonical holder count independently from trade metrics through feed and token DTOs', () => {
     const typeSource = readFileSync(new URL('../../packages/types/src/api.ts', import.meta.url), 'utf8');
-    const routeSource = readFileSync(new URL('../../apps/api/src/routes/token.ts', import.meta.url), 'utf8');
-    expect(typeSource).toContain('holderCount: string | null;');
-    expect(routeSource).toContain('holderCount: row.holderCount?.toString(10) ?? null');
+    const feedRouteSource = readFileSync(new URL('../../apps/api/src/routes/feed.ts', import.meta.url), 'utf8');
+    const tokenRouteSource = readFileSync(new URL('../../apps/api/src/routes/token.ts', import.meta.url), 'utf8');
+    const metricType = typeSource.match(
+      /export type IndexedTradeMetricsSummary = Readonly<\{([\s\S]*?)\n\}>;/,
+    )?.[1];
+
+    expect(typeSource).toMatch(
+      /export type IndexedFeedItem = Readonly<\{[\s\S]*?holderCount: string \| null;[\s\S]*?metrics:/,
+    );
+    expect(metricType).not.toContain('holderCount');
+    expect(feedRouteSource).toContain('holderCount: metricRow?.holderCount?.toString(10) ?? null');
+    expect(tokenRouteSource).toContain('holderCount: metrics?.holderCount?.toString(10) ?? null');
   });
 
   it('renders the authoritative indexed creator wallet directly below TokenCard identity', () => {
@@ -113,7 +137,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(source).toContain('<dt>24h change</dt>');
     expect(source).toContain('<dt>24h volume</dt>');
     expect(source).toContain('<dt>Holders</dt>');
-    expect(source).toContain('{model.holderCount ?? \'—\'}');
+    expect(source).toContain("{model.holderCount ?? '—'}");
     expect(source).not.toContain('Indexed price ratio');
   });
 
