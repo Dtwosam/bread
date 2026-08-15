@@ -1,31 +1,31 @@
 {
   "schema": "bread://schemas/day5-graduation-deployment-v1",
   "network": "arc-testnet",
-  "status": "BLOCKED_UNTIL_VERIFIED_DEX_AND_PRODUCTION_CONFIG",
+  "status": "VERIFIED",
   "chainId": 5042002,
   "core": {
-    "factory": null,
-    "deployer": null,
-    "feePolicy": null,
-    "feeEscrow": null,
-    "emergencyController": null,
-    "locker": null,
-    "coordinator": null
+    "factory": "0xddf400f7a376fb8a962eee6d74c1ba37efa644f7",
+    "deployer": "0x89f70023c11b368d4ce5c6e4c100d4fa176f64fd",
+    "feePolicy": "0x388e534b94268e231a1badf14c4678f01bfc60e3",
+    "feeEscrow": "0xea9bb3330e0a2c9898776c75f549d06d2a644c94",
+    "emergencyController": "0xb6879be6a83b3a6e7a7de5cb841ca1550178ba42",
+    "locker": "0xecf66a3a221d90a413d9015803417aa8d4ba97fe",
+    "coordinator": "0x239da83ec8294b2433848ea8c85155f41e76f60a"
   },
   "adapter": {
-    "active": false,
-    "family": null,
-    "adapter": null,
-    "positionManager": null,
+    "active": true,
+    "family": "UNISWAP_V3",
+    "adapter": "0xfe2378a81d655e051b53aba57271d2b4d5b5dd84",
+    "positionManager": "0x444Cc395346428216fB6f2892eb03cB804aE4CD5",
     "poolManager": null,
-    "v3Factory": null,
-    "configHash": null
+    "v3Factory": "0x0fB6EEDA6e90E90797083861A75D15752a27f59c",
+    "configHash": "0x4069e56d708b6bc2d4b003e09e6a566299b799bc8646732a901024fcf77781c7"
   },
   "authorities": {
-    "protocolAdmin": null,
-    "guardian": null
+    "protocolAdmin": "0x9004e285521d69197cd9965c301b02161eb1d0d8",
+    "guardian": "0xdcb9cb7038ff1a282265a855754dba8695a3121c"
   },
-  "economicsConfigHash": null,
-  "dexEvidenceHash": null,
-  "deploymentStartBlock": null
+  "economicsConfigHash": "0x081b597d7b603cb67d3921f269f7940a84221524b2d9baefc4f319c9f15f9747",
+  "dexEvidenceHash": "0xd30f72e114168ae2786f24e1375804d4ba1dd99822bbb292855597c60384ea26",
+  "deploymentStartBlock": 56448201
 }

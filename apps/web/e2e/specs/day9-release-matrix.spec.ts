@@ -4,7 +4,11 @@ import path from 'node:path';
 import { ACTIVE_TOKEN } from '../fixtures/constants';
 import { expect, test } from '../fixtures/browser';
 
-type MatrixStatus = 'PASS' | 'EXTERNAL_EXECUTION_REQUIRED' | 'NO_FIRST_CLASS_WALLET_BROWSER_CLAIM';
+type MatrixStatus =
+  | 'PASS'
+  | 'PARTIAL_PASS_EXTERNAL_USER_EXECUTION'
+  | 'EXTERNAL_EXECUTION_REQUIRED'
+  | 'NO_FIRST_CLASS_WALLET_BROWSER_CLAIM';
 type EvidenceKind =
   | 'AUTOMATED_BROWSER_ENGINE'
   | 'EMULATION'
@@ -51,7 +55,7 @@ test('release matrix distinguishes automated engines, emulation, physical device
 
   const rows = parseMatrix(await readFile(evidencePath, 'utf8'));
 
-  for (const target of ['Desktop Chromium', 'Desktop Firefox', 'Desktop WebKit']) {
+  for (const target of ['Desktop Chromium / Chrome', 'Desktop Firefox', 'Desktop WebKit']) {
     const current = row(rows, target);
     expect(current.status).toBe('PASS');
     expect(current.evidenceKind).toBe('AUTOMATED_BROWSER_ENGINE');
@@ -62,15 +66,39 @@ test('release matrix distinguishes automated engines, emulation, physical device
   expect(mobileEmulation.status).toBe('PASS');
   expect(mobileEmulation.evidenceKind).toBe('EMULATION');
 
-  for (const target of ['macOS Safari', 'iOS Safari', 'Android Chrome physical']) {
-    const current = row(rows, target);
-    expect(['PASS', 'EXTERNAL_EXECUTION_REQUIRED']).toContain(current.status);
-    if (current.status === 'PASS') {
-      expect(current.evidenceKind).toBe('PHYSICAL_EXECUTION');
-      expect(current.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
-    } else {
-      expect(current.evidenceKind).toBe('EXTERNAL_EXECUTION');
-    }
+  const macosSafari = row(rows, 'macOS Safari');
+  expect([
+    'PASS',
+    'PARTIAL_PASS_EXTERNAL_USER_EXECUTION',
+    'EXTERNAL_EXECUTION_REQUIRED',
+  ]).toContain(macosSafari.status);
+  if (macosSafari.status === 'PASS') {
+    expect(macosSafari.evidenceKind).toBe('PHYSICAL_EXECUTION');
+    expect(macosSafari.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
+  } else {
+    expect(macosSafari.evidenceKind).toBe('EXTERNAL_EXECUTION');
+  }
+
+  const iosSafari = row(rows, 'iOS Safari');
+  expect(['PASS', 'EXTERNAL_EXECUTION_REQUIRED']).toContain(iosSafari.status);
+  if (iosSafari.status === 'PASS') {
+    expect(iosSafari.evidenceKind).toBe('PHYSICAL_EXECUTION');
+    expect(iosSafari.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
+  } else {
+    expect(iosSafari.evidenceKind).toBe('EXTERNAL_EXECUTION');
+  }
+
+  const androidChrome = row(rows, 'Android Chrome physical');
+  expect([
+    'PASS',
+    'PARTIAL_PASS_EXTERNAL_USER_EXECUTION',
+    'EXTERNAL_EXECUTION_REQUIRED',
+  ]).toContain(androidChrome.status);
+  if (androidChrome.status === 'PASS') {
+    expect(androidChrome.evidenceKind).toBe('PHYSICAL_EXECUTION');
+    expect(androidChrome.evidence.toLowerCase()).not.toMatch(/emulat|webkit engine/);
+  } else {
+    expect(androidChrome.evidenceKind).toBe('EXTERNAL_EXECUTION');
   }
 
   const walletBrowser = row(rows, 'Wallet / in-app browsers');
@@ -90,9 +118,13 @@ test('primary trade controls are keyboard reachable with visible focus and reduc
   const connect = trade.getByRole('button', { name: 'Connect wallet' });
   await expect(connect).toBeVisible();
 
+  // Safari/WebKit uses Option+Tab for sequential clickable-item focus unless
+  // the browser/system full-keyboard-navigation preference swaps that behavior.
+  const sequentialFocusKey = testInfo.project.name === 'probe-webkit' ? 'Alt+Tab' : 'Tab';
+
   let reached = false;
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(sequentialFocusKey);
     reached = await connect.evaluate((element) => element === document.activeElement);
     if (reached) break;
   }

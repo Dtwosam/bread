@@ -3,5 +3,9 @@ packages:
   - packages/*
 
 allowBuilds:
+  # Transitive dependency of @walletconnect/ethereum-provider. Its postinstall
+  # is only a @reown/appkit version-consistency notice and Bread gains nothing
+  # from executing a third-party install script, so it stays denied.
+  '@reown/appkit': false
   esbuild: true
   sharp: true

@@ -19,8 +19,12 @@ function isClaimAction(action: unknown): action is Extract<TransactionAction, 'C
   return action === 'CLAIM';
 }
 
+function isGraduationAction(action: unknown): action is Extract<TransactionAction, 'GRADUATION'> {
+  return action === 'GRADUATION';
+}
+
 function hasValidSubject(record: Record<string, unknown>): boolean {
-  if (isTradeAction(record.action)) {
+  if (isTradeAction(record.action) || isGraduationAction(record.action)) {
     return typeof record.tokenAddress === 'string' && ADDRESS.test(record.tokenAddress);
   }
   if (isLaunchAction(record.action)) {
@@ -39,7 +43,7 @@ function isRecord(value: unknown): value is SubmittedTransactionRecord {
     Number.isInteger(record.chainId) &&
     typeof record.hash === 'string' &&
     HASH.test(record.hash) &&
-    (isTradeAction(record.action) || isLaunchAction(record.action) || isClaimAction(record.action)) &&
+    (isTradeAction(record.action) || isLaunchAction(record.action) || isClaimAction(record.action) || isGraduationAction(record.action)) &&
     hasValidSubject(record) &&
     typeof record.submittedAt === 'string' &&
     !Number.isNaN(Date.parse(record.submittedAt)) &&

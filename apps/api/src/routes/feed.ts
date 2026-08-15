@@ -1,43 +1,64 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from "fastify";
 
-import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
+import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
+import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
 import {
   decodeNewFeedCursor,
   DEFAULT_FEED_LIMIT,
   encodeNewFeedCursor,
   MAX_FEED_LIMIT,
   NEW_FEED_CURSOR_VERSION,
-} from '../pagination.js';
-import { serializeGraduationProgress, serializeLaunch, serializeTradeMetrics } from './token.js';
-import type { BreadReadRouteDeps } from './types.js';
+} from "../pagination.js";
+import {
+  serializeGraduationProgress,
+  serializeLaunch,
+  serializeTradeMetrics,
+} from "./token.js";
+import type { BreadReadRouteDeps } from "./types.js";
 
-const SOURCE_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
+const SOURCE_VIEWS = new Set(["new", "trending", "graduating", "graduated"]);
 
-export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
-  app.get('/v1/feed', async (request, reply) => {
+export function registerFeedRoute(
+  app: FastifyInstance,
+  deps: BreadReadRouteDeps,
+): void {
+  app.get("/v1/feed", async (request, reply) => {
     markNoStore(reply);
-    const query = request.query as { view?: string; limit?: string; cursor?: string };
-    const view = query.view ?? 'new';
+    const query = request.query as {
+      view?: string;
+      limit?: string;
+      cursor?: string;
+    };
+    const view = query.view ?? "new";
     if (!SOURCE_VIEWS.has(view)) {
       return reply.code(400).send({
-        error: { code: 'INVALID_FEED_VIEW', message: 'Feed view is not supported.', requestId: request.id },
+        error: {
+          code: "INVALID_FEED_VIEW",
+          message: "Feed view is not supported.",
+          requestId: request.id,
+        },
       });
     }
-    if (view !== 'new') {
+    if (view !== "new") {
       return reply.code(503).send({
         error: {
-          code: 'FEED_VIEW_NOT_READY',
-          message: 'This deterministic feed projection is not available yet.',
+          code: "FEED_VIEW_NOT_READY",
+          message: "This deterministic feed projection is not available yet.",
           requestId: request.id,
         },
       });
     }
 
-    const parsedLimit = query.limit === undefined ? DEFAULT_FEED_LIMIT : Number(query.limit);
-    if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > MAX_FEED_LIMIT) {
+    const parsedLimit =
+      query.limit === undefined ? DEFAULT_FEED_LIMIT : Number(query.limit);
+    if (
+      !Number.isInteger(parsedLimit) ||
+      parsedLimit < 1 ||
+      parsedLimit > MAX_FEED_LIMIT
+    ) {
       return reply.code(400).send({
         error: {
-          code: 'INVALID_LIMIT',
+          code: "INVALID_LIMIT",
           message: `Limit must be an integer from 1 to ${MAX_FEED_LIMIT}.`,
           requestId: request.id,
         },
@@ -64,8 +85,8 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
       } catch {
         return reply.code(400).send({
           error: {
-            code: 'INVALID_CURSOR',
-            message: 'Feed cursor is malformed or unsupported.',
+            code: "INVALID_CURSOR",
+            message: "Feed cursor is malformed or unsupported.",
             requestId: request.id,
           },
         });
@@ -74,9 +95,13 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
 
     if (deps.feedRateLimit) {
       const rate = await deps.feedRateLimit(request.ip);
-      if (rate === 'LIMITED') {
+      if (rate === "LIMITED") {
         return reply.code(429).send({
-          error: { code: 'FEED_RATE_LIMITED', message: 'Feed request rate limit exceeded.', requestId: request.id },
+          error: {
+            code: "FEED_RATE_LIMITED",
+            message: "Feed request rate limit exceeded.",
+            requestId: request.id,
+          },
         });
       }
       // Cached feed is intentionally broadly serviceable. If Redis-backed
@@ -97,7 +122,8 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
       const last = launches.at(-1);
       let nextCursor: string | undefined;
       if (hasMore && last) {
-        if (last.launchTimestamp === null) throw new Error('New-feed row is missing launch timestamp');
+        if (last.launchTimestamp === null)
+          throw new Error("New-feed row is missing launch timestamp");
         nextCursor = encodeNewFeedCursor({
           version: NEW_FEED_CURSOR_VERSION,
           launchBlockNumber: last.launchBlockNumber.toString(10),
@@ -111,11 +137,15 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
         deps.context.chainId,
         launches.map((launch) => launch.tokenAddress),
       );
-      const metricsByToken = new Map(metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]));
+      const metricsByToken = new Map(
+        metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]),
+      );
       const meta = await deps.freshness();
       return {
         data: launches.map((launch) => {
-          const metricRow = metricsByToken.get(launch.tokenAddress.toLowerCase());
+          const metricRow = metricsByToken.get(
+            launch.tokenAddress.toLowerCase(),
+          );
           return {
             ...serializeLaunch(launch),
             metrics: serializeTradeMetrics(metricRow),
@@ -130,14 +160,18 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadReadRouteDeps
       };
     };
 
-    const cacheKey = `view=${view}&limit=${parsedLimit}&cursor=${query.cursor ?? ''}`;
+    const cacheKey = `view=${view}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
-          channel: `stack:${deps.context.chainId}:${deps.context.stackVersion}:feed`,
+          channel: stackFeedProjectionCacheChannel({
+            chainId: deps.context.chainId,
+            stackVersion: deps.context.stackVersion,
+            factoryAddress: deps.context.factoryAddress,
+          }),
           key: cacheKey,
           load,
         })
-      : { value: await load(), cache: 'BYPASS' as const };
+      : { value: await load(), cache: "BYPASS" as const };
     const now = (deps.now ?? (() => new Date()))();
     markPublicProjectionCacheable(reply);
     return {

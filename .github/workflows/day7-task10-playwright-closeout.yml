@@ -36,7 +36,20 @@ jobs:
       - name: Install pinned Chromium runtime
         run: pnpm --filter @bread/web exec playwright install --with-deps chromium
       - name: Run Day 7 Task 10 desktop/mobile browser journeys
-        run: pnpm --filter @bread/web test:e2e
+        shell: bash
+        run: |
+          set -uo pipefail
+          log="$RUNNER_TEMP/day7-playwright-closeout.log"
+          pnpm --filter @bread/web test:e2e 2>&1 | tee "$log"
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            message="$(tail -n 100 "$log")"
+            message="${message//'%'/'%25'}"
+            message="${message//$'\r'/'%0D'}"
+            message="${message//$'\n'/'%0A'}"
+            echo "::error title=Day 7 primary browser journey failure::$message"
+            exit "$status"
+          fi
       - name: Verify E2E fixture restored canonical manifests
         if: always()
         run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json

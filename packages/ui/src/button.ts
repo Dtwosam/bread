@@ -1,4 +1,4 @@
-import { createElement, type ReactNode } from 'react';
+import { createElement, type MouseEvent, type ReactNode } from 'react';
 
 export type ButtonVariant = 'primary' | 'buy' | 'sell' | 'secondary' | 'small';
 
@@ -11,7 +11,7 @@ export type ButtonProps = Readonly<{
   type?: 'button' | 'submit' | 'reset';
   className?: string;
   ariaLabel?: string;
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 }>;
 
 export function Button({

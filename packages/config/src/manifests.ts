@@ -3,14 +3,42 @@ import { z } from 'zod';
 const addressSchema = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 const nullableAddressSchema = addressSchema.nullable();
 
+const swapRouterKindSchema = z.enum(['V3_SWAP_ROUTER', 'V3_SWAP_ROUTER_02']);
+const quoterKindSchema = z.enum(['V3_QUOTER', 'V3_QUOTER_V2']);
+
 const dexSchema = z
   .object({
     type: z.string().min(1),
     poolManager: nullableAddressSchema,
     positionManager: nullableAddressSchema,
     factory: nullableAddressSchema,
+    swapRouter: nullableAddressSchema.optional(),
+    swapRouterKind: swapRouterKindSchema.nullable().optional(),
+    quoter: nullableAddressSchema.optional(),
+    quoterKind: quoterKindSchema.nullable().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((dex, ctx) => {
+    const hasRouterAddress = dex.swapRouter !== undefined && dex.swapRouter !== null;
+    const hasRouterKind = dex.swapRouterKind !== undefined && dex.swapRouterKind !== null;
+    if (hasRouterAddress !== hasRouterKind) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'V3 swap router address and ABI kind must be configured together',
+        path: ['swapRouter'],
+      });
+    }
+
+    const hasQuoterAddress = dex.quoter !== undefined && dex.quoter !== null;
+    const hasQuoterKind = dex.quoterKind !== undefined && dex.quoterKind !== null;
+    if (hasQuoterAddress !== hasQuoterKind) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'V3 quoter address and ABI kind must be configured together',
+        path: ['quoter'],
+      });
+    }
+  });
 
 const usdcSchema = z
   .object({

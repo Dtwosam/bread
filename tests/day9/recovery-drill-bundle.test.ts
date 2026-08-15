@@ -20,7 +20,7 @@ const required = [
 
 describe('Day 9 pre-launch recovery drill bundle', () => {
   it(
-    'maps every required recovery drill to executable evidence or the exact multisig environment blocker',
+    'maps every required recovery drill to executed evidence including the retained real Safe threshold rehearsal',
     async () => {
       expect(REQUIRED_RECOVERY_DRILL_IDS).toEqual(required);
 
@@ -28,25 +28,22 @@ describe('Day 9 pre-launch recovery drill bundle', () => {
       expect(summary.drills.map((drill) => drill.id)).toEqual(required);
 
       for (const drill of summary.drills) {
-        expect(['MISSING', 'UNEXECUTED']).not.toContain(drill.status);
+        expect(['BLOCKED', 'MISSING', 'UNEXECUTED']).not.toContain(drill.status);
         expect(drill.evidence).toBeTruthy();
         expect(drill.evidenceKind).not.toBe('PROSE_ONLY');
+        expect(drill.evidenceKind).not.toBe('ENVIRONMENT_BLOCKER');
       }
 
       const multisig = summary.drills.find(
         (drill) => drill.id === 'MULTISIG_SIGNER_RECOVERY_ROTATION',
       );
-      expect(multisig).toBeDefined();
-
-      if (multisig?.status === 'BLOCKED') {
-        expect(summary.status).toBe('BLOCKED');
-        expect(summary.blocker).toBe('DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT');
-        expect(multisig.evidenceKind).toBe('ENVIRONMENT_BLOCKER');
-      } else {
-        expect(multisig?.status).toBe('PASS');
-        expect(summary.status).toBe('PASS');
-        expect(summary.blocker).toBeNull();
-      }
+      expect(multisig).toMatchObject({
+        status: 'PASS',
+        evidence: 'docs/evidence/day9-safe-threshold-recovery.json',
+        evidenceKind: 'EXECUTED_REHEARSAL',
+      });
+      expect(summary.status).toBe('PASS');
+      expect(summary.blocker).toBeNull();
     },
     600_000,
   );

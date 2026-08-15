@@ -49,6 +49,6 @@ jobs:
         env:
           BREAD_DAY9_MODE: CONTROLLED_FIXTURE
         run: pnpm exec vitest run tests/day9/clean-local-rehearsal.test.ts
-      - name: Run full contract regression
+      - name: Run full deterministic contract regression
         working-directory: contracts
-        run: forge test -q
+        run: forge test -q --no-match-path 'test/fork/**'

@@ -10,13 +10,14 @@ import type {
   BuyTradeReview,
   SellTradeReview,
 } from '../../../../packages/protocol-sdk/src/trade-review';
+import type { V3TradeReview } from '../../../../packages/protocol-sdk/src/v3-trading';
 import type { TradeAction, TransactionState } from '../../lib/transactions/state';
 import { TransactionStatus } from '../transaction-status';
 import type { TradeConnectionStatus } from './trade-runtime';
 
 void styles;
 
-type TradeReview = BuyTradeReview | SellTradeReview;
+type TradeReview = BuyTradeReview | SellTradeReview | V3TradeReview;
 type Preset = '$25' | '$50' | '$100' | '25%' | '50%' | '75%' | 'MAX';
 
 function formatAmount(value: bigint, decimals: number): string {
@@ -25,6 +26,10 @@ function formatAmount(value: bigint, decimals: number): string {
 
 function formatBps(value: number): string {
   return `${(value / 100).toFixed(2)}%`;
+}
+
+function formatV3Fee(value: number): string {
+  return `${(value / 10_000).toFixed(2)}%`;
 }
 
 export function TradePanel({
@@ -64,6 +69,7 @@ export function TradePanel({
   const outputDecimals = action === 'BUY' ? BREAD_LAUNCH_TOKEN_DECIMALS : 6;
   const quoteDecimals = 6;
   const walletReady = connectionStatus === 'READY';
+  const v3Review = review !== null && 'route' in review && review.route === 'V3_POOL';
   const primaryLabel = connectionStatus === 'DISCONNECTED'
     ? 'Connect wallet'
     : connectionStatus === 'WRONG_NETWORK'
@@ -144,9 +150,15 @@ export function TradePanel({
         <dl className="bread-trade-review">
           <div><dt>Expected output</dt><dd>{formatAmount(review.expectedOutput, outputDecimals)}</dd></div>
           <div><dt>Minimum output</dt><dd>{formatAmount(review.minimumOutput, outputDecimals)}</dd></div>
-          <div><dt>Base fee</dt><dd>{formatAmount(review.baseFee, quoteDecimals)} USDC</dd></div>
-          <div><dt>Creator tax</dt><dd>{formatAmount(review.creatorTax, quoteDecimals)} USDC</dd></div>
-          <div><dt>Opening buy tax</dt><dd>{action === 'BUY' ? `${formatAmount(review.openingTax, quoteDecimals)} USDC (${formatBps(review.openingTaxBps)})` : '0.00% (sell unaffected)'}</dd></div>
+          {v3Review ? (
+            <div><dt>V3 venue fee</dt><dd>{formatV3Fee(review.venueFee)}</dd></div>
+          ) : (
+            <>
+              <div><dt>Base fee</dt><dd>{formatAmount(review.baseFee, quoteDecimals)} USDC</dd></div>
+              <div><dt>Creator tax</dt><dd>{formatAmount(review.creatorTax, quoteDecimals)} USDC</dd></div>
+              <div><dt>Opening buy tax</dt><dd>{action === 'BUY' ? `${formatAmount(review.openingTax, quoteDecimals)} USDC (${formatBps(review.openingTaxBps)})` : '0.00% (sell unaffected)'}</dd></div>
+            </>
+          )}
           <div><dt>Price impact</dt><dd>{formatBps(review.priceImpactBps)}</dd></div>
           <div><dt>Slippage</dt><dd>{formatBps(review.slippageBps)}</dd></div>
         </dl>

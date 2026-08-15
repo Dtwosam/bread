@@ -1,7 +1,8 @@
 export type TradeAction = 'BUY' | 'SELL';
 export type LaunchAction = 'LAUNCH' | 'LAUNCH_AND_BUY';
 export type ClaimAction = 'CLAIM';
-export type TransactionAction = TradeAction | LaunchAction | ClaimAction;
+export type GraduationAction = 'GRADUATION';
+export type TransactionAction = TradeAction | LaunchAction | ClaimAction | GraduationAction;
 
 export type TransactionStatus =
   | 'IDLE'
@@ -71,6 +72,10 @@ export function createClaimTransactionState(claimRecipient: `0x${string}`): Tran
   return { action: 'CLAIM', claimRecipient, status: 'IDLE' };
 }
 
+export function createGraduationTransactionState(tokenAddress: `0x${string}`): TransactionState {
+  return { action: 'GRADUATION', tokenAddress, status: 'IDLE' };
+}
+
 const ACTIVE_LOCKED = new Set<TransactionStatus>([
   'VALIDATING',
   'PREPARING',
@@ -106,6 +111,10 @@ function resetState(state: TransactionState): TransactionState {
   if (state.action === 'BUY' || state.action === 'SELL') {
     if (!state.tokenAddress) throw new Error('trade transaction state has no token address');
     return createTransactionState(state.action, state.tokenAddress);
+  }
+  if (state.action === 'GRADUATION') {
+    if (!state.tokenAddress) throw new Error('graduation transaction state has no token address');
+    return createGraduationTransactionState(state.tokenAddress);
   }
   if (state.action === 'CLAIM') {
     if (!state.claimRecipient) throw new Error('claim transaction state has no recipient');

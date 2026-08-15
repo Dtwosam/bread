@@ -6,6 +6,12 @@ import { rehearseServiceRollback } from './rehearse-service-rollback.mts';
 
 const repoRoot = path.resolve(new URL('../..', import.meta.url).pathname);
 const contractsRoot = path.join(repoRoot, 'contracts');
+const safeRecoveryEvidencePath = path.join(
+  repoRoot,
+  'docs',
+  'evidence',
+  'day9-safe-threshold-recovery.json',
+);
 
 export const REQUIRED_RECOVERY_DRILL_IDS = [
   'GUARDIAN_PAUSE_NEW_LAUNCHES',
@@ -49,6 +55,39 @@ type BrowserRecoveryProof = Readonly<{
   evidenceKind?: string;
   transactionRecoverySpecIncluded?: boolean;
   manifestRestoration?: string;
+}>;
+
+type SafeRecoveryTransactionEvidence = Readonly<{
+  step?: string;
+  safeNonce?: string;
+  safeTxHash?: string;
+  chainTransactionHash?: string;
+  blockNumber?: number;
+  recoveredSigners?: readonly string[];
+  executionSuccess?: boolean;
+}>;
+
+type SafeRecoveryEvidence = Readonly<{
+  schema?: string;
+  status?: string;
+  chainId?: number;
+  safe?: string;
+  safeVersion?: string;
+  threshold?: number;
+  startNonce?: string;
+  endNonce?: string;
+  originalOwners?: readonly string[];
+  simulatedLostOwner?: string;
+  recoveryOwner?: string;
+  transactions?: readonly SafeRecoveryTransactionEvidence[];
+  finalOwners?: readonly string[];
+  finalOwnerSetRestored?: boolean;
+  recoveryOwnerRemovedAfterDrill?: boolean;
+  recoveredSignerParticipatedInRestore?: boolean;
+  independentVerifierUsedPrivateKeys?: boolean;
+  privateKeysPrinted?: boolean;
+  productionAuthorityClaim?: boolean;
+  evidenceKind?: string;
 }>;
 
 function execute(
@@ -213,16 +252,62 @@ function runGraduationRetry(): RecoveryDrillResult {
   );
 }
 
-function multisigEnvironmentBlocker(): RecoveryDrillResult {
-  // There is currently no Safe-compatible threshold signer-change/recovery
-  // executor in the repository or CI environment. A configured Protocol Admin
-  // contract address is not evidence of a threshold recovery drill. This must
-  // remain BLOCKED until an actual Safe-compatible environment executes it.
+function sameOwnerSet(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false;
+  const normalized = new Set(right.map((owner) => owner.toLowerCase()));
+  return left.every((owner) => normalized.has(owner.toLowerCase()));
+}
+
+async function retainedMultisigRecoveryEvidence(): Promise<RecoveryDrillResult> {
+  let proof: SafeRecoveryEvidence;
+  try {
+    proof = JSON.parse(await readFile(safeRecoveryEvidencePath, 'utf8')) as SafeRecoveryEvidence;
+  } catch (error) {
+    throw new Error(`retained Safe recovery evidence is unavailable or invalid: ${String(error)}`);
+  }
+
+  const startNonce = BigInt(proof.startNonce ?? '-1');
+  const endNonce = BigInt(proof.endNonce ?? '-1');
+  const originalOwners = proof.originalOwners ?? [];
+  const finalOwners = proof.finalOwners ?? [];
+  const transactions = proof.transactions ?? [];
+  const recoveryOwner = proof.recoveryOwner?.toLowerCase();
+  const restoreSigners = transactions[1]?.recoveredSigners?.map((owner) => owner.toLowerCase()) ?? [];
+
+  if (
+    proof.schema !== 'bread://evidence/day9-safe-threshold-recovery-v1'
+    || proof.status !== 'DAY9_ARC_SAFE_THRESHOLD_RECOVERY_FINAL_EVIDENCE_PASS'
+    || proof.chainId !== 5_042_002
+    || proof.safe?.toLowerCase() !== '0x9004e285521d69197cd9965c301b02161eb1d0d8'
+    || proof.safeVersion !== '1.4.1'
+    || proof.threshold !== 2
+    || originalOwners.length !== 3
+    || !sameOwnerSet(originalOwners, finalOwners)
+    || endNonce !== startNonce + 2n
+    || transactions.length !== 2
+    || transactions[0]?.step !== 'ROTATED_TO_RECOVERY_OWNER'
+    || transactions[1]?.step !== 'RESTORED_ORIGINAL_OWNER'
+    || transactions.some((tx) => tx.executionSuccess !== true)
+    || transactions.some((tx) => !/^0x[0-9a-fA-F]{64}$/.test(tx.chainTransactionHash ?? ''))
+    || transactions.some((tx) => !/^0x[0-9a-fA-F]{64}$/.test(tx.safeTxHash ?? ''))
+    || !recoveryOwner
+    || !restoreSigners.includes(recoveryOwner)
+    || proof.finalOwnerSetRestored !== true
+    || proof.recoveryOwnerRemovedAfterDrill !== true
+    || proof.recoveredSignerParticipatedInRestore !== true
+    || proof.independentVerifierUsedPrivateKeys !== false
+    || proof.privateKeysPrinted !== false
+    || proof.productionAuthorityClaim !== false
+    || proof.evidenceKind !== 'EXECUTED_REHEARSAL'
+  ) {
+    throw new Error(`retained Safe threshold recovery evidence failed validation: ${JSON.stringify(proof)}`);
+  }
+
   return {
     id: 'MULTISIG_SIGNER_RECOVERY_ROTATION',
-    status: 'BLOCKED',
-    evidence: 'ENVIRONMENT_CHECK:NO_SAFE_COMPATIBLE_THRESHOLD_RECOVERY_EXECUTOR_CONFIGURED',
-    evidenceKind: 'ENVIRONMENT_BLOCKER',
+    status: 'PASS',
+    evidence: 'docs/evidence/day9-safe-threshold-recovery.json',
+    evidenceKind: 'EXECUTED_REHEARSAL',
   };
 }
 
@@ -235,7 +320,7 @@ export async function runRecoveryDrills(): Promise<RecoveryDrillSummary> {
   const rpcFailover = runRpcFailover();
   const indexerReconcile = runIndexerReconcile();
   const graduationRetry = runGraduationRetry();
-  const multisig = multisigEnvironmentBlocker();
+  const multisig = await retainedMultisigRecoveryEvidence();
 
   const byId = new Map<RecoveryDrillId, RecoveryDrillResult>();
   for (const result of [

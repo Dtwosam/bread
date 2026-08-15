@@ -1,9 +1,20 @@
+import arcTestnetDeployment from '../../../../config/deployments/arc-testnet.day5.json';
 import arcTestnetManifest from '../../../../config/networks/arc-testnet.json';
 
 export const ARC_TESTNET_CHAIN_ID = arcTestnetManifest.chainId;
 export const ARC_TESTNET_CHAIN_ID_HEX = `0x${arcTestnetManifest.chainId.toString(16)}`;
 export const ARC_TESTNET_RPC = `${arcTestnetManifest.rpc[0].replace(/\/+$/, '')}/`;
 export const ARC_TESTNET_USDC = arcTestnetManifest.usdc.address as `0x${string}`;
+
+export const CANONICAL_FACTORY = arcTestnetDeployment.core.factory as `0x${string}`;
+export const CANONICAL_COORDINATOR = arcTestnetDeployment.core.coordinator as `0x${string}`;
+export const CANONICAL_GRADUATION_ADAPTER = arcTestnetDeployment.adapter.adapter as `0x${string}`;
+export const CANONICAL_GRADUATION_CONFIG_HASH = arcTestnetDeployment.adapter.configHash as `0x${string}`;
+export const V3_FACTORY = arcTestnetManifest.dex.factory as `0x${string}`;
+export const V3_POSITION_MANAGER = arcTestnetManifest.dex.positionManager as `0x${string}`;
+export const V3_ROUTER = arcTestnetManifest.dex.swapRouter as `0x${string}`;
+export const V3_QUOTER = arcTestnetManifest.dex.quoter as `0x${string}`;
+export const E2E_V3_POOL = '0x4000000000000000000000000000000000000001' as const;
 
 export const E2E_WALLET = '0x5000000000000000000000000000000000000001' as const;
 export const E2E_SECOND_WALLET = '0x5000000000000000000000000000000000000002' as const;

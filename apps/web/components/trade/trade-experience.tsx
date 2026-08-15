@@ -5,17 +5,15 @@ import { Button, Card } from '@bread/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, parseUnits } from 'viem';
 
+import {
+  readCanonicalTradeReview,
+  type CanonicalTradeReview,
+} from '../../../../packages/protocol-sdk/src/canonical-trade-review';
 import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/src/constants';
-import type {
-  BuyTradeReview,
-  SellTradeReview,
-} from '../../../../packages/protocol-sdk/src/trade-review';
+import type { CanonicalTradeRoute } from '../../../../packages/protocol-sdk/src/trade-route';
 import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
 import { breadQueryKeys } from '../../lib/api/queries';
-import {
-  executeTradeLifecycle,
-  prepareTradeReview,
-} from '../../lib/transactions/controller';
+import { executeTradeLifecycle } from '../../lib/transactions/controller';
 import {
   canSubmitTransactionAction,
   createTransactionState,
@@ -25,7 +23,7 @@ import {
 import { TradePanel } from './trade-panel';
 import { useTradeRuntime, type TradeConnectionStatus } from './trade-runtime';
 
-type TradeReview = BuyTradeReview | SellTradeReview;
+type TradeReview = CanonicalTradeReview;
 type Preset = '$25' | '$50' | '$100' | '25%' | '50%' | '75%' | 'MAX';
 
 function message(error: unknown): string {
@@ -42,6 +40,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   const [amount, setAmount] = useState('');
   const [slippageBps, setSlippageBps] = useState(50);
   const [review, setReview] = useState<TradeReview | null>(null);
+  const [reviewRoute, setReviewRoute] = useState<CanonicalTradeRoute | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -75,6 +74,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     adoptedRecoveryHash.current = recoveredHash;
     setAction(recoveredTransactionState.action as TradeAction);
     setReview(null);
+    setReviewRoute(null);
     setReviewError(null);
     setTransactionState(recoveredTransactionState);
   }, [recoveredTransactionState, transactionState.hash, transactionState.status]);
@@ -108,11 +108,12 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }),
     // Handler identities are intentionally recreated from the latest state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [action, amount, slippageBps, review, transactionState, connectionStatus, runtime, busy, reviewError],
+    [action, amount, slippageBps, review, reviewRoute, transactionState, connectionStatus, runtime, busy, reviewError],
   );
 
   function resetReview(nextAction: TradeAction = action) {
     setReview(null);
+    setReviewRoute(null);
     setReviewError(null);
     setTransactionState(createTransactionState(nextAction, tokenAddress));
   }
@@ -193,26 +194,30 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     setReviewBusy(true);
     setReviewError(null);
     try {
+      const protocolContext = runtime.protocolContext;
+      if (!protocolContext) throw new Error('Canonical protocol context is not available.');
+
       const [account, walletChainId] = await Promise.all([
         runtime.wallet.getAccount(),
         runtime.wallet.getChainId(),
       ]);
       if (!account) throw new Error('Connect a wallet before reviewing this trade.');
-      const prepared = await prepareTradeReview({
-        client: runtime.client,
-        context: runtime.context,
-        walletChainId,
-        account,
+      if (walletChainId !== protocolContext.chainId) {
+        throw new Error(`Wrong network: wallet is on chain ${walletChainId}, expected ${protocolContext.chainId}.`);
+      }
+
+      const result = await readCanonicalTradeReview(runtime.client, protocolContext, {
+        token: tokenAddress,
         action,
-        tokenAddress,
-        curveAddress,
         inputAmount: inputAmount(),
         slippageBps,
       });
-      setReview(prepared.review);
+      setReview(result.review);
+      setReviewRoute(result.route);
       setTransactionState(createTransactionState(action, tokenAddress));
     } catch (error) {
       setReview(null);
+      setReviewRoute(null);
       setReviewError(message(error));
     } finally {
       setReviewBusy(false);
@@ -222,12 +227,20 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   async function submitTrade() {
     if (!runtime || !runtime.wallet || !walletReady || !review || busy) return;
     setReviewError(null);
+
+    const protocolContext = runtime.protocolContext;
+    if (!protocolContext) {
+      setReviewError('Canonical protocol context is not available.');
+      return;
+    }
+
     const storage = runtime.storage ?? window.localStorage;
     const result = await executeTradeLifecycle({
       client: runtime.client,
       wallet: runtime.wallet,
       storage,
       context: runtime.context,
+      protocolContext,
       action,
       tokenAddress,
       curveAddress,
@@ -247,11 +260,13 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     setTransactionState(result.state);
     if (result.reviewChanged && result.prepared) {
       setReview(result.prepared.review);
+      setReviewRoute(null);
       setReviewError('Trade values changed during the final canonical reread. Review the updated values before opening your wallet.');
       return;
     }
     if (result.state.status === 'CONFIRMED') {
       setReview(null);
+      setReviewRoute(null);
       setAmount('');
     }
   }

@@ -18,11 +18,16 @@ import {
   ARC_TESTNET_USDC,
   BLOCK_HASH,
   BUY_TX_HASH,
+  CANONICAL_COORDINATOR,
+  CANONICAL_FACTORY,
+  CANONICAL_GRADUATION_ADAPTER,
+  CANONICAL_GRADUATION_CONFIG_HASH,
   CLAIM_TX_HASH,
   E2E_FACTORY,
   E2E_FEE_ESCROW,
   E2E_FEE_POLICY,
   E2E_GRADUATION_ADAPTER,
+  E2E_V3_POOL,
   E2E_WALLET,
   FIXTURE_BLOCK_NUMBER_HEX,
   GRADUATED_CURVE,
@@ -33,6 +38,10 @@ import {
   PENDING_CURVE,
   PENDING_TOKEN,
   SELL_TX_HASH,
+  V3_FACTORY,
+  V3_POSITION_MANAGER,
+  V3_QUOTER,
+  V3_ROUTER,
 } from './constants';
 
 const ERC20_ABI = parseAbi([
@@ -40,9 +49,49 @@ const ERC20_ABI = parseAbi([
   'function approve(address spender, uint256 amount) returns (bool)',
   'function balanceOf(address account) view returns (uint256)',
 ]);
+const CANONICAL_FACTORY_ABI = parseAbi([
+  'function getLaunch(address token) view returns ((address token,address curve,address deployer,address creatorFeeRecipient,uint16 creatorTaxBps,bytes32 economicsDigest,uint64 launchTimestamp,uint64 configVersion,address graduationCoordinator,address graduationAdapter,uint8 graduationAdapterFamily,bytes32 graduationConfigHash) r)',
+]);
+const CANONICAL_COORDINATOR_ABI = parseAbi([
+  'function getGraduation(address token) view returns ((uint8 phase,uint64 sweptAt,uint256 sweptUsdc,uint256 sweptTokens,uint256 poolTokenAmount,bytes32 poolId,address positionManager,uint256 positionId) r)',
+]);
+const GRADUATION_ADAPTER_ABI = parseAbi([
+  'function family() view returns (uint8)',
+  'function coordinator() view returns (address)',
+  'function configHash() view returns (bytes32)',
+  'function usdc() view returns (address)',
+  'function positionManager() view returns (address)',
+  'function v3Factory() view returns (address)',
+  'function fee() view returns (uint24)',
+]);
+const V3_FACTORY_ABI = parseAbi([
+  'function getPool(address tokenA,address tokenB,uint24 fee) view returns (address pool)',
+]);
+const V3_ROUTER_ABI = parseAbi([
+  'function factory() view returns (address)',
+  'function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96) params) payable returns (uint256 amountOut)',
+]);
+const V3_QUOTER_ABI = parseAbi([
+  'function factory() view returns (address)',
+  'function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96) params) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)',
+]);
+const V3_POOL_ABI = parseAbi([
+  'function token0() view returns (address)',
+  'function token1() view returns (address)',
+  'function fee() view returns (uint24)',
+  'function liquidity() view returns (uint128)',
+  'function slot0() view returns (uint160 sqrtPriceX96,int24 tick,uint16 observationIndex,uint16 observationCardinality,uint16 observationCardinalityNext,uint8 feeProtocol,bool unlocked)',
+]);
+
 const ECONOMICS_DIGEST = `0x${'66'.repeat(32)}` as `0x${string}`;
 const GRADUATION_CONFIG_HASH = `0x${'77'.repeat(32)}` as `0x${string}`;
+const ZERO_BYTES32 = `0x${'00'.repeat(32)}` as `0x${string}`;
 const ZERO_BLOOM = `0x${'00'.repeat(256)}`;
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+const Q96 = BigInt(1) << BigInt(96);
+const V3_QUOTE_OUT = BigInt('9000000');
+const V3_FEE = 3000;
+const V3_POOL_ID = `0x${'0'.repeat(24)}${E2E_V3_POOL.slice(2)}` as `0x${string}`;
 
 export type RpcReceiptMode = 'SUCCESS' | 'PENDING' | 'REVERTED' | 'ERROR';
 
@@ -104,7 +153,7 @@ function curveResult(address: string, data: `0x${string}`): `0x${string}` {
       return functionResult(
         breadAbiRegistry.curve as Abi,
         decoded.functionName,
-        address.toLowerCase() !== ACTIVE_CURVE.toLowerCase(),
+        address.toLowerCase() === PENDING_CURVE.toLowerCase(),
       );
     case 'buy':
       return functionResult(
@@ -169,6 +218,140 @@ function factoryResult(data: `0x${string}`): `0x${string}` {
   }
 }
 
+function launchCurve(token: string): `0x${string}` {
+  const normalized = token.toLowerCase();
+  if (normalized === ACTIVE_TOKEN.toLowerCase()) return ACTIVE_CURVE;
+  if (normalized === PENDING_TOKEN.toLowerCase()) return PENDING_CURVE;
+  if (normalized === GRADUATED_TOKEN.toLowerCase()) return GRADUATED_CURVE;
+  if (normalized === NEW_LAUNCH_TOKEN.toLowerCase()) return NEW_LAUNCH_CURVE;
+  throw new Error(`Unhandled canonical launch token ${token}`);
+}
+
+function canonicalFactoryResult(data: `0x${string}`): `0x${string}` {
+  let decoded: ReturnType<typeof decode>;
+  try {
+    decoded = decode(CANONICAL_FACTORY_ABI, data);
+  } catch {
+    return factoryResult(data);
+  }
+  if (decoded.functionName !== 'getLaunch') {
+    return factoryResult(data);
+  }
+  const token = String(decoded.args?.[0] ?? '') as `0x${string}`;
+  return functionResult(CANONICAL_FACTORY_ABI, decoded.functionName, {
+    token,
+    curve: launchCurve(token),
+    deployer: E2E_WALLET,
+    creatorFeeRecipient: E2E_WALLET,
+    creatorTaxBps: 125,
+    economicsDigest: ECONOMICS_DIGEST,
+    launchTimestamp: BigInt(1),
+    configVersion: BigInt(1),
+    graduationCoordinator: CANONICAL_COORDINATOR,
+    graduationAdapter: CANONICAL_GRADUATION_ADAPTER,
+    graduationAdapterFamily: 2,
+    graduationConfigHash: CANONICAL_GRADUATION_CONFIG_HASH,
+  });
+}
+
+function graduationPhase(token: string): number {
+  const normalized = token.toLowerCase();
+  if (normalized === ACTIVE_TOKEN.toLowerCase()) return 0;
+  if (normalized === PENDING_TOKEN.toLowerCase()) return 0;
+  if (normalized === NEW_LAUNCH_TOKEN.toLowerCase()) return 0;
+  if (normalized === GRADUATED_TOKEN.toLowerCase()) return 2;
+  throw new Error(`Unhandled graduation token ${token}`);
+}
+
+function coordinatorResult(data: `0x${string}`): `0x${string}` {
+  const decoded = decode(CANONICAL_COORDINATOR_ABI, data);
+  if (decoded.functionName !== 'getGraduation') {
+    throw new Error(`Unhandled coordinator function ${decoded.functionName}`);
+  }
+  const token = String(decoded.args?.[0] ?? '');
+  const phase = graduationPhase(token);
+  return functionResult(CANONICAL_COORDINATOR_ABI, decoded.functionName, {
+    phase,
+    sweptAt: BigInt(0),
+    sweptUsdc: BigInt(0),
+    sweptTokens: BigInt(0),
+    poolTokenAmount: BigInt(0),
+    poolId: phase === 2 ? V3_POOL_ID : ZERO_BYTES32,
+    positionManager: phase === 2 ? V3_POSITION_MANAGER : ZERO_ADDRESS,
+    positionId: phase === 2 ? BigInt(1) : BigInt(0),
+  });
+}
+
+function graduationAdapterResult(data: `0x${string}`): `0x${string}` {
+  const decoded = decode(GRADUATION_ADAPTER_ABI, data);
+  switch (decoded.functionName) {
+    case 'family':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, 2);
+    case 'coordinator':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, CANONICAL_COORDINATOR);
+    case 'configHash':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, CANONICAL_GRADUATION_CONFIG_HASH);
+    case 'usdc':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, ARC_TESTNET_USDC);
+    case 'positionManager':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, V3_POSITION_MANAGER);
+    case 'v3Factory':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, V3_FACTORY);
+    case 'fee':
+      return functionResult(GRADUATION_ADAPTER_ABI, decoded.functionName, V3_FEE);
+    default:
+      throw new Error(`Unhandled graduation adapter function ${decoded.functionName}`);
+  }
+}
+
+function v3FactoryResult(data: `0x${string}`): `0x${string}` {
+  const decoded = decode(V3_FACTORY_ABI, data);
+  if (decoded.functionName !== 'getPool') throw new Error(`Unhandled V3 factory function ${decoded.functionName}`);
+  return functionResult(V3_FACTORY_ABI, decoded.functionName, E2E_V3_POOL);
+}
+
+function v3RouterResult(data: `0x${string}`): `0x${string}` {
+  const decoded = decode(V3_ROUTER_ABI, data);
+  switch (decoded.functionName) {
+    case 'factory':
+      return functionResult(V3_ROUTER_ABI, decoded.functionName, V3_FACTORY);
+    case 'exactInputSingle':
+      return functionResult(V3_ROUTER_ABI, decoded.functionName, V3_QUOTE_OUT);
+    default:
+      throw new Error(`Unhandled V3 router function ${decoded.functionName}`);
+  }
+}
+
+function v3QuoterResult(data: `0x${string}`): `0x${string}` {
+  const decoded = decode(V3_QUOTER_ABI, data);
+  switch (decoded.functionName) {
+    case 'factory':
+      return functionResult(V3_QUOTER_ABI, decoded.functionName, V3_FACTORY);
+    case 'quoteExactInputSingle':
+      return functionResult(V3_QUOTER_ABI, decoded.functionName, [V3_QUOTE_OUT, Q96, 0, BigInt(123_456)]);
+    default:
+      throw new Error(`Unhandled V3 quoter function ${decoded.functionName}`);
+  }
+}
+
+function v3PoolResult(data: `0x${string}`): `0x${string}` {
+  const decoded = decode(V3_POOL_ABI, data);
+  switch (decoded.functionName) {
+    case 'token0':
+      return functionResult(V3_POOL_ABI, decoded.functionName, GRADUATED_TOKEN);
+    case 'token1':
+      return functionResult(V3_POOL_ABI, decoded.functionName, ARC_TESTNET_USDC);
+    case 'fee':
+      return functionResult(V3_POOL_ABI, decoded.functionName, V3_FEE);
+    case 'liquidity':
+      return functionResult(V3_POOL_ABI, decoded.functionName, BigInt(1));
+    case 'slot0':
+      return functionResult(V3_POOL_ABI, decoded.functionName, [Q96, 0, 0, 1, 1, 0, true]);
+    default:
+      throw new Error(`Unhandled V3 pool function ${decoded.functionName}`);
+  }
+}
+
 function feePolicyResult(data: `0x${string}`): `0x${string}` {
   const abi = breadAbiRegistry.feePolicy as Abi;
   const decoded = decode(abi, data);
@@ -205,6 +388,13 @@ function callResult(state: RpcFixtureState, call: Record<string, unknown>): `0x$
   if ([ARC_TESTNET_USDC, ACTIVE_TOKEN, PENDING_TOKEN, GRADUATED_TOKEN, NEW_LAUNCH_TOKEN].some((value) => value.toLowerCase() === to)) {
     return erc20Result(state, to, data);
   }
+  if (to === CANONICAL_FACTORY.toLowerCase()) return canonicalFactoryResult(data);
+  if (to === CANONICAL_COORDINATOR.toLowerCase()) return coordinatorResult(data);
+  if (to === CANONICAL_GRADUATION_ADAPTER.toLowerCase()) return graduationAdapterResult(data);
+  if (to === V3_FACTORY.toLowerCase()) return v3FactoryResult(data);
+  if (to === V3_ROUTER.toLowerCase()) return v3RouterResult(data);
+  if (to === V3_QUOTER.toLowerCase()) return v3QuoterResult(data);
+  if (to === E2E_V3_POOL.toLowerCase()) return v3PoolResult(data);
   if (to === E2E_FACTORY.toLowerCase()) return factoryResult(data);
   if (to === E2E_FEE_POLICY.toLowerCase()) return feePolicyResult(data);
   if (to === E2E_FEE_ESCROW.toLowerCase()) return feeEscrowResult(state, data);
@@ -315,7 +505,9 @@ function handleRpc(state: RpcFixtureState, request: RpcRequest) {
         break;
       }
       case 'eth_getTransactionByHash':
-        result = transaction(String(params[0] ?? BUY_TX_HASH));
+        result = state.receiptMode === 'PENDING'
+          ? null
+          : transaction(String(params[0] ?? BUY_TX_HASH));
         break;
       default:
         state.unknownCalls.push(method);

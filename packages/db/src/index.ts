@@ -1,8 +1,14 @@
-export const DB_STATUS = 'day6-transaction-boundary' as const;
+export const DB_STATUS = "day6-transaction-boundary" as const;
 
-export { breadDbSchema, createBreadDb, migrateBreadDb, type BreadDb, type BreadPgPool } from './client.js';
+export {
+  breadDbSchema,
+  createBreadDb,
+  migrateBreadDb,
+  type BreadDb,
+  type BreadPgPool,
+} from "./client.js";
 
-export { eventJournal } from './schema/event-journal.js';
+export { eventJournal } from "./schema/event-journal.js";
 export {
   adminEvents,
   creatorRollups,
@@ -17,7 +23,7 @@ export {
   protocolStacks,
   tokenMetrics,
   trades,
-} from './schema/projections.js';
+} from "./schema/projections.js";
 
 export {
   DAY6_DB_SCHEMA_VERSION,
@@ -28,26 +34,36 @@ export {
   type CanonicalIndexedEvent,
   type IndexerProtocolContext,
   type ProjectionReducer,
-} from './repositories/indexer.js';
+} from "./repositories/indexer.js";
 
-export { ReadRepository, decimalIntegerToBigInt } from './repositories/read.js';
-export { SearchRepository, type SearchLaunchInput, type SearchLaunchRow } from './repositories/search.js';
+export { ReadRepository, decimalIntegerToBigInt } from "./repositories/read.js";
+export {
+  SearchRepository,
+  type SearchLaunchInput,
+  type SearchLaunchRow,
+} from "./repositories/search.js";
 export {
   RebuildRepository,
   type ReconciliationLaunchRow,
   type ReconciliationLaunchStateRow,
   type ReconciliationSnapshot,
   type ReconciliationStackRow,
-} from './repositories/rebuild.js';
+} from "./repositories/rebuild.js";
 export {
   applyCanonicalTradeProjection,
   type CanonicalTradeProjection,
-} from './repositories/trades.js';
-export { applyFeeAdminGraduationProjection } from './repositories/fees-admin-graduation.js';
-export { projectCurveGraduationProgress } from './repositories/graduation-progress.js';
-export { projectCreatorTradeCount } from './repositories/creator-trade-count.js';
-export { CreatorRepository } from './repositories/creators.js';
+} from "./repositories/trades.js";
+export {
+  applyFeeAdminGraduationProjection,
+  type VerifiedGraduatedVenueProjection,
+} from "./repositories/verified-graduation.js";
+export { projectCurveGraduationProgress } from "./repositories/graduation-progress.js";
+export {
+  incrementCreatorTradeCountForToken,
+  projectCreatorTradeCount,
+} from "./repositories/creator-trade-count.js";
+export { CreatorRepository } from "./repositories/creators.js";
 export {
   applyHolderTransferProjection,
   type HolderProjectionContext,
-} from './repositories/holders.js';
+} from "./repositories/holders.js";

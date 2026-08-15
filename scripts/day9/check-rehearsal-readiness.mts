@@ -59,6 +59,24 @@ type DeploymentManifest = Readonly<{
   dexEvidenceHash: string | null;
 }>;
 
+type DexSourceInventory = Readonly<{
+  uniswapV3?: Readonly<{
+    activationAllowed?: boolean;
+    arcDeployment?: Readonly<{
+      status?: string;
+      factory?: string | null;
+      positionManager?: string | null;
+      realDependencyForkProof?: Readonly<{ status?: string }>;
+    }>;
+  }>;
+  uniswapV4?: Readonly<{
+    arcDeployment?: Readonly<{
+      status?: string;
+      activationAllowed?: boolean;
+    }>;
+  }>;
+}>;
+
 function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(resolve(process.cwd(), path), 'utf8')) as T;
 }
@@ -71,6 +89,10 @@ function isHash(value: string | null | undefined): value is string {
   return /^0x[0-9a-fA-F]{64}$/.test(value ?? '') && !/^0x0{64}$/i.test(value ?? '');
 }
 
+function sameAddress(a: string | null | undefined, b: string | null | undefined): boolean {
+  return isAddress(a) && isAddress(b) && a.toLowerCase() === b.toLowerCase();
+}
+
 function hasPublishedMainnetIdentity(network: NetworkManifest): boolean {
   return network.status !== 'AWAITING_OFFICIAL_VALUES'
     && network.chainId !== null
@@ -79,24 +101,67 @@ function hasPublishedMainnetIdentity(network: NetworkManifest): boolean {
     && network.usdc.decimals === 6;
 }
 
-function hasVerifiedDexBoundary(network: NetworkManifest, deployment: DeploymentManifest): boolean {
-  const family = deployment.adapter.family;
-  if (!deployment.adapter.active || (family !== 'UNISWAP_V3' && family !== 'UNISWAP_V4')) return false;
-  if (network.dex?.type !== family) return false;
-  if (!isHash(deployment.dexEvidenceHash) || !isHash(deployment.adapter.configHash)) return false;
-  if (!isAddress(deployment.adapter.adapter) || !isAddress(deployment.adapter.positionManager)) return false;
+/**
+ * DEX evidence is a property of the selected network dependencies, not of a
+ * Bread deployment that does not exist yet. Keeping this boundary independent
+ * avoids a circular gate where deployment is required to authorize deployment.
+ */
+function hasVerifiedNetworkDexEvidence(
+  network: NetworkManifest,
+  inventory: DexSourceInventory,
+): boolean {
+  const family = network.dex?.type;
 
   if (family === 'UNISWAP_V3') {
-    return isAddress(deployment.adapter.v3Factory) && deployment.adapter.poolManager === null;
+    const evidence = inventory.uniswapV3?.arcDeployment;
+    return inventory.uniswapV3?.activationAllowed === true
+      && evidence?.realDependencyForkProof?.status === 'PASS'
+      && /VERIFIED|PASS/.test(evidence?.status ?? '')
+      && sameAddress(network.dex?.positionManager, evidence?.positionManager)
+      && sameAddress(network.dex?.factory, evidence?.factory)
+      && network.dex?.poolManager === null;
   }
-  return isAddress(deployment.adapter.poolManager) && deployment.adapter.v3Factory === null;
+
+  if (family === 'UNISWAP_V4') {
+    const evidence = inventory.uniswapV4?.arcDeployment;
+    return evidence?.activationAllowed === true
+      && /VERIFIED|PASS/.test(evidence?.status ?? '')
+      && isAddress(network.dex?.positionManager)
+      && isAddress(network.dex?.poolManager)
+      && network.dex?.factory === null;
+  }
+
+  return false;
 }
 
 function hasReadyDeploymentManifest(deployment: DeploymentManifest): boolean {
   if (!['DEPLOYED', 'VERIFIED'].includes(deployment.status)) return false;
-  if (!isHash(deployment.economicsConfigHash)) return false;
+  if (!isHash(deployment.economicsConfigHash) || !isHash(deployment.dexEvidenceHash)) return false;
   if (!isAddress(deployment.authorities.protocolAdmin) || !isAddress(deployment.authorities.guardian)) return false;
   return Object.values(deployment.core).every((address) => isAddress(address));
+}
+
+function deploymentMatchesVerifiedDex(
+  network: NetworkManifest,
+  deployment: DeploymentManifest,
+): boolean {
+  const family = network.dex?.type;
+  if (!deployment.adapter.active || deployment.adapter.family !== family) return false;
+  if (!isHash(deployment.adapter.configHash) || !isAddress(deployment.adapter.adapter)) return false;
+
+  if (family === 'UNISWAP_V3') {
+    return sameAddress(deployment.adapter.positionManager, network.dex?.positionManager)
+      && sameAddress(deployment.adapter.v3Factory, network.dex?.factory)
+      && deployment.adapter.poolManager === null;
+  }
+
+  if (family === 'UNISWAP_V4') {
+    return sameAddress(deployment.adapter.positionManager, network.dex?.positionManager)
+      && sameAddress(deployment.adapter.poolManager, network.dex?.poolManager)
+      && deployment.adapter.v3Factory === null;
+  }
+
+  return false;
 }
 
 /**
@@ -113,6 +178,7 @@ export function assessDay9RehearsalReadiness(input: Readonly<{
 }>): Day9Readiness {
   const network = readJson<NetworkManifest>(`config/networks/${input.network}.json`);
   const deployment = readJson<DeploymentManifest>(`config/deployments/${input.network}.day5.json`);
+  const dexInventory = readJson<DexSourceInventory>('config/protocol/day5-dex-source-inventory.json');
 
   if (input.network === 'arc-mainnet' && !hasPublishedMainnetIdentity(network)) {
     return { ready: false, code: 'ARC_MAINNET_VALUES_REQUIRED' };
@@ -127,11 +193,11 @@ export function assessDay9RehearsalReadiness(input: Readonly<{
     };
   }
 
-  if (!hasVerifiedDexBoundary(network, deployment)) {
+  if (!hasVerifiedNetworkDexEvidence(network, dexInventory)) {
     return { ready: false, code: 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED' };
   }
 
-  if (!hasReadyDeploymentManifest(deployment)) {
+  if (!hasReadyDeploymentManifest(deployment) || !deploymentMatchesVerifiedDex(network, deployment)) {
     return { ready: false, code: 'DEPLOYMENT_MANIFEST_NOT_READY' };
   }
 

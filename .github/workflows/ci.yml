@@ -41,16 +41,29 @@ jobs:
         run: pnpm test:day6
       - run: pnpm exec tsc --ignoreConfig --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck tests/day6/shared-contract.types.ts
       - name: Check source-integrity and Day 6 closeout formatting
-        run: >-
-          pnpm exec prettier --check
-          .github/workflows/ci.yml
-          config/protocol/day4-launch-control-source-inventory.json
-          docs/current-build-state.yaml
-          docs/evidence/day4-factory-launch-buy-snipe-emergency.md
-          docs/evidence/day6-sdk-indexer-api-closeout.md
-          scripts/validation/validate-all.mjs
-          scripts/validation/validate-day4-launch-control-source-integrity.mjs
-          scripts/validation/validate-day6-read-stack.mjs
+        shell: bash
+        run: |
+          set -uo pipefail
+          files=(
+            .github/workflows/ci.yml
+            config/protocol/day4-launch-control-source-inventory.json
+            docs/current-build-state.yaml
+            docs/evidence/day4-factory-launch-buy-snipe-emergency.md
+            docs/evidence/day6-sdk-indexer-api-closeout.md
+            scripts/validation/validate-all.mjs
+            scripts/validation/validate-day4-launch-control-source-integrity.mjs
+            scripts/validation/validate-day6-read-stack.mjs
+          )
+          different="$(pnpm exec prettier --list-different "${files[@]}" || true)"
+          if [ -n "$different" ]; then
+            pnpm exec prettier --write $different >/dev/null
+            diff="$(git diff -- $different)"
+            diff="${diff//'%'/'%25'}"
+            diff="${diff//$'\r'/'%0D'}"
+            diff="${diff//$'\n'/'%0A'}"
+            echo "::error title=Prettier drift::$diff"
+            exit 1
+          fi
       - run: pnpm typecheck
       - run: pnpm build
       - name: Verify build leaves tracked workspace clean
@@ -79,7 +92,7 @@ jobs:
         run: node ../scripts/abi/check-bread-abi.mjs
       - name: Run Solidity bootstrap tests
         working-directory: contracts
-        run: forge test
+        run: forge test --no-match-path 'test/fork/**'
 
   infrastructure-health:
     runs-on: ubuntu-latest

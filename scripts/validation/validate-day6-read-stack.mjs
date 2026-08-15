@@ -27,6 +27,10 @@ function requirePattern(text, pattern, label) {
   }
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 async function collectTypeScriptFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
@@ -68,7 +72,11 @@ const routeContract = new Map([
 const server = await readRequired("apps/api/src/server.ts");
 for (const [file, route] of routeContract) {
   const routeSource = await readRequired(file);
-  requireText(routeSource, `app.get('${route}'`, file);
+  requirePattern(
+    routeSource,
+    new RegExp(`app\\.get\\(\\s*["']${escapeRegExp(route)}["']`),
+    file,
+  );
 }
 
 const requiredRegistrations = [
@@ -106,11 +114,15 @@ for (const token of [
   "indexedThroughBlockHash:",
   "indexedThroughBlockTimestamp:",
   "servedAt:",
-  "source: 'bread-indexer';",
   "status: FreshnessStatus;",
 ]) {
   requireText(apiTypes, token, "FreshnessMeta");
 }
+requirePattern(
+  apiTypes,
+  /source:\s*["']bread-indexer["'];/,
+  "FreshnessMeta source",
+);
 
 const migration = await readRequired(
   "packages/db/drizzle/0001_day6_read_stack.sql",

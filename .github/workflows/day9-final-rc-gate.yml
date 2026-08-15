@@ -8,7 +8,9 @@ on:
       - 'docs/current-build-state.yaml'
       - 'docs/evidence/day9-browser-device-wallet-matrix.md'
       - 'docs/evidence/day9-live-arc-rehearsal.md'
-      - 'scripts/day9/check-live-arc-rehearsal.mts'
+      - 'docs/evidence/day9-public-arc-lifecycle-smoke.md'
+      - 'docs/evidence/day9-safe-threshold-recovery.json'
+      - 'config/deployments/arc-testnet.day5.json'
   push:
     branches: [main]
     paths:
@@ -17,7 +19,9 @@ on:
       - 'docs/current-build-state.yaml'
       - 'docs/evidence/day9-browser-device-wallet-matrix.md'
       - 'docs/evidence/day9-live-arc-rehearsal.md'
-      - 'scripts/day9/check-live-arc-rehearsal.mts'
+      - 'docs/evidence/day9-public-arc-lifecycle-smoke.md'
+      - 'docs/evidence/day9-safe-threshold-recovery.json'
+      - 'config/deployments/arc-testnet.day5.json'
 
 permissions:
   contents: read
@@ -41,32 +45,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate repository and source mirrors
         run: pnpm validate
-      - name: Assert final Day-9 verdict evidence and durable state are truthful
+      - name: Assert current blocked Day-9 verdict is truthful
         run: |
           set -euo pipefail
           test -f docs/evidence/day9-release-candidate-rehearsal.md
-          grep -Fq 'DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED' docs/evidence/day9-release-candidate-rehearsal.md
-          grep -Fq 'EMPTY_ENVIRONMENT_TO_USABLE_LAUNCHPAD = BLOCKED' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'DAY_9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_PHYSICAL_MATRIX_ONLY' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'EMPTY_ENVIRONMENT_TO_USABLE_LAUNCHPAD = PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'POST_GRADUATION_V3_INDEXING_REBUILD_RECONCILE = PASS' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'ROLLBACK = PASS' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'RECONCILE = PASS' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'RECOVERY_DRILLS = PASS_REAL_SAFE_THRESHOLD_RECOVERY' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'SUPPORTED_MATRIX = BLOCKED_EXTERNAL_EXECUTION_REQUIRED' docs/evidence/day9-release-candidate-rehearsal.md
+          grep -Fq 'EXACT_HEAD_GITHUB_ACTIONS_AUTOMATED_RELEASE = PASS_AT_5a8a6ab49c0f4dd6cd41f200792665ae26a1168e' docs/evidence/day9-release-candidate-rehearsal.md
           grep -Fq 'RC_TAG_CREATED = false' docs/evidence/day9-release-candidate-rehearsal.md
-          grep -Fq 'active_gate: DAY9_RELEASE_CANDIDATE_REHEARSAL_BLOCKED_EXTERNAL_PREREQUISITES' docs/current-build-state.yaml
+          grep -Fq 'active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED' docs/current-build-state.yaml
           grep -Fq 'day9_started: true' docs/current-build-state.yaml
           grep -Fq 'day9_complete: false' docs/current-build-state.yaml
           grep -Fq 'day9_rc_tag_created: false' docs/current-build-state.yaml
           grep -Fq 'day10_started: false' docs/current-build-state.yaml
-      - name: Prove live Arc rehearsal remains fail-closed
+      - name: Validate retained public Arc Testnet deployment and lifecycle evidence
         run: |
           set -euo pipefail
-          set +e
-          output="$(pnpm exec tsx scripts/day9/check-live-arc-rehearsal.mts 2>&1)"
-          status=$?
-          set -e
-          printf '%s\n' "$output"
-          test "$status" -eq 2
-          grep -Fq 'ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED' <<<"$output"
-          grep -Fq 'ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY' <<<"$output"
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('config/deployments/arc-testnet.day5.json', 'utf8'));
+          if (manifest.status !== 'VERIFIED' || manifest.chainId !== 5042002) throw new Error('Arc Testnet deployment manifest is not VERIFIED');
+          if (manifest.core.factory !== '0xddf400f7a376fb8a962eee6d74c1ba37efa644f7') throw new Error('unexpected canonical Day-9 factory');
+          if (manifest.authorities.protocolAdmin !== '0x9004e285521d69197cd9965c301b02161eb1d0d8') throw new Error('unexpected Day-9 Protocol Admin Safe');
+
+          const recovery = JSON.parse(fs.readFileSync('docs/evidence/day9-safe-threshold-recovery.json', 'utf8'));
+          if (recovery.status !== 'DAY9_ARC_SAFE_THRESHOLD_RECOVERY_FINAL_EVIDENCE_PASS') throw new Error('Safe recovery evidence not PASS');
+          if (recovery.chainId !== 5042002 || recovery.threshold !== 2) throw new Error('Safe recovery identity mismatch');
+          if (recovery.endNonce !== '2' || recovery.startNonce !== '0') throw new Error('Safe recovery nonce evidence mismatch');
+          if (recovery.finalOwnerSetRestored !== true || recovery.recoveryOwnerRemovedAfterDrill !== true) throw new Error('Safe owner restoration evidence missing');
+          if (recovery.recoveredSignerParticipatedInRestore !== true) throw new Error('recovered signer did not prove restored threshold control');
+          if (!Array.isArray(recovery.transactions) || recovery.transactions.length !== 2 || recovery.transactions.some((tx) => tx.executionSuccess !== true)) throw new Error('Safe recovery transaction evidence invalid');
+          NODE
+          grep -Fq 'BREAD_ARC_TESTNET_SMOKE_RECOVERY_AND_FINAL_VERIFY_PASS' docs/evidence/day9-public-arc-lifecycle-smoke.md
+          grep -Fq 'positionId = 265870' docs/evidence/day9-public-arc-lifecycle-smoke.md
+      - name: Assert required physical matrix remains fail-closed
+        run: |
+          set -euo pipefail
+          grep -Fq '| iOS Safari | EXTERNAL_EXECUTION_REQUIRED |' docs/evidence/day9-browser-device-wallet-matrix.md
+          grep -Fq '| Android Chrome physical | PARTIAL_PASS_EXTERNAL_USER_EXECUTION |' docs/evidence/day9-browser-device-wallet-matrix.md
+          grep -Fq 'remaining full physical representative Android Chrome checklist' docs/evidence/day9-browser-device-wallet-matrix.md
+          grep -Fq '| Desktop Edge | EXTERNAL_EXECUTION_REQUIRED |' docs/evidence/day9-browser-device-wallet-matrix.md
+          grep -Fq 'NO_FIRST_CLASS_WALLET_BROWSER_CLAIM' docs/evidence/day9-browser-device-wallet-matrix.md
       - name: Prove no Day-9 RC PASS tag exists while blocked
         run: |
           set -euo pipefail
