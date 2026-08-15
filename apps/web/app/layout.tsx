@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Geist_Mono, Inter } from 'next/font/google';
 
 import { MobileNavigation, Navigation } from '@bread/ui';
 import '@bread/ui/theme.css';
+import { PrimaryMobileNavigation, PrimaryNavigation } from '../components/primary-navigation';
 import { Providers } from '../components/providers';
 import { SearchSurface } from '../components/search-surface';
 import { WalletButton } from '../components/wallet/wallet-button';
@@ -34,7 +35,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 <a className="bread-brand" href="/explore" aria-label="Bread home">
                   Bread
                 </a>
-                <Navigation />
+                <Suspense fallback={<Navigation />}>
+                  <PrimaryNavigation />
+                </Suspense>
                 <SearchSurface />
                 <WalletButton />
               </div>
@@ -51,7 +54,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             {children}
 
             <div className="bread-mobile-bottom">
-              <MobileNavigation />
+              <Suspense fallback={<MobileNavigation />}>
+                <PrimaryMobileNavigation />
+              </Suspense>
             </div>
           </div>
         </Providers>
