@@ -4,11 +4,28 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
 
 import type { IndexedSearchResult } from '../../../packages/types/src/index';
-import { Button } from '@bread/ui';
+import { Button, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
 import { searchIntent } from './explore/model';
 import { FreshnessBanner } from './freshness-banner';
+
+function SearchGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      focusable="false"
+    >
+      <circle cx="11" cy="11" r="6" />
+      <path d="m16 16 4 4" />
+    </svg>
+  );
+}
 
 export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
@@ -39,6 +56,23 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
   function closeSearch() {
     setOpen(false);
   }
+
+  useEffect(() => {
+    if (compact) return;
+    const onShortcut = (event: KeyboardEvent) => {
+      const isShortcut = event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey) && !event.altKey;
+      if (!isShortcut) return;
+
+      event.preventDefault();
+      const trigger = document.querySelector<HTMLElement>('.bread-header .bread-search-trigger');
+      const active = document.activeElement;
+      returnFocusRef.current = trigger ?? (active instanceof HTMLElement ? active : null);
+      setOpen(true);
+    };
+
+    window.addEventListener('keydown', onShortcut);
+    return () => window.removeEventListener('keydown', onShortcut);
+  }, [compact]);
 
   useEffect(() => {
     if (open) return;
@@ -95,7 +129,10 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
         ariaLabel="Search"
         onClick={openSearch}
       >
-        {compact ? 'Search' : 'Search token, ticker or contract…'}
+        <Icon size="normal">
+          <SearchGlyph />
+        </Icon>
+        <span>{compact ? 'Search' : 'Search token, ticker or contract…'}</span>
       </Button>
 
       {open ? (
