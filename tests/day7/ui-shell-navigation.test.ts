@@ -64,4 +64,33 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
     expect(css).toContain('color: var(--bread-accent);');
     expect(css).toContain('background: var(--bread-accent-soft);');
   });
+
+  it('composes the desktop header in the source-required Bread -> nav -> flexible search -> watchlist -> wallet order', () => {
+    const layout = readFileSync(new URL('../../apps/web/app/layout.tsx', import.meta.url), 'utf8');
+    const brand = layout.indexOf('className="bread-brand"');
+    const nav = layout.indexOf('<PrimaryNavigation />');
+    const search = layout.indexOf('className="bread-header__search"');
+    const watchlist = layout.indexOf('className="bread-header__watchlist"');
+    const wallet = layout.indexOf('<WalletButton />');
+
+    expect(brand).toBeGreaterThanOrEqual(0);
+    expect(nav).toBeGreaterThan(brand);
+    expect(search).toBeGreaterThan(nav);
+    expect(watchlist).toBeGreaterThan(search);
+    expect(wallet).toBeGreaterThan(watchlist);
+  });
+
+  it('uses the approved compact desktop shell proportions without widening navigation or wallet controls', () => {
+    const css = readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8');
+
+    expect(css).toContain('height: var(--bread-header-desktop);');
+    expect(css).toContain('max-width: var(--bread-max-width);');
+    expect(css).toContain('grid-template-columns: auto auto minmax(280px, 1fr) auto auto;');
+    expect(css).toContain('.bread-header__search {');
+    expect(css).toContain('width: min(100%, 520px);');
+    expect(css).toContain('justify-self: center;');
+    expect(css).toContain('.bread-header__watchlist {');
+    expect(css).toContain('width: var(--bread-touch-target);');
+    expect(css).toContain('height: var(--bread-touch-target);');
+  });
 });
