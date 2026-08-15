@@ -1,0 +1,95 @@
+.bread-header {
+  height: var(--bread-header-desktop);
+}
+
+.bread-header__inner {
+  width: 100%;
+  max-width: var(--bread-max-width);
+  margin-inline: auto;
+  padding-inline: var(--bread-gutter-desktop);
+  display: grid;
+  grid-template-columns: auto auto minmax(280px, 1fr) auto auto;
+  align-items: center;
+  gap: var(--bread-space-20);
+}
+
+.bread-header .bread-navigation {
+  width: max-content;
+}
+
+.bread-brand {
+  font-size: 20px;
+  line-height: 26px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bread-header__search {
+  width: min(100%, 520px);
+  justify-self: center;
+}
+
+.bread-header__search .bread-search-trigger {
+  width: 100%;
+  min-height: 40px;
+  justify-content: flex-start;
+  padding-inline: var(--bread-space-16);
+  border-color: var(--bread-border-strong);
+  background: var(--bread-bg-secondary);
+  color: var(--bread-text-secondary);
+  font-weight: 400;
+  text-align: left;
+}
+
+.bread-header__search .bread-search-trigger:hover:not(:disabled) {
+  border-color: var(--bread-accent);
+  background: var(--bread-surface-1);
+}
+
+.bread-header__watchlist {
+  width: var(--bread-touch-target);
+  height: var(--bread-touch-target);
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-bg-secondary);
+  color: var(--bread-brand-butter);
+}
+
+.bread-header__watchlist svg {
+  width: var(--bread-icon-primary-control);
+  height: var(--bread-icon-primary-control);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.bread-header__watchlist:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.bread-header .bread-wallet-control > .bread-button {
+  min-width: 160px;
+  min-height: var(--bread-touch-target);
+  padding-inline: var(--bread-space-20);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .bread-header__inner {
+    gap: var(--bread-space-12);
+  }
+
+  .bread-header .bread-navigation__link {
+    padding-inline: var(--bread-space-8);
+  }
+
+  .bread-header .bread-wallet-control > .bread-button {
+    min-width: 0;
+  }
+}
