@@ -9,6 +9,11 @@ export {
 } from './creator-attribution';
 export { Icon, type IconProps, type IconSize } from './icon';
 export {
+  LiveActivityStrip,
+  type LiveActivityStatus,
+  type LiveActivityStripProps,
+} from './live-activity-strip';
+export {
   PageContainer,
   type PageContainerProps,
   type PageContainerVariant,
