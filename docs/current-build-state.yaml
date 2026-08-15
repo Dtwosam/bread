@@ -1,6 +1,6 @@
-schema_version: 1.64
+schema_version: 1.65
 project: Bread
-updated_at: 2026-08-15T19:50:00+01:00
+updated_at: 2026-08-15T19:55:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -43,6 +43,7 @@ completed_checkpoints:
   - "UI v2.2 Figma foundations/components canonical editable source established and visually validated"
   - "Lane 1 slice 1: exact v2.2 theme token contract RED 0b44473 -> GREEN 9cf15bc; state-compatibility correction verified by root CI 31901898791"
   - "Lane 1 slice 2: shared CreatorAttribution RED 6795dd1 -> GREEN 5c996cf; focused workflow 31902113415 PASS and root CI 31902113406 PASS"
+  - "Lane 1 slice 3: runtime CSS token surface RED 7adaf4e -> GREEN b0e6c88; focused workflow 31902360616 PASS and root CI 31902360622 PASS"
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -54,7 +55,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 5c996cf985dfa03e5d8f0dd78da56f6e5a616eed
+  ui_accepted_head_before_this_state_sync: b0e6c88c721f5759fd8a237ec09c1492e971f3cc
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -96,6 +97,9 @@ verification:
   ui_lane1_creator_attribution_red: FAIL_EXPECTED_RUN_31902014634
   ui_lane1_creator_attribution_focused_green: PASS_RUN_31902113415
   ui_lane1_creator_attribution_root_ci: PASS_RUN_31902113406
+  ui_lane1_runtime_css_red: FAIL_EXPECTED_RUN_31902301384
+  ui_lane1_runtime_css_focused_green: PASS_RUN_31902360616
+  ui_lane1_runtime_css_root_ci: PASS_RUN_31902360622
 
 lan_acceptance:
   status: PASS
@@ -136,6 +140,7 @@ ui_ux_v2_2:
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
+    - EXACT_V2_2_RUNTIME_CSS_TOKEN_SURFACE
   implementation_order:
     - "Lane 0 — current UI conformance audit / frozen impact map"
     - "Lane 1 — foundations"
@@ -186,10 +191,10 @@ decisions_since_last_state:
   - "LAN functional acceptance PASS recorded from BREAD_LAN_ACCEPTANCE_READY without touching the running environment."
   - "Dedicated remote UI implementation branch and draft PR #94 established from the source-hygiene descendant of the Day-9 head."
   - "Canonical Figma foundations/components established and visually validated before production Lane-1 code."
-  - "Exact theme token and CreatorAttribution foundation behaviors are accepted with RED evidence plus focused and root-CI GREEN evidence."
+  - "Exact theme tokens, CreatorAttribution, and runtime CSS token surface are accepted with RED evidence plus focused and root-CI GREEN evidence."
 
 next_action: >-
-  Continue Lane 1 with the next independently reviewable foundation behavior under 06D RED -> GREEN discipline: reconcile the runtime CSS variable surface with the exact ratified v2.2 token set so rendered components consume the same canonical values already frozen in Figma and packages/ui/src/theme.ts. Verify focused UI-foundation tests and root CI before advancing. Then continue remaining Lane-1 responsive/icon/motion/focus primitives one bounded behavior at a time. Keep /tmp/bread-synthra-fork-proof untouched.
+  Continue Lane 1 with the next independently reviewable foundation behavior under 06D RED -> GREEN discipline: implement the ratified focus-visible and motion primitives exactly as frozen in Figma/source, including a visible 2px accent outer focus ring with offset, hover movement capped at translateY(-1px) with no scale, and reduced-motion suppression/simplification. Verify focused UI-foundation tests, adjacent regressions, source-conformance, and root CI before advancing. Then continue remaining Lane-1 responsive/icon primitives one bounded behavior at a time. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof, its LAN/indexer process, containers, database, checkpoint or acceptance evidence."
