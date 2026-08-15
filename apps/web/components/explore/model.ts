@@ -9,7 +9,7 @@ export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
 export type IndexedFeedCardFields = Pick<
   IndexedFeedItem,
-  'tokenAddress' | 'deployerAddress' | 'name' | 'symbol' | 'metrics' | 'progress'
+  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'name' | 'symbol' | 'metrics' | 'progress'
 >;
 
 export type SearchIntent =
@@ -87,7 +87,7 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     symbol: source.symbol?.trim() || '—',
     price: source.metrics?.lastPrice ?? null,
     volume24h: source.metrics?.quoteVolume.h24 ?? null,
-    holderCount: source.metrics?.holderCount ?? null,
+    holderCount: source.holderCount,
     priceChange24h: null,
     progress: progressModel(source.progress),
   };
