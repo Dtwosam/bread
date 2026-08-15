@@ -90,10 +90,31 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
         setOpen(false);
         return;
       }
-      if (event.key !== 'Tab') return;
 
       const dialog = dialogRef.current;
       if (!dialog) return;
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const results = Array.from(dialog.querySelectorAll<HTMLAnchorElement>('a.bread-search-result[href]'));
+        if (results.length === 0) return;
+
+        const activeIndex = results.findIndex((result) => result === document.activeElement);
+        const nextIndex =
+          event.key === 'ArrowDown'
+            ? activeIndex >= 0
+              ? (activeIndex + 1) % results.length
+              : 0
+            : activeIndex >= 0
+              ? (activeIndex - 1 + results.length) % results.length
+              : results.length - 1;
+
+        event.preventDefault();
+        results[nextIndex]?.focus();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
       const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       )).filter((element) => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true');
