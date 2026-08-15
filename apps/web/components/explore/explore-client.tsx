@@ -20,7 +20,7 @@ const PAGE_SIZE = 25;
 const VIEWS: readonly Readonly<{ value: ExploreView; label: string }>[] = [
   { value: 'new', label: 'New' },
   { value: 'trending', label: 'Trending' },
-  { value: 'graduating', label: 'Near Graduation' },
+  { value: 'graduating', label: 'Almost Baked' },
   { value: 'graduated', label: 'Graduated' },
 ];
 
