@@ -153,6 +153,7 @@
 .bread-token-card:hover {
   border-color: var(--bread-border-strong);
   background: var(--bread-surface-2);
+  transform: translateY(-1px);
 }
 
 .bread-token-card:active {
@@ -927,5 +928,12 @@
     padding: 8px 16px;
     border-top: 1px solid var(--bread-border-subtle);
     background: var(--bread-bg-secondary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bread-token-card:hover,
+  .bread-token-card:active {
+    transform: none;
   }
 }
