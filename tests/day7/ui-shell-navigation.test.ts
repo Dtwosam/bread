@@ -111,4 +111,32 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
     expect(css).toContain('width: var(--bread-touch-target);');
     expect(css).toContain('height: var(--bread-touch-target);');
   });
+
+  it('renders one truthful 40px live strip and never labels degraded indexed state as LIVE', () => {
+    expect(exports).toHaveProperty('LiveActivityStrip');
+    const LiveActivityStrip = exports.LiveActivityStrip as ((props: Record<string, unknown>) => ElementLike) | undefined;
+    expect(typeof LiveActivityStrip).toBe('function');
+
+    const fresh = LiveActivityStrip?.({ status: 'FRESH', indexedThroughBlock: '57159858' }) as ElementLike | undefined;
+    const freshChildren = fresh?.props?.children as readonly ElementLike[] | undefined;
+    expect(fresh?.props?.className).toBe('bread-live-strip');
+    expect(freshChildren?.[0]?.props?.children).toContain('LIVE');
+
+    for (const [status, expected] of [
+      ['LAGGING', 'Live updates delayed'],
+      ['REBUILDING', 'Live updates rebuilding'],
+      ['DEGRADED', 'Live updates paused'],
+      ['UNAVAILABLE', 'Live updates paused'],
+    ] as const) {
+      const rendered = LiveActivityStrip?.({ status, indexedThroughBlock: '57159858' }) as ElementLike | undefined;
+      const children = rendered?.props?.children as readonly ElementLike[] | undefined;
+      expect(String(children?.[0]?.props?.children)).toContain(expected);
+      expect(String(children?.[0]?.props?.children)).not.toBe('LIVE');
+    }
+
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+    expect(css).toContain('.bread-live-strip {');
+    expect(css).toContain('height: var(--bread-live-strip-desktop);');
+    expect(css).toContain('border: 1px solid var(--bread-border-subtle);');
+  });
 });
