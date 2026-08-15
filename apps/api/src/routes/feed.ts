@@ -133,22 +133,27 @@ export function registerFeedRoute(
         });
       }
 
-      const metricRows = await deps.repository.listTokenMetrics(
-        deps.context.chainId,
-        launches.map((launch) => launch.tokenAddress),
-      );
+      const tokenAddresses = launches.map((launch) => launch.tokenAddress);
+      const [metricRows, stateRows] = await Promise.all([
+        deps.repository.listTokenMetrics(deps.context.chainId, tokenAddresses),
+        deps.repository.listLaunchStates(deps.context.chainId, tokenAddresses),
+      ]);
       const metricsByToken = new Map(
         metricRows.map((row) => [row.tokenAddress.toLowerCase(), row]),
+      );
+      const statesByToken = new Map(
+        stateRows.map((row) => [row.tokenAddress.toLowerCase(), row]),
       );
       const meta = await deps.freshness();
       return {
         data: launches.map((launch) => {
-          const metricRow = metricsByToken.get(
-            launch.tokenAddress.toLowerCase(),
-          );
+          const tokenKey = launch.tokenAddress.toLowerCase();
+          const metricRow = metricsByToken.get(tokenKey);
+          const stateRow = statesByToken.get(tokenKey);
           return {
             ...serializeLaunch(launch),
             holderCount: metricRow?.holderCount?.toString(10) ?? null,
+            graduatedVenueKind: stateRow?.graduatedVenueKind ?? null,
             metrics: serializeTradeMetrics(metricRow),
             progress: serializeGraduationProgress(metricRow),
           };
