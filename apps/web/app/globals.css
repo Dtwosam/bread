@@ -236,7 +236,7 @@
 }
 
 .bread-progress-track {
-  height: 6px;
+  height: 5px;
   overflow: hidden;
   border-radius: 9999px;
   background: var(--bread-surface-3);
@@ -246,7 +246,7 @@
   height: 100%;
   display: block;
   border-radius: inherit;
-  background: var(--bread-accent);
+  background: var(--bread-brand-butter);
 }
 
 .bread-explore-more {
