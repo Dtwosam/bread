@@ -164,6 +164,16 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(source).toContain('bread-token-card__graduated');
   });
 
+  it('makes Search results contract-safe and creator-aware without duplicating identity formatting', () => {
+    const source = readFileSync(new URL('../../apps/web/components/search-surface.tsx', import.meta.url), 'utf8');
+    expect(source).toContain('CreatorAttribution');
+    expect(source).toContain('creatorAddress={result.deployerAddress}');
+    expect(source).toContain("result.matchKind === 'CONTRACT'");
+    expect(source).toContain('Exact contract match');
+    expect(source).toContain('shortAddress(result.tokenAddress)');
+    expect(source).not.toContain('>{result.tokenAddress}</code>');
+  });
+
   it('uses the v2.2 five-pixel brand-butter baked-progress treatment without shrinking shared progress', () => {
     const source = readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8');
     expect(source).toMatch(
