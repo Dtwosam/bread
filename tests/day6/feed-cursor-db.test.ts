@@ -63,7 +63,9 @@ describe.skipIf(!RUN_DB)('Day 6 Task 4 deterministic feed keyset pagination', ()
   beforeEach(async () => {
     const dbModule = await import('../../packages/db/src/index.ts');
     await dbModule.migrateBreadDb(pool);
-    await pool.query('TRUNCATE launches, indexer_checkpoints, protocol_stacks CASCADE');
+    await pool.query(
+      'TRUNCATE launch_state, token_metrics, trades, launches, indexer_checkpoints, protocol_stacks CASCADE',
+    );
     await pool.query(
       `INSERT INTO indexer_checkpoints (
         chain_id, stack_version, factory_address, deployment_start_block,
