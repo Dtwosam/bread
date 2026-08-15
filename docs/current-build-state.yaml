@@ -1,6 +1,6 @@
-schema_version: 1.65
+schema_version: 1.66
 project: Bread
-updated_at: 2026-08-15T19:55:00+01:00
+updated_at: 2026-08-15T20:01:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -24,7 +24,10 @@ legacy_ratifications:
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
 active_lane: "UI/UX v2.2 Lane 1 — foundations"
-active_gate: "UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE + PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED"
+active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+active_ui_gate: UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+day9_started: true
+day9_rc_tag_created: false
 
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
@@ -201,4 +204,4 @@ do_not_do:
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
-  - "Do not fabricate performance, physical-device, contract/config or live-state evidence."
+  - "Do not fabricate performance, physical-device, contract/config values or live-state evidence."
