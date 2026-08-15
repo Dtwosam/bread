@@ -3,22 +3,22 @@ name: day9-lan-provider-runtime
 on:
   pull_request:
     paths:
-      - '.github/workflows/day9-lan-provider-runtime.yml'
-      - 'apps/indexer/src/lan/chain-client.ts'
-      - 'apps/indexer/src/lan/chain-client.d.ts'
-      - 'apps/indexer/src/lan/indexer-runner.ts'
-      - 'tests/day9/lan-runtime-provider-boundaries.test.ts'
-      - 'scripts/day9/lan/**'
+      - ".github/workflows/day9-lan-provider-runtime.yml"
+      - "apps/indexer/src/lan/chain-client.ts"
+      - "apps/indexer/src/lan/chain-client.d.ts"
+      - "apps/indexer/src/lan/indexer-runner.ts"
+      - "tests/day9/lan-runtime-provider-boundaries.test.ts"
+      - "scripts/day9/lan/**"
   push:
     branches:
       - day9/synthra-arc-testnet-v3-candidate
     paths:
-      - '.github/workflows/day9-lan-provider-runtime.yml'
-      - 'apps/indexer/src/lan/chain-client.ts'
-      - 'apps/indexer/src/lan/chain-client.d.ts'
-      - 'apps/indexer/src/lan/indexer-runner.ts'
-      - 'tests/day9/lan-runtime-provider-boundaries.test.ts'
-      - 'scripts/day9/lan/**'
+      - ".github/workflows/day9-lan-provider-runtime.yml"
+      - "apps/indexer/src/lan/chain-client.ts"
+      - "apps/indexer/src/lan/chain-client.d.ts"
+      - "apps/indexer/src/lan/indexer-runner.ts"
+      - "tests/day9/lan-runtime-provider-boundaries.test.ts"
+      - "scripts/day9/lan/**"
   workflow_dispatch:
 
 permissions:
