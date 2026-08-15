@@ -58,6 +58,21 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
     }
   });
 
+  it('uses decorative canonical 20px navigation icons without changing link names', () => {
+    const Navigation = exports.Navigation as ((props?: Record<string, unknown>) => ElementLike) | undefined;
+    const rendered = Navigation?.({ currentHref: '/explore' });
+    const children = rendered?.props?.children as readonly ElementLike[];
+    const anchors = children.map(renderNavigationLink);
+
+    for (const [index, anchor] of anchors.entries()) {
+      const content = anchor.props?.children as readonly [ElementLike, string];
+      expect(content).toHaveLength(2);
+      expect(content[0]?.props?.size).toBe('navigation');
+      expect(content[0]?.props?.label).toBeUndefined();
+      expect(content[1]).toBe(['Explore', 'Trending', 'Create', 'Portfolio'][index]);
+    }
+  });
+
   it('uses the v2.2 active-navigation semantic surface rather than a competing visual treatment', () => {
     const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
     expect(css).toContain('.bread-navigation__link[aria-current="page"]');
