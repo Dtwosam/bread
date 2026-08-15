@@ -70,6 +70,37 @@ test('desktop Search opens from both Ctrl+K and Cmd+K without changing its acces
   await expect(searchTrigger).toHaveAttribute('aria-label', 'Search');
 });
 
+test('Search explicitly labels the exact contract match and keeps the full contract out of visible copy', async ({
+  page,
+  indexedApiState,
+  rpcState,
+}) => {
+  await page.goto('/explore');
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Search Bread' });
+  const input = dialog.getByPlaceholder('Search by name, ticker, contract or creator');
+  await input.fill(ACTIVE_TOKEN);
+
+  const results = dialog.locator('a.bread-search-result');
+  await expect(results).toHaveCount(1);
+  const exactResult = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
+  const shortContract = `${ACTIVE_TOKEN.slice(0, 8)}…${ACTIVE_TOKEN.slice(-6)}`;
+  await expect(exactResult).toContainText('Exact contract match');
+  await expect(exactResult).toContainText(shortContract);
+  await expect(exactResult).not.toContainText(ACTIVE_TOKEN);
+  await expect(exactResult.locator('code')).toHaveAttribute('title', ACTIVE_TOKEN);
+  await expect(exactResult.locator('.bread-creator-attribution')).toHaveAttribute('data-creator-address', E2E_DEPLOYER);
+
+  expect(
+    indexedApiState.requests.some((request) => {
+      const url = new URL(request);
+      return url.pathname === '/v1/search' && url.searchParams.get('q') === ACTIVE_TOKEN.toLowerCase();
+    }),
+  ).toBe(true);
+  expect(rpcState.requests).toEqual([]);
+});
+
 test('Explore filters and Search preserve contract identity plus keyboard containment', async ({
   page,
   indexedApiState,
