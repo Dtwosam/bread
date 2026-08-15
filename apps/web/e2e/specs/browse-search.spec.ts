@@ -24,6 +24,7 @@ test('desktop Search opens from both Ctrl+K and Cmd+K without changing its acces
   test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop search shortcut proof runs in Chromium.');
 
   await page.goto('/explore');
+  await page.waitForLoadState('networkidle');
   const searchTrigger = page.getByRole('button', { name: 'Search', exact: true });
   const dialog = page.getByRole('dialog', { name: 'Search Bread' });
 
