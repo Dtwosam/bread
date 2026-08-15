@@ -6,6 +6,7 @@ import type { ProtocolContext } from '../../packages/protocol-sdk/src/context.js
 
 const RUN_DB = process.env.BREAD_DB_INTEGRATION === '1';
 const address = (nibble: string) => `0x${nibble.repeat(40)}` as Address;
+const patternedAddress = (byte: string) => `0x${byte.repeat(20)}` as Address;
 const factory = address('1');
 const context: ProtocolContext = {
   network: 'arc-testnet',
@@ -209,6 +210,129 @@ describe.skipIf(!RUN_DB)('Day 6 Task 4 deterministic feed keyset pagination', ()
     };
     expect(second.data.map((item) => item.tokenAddress)).toEqual([address('b')]);
     expect(second.data[0]?.graduatedVenueKind).toBe('UNISWAP_V3');
+    expect(second.page.hasMore).toBe(false);
+    expect(second.page.nextCursor).toBeUndefined();
+    expect([...first.data, ...second.data].some((item) => item.tokenAddress === address('c'))).toBe(false);
+
+    await app.close();
+  });
+
+  it('ranks Trending from the trailing indexed hour and excludes activity outside the committed head window', async () => {
+    const tokenD = patternedAddress('ab');
+    const tokenE = patternedAddress('bc');
+    const tokenF = patternedAddress('cd');
+    const curveD = patternedAddress('da');
+    const curveE = patternedAddress('eb');
+    const curveF = patternedAddress('fc');
+
+    for (const [index, token, curve] of [
+      [1, tokenD, curveD],
+      [2, tokenE, curveE],
+      [3, tokenF, curveF],
+    ] as const) {
+      await pool.query(
+        `INSERT INTO launches (
+          chain_id, token_address, curve_address, stack_version, factory_address,
+          launch_timestamp, initial_supply, launch_block_number,
+          launch_transaction_hash, launch_log_index, name, symbol
+        ) VALUES ($1,$2,$3,$4,$5,$6,'1000',$7,$8,$9,$10,$11)`,
+        [
+          context.chainId,
+          token.toLowerCase(),
+          curve.toLowerCase(),
+          context.stackVersion,
+          factory.toLowerCase(),
+          String(1786262390 - index),
+          String(99 - index),
+          `0x${String(100 + index).padStart(64, '0')}`,
+          index,
+          `Trending ${index}`,
+          `TR${index}`,
+        ],
+      );
+    }
+
+    await pool.query(
+      `UPDATE indexer_checkpoints
+       SET indexed_through_block = '300', indexed_through_block_timestamp = '1786262402'
+       WHERE chain_id = $1 AND stack_version = $2 AND factory_address = $3`,
+      [context.chainId, context.stackVersion, factory.toLowerCase()],
+    );
+
+    let sequence = 200;
+    const insertTrade = async (input: {
+      token: Address;
+      curve: Address;
+      trader: Address;
+      quote: string;
+      block: string;
+      log: number;
+      timestamp: string;
+    }) => {
+      sequence += 1;
+      await pool.query(
+        `INSERT INTO trades (
+          chain_id, transaction_hash, log_index, token_address, curve_address,
+          side, trader_address, recipient_address, base_amount, quote_amount,
+          fee_amount, tax_amount, block_number, transaction_index, stack_version,
+          block_timestamp
+        ) VALUES ($1,$2,$3,$4,$5,'BUY',$6,$6,'1',$7,'0','0',$8,0,$9,$10)`,
+        [
+          context.chainId,
+          `0x${String(sequence).padStart(64, '0')}`,
+          input.log,
+          input.token.toLowerCase(),
+          input.curve.toLowerCase(),
+          input.trader.toLowerCase(),
+          input.quote,
+          input.block,
+          context.stackVersion,
+          input.timestamp,
+        ],
+      );
+    };
+
+    // Same 1h volume/unique/count for E, D and F; latest activity makes E first,
+    // then token address breaks the D/F tie. B has equal volume but fewer traders/trades.
+    await insertTrade({ token: tokenE, curve: curveE, trader: address('3'), quote: '150', block: '260', log: 1, timestamp: '1786262300' });
+    await insertTrade({ token: tokenE, curve: curveE, trader: address('4'), quote: '150', block: '261', log: 2, timestamp: '1786262310' });
+    await insertTrade({ token: tokenD, curve: curveD, trader: address('3'), quote: '150', block: '250', log: 1, timestamp: '1786262200' });
+    await insertTrade({ token: tokenD, curve: curveD, trader: address('4'), quote: '150', block: '255', log: 2, timestamp: '1786262210' });
+    await insertTrade({ token: tokenF, curve: curveF, trader: address('3'), quote: '150', block: '250', log: 1, timestamp: '1786262200' });
+    await insertTrade({ token: tokenF, curve: curveF, trader: address('4'), quote: '150', block: '255', log: 2, timestamp: '1786262210' });
+    await insertTrade({ token: address('b'), curve: address('e'), trader: address('3'), quote: '300', block: '270', log: 1, timestamp: '1786262320' });
+    await insertTrade({ token: address('c'), curve: address('f'), trader: address('3'), quote: '9999', block: '200', log: 1, timestamp: '1786258700' });
+
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const apiModule = await import('../../apps/api/src/server.ts');
+    const db = dbModule.createBreadDb(pool);
+    const app = apiModule.createBreadApi({
+      db,
+      context,
+      observedHeadBlock: async () => 300n,
+      now: () => new Date('2026-08-09T12:00:00.000Z'),
+    });
+
+    const firstResponse = await app.inject({ method: 'GET', url: '/v1/feed?view=trending&limit=2' });
+    expect(firstResponse.statusCode).toBe(200);
+    const first = firstResponse.json() as {
+      data: Array<{ tokenAddress: string }>;
+      page: { hasMore: boolean; nextCursor?: string };
+    };
+    expect(first.data.map((item) => item.tokenAddress)).toEqual([tokenE, tokenD]);
+    expect(first.page.hasMore).toBe(true);
+    expect(first.page.nextCursor).toMatch(/^[A-Za-z0-9_-]+$/);
+
+    const secondResponse = await app.inject({
+      method: 'GET',
+      url: `/v1/feed?view=trending&limit=2&cursor=${first.page.nextCursor}`,
+    });
+    expect(secondResponse.statusCode).toBe(200);
+    const second = secondResponse.json() as {
+      data: Array<{ tokenAddress: string }>;
+      page: { hasMore: boolean; nextCursor?: string };
+    };
+    expect(second.data.map((item) => item.tokenAddress)).toEqual([tokenF, address('b')]);
     expect(second.page.hasMore).toBe(false);
     expect(second.page.nextCursor).toBeUndefined();
     expect([...first.data, ...second.data].some((item) => item.tokenAddress === address('c'))).toBe(false);
