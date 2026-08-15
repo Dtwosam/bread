@@ -9,7 +9,7 @@ export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
 export type IndexedFeedCardFields = Pick<
   IndexedFeedItem,
-  'tokenAddress' | 'name' | 'symbol' | 'metrics' | 'progress'
+  'tokenAddress' | 'deployerAddress' | 'name' | 'symbol' | 'metrics' | 'progress'
 >;
 
 export type SearchIntent =
@@ -19,6 +19,7 @@ export type SearchIntent =
 
 export type TokenCardModel = Readonly<{
   tokenAddress: string;
+  creatorAddress: string;
   name: string;
   symbol: string;
   price: IndexedPriceSummary | null;
@@ -80,6 +81,7 @@ function progressModel(progress: IndexedGraduationProgressSummary | null) {
 export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel {
   return {
     tokenAddress: source.tokenAddress,
+    creatorAddress: source.deployerAddress,
     name: source.name?.trim() || 'Unnamed token',
     symbol: source.symbol?.trim() || '—',
     price: source.metrics?.lastPrice ?? null,
