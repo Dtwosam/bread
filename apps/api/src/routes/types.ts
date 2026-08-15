@@ -7,10 +7,13 @@ import type { RateLimitResult } from '../rate-limit.js';
 
 export type BreadReadRouteDeps = Readonly<{
   repository: ReadRepository;
-  trendingRepository: TrendingRepository;
   context: ProtocolContext;
   freshness: () => Promise<FreshnessMeta>;
   cache?: BreadCache;
   feedRateLimit?: (subject: string) => Promise<RateLimitResult>;
   now?: () => Date;
+}>;
+
+export type BreadFeedRouteDeps = BreadReadRouteDeps & Readonly<{
+  trendingRepository: TrendingRepository;
 }>;
