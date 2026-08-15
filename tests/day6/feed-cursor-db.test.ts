@@ -100,6 +100,15 @@ describe.skipIf(!RUN_DB)('Day 6 Task 4 New-feed keyset pagination', () => {
         ],
       );
     }
+
+    await pool.query(
+      `INSERT INTO launch_state (
+        chain_id, token_address, mode, graduation_phase,
+        graduated_venue_kind, graduated_venue_address, graduated_venue_fee_tier,
+        graduated_venue_quote_is_token0
+      ) VALUES ($1,$2,'GRADUATED','POOL_CREATED','UNISWAP_V3',$3,500,true)`,
+      [context.chainId, address('a').toLowerCase(), address('9').toLowerCase()],
+    );
   });
 
   it('uses nextCursor keyset pagination with no overlap and stable New ordering', async () => {
@@ -116,10 +125,11 @@ describe.skipIf(!RUN_DB)('Day 6 Task 4 New-feed keyset pagination', () => {
     const firstResponse = await app.inject({ method: 'GET', url: '/v1/feed?view=new&limit=2' });
     expect(firstResponse.statusCode).toBe(200);
     const first = firstResponse.json() as {
-      data: Array<{ tokenAddress: string }>;
+      data: Array<{ tokenAddress: string; graduatedVenueKind: string | null }>;
       page: { hasMore: boolean; nextCursor?: string };
     };
     expect(first.data.map((item) => item.tokenAddress)).toEqual([address('a'), address('b')]);
+    expect(first.data.map((item) => item.graduatedVenueKind)).toEqual(['UNISWAP_V3', null]);
     expect(first.page.hasMore).toBe(true);
     expect(first.page.nextCursor).toMatch(/^[A-Za-z0-9_-]+$/);
 
@@ -129,10 +139,11 @@ describe.skipIf(!RUN_DB)('Day 6 Task 4 New-feed keyset pagination', () => {
     });
     expect(secondResponse.statusCode).toBe(200);
     const second = secondResponse.json() as {
-      data: Array<{ tokenAddress: string }>;
+      data: Array<{ tokenAddress: string; graduatedVenueKind: string | null }>;
       page: { hasMore: boolean; nextCursor?: string };
     };
     expect(second.data.map((item) => item.tokenAddress)).toEqual([address('c')]);
+    expect(second.data.map((item) => item.graduatedVenueKind)).toEqual([null]);
     expect(second.page.hasMore).toBe(false);
     expect(second.page.nextCursor).toBeUndefined();
     expect(new Set([...first.data, ...second.data].map((item) => item.tokenAddress)).size).toBe(3);
