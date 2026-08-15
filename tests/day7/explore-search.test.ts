@@ -8,9 +8,11 @@ import {
   resolveExploreView,
   searchIntent,
   toTokenCardModel,
+  type IndexedFeedCardFields,
 } from '../../apps/web/components/explore/model';
 
 const VALID_ADDRESS = `0x${'12'.repeat(20)}`;
+const CREATOR_ADDRESS = `0x${'34'.repeat(20)}`;
 
 describe('Day 7 Explore/Search interaction contract', () => {
   it('keeps Explore view selection inside the frozen query-param model', () => {
@@ -66,6 +68,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(
       toTokenCardModel({
         tokenAddress: VALID_ADDRESS,
+        deployerAddress: CREATOR_ADDRESS,
         name: 'Bread',
         symbol: 'BRD',
         metrics: {
@@ -75,9 +78,10 @@ describe('Day 7 Explore/Search interaction contract', () => {
           uniqueTraders: { h1: '2', h24: '5' },
         },
         progress: { progressBps: '6250', state: 'CURVE_ACTIVE' },
-      }),
+      } as IndexedFeedCardFields),
     ).toEqual({
       tokenAddress: VALID_ADDRESS,
+      creatorAddress: CREATOR_ADDRESS,
       name: 'Bread',
       symbol: 'BRD',
       price: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
@@ -85,6 +89,13 @@ describe('Day 7 Explore/Search interaction contract', () => {
       priceChange24h: null,
       progress: { bps: 6250, percent: 62.5, state: 'CURVE_ACTIVE' },
     });
+  });
+
+  it('renders the authoritative indexed creator wallet directly below TokenCard identity', () => {
+    const source = readFileSync(new URL('../../apps/web/components/token-card.tsx', import.meta.url), 'utf8');
+    expect(source).toContain('CreatorAttribution');
+    expect(source).toContain('creatorAddress={model.creatorAddress}');
+    expect(source).not.toContain('creatorAddress={item.creatorFeeRecipient}');
   });
 
   it('keeps Explore/Search rendering free of per-card API or raw-RPC fanout', () => {
