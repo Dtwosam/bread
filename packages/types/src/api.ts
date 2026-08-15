@@ -50,7 +50,6 @@ export type IndexedPriceSummary = Readonly<{
 
 export type IndexedTradeMetricsSummary = Readonly<{
   lastPrice: IndexedPriceSummary;
-  holderCount: string | null;
   quoteVolume: Readonly<{
     m5: string | null;
     h1: string | null;
@@ -101,6 +100,7 @@ export type IndexedFeedItem = Readonly<{
   launchBlockNumber: string;
   launchTransactionHash: string;
   launchLogIndex: number;
+  holderCount: string | null;
   metrics: IndexedTradeMetricsSummary | null;
   progress: IndexedGraduationProgressSummary | null;
 }>;
