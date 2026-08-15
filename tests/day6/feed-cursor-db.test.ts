@@ -37,7 +37,7 @@ const { Pool } = requireFromDb('pg') as {
   Pool: new (config: Record<string, unknown>) => TestPool;
 };
 
-describe.skipIf(!RUN_DB)('Day 6 Task 4 New-feed keyset pagination', () => {
+describe.skipIf(!RUN_DB)('Day 6 Task 4 deterministic feed keyset pagination', () => {
   const schemaName = `day6_task4_cursor_${process.pid}`;
   let adminPool: TestPool;
   let pool: TestPool;
@@ -147,6 +147,69 @@ describe.skipIf(!RUN_DB)('Day 6 Task 4 New-feed keyset pagination', () => {
     expect(second.page.hasMore).toBe(false);
     expect(second.page.nextCursor).toBeUndefined();
     expect(new Set([...first.data, ...second.data].map((item) => item.tokenAddress)).size).toBe(3);
+
+    await app.close();
+  });
+
+  it('projects only canonical POOL_CREATED launches in completion order with stable graduated pagination', async () => {
+    await pool.query(
+      `UPDATE launch_state
+       SET graduation_completed_block = '210', graduation_completed_log_index = 7
+       WHERE chain_id = $1 AND token_address = $2`,
+      [context.chainId, address('a').toLowerCase()],
+    );
+    await pool.query(
+      `INSERT INTO launch_state (
+        chain_id, token_address, mode, graduation_phase,
+        graduation_completed_block, graduation_completed_log_index,
+        graduated_venue_kind, graduated_venue_address, graduated_venue_fee_tier,
+        graduated_venue_quote_is_token0
+      ) VALUES ($1,$2,'GRADUATED','POOL_CREATED','209',3,'UNISWAP_V3',$3,500,false)`,
+      [context.chainId, address('b').toLowerCase(), address('8').toLowerCase()],
+    );
+    await pool.query(
+      `INSERT INTO launch_state (
+        chain_id, token_address, mode, graduation_phase,
+        graduation_completed_block, graduation_completed_log_index
+      ) VALUES ($1,$2,'GRADUATED','RESCUED','211',9)`,
+      [context.chainId, address('c').toLowerCase()],
+    );
+
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const apiModule = await import('../../apps/api/src/server.ts');
+    const db = dbModule.createBreadDb(pool);
+    const app = apiModule.createBreadApi({
+      db,
+      context,
+      observedHeadBlock: async () => 211n,
+      now: () => new Date('2026-08-09T12:00:00.000Z'),
+    });
+
+    const firstResponse = await app.inject({ method: 'GET', url: '/v1/feed?view=graduated&limit=1' });
+    expect(firstResponse.statusCode).toBe(200);
+    const first = firstResponse.json() as {
+      data: Array<{ tokenAddress: string; graduatedVenueKind: string | null }>;
+      page: { hasMore: boolean; nextCursor?: string };
+    };
+    expect(first.data.map((item) => item.tokenAddress)).toEqual([address('a')]);
+    expect(first.data[0]?.graduatedVenueKind).toBe('UNISWAP_V3');
+    expect(first.page.hasMore).toBe(true);
+    expect(first.page.nextCursor).toMatch(/^[A-Za-z0-9_-]+$/);
+
+    const secondResponse = await app.inject({
+      method: 'GET',
+      url: `/v1/feed?view=graduated&limit=1&cursor=${first.page.nextCursor}`,
+    });
+    expect(secondResponse.statusCode).toBe(200);
+    const second = secondResponse.json() as {
+      data: Array<{ tokenAddress: string; graduatedVenueKind: string | null }>;
+      page: { hasMore: boolean; nextCursor?: string };
+    };
+    expect(second.data.map((item) => item.tokenAddress)).toEqual([address('b')]);
+    expect(second.data[0]?.graduatedVenueKind).toBe('UNISWAP_V3');
+    expect(second.page.hasMore).toBe(false);
+    expect(second.page.nextCursor).toBeUndefined();
+    expect([...first.data, ...second.data].some((item) => item.tokenAddress === address('c'))).toBe(false);
 
     await app.close();
   });
