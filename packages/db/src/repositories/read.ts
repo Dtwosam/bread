@@ -217,6 +217,16 @@ export class ReadRepository {
     return row ? normalizeLaunchStateRow(row) : undefined;
   }
 
+  async listLaunchStates(chainId: number, tokenAddresses: readonly string[]) {
+    if (tokenAddresses.length === 0) return [];
+    const canonical = [...new Set(tokenAddresses.map((value) => value.toLowerCase()))];
+    const rows = await this.db
+      .select()
+      .from(launchState)
+      .where(and(eq(launchState.chainId, chainId), inArray(launchState.tokenAddress, canonical)));
+    return rows.map(normalizeLaunchStateRow);
+  }
+
   async getTokenMetrics(chainId: number, tokenAddress: string) {
     const [row] = await this.db
       .select()
