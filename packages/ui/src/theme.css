@@ -14,21 +14,55 @@
   --bread-accent: #4c8dff;
   --bread-accent-hover: #68a0ff;
   --bread-accent-soft: #14233e;
+  --bread-brand-butter: #f4c35d;
+  --bread-brand-butter-hover: #ffd477;
+  --bread-brand-butter-soft: #2b2210;
+  --bread-brand-lavender: #a98bfa;
+  --bread-brand-lavender-soft: #211a35;
+  --bread-brand-mint: #47d7b0;
+  --bread-brand-mint-soft: #102b26;
   --bread-positive: #32d583;
   --bread-positive-soft: #102a20;
   --bread-negative: #f97066;
   --bread-negative-soft: #351817;
-  --bread-warning: #fdb022;
-  --bread-warning-soft: #35290d;
+  --bread-warning: #f79009;
+  --bread-warning-soft: #35240d;
+  --bread-space-0: 0px;
+  --bread-space-4: 4px;
+  --bread-space-8: 8px;
+  --bread-space-12: 12px;
+  --bread-space-16: 16px;
+  --bread-space-20: 20px;
+  --bread-space-24: 24px;
+  --bread-space-32: 32px;
+  --bread-space-40: 40px;
+  --bread-space-48: 48px;
+  --bread-space-64: 64px;
   --bread-radius-control: 8px;
   --bread-radius-card: 12px;
   --bread-radius-modal: 16px;
+  --bread-radius-full: 9999px;
   --bread-button-standard: 40px;
   --bread-button-large: 48px;
   --bread-button-small: 32px;
   --bread-touch-target: 44px;
+  --bread-gutter-mobile: 16px;
+  --bread-gutter-tablet: 24px;
+  --bread-gutter-desktop: 32px;
+  --bread-max-width: 1440px;
+  --bread-explore-max-width: 1600px;
+  --bread-trade-rail: 360px;
+  --bread-filter-rail: 232px;
+  --bread-header-desktop: 64px;
+  --bread-live-strip-desktop: 40px;
+  --bread-live-strip-mobile: 36px;
+  --bread-topbar-mobile: 56px;
+  --bread-bottomnav-mobile: 64px;
+  --bread-motion-instant: 80ms;
   --bread-motion-fast: 120ms;
   --bread-motion-standard: 180ms;
+  --bread-motion-enter: 220ms;
+  --bread-motion-sheet: 260ms;
   --bread-easing: cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -88,7 +122,7 @@ textarea:focus-visible {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 4px;
+  gap: var(--bread-space-4);
   color: var(--bread-text-secondary);
   font-size: 12px;
   line-height: 17px;
@@ -116,7 +150,7 @@ textarea:focus-visible {
 .bread-button {
   min-width: var(--bread-touch-target);
   min-height: var(--bread-button-standard);
-  padding: 0 16px;
+  padding: 0 var(--bread-space-16);
   border: 1px solid transparent;
   border-radius: var(--bread-radius-control);
   color: var(--bread-text-primary);
@@ -163,12 +197,12 @@ textarea:focus-visible {
 
 .bread-button--buy {
   background: var(--bread-positive);
-  color: #07130d;
+  color: var(--bread-bg-primary);
 }
 
 .bread-button--sell {
   background: var(--bread-negative);
-  color: #1a0807;
+  color: var(--bread-bg-primary);
 }
 
 .bread-button--secondary,
@@ -179,12 +213,12 @@ textarea:focus-visible {
 
 .bread-button--small {
   min-height: var(--bread-button-small);
-  padding: 0 12px;
+  padding: 0 var(--bread-space-12);
   font-size: 13px;
 }
 
 .bread-card {
-  padding: 16px;
+  padding: var(--bread-space-16);
   border: 1px solid var(--bread-border-subtle);
   border-radius: var(--bread-radius-card);
   background: var(--bread-surface-1);
@@ -199,7 +233,7 @@ textarea:focus-visible {
   min-height: var(--bread-touch-target);
   display: inline-flex;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 var(--bread-space-12);
   border-radius: var(--bread-radius-control);
   color: var(--bread-text-secondary);
   text-decoration: none;
@@ -220,7 +254,7 @@ textarea:focus-visible {
 }
 
 .bread-state {
-  padding: 24px;
+  padding: var(--bread-space-24);
   border: 1px solid var(--bread-border-subtle);
   border-radius: var(--bread-radius-card);
   background: var(--bread-surface-1);
@@ -232,7 +266,7 @@ textarea:focus-visible {
 }
 
 .bread-state p {
-  margin-top: 8px;
+  margin-top: var(--bread-space-8);
   color: var(--bread-text-secondary);
 }
 
