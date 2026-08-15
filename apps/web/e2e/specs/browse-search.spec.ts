@@ -20,6 +20,35 @@ test('disconnected users browse Explore and token detail without raw RPC', async
   expect(rpcState.requests).toEqual([]);
 });
 
+test('Explore holds three columns at xl and permits four only at 2xl', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'Explore desktop grid proof runs in Chromium.');
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/explore');
+  await page.waitForLoadState('networkidle');
+
+  const grid = page.locator('.bread-token-grid');
+  await expect(grid.locator(':scope > .bread-token-card')).toHaveCount(3);
+  await grid.evaluate((element) => {
+    const firstCard = element.querySelector('.bread-token-card');
+    if (!firstCard) throw new Error('TokenCard fixture missing');
+    element.append(firstCard.cloneNode(true));
+  });
+  await expect(grid.locator(':scope > .bread-token-card')).toHaveCount(4);
+
+  const uniqueColumns = async () => {
+    const boxes = await grid.locator(':scope > .bread-token-card').evaluateAll((cards) =>
+      cards.map((card) => Math.round(card.getBoundingClientRect().x)),
+    );
+    return new Set(boxes).size;
+  };
+
+  expect(await uniqueColumns()).toBe(3);
+
+  await page.setViewportSize({ width: 1586, height: 992 });
+  expect(await uniqueColumns()).toBe(4);
+});
+
 test('desktop Search opens from both Ctrl+K and Cmd+K without changing its accessible trigger name', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop search shortcut proof runs in Chromium.');
 
