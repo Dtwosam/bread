@@ -1,6 +1,6 @@
-schema_version: 1.74
+schema_version: 1.75
 project: Bread
-updated_at: 2026-08-15T21:45:00+01:00
+updated_at: 2026-08-15T22:03:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -23,9 +23,9 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Lane 2 — global shell/navigation visual-reference reconciliation"
+active_lane: "UI/UX v2.2 Lane 3 — Explore / TokenCard / filters READY"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-active_ui_gate: APPROVED_VISUAL_REFERENCE_RECONCILIATION_PENDING
+active_ui_gate: UI_UX_V2_2_LANE3_IMPLEMENTATION
 day9_started: true
 day9_rc_tag_created: false
 
@@ -35,13 +35,13 @@ completed_checkpoints:
   - "Day 9 LAN functional acceptance PASS — BREAD_LAN_ACCEPTANCE_READY."
   - "UI/UX v2.2 Lane 1 — Foundations PASS at 0358b4d6b3e3d31baf23c18b92d743382e41b025."
   - "Lane 2A primary navigation order + active-state contract: integrated GREEN 855c6c7; focused/root/truthfulness/browser/frontend-security PASS."
-  - "Lane 2B desktop header composition/geometry: RED a871a7a -> integrated safe GREEN c3f839d; 64px header, 1440px max inner width, centered flexible Search, watchlist shell slot and wallet proportions; focused 31905354837 PASS, root CI 31905354813 PASS, primary browser 31905354936 PASS, frontend-security 31905354805 PASS, Day-9 truthfulness 31905354836 PASS."
-  - "Approved visual-reference reconciliation infrastructure: exact 1586x992 Playwright screenshot artifact captured per head; first capture exposed material shell drift and visual gate remained FAIL/PENDING."
-  - "Canonical Figma shell continuity repaired from frozen written v2.2 + approved visual reference: editable shell-only target node 7:2, header 7:3, live strip 7:28; no Lane-3 page composition invented."
-  - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7; focused 31905629819 PASS, root CI 31905629721 PASS, primary browser/screenshot 31905629698 PASS, frontend-security 31905629722 PASS, Day-9 truthfulness 31905629753 PASS."
-  - "Lane 2 visual correction — truthful live activity strip: RED 750affd -> accepted GREEN 0829cf18c438ff7adcf31f41fddbf5a906bc9e50. Shared component owns stable bread-live-strip root + data-status state and shared theme owns 40px single-surface styling; web shell owns placement only. Focused 31906372671 PASS, root CI 31906372499 PASS, primary browser/screenshot 31906372472 PASS, frontend-security 31906372424 PASS, Explore/Search 31906372516 PASS, wallet/network 31906372540 PASS, Day-9 truthfulness 31906372506 PASS. Exact-head 1586x992 artifact 9252476635 shows truthful Checking live updates and no fabricated market metrics."
-  - "Lane 2 visual correction — Bread-specific brand mark: RED efd66d34fc83073b3da45fbef475a9192af69a44 -> accepted GREEN 439ee0103b84d05aa5042942cc03ece9d50f1372. One shared BreadBrand primitive now serves desktop/mobile with the canonical decorative 36x36 brand-butter •ᴗ• mark before BREAD. Focused 31906702590 PASS, root CI 31906702566 PASS, primary browser/screenshot 31906702585 PASS, frontend-security 31906702690 PASS, Explore/Search 31906702584 PASS, wallet/network 31906702501 PASS, production gates 31906702605 PASS, Day-9 truthfulness 31906702643 PASS. Exact-head 1586x992 artifact 9252564854 confirms the mark without geometry regression."
-  - "Lane 2 Search-shell correction: browser RED 303f704b650d1596cd84c18026de9f091c2fcfa5 proved missing Ctrl/Cmd+K and missing normal search icon. First implementation head e8b51522 fixed the icon but exposed an immediate pre-hydration test-timing issue; the same shortcut proof was rerun only after stable network load. Accepted GREEN 990dd5e9358cf23655cdc9ada45de650632002ae proves Ctrl+K and Cmd+K open the existing Search dialog, Escape closes it, accessible name Search is preserved, and the 16px glyph renders left-aligned in the 520px trigger. Root CI 31907280306 PASS, Explore/Search 31907280247 PASS, wallet/network 31907280250 PASS, frontend-security 31907280274 PASS, production gates 31907280227 PASS, browser 31907280287 PASS, Day-9 truthfulness 31907280233 PASS. Exact-head 1586x992 artifact 9252717293 confirms the visual correction."
+  - "Lane 2B desktop header composition/geometry: RED a871a7a -> integrated safe GREEN c3f839d; 64px header, 1440px max inner width, centered flexible Search, watchlist shell slot and wallet proportions."
+  - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7."
+  - "Lane 2 visual correction — truthful live activity strip: RED 750affd -> GREEN 0829cf18c438ff7adcf31f41fddbf5a906bc9e50; no fabricated market metrics."
+  - "Lane 2 visual correction — Bread-specific brand mark: RED efd66d34fc83073b3da45fbef475a9192af69a44 -> GREEN 439ee0103b84d05aa5042942cc03ece9d50f1372."
+  - "Lane 2 Search-shell correction: RED 303f704b650d1596cd84c18026de9f091c2fcfa5 -> accepted GREEN 990dd5e9358cf23655cdc9ada45de650632002ae; Ctrl+K/Cmd+K + 16px search glyph, accessible Search name preserved."
+  - "Lane 2 mobile-shell correction: RED 577a8305106a63a5ae410e1080e4392f5310cdb9 proved the 390x844 live strip was hidden while 26 other browser journeys passed. Production GREEN 83220005d2ae93755ec380abf4566a6929feeeee restores 56px mobile top -> truthful 36px strip -> page, retains persistent bottom nav, and adds exact mobile screenshot evidence."
+  - "APPROVED_VISUAL_REFERENCE_RECONCILIATION PASS at accepted evidence head 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3. Evidence: docs/evidence/ui-v2-2-lane2-approved-visual-reference-reconciliation.md. Desktop 1586x992 artifact 9252919190; mobile 390x844 artifact 9252919323; exact-head root/browser/security/wallet/production/truthfulness regressions PASS."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -53,7 +53,8 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 990dd5e9358cf23655cdc9ada45de650632002ae
+  ui_lane2_accepted_implementation_evidence_head: 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
+  ui_lane2_last_production_shell_change: 83220005d2ae93755ec380abf4566a6929feeeee
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -90,25 +91,30 @@ verification:
   lane2b_header_integrated_green: c3f839d5f2b073e93fcf11981f107313813ed495
   lane2_nav_icon_green: 7c7d2a7f3474fe1f5cb1d14ed981356320f1a7cd
   lane2_live_strip_green: 0829cf18c438ff7adcf31f41fddbf5a906bc9e50
-  lane2_brand_red: efd66d34fc83073b3da45fbef475a9192af69a44
   lane2_brand_green: 439ee0103b84d05aa5042942cc03ece9d50f1372
-  lane2_brand_focused_green: PASS_RUN_31906702590
-  lane2_brand_root_ci: PASS_RUN_31906702566
-  lane2_brand_primary_browser: PASS_RUN_31906702585
-  lane2_brand_frontend_security: PASS_RUN_31906702690
-  visual_reference_capture_439ee010_artifact: 9252564854
-  lane2_search_red: 303f704b650d1596cd84c18026de9f091c2fcfa5
   lane2_search_green: 990dd5e9358cf23655cdc9ada45de650632002ae
-  lane2_search_root_ci: PASS_RUN_31907280306
-  lane2_search_explore_search: PASS_RUN_31907280247
-  lane2_search_wallet_network: PASS_RUN_31907280250
-  lane2_search_frontend_security: PASS_RUN_31907280274
-  lane2_search_production_gates: PASS_RUN_31907280227
-  lane2_search_primary_browser: PASS_RUN_31907280287
-  lane2_search_day9_truthfulness: PASS_RUN_31907280233
-  visual_reference_capture_viewport: 1586x992
-  visual_reference_capture_990dd5e9_artifact: 9252717293
-  visual_reference_capture_990dd5e9_digest: sha256:c499b6c75cee31f72fa107919d8ee3dcf0eead78a0c277f16e4535180c46c0cd
+  lane2_mobile_red: 577a8305106a63a5ae410e1080e4392f5310cdb9
+  lane2_mobile_green: 83220005d2ae93755ec380abf4566a6929feeeee
+  lane2_visual_reconciliation_evidence_head: 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
+  lane2_final_root_ci: PASS_RUN_31908014748
+  lane2_final_ui_foundation_shell: PASS_RUN_31908014633
+  lane2_final_explore_search: PASS_RUN_31908014663
+  lane2_final_wallet_network: PASS_RUN_31908014751
+  lane2_final_frontend_security: PASS_RUN_31908014708
+  lane2_final_production_gates: PASS_RUN_31908014701
+  lane2_final_primary_browser: PASS_RUN_31908014716
+  lane2_final_browser_matrix: PASS_RUN_31908014677
+  lane2_final_day9_truthfulness: PASS_RUN_31908014737
+  lane2_final_service_rollback: PASS_RUN_31908014637
+  lane2_final_recovery_drills: PASS_RUN_31908014646
+  lane2_desktop_viewport: 1586x992
+  lane2_desktop_artifact: 9252919190
+  lane2_desktop_artifact_digest: sha256:e98b4671c282d0a5f8627e9ef17567a9ce8b503d932ae71edaeb5c9da71a0f5f
+  lane2_desktop_png_sha256: c9197124221712c1409b0ff6c1a98571107ffc764ee764253eb0798d4688dd76
+  lane2_mobile_viewport: 390x844
+  lane2_mobile_artifact: 9252919323
+  lane2_mobile_artifact_digest: sha256:e7f48c573b58f200f6d1ccd47fb58efe302d72576ad6a445f0e79598caaa306b
+  lane2_mobile_png_sha256: 5431247887d0570d3ce69a110d8cedc0128db605cd28dcbf8a04301dd8672688
 
 lan_acceptance:
   status: PASS
@@ -130,7 +136,8 @@ ui_ux_v2_2:
   lan_functional_acceptance: PASS
   production_implementation: AUTHORIZED_IN_ISOLATED_UI_LANE
   approved_visual_reference: FROZEN_CONTROLLING_CLARIFICATION_WHERE_COMPATIBLE_WITH_WRITTEN_V2_2
-  approved_visual_reference_reconciliation: PENDING
+  approved_visual_reference_reconciliation: PASS
+  lane2_global_shell_navigation: PASS
   figma_required: true
   figma_free_starter_compatible: true
   figma_file_key: DsjM9F9yt0WZRhyKGHOvCl
@@ -138,13 +145,13 @@ ui_ux_v2_2:
   figma_reconciled_shell_node: "7:2"
   figma_reconciled_header_node: "7:3"
   figma_reconciled_live_strip_node: "7:28"
-  figma_continuity_note: "Earlier recorded shell node IDs were not present on fresh metadata readback; canonical shell-only target was rebuilt from frozen written v2.2 plus approved reference without inventing Lane-3 page composition."
   figma_mcp_status: STARTER_PLAN_CALL_LIMIT_REACHED_DURING_RECONCILIATION
-  figma_sync_debt: "Brand/Search and any subsequent source-compatible shell correction must be synchronized back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the visual QA bar."
+  figma_sync_debt: "Synchronize accepted brand/Search/mobile corrections and any later frozen visual corrections back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the QA bar."
   temporary_visual_conformance_path: "Written v2.2 + approved visual reference + established canonical Figma node 7:2 + exact-head Playwright rendered evidence."
+  vercel_preview_status: "CONNECTOR_TEAM_AVAILABLE_BUT_NO_BREAD_PROJECT_CONFIGURED; no preview evidence fabricated."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Lane 2 — Global shell/navigation visual reconciliation"
+  current_lane: "Lane 3 — Explore / TokenCard / filters READY_NOT_STARTED"
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
@@ -156,22 +163,22 @@ ui_ux_v2_2:
     - PRIMARY_NAVIGATION_ORDER_AND_ACTIVE_STATE
     - DESKTOP_HEADER_COMPOSITION_AND_GEOMETRY
     - DECORATIVE_CANONICAL_NAVIGATION_ICON_CHARACTER
-    - TRUTHFUL_LIVE_ACTIVITY_STRIP_DESKTOP
+    - TRUTHFUL_LIVE_ACTIVITY_STRIP_DESKTOP_AND_MOBILE
     - SHARED_BREAD_BRAND_MARK
     - DESKTOP_SEARCH_SHORTCUT_AND_GLYPH
-  visual_findings_open:
-    - MOBILE_LIVE_STRIP_CURRENTLY_HIDDEN_BUT_V2_2_REQUIRES_COMPACT_36PX_STRIP
-    - MOBILE_TOP_BOTTOM_NAV_CHARACTER_AND_390X844_RENDERED_RECONCILIATION_PENDING
+    - MOBILE_56_TOP_36_LIVE_64_BOTTOM_COMPOSITION
+    - MOBILE_390_NO_HORIZONTAL_OVERFLOW_OR_CONTROL_LABEL_CLIPPING
+  visual_findings_open: []
   intentional_differences:
-    - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's full-canvas x32 content origin at 1586px. Do not widen code to imitate a conflicting concept geometry; sync Figma later."
+    - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's earlier full-canvas x32 content origin at 1586px. Do not widen code to imitate conflicting concept geometry; sync Figma later."
     - "Approved-reference sample live movers/trades/volume are not reproduced until reliable Bread indexed data supports them; current status-only strip is intentionally truthful rather than fabricated."
-    - "Explore card/feed body remains pre-v2.2 until Lane 3 and is intentionally excluded from Lane-2 page-composition repair."
-  intentional_scope_boundary: "Explore card/feed body remains pre-v2.2 until Lane 3 and is not to be silently redesigned during Lane 2 reconciliation."
+    - "Explore card/feed body remains pre-v2.2 until Lane 3 and was intentionally excluded from Lane-2 shell reconciliation."
+    - "The Next.js development indicator visible at bottom-left in Playwright captures is a non-product test-harness overlay and is excluded from Bread UI comparison."
+  intentional_scope_boundary: "Lane 2 PASS covers global shell/navigation only. Explore card/feed composition begins in Lane 3."
 
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
-  - APPROVED_VISUAL_REFERENCE_RECONCILIATION_PENDING
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
   - BREAD_PRODUCTION_ECONOMICS_CONFIG
@@ -180,8 +187,7 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Continue ratified redesign lane-by-lane with canonical Figma, tests, browser QA, 04D gates, affected 06I regressions and exact-head evidence."
-  APPROVED_VISUAL_REFERENCE_RECONCILIATION_PENDING: "Lane 2 must match the approved Bread composition/hierarchy/proportions/character where source-compatible before Lane 3 begins; dark colors alone are insufficient."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 2 is complete; continue ratified redesign Lane 3 onward with tests, rendered QA, accessibility/performance evidence and exact-head CI."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
@@ -191,16 +197,15 @@ blocker_scope:
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
   figma: CANONICAL_STARTER_SHELL_ESTABLISHED_BUT_MCP_CALL_LIMIT_CURRENTLY_REACHED
-  vercel: CONNECTED_BUT_NOT_SUBSTITUTE_FOR_GITHUB_CI
-  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_SCREENSHOT_ARTIFACTS
+  vercel: CONNECTED_TEAM_PRESENT_NO_BREAD_PROJECT_CONFIGURED
+  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_DESKTOP_AND_MOBILE_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Continue Lane 2 with the final bounded mobile-shell visual reconciliation slice before the approved-reference gate can close. Written v2.2 requires a 56px mobile top bar (Bread logo + one-tap Search + Wallet), a compact truthful 36px live strip directly below the top bar, and a 64px + safe-area bottom nav with Explore/Trending/Create/Portfolio. Current CSS hides the live strip below 768px, so first add a failing mobile browser/source-conformance test at the authoritative 390x844 viewport proving the strip is absent/wrongly ordered and requiring a retained exact-head mobile screenshot artifact. Then make the minimum DOM/CSS correction so desktop remains header -> strip while mobile becomes top bar -> strip -> page, preserve truthfulness/no fake metrics and existing mobile navigation destinations, and render/inspect the exact 390x844 candidate. Run focused shell + mobile browser, root CI, Explore/Search, wallet/network, frontend-security, production gates and Day-9 truthfulness. Only after structured desktop+mobile visual diff shows no remaining material Lane-2 drift may APPROVED_VISUAL_REFERENCE_RECONCILIATION become PASS. Do not begin Lane 3 before that PASS. Keep /tmp/bread-synthra-fork-proof untouched.
+  Begin UI/UX v2.2 Lane 3 from the accepted Lane-2 baseline using small RED -> GREEN slices. First reconcile the Explore discovery surface only: written v2.2 requires first-viewport real tokens, tabs New / Trending / Almost Baked / Graduated, calm progressive filters, and TokenCard information hierarchy with creator attribution visible at first glance. Do not implement the whole page in one sweep. Start with a focused failing source/browser test for the first independently reviewable Explore behavior, preserve the existing indexed API/query semantics and no-per-card-RPC architecture, then make the minimum implementation change and run focused + adjacent browser/CI regressions. Figma MCP is currently rate-limited; because the written design and approved reference are frozen, use the recorded fallback path without inventing new design decisions and queue synchronization for when writable Figma access returns. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
-  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, visual-reference or physical-device gates remain open."
-  - "Do not begin Lane 3 until APPROVED_VISUAL_REFERENCE_RECONCILIATION = PASS."
+  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
-  - "Do not fabricate performance, physical-device, contract/config, market or live-state evidence."
+  - "Do not fabricate performance, physical-device, Vercel, contract/config, market or live-state evidence."
