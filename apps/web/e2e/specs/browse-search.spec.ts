@@ -20,11 +20,31 @@ test('disconnected users browse Explore and token detail without raw RPC', async
   expect(rpcState.requests).toEqual([]);
 });
 
+test('desktop Search opens from both Ctrl+K and Cmd+K without changing its accessible trigger name', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop search shortcut proof runs in Chromium.');
+
+  await page.goto('/explore');
+  const searchTrigger = page.getByRole('button', { name: 'Search', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Search Bread' });
+
+  await expect(searchTrigger).toBeVisible();
+  await page.keyboard.press('Control+K');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+
+  await page.keyboard.press('Meta+K');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(searchTrigger).toHaveAttribute('aria-label', 'Search');
+});
+
 test('Explore filters and Search preserve contract identity plus keyboard containment', async ({
   page,
   indexedApiState,
   rpcState,
-}) => {
+}, testInfo) => {
   await page.goto('/explore');
 
   const feedNav = page.getByRole('navigation', { name: 'Explore feed' });
@@ -34,6 +54,9 @@ test('Explore filters and Search preserve contract identity plus keyboard contai
 
   const searchTrigger = page.getByRole('button', { name: 'Search', exact: true });
   await expect(searchTrigger).toHaveCount(1);
+  if (testInfo.project.name === 'desktop-chromium') {
+    await expect(searchTrigger.locator('.bread-icon--normal')).toBeVisible();
+  }
   await searchTrigger.focus();
   await searchTrigger.click();
 
