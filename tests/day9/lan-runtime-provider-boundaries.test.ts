@@ -30,6 +30,16 @@ function timeoutError(): Error & { details: string } {
   return error;
 }
 
+function fetchFailedError(): Error {
+  return new Error('HTTP request failed.', { cause: new TypeError('fetch failed') });
+}
+
+function invalidParamsError(): Error & { code: number } {
+  const error = new Error('Invalid params.') as Error & { code: number };
+  error.code = -32602;
+  return error;
+}
+
 function logAt(blockNumber: bigint): RpcLog {
   const hex = blockNumber.toString(16).padStart(64, '0');
   return {
@@ -126,6 +136,104 @@ describe('Day 9 LAN provider/runtime regressions', () => {
       [100n, 611n],
     ]);
     expect(delays).toEqual([10, 20]);
+  });
+
+  it('retries a transient fetch failure without splitting the logical log range', async () => {
+    const seen: Array<readonly [bigint, bigint]> = [];
+    const delays: number[] = [];
+    let attempts = 0;
+    let clock = 0;
+    const raw: LogClient = {
+      getLogs: async (request) => {
+        const fromBlock = request.fromBlock as bigint;
+        const toBlock = request.toBlock as bigint;
+        seen.push([fromBlock, toBlock]);
+        attempts += 1;
+        if (attempts === 1) throw fetchFailedError();
+        return [logAt(fromBlock)];
+      },
+    };
+
+    const client = createArcProviderSafeLogClient(raw, {
+      maxTransientRetries: 1,
+      transientBackoffMs: 10,
+      minimumIntervalMs: 0,
+      maxRpcAttempts: 8,
+      now: () => clock,
+      sleep: async (ms) => {
+        delays.push(ms);
+        clock += ms;
+      },
+    });
+
+    const logs = await client.getLogs({ fromBlock: 100n, toBlock: 611n, address: [] });
+
+    expect(logs).toHaveLength(1);
+    expect(seen).toEqual([
+      [100n, 611n],
+      [100n, 611n],
+    ]);
+    expect(delays).toEqual([10]);
+  });
+
+  it('fails closed after the bounded transient fetch retry budget is exhausted', async () => {
+    const seen: Array<readonly [bigint, bigint]> = [];
+    const delays: number[] = [];
+    let clock = 0;
+    const raw: LogClient = {
+      getLogs: async (request) => {
+        seen.push([request.fromBlock as bigint, request.toBlock as bigint]);
+        throw fetchFailedError();
+      },
+    };
+
+    const client = createArcProviderSafeLogClient(raw, {
+      maxTransientRetries: 1,
+      transientBackoffMs: 10,
+      minimumIntervalMs: 0,
+      maxRpcAttempts: 8,
+      now: () => clock,
+      sleep: async (ms) => {
+        delays.push(ms);
+        clock += ms;
+      },
+    });
+
+    await expect(
+      client.getLogs({ fromBlock: 100n, toBlock: 611n, address: [] }),
+    ).rejects.toThrow('HTTP request failed.');
+    expect(seen).toEqual([
+      [100n, 611n],
+      [100n, 611n],
+    ]);
+    expect(delays).toEqual([10]);
+  });
+
+  it('does not retry permanent JSON-RPC semantic errors as transient transport failures', async () => {
+    let attempts = 0;
+    const delays: number[] = [];
+    const raw: LogClient = {
+      getLogs: async () => {
+        attempts += 1;
+        throw invalidParamsError();
+      },
+    };
+
+    const client = createArcProviderSafeLogClient(raw, {
+      maxTransientRetries: 2,
+      transientBackoffMs: 10,
+      minimumIntervalMs: 0,
+      maxRpcAttempts: 8,
+      sleep: async (ms) => {
+        delays.push(ms);
+      },
+    });
+
+    await expect(
+      client.getLogs({ fromBlock: 100n, toBlock: 611n, address: [] }),
+    ).rejects.toThrow('Invalid params.');
+    expect(attempts).toBe(1);
+    expect(delays).toEqual([]);
   });
 
   it('splits only genuine request-size limited ranges into contiguous subranges', async () => {
