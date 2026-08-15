@@ -5,10 +5,10 @@ on:
     branches:
       - day9/synthra-arc-testnet-v3-candidate
     paths:
-      - '.github/workflows/day9-prettier-diagnostic.yml'
+      - ".github/workflows/day9-prettier-diagnostic.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format-preview:
@@ -30,14 +30,17 @@ jobs:
           .github/workflows/day9-lan-provider-runtime.yml
           apps/indexer/src/lan/chain-client.ts
           tests/day9/lan-runtime-provider-boundaries.test.ts
-      - name: Print formatted files
+      - name: Commit exact formatter output
         run: |
-          echo '===BEGIN_WORKFLOW==='
-          cat .github/workflows/day9-lan-provider-runtime.yml
-          echo '===END_WORKFLOW==='
-          echo '===BEGIN_CHAIN_CLIENT==='
-          cat apps/indexer/src/lan/chain-client.ts
-          echo '===END_CHAIN_CLIENT==='
-          echo '===BEGIN_TEST==='
-          cat tests/day9/lan-runtime-provider-boundaries.test.ts
-          echo '===END_TEST==='
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/day9-lan-provider-runtime.yml \
+            apps/indexer/src/lan/chain-client.ts \
+            tests/day9/lan-runtime-provider-boundaries.test.ts
+          if git diff --cached --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git commit -m "style(day9): format LAN provider runtime files"
+          git push origin HEAD:day9/synthra-arc-testnet-v3-candidate
