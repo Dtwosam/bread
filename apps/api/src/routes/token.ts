@@ -53,7 +53,6 @@ export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefin
       denominator: row.lastPriceDenominator.toString(10),
       source: row.lastPriceSource,
     },
-    holderCount: row.holderCount?.toString(10) ?? null,
     quoteVolume: {
       m5: row.quoteVolume5m?.toString(10) ?? null,
       h1: row.quoteVolume1h?.toString(10) ?? null,
@@ -147,6 +146,7 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
         found: true as const,
         data: {
           ...serializeLaunch(launch),
+          holderCount: metrics?.holderCount?.toString(10) ?? null,
           curveState: serializeCurveState(state),
           metrics: serializeTradeMetrics(metrics),
           progress: serializeGraduationProgress(metrics),
