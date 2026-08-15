@@ -206,31 +206,50 @@
   flex: 0 0 auto;
 }
 
+.bread-token-card__market,
 .bread-token-card__metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
 }
 
+.bread-token-card__market div,
 .bread-token-card__metrics div {
   min-width: 0;
   display: grid;
   gap: 4px;
 }
 
+.bread-token-card__market dt,
 .bread-token-card__metrics dt {
   color: var(--bread-text-tertiary);
   font-size: 11px;
   line-height: 15px;
 }
 
+.bread-token-card__market dd,
 .bread-token-card__metrics dd {
   margin: 0;
   overflow: hidden;
   color: var(--bread-text-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.bread-token-card__market div:first-child dd {
+  font-size: 17px;
+  line-height: 23px;
+  font-weight: 700;
+}
+
+.bread-token-card__market div:last-child dd {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.bread-token-card__metrics dd {
   font-size: 12px;
   line-height: 17px;
 }
@@ -835,14 +854,6 @@
 
   .bread-token-card__identity strong {
     font-size: 16px;
-  }
-
-  .bread-token-card__metrics {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .bread-token-card__metrics div:first-child {
-    grid-column: 1 / -1;
   }
 
   .bread-search-backdrop {
