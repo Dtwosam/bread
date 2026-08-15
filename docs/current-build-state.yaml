@@ -1,6 +1,6 @@
-schema_version: 1.62
+schema_version: 1.63
 project: Bread
-updated_at: 2026-08-15T19:25:00+01:00
+updated_at: 2026-08-15T19:41:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -14,8 +14,18 @@ source_pack:
     - 04D-ux-performance-accessibility-production-gates
   ui_detail_authority: Bread-UI-UX-v2-complete-interface-specification-v2.2.docx
 
+# New source ratification supersedes only the explicitly retired UI documents.
+# Earlier non-conflicting production ratifications remain durable and controlling.
+legacy_ratifications:
+  day4:
+    pack: v1.4-day4-design
+    day4_production_ratification: RATIFIED
+  day5:
+    pack: v1.5-day5-preflight-consolidated
+    status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
+
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 implementation opening after source ratification + LAN functional acceptance PASS"
+active_lane: "UI/UX v2.2 Lane 1 — foundations; first exact-token RED→GREEN slice under verification"
 active_gate: "UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE + PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED"
 
 completed_checkpoints:
@@ -32,20 +42,28 @@ completed_checkpoints:
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
   - "Project Source Pack v1.6: PROJECT_SOURCE_PACK_RATIFIED = v1.6-pre-rc-ui-ux-v2.2"
   - "Day 9 LAN functional acceptance: PASS — BREAD_LAN_ACCEPTANCE_READY"
+  - "UI v2.2 Figma foundations/components canonical editable source established"
+  - "UI v2.2 Lane 1 slice 1 RED verified at 0b44473de856436a8602cea2c461f6ca8b05ffce"
+  - "UI v2.2 Lane 1 slice 1 focused GREEN verified at 9cf15bc50231eb9428e788b3e5ba790663c2bacc"
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
+  active_implementation_branch: day9/synthra-arc-testnet-v3-candidate
   day9_branch: day9/synthra-arc-testnet-v3-candidate
   active_pr: 93
   active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
   verified_code_bearing_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
   source_hygiene_branch: docs/ui-v2-2-source-pack-hygiene
+  source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
-  ui_baseline_rule: "Create from this synchronized source-hygiene descendant of the verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
+  ui_implementation_pr: 94
+  ui_current_head_before_this_state_sync: 9cf15bc50231eb9428e788b3e5ba790663c2bacc
+  ui_baseline_rule: "Source-hygiene descendant of the verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
   - day9/synthra-arc-testnet-v3-candidate
   - docs/ui-v2-2-source-pack-hygiene
+  - agent/ui-ux-v2-2-implementation
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -53,12 +71,16 @@ repository:
   active_pr: 93
   active_pr_state: OPEN_DRAFT_UNMERGED
   active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
+  active_pr_vs_main: AHEAD_478_BEHIND_0
+  ui_implementation_pr: 94
+  ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
+  repository_status: REMOTE_GITHUB_VERIFIED_UI_BRANCH_ISOLATED_FROM_RUNNING_LAN_ENVIRONMENT
   day9_complete: false
   rc_tag_created: false
   day10_started: false
-  ui_implementation_branch_created: false
+  ui_implementation_branch_created: true
   local_ui_worktree_created: false
-  local_ui_worktree_limitation: "No repository checkout is mounted in this ChatGPT runtime; remote branch creation is available through GitHub, but a local git worktree cannot be materialized here."
+  local_ui_worktree_limitation: "No repository checkout is mounted in this ChatGPT runtime; remote branch isolation is established through GitHub, but a literal local git worktree cannot be materialized here."
 
 verification:
   root_ci_current_pr_head: PASS_RUN_31894437375
@@ -71,6 +93,9 @@ verification:
   physical_android_auto_graduation_recovery: PASS_RETAINED_PARTIAL_DEVICE_EVIDENCE
   bread_day9_rc1_tag_lookup: NOT_FOUND
   day9_verdict: INCOMPLETE
+  ui_lane1_slice1_red: FAIL_EXPECTED_RUN_31901626270
+  ui_lane1_slice1_focused_green: PASS_RUN_31901670876
+  ui_lane1_slice1_root_ci_before_state_compatibility_fix: FAIL_RUN_31901670825_DAY4_BUILD_STATE_COMPATIBILITY_ROOT_CAUSE_IDENTIFIED
 
 lan_acceptance:
   status: PASS
@@ -97,9 +122,18 @@ ui_ux_v2_2:
   production_implementation: AUTHORIZED_IN_ISOLATED_UI_LANE
   figma_required: true
   figma_free_starter_compatible: true
-  figma_started: false
+  figma_started: true
+  figma_file_key: DsjM9F9yt0WZRhyKGHOvCl
+  figma_file_name: "Bread UI/UX v2.2 — Canonical Design System"
+  figma_foundations_page: "00 Foundations"
+  figma_components_page: "01 Components"
+  figma_foundations_visual_validation: PASS
   ui_worktree_created: false
-  ui_branch_created: false
+  ui_branch_created: true
+  ui_branch: agent/ui-ux-v2-2-implementation
+  ui_pr: 94
+  current_lane: "Lane 1 — Foundations"
+  current_slice: "Exact v2.2 theme/token contract"
   implementation_order:
     - "Lane 0 — current UI conformance audit / frozen impact map"
     - "Lane 1 — foundations"
@@ -117,6 +151,8 @@ ui_ux_v2_2:
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+  - CURRENT_PONS_FACTORY_SOURCE_PARITY
+  - PONS_V2_RUNTIME_REFERENCE
   - BREAD_PRODUCTION_ECONOMICS_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
@@ -124,6 +160,8 @@ blockers:
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge still require genuine execution/evidence on the final redesigned candidate."
   UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Ratified redesign must be implemented lane-by-lane with canonical Figma, tests, rendered QA, 04D performance/accessibility gates, affected 06I regressions and exact-head evidence before Day-9 RC."
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; do not claim exact-current Pons parity"
+  PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
@@ -138,10 +176,19 @@ deployments:
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
   vercel: CONNECTED_BUT_NOT_SUBSTITUTE_FOR_GITHUB_CI
-  figma: AUTHORIZED_TO_START_CANONICAL_FREE_STARTER_COMPATIBLE_PIPELINE
+  figma: CANONICAL_FREE_STARTER_COMPATIBLE_FOUNDATIONS_ESTABLISHED
+
+decisions_since_last_state:
+  - "PROJECT_SOURCE_PACK_RATIFIED = v1.6-pre-rc-ui-ux-v2.2; only 04B/04C retire."
+  - "04A and 04D remain controlling, and prior non-conflicting Day-4/Day-5 protocol/security ratifications remain durable."
+  - "LAN functional acceptance PASS recorded from genuine BREAD_LAN_ACCEPTANCE_READY operator output without touching the running environment."
+  - "Dedicated remote UI implementation branch and draft PR #94 established from the synchronized source-hygiene descendant of Day-9 head."
+  - "Canonical Figma foundations/components established and visually validated before production Lane-1 code."
+  - "Lane-1 exact-token RED failed for the intended missing v2.2 tokens; focused GREEN passed."
+  - "Root CI exposed an omitted legacy Day-4 build-state ratification token; this state revision restores it at the source rather than weakening validation."
 
 next_action: >-
-  Create agent/ui-ux-v2-2-implementation from this synchronized source-hygiene descendant of the verified Day-9 lineage. Do not use or modify /tmp/bread-synthra-fork-proof. Establish the canonical free/Starter-compatible Figma foundations/variables/reusable components first. Only then begin Lane 1 production UI work using 06D source-read -> RED -> GREEN -> focused tests -> adjacent regressions -> source-conformance review -> exact-head evidence.
+  Verify this build-state compatibility correction on the exact UI branch head through root CI and the focused UI-foundation workflow. Do not advance to another Lane-1 behavior until those adjacent regressions are green. Once green, record the accepted exact head and continue Lane 1 one independently reviewable foundation primitive at a time under 06D RED -> GREEN discipline, with CreatorAttribution as the next bounded behavior. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof, its LAN/indexer process, containers, database, checkpoint or acceptance evidence."
