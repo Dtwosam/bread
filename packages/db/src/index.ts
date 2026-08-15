@@ -38,6 +38,10 @@ export {
 
 export { ReadRepository, decimalIntegerToBigInt } from "./repositories/read.js";
 export {
+  TrendingRepository,
+  type TrendingLaunchCursorKey,
+} from "./repositories/trending.js";
+export {
   SearchRepository,
   type SearchLaunchInput,
   type SearchLaunchRow,
