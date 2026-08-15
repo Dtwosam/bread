@@ -13,13 +13,25 @@ test('mobile shell follows the v2.2 56px top -> 36px live strip -> page composit
   const liveStrip = page.locator('.bread-live-strip-region .bread-live-strip');
   const heading = page.getByRole('heading', { name: 'Explore' });
   const navigation = page.getByRole('navigation', { name: 'Mobile navigation' });
+  const search = topBar.getByRole('button', { name: 'Search', exact: true });
+  const wallet = topBar.getByRole('button', { name: 'Connect wallet', exact: true });
 
   await expect(topBar).toBeVisible();
   await expect(topBar).toHaveCSS('height', '56px');
+  await expect(search).toBeVisible();
+  await expect(wallet).toBeVisible();
   await expect(liveStrip).toBeVisible();
   await expect(liveStrip).toHaveCSS('height', '36px');
   await expect(heading).toBeVisible();
   await expect(navigation).toBeVisible();
+
+  for (const control of [search, wallet]) {
+    const label = control.locator('.bread-button__label');
+    expect(
+      await label.evaluate((element) => element.scrollWidth <= element.clientWidth),
+      'mobile top-bar control label must fit without clipping',
+    ).toBe(true);
+  }
 
   const topBox = await topBar.boundingBox();
   const liveBox = await liveStrip.boundingBox();
