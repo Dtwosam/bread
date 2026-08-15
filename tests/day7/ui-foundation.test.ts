@@ -130,6 +130,59 @@ describe('Bread UI/UX v2.2 public web design foundation', () => {
     });
   });
 
+  it('provides one shared secondary CreatorAttribution primitive', () => {
+    expect(exports).toHaveProperty('CreatorAttribution');
+    const CreatorAttribution = exports.CreatorAttribution as
+      | ((props: Record<string, unknown>) => unknown)
+      | undefined;
+    expect(typeof CreatorAttribution).toBe('function');
+
+    const wallet = '0x1234567890abcdef1234567890abcdef12345678';
+    const element = CreatorAttribution?.({ creatorAddress: wallet }) as ElementLike | undefined;
+    const children = element?.props?.children as readonly ElementLike[] | undefined;
+
+    expect(element?.props?.className).toBe('bread-creator-attribution');
+    expect(element?.props?.title).toBe(wallet);
+    expect(children).toHaveLength(2);
+    expect(children?.[0]?.props?.children).toBe('by');
+    expect(children?.[1]?.props?.children).toBe('0x1234…5678');
+  });
+
+  it('keeps creator display identity secondary while preserving the authoritative wallet', () => {
+    const CreatorAttribution = exports.CreatorAttribution as
+      | ((props: Record<string, unknown>) => unknown)
+      | undefined;
+    const wallet = '0x1234567890abcdef1234567890abcdef12345678';
+
+    const handled = CreatorAttribution?.({ creatorAddress: wallet, displayName: 'breadmaker' }) as ElementLike;
+    const handledChildren = handled.props?.children as readonly ElementLike[];
+    expect(handled.props?.title).toBe(wallet);
+    expect(handledChildren[1]?.props?.children).toBe('@breadmaker');
+
+    const currentUser = CreatorAttribution?.({ creatorAddress: wallet, isCurrentUser: true }) as ElementLike;
+    const currentUserChildren = currentUser.props?.children as readonly ElementLike[];
+    expect(currentUserChildren[1]?.props?.children).toBe('you');
+
+    const unknown = CreatorAttribution?.({ creatorAddress: null }) as ElementLike;
+    const unknownChildren = unknown.props?.children as readonly ElementLike[];
+    expect(unknown.props?.title).toBeUndefined();
+    expect(unknownChildren[1]?.props?.children).toBe('—');
+  });
+
+  it('styles CreatorAttribution as one quiet line without semantic success/error treatment', () => {
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+
+    expect(css).toContain('.bread-creator-attribution {');
+    expect(css).toContain('font-size: 12px');
+    expect(css).toContain('line-height: 17px');
+    expect(css).toContain('font-weight: 500');
+    expect(css).toContain('color: var(--bread-text-secondary)');
+    expect(css).toContain('white-space: nowrap');
+    expect(css).toContain('text-overflow: ellipsis');
+    expect(css).not.toContain('.bread-creator-attribution {\n  color: var(--bread-positive)');
+    expect(css).not.toContain('.bread-creator-attribution {\n  color: var(--bread-negative)');
+  });
+
   it('retains the existing navigation behavior until the dedicated shell/navigation lane', () => {
     expect(exports).toHaveProperty('desktopNavigation');
     expect(exports).toHaveProperty('mobileNavigation');
