@@ -55,6 +55,8 @@ repository:
   active_pr: 93
   active_pr_state: OPEN_DRAFT_UNMERGED
   active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
+  active_pr_vs_main: AHEAD_478_BEHIND_0
+  repository_status: REMOTE_GITHUB_VERIFIED_NO_LOCAL_REPOSITORY_WORKTREE_USED_FOR_THIS_CORRECTION
   day9_complete: false
   rc_tag_created: false
   day10_started: false
@@ -107,6 +109,7 @@ blocker_scope:
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
 
 deployments:
+  network: ARC_TESTNET_CHAIN_5042002
   arc_testnet_stack_status: VERIFIED_RETAINED
   deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
   deployment_start_block: 56448201
