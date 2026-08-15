@@ -84,6 +84,35 @@ textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.bread-creator-attribution {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bread-creator-attribution__prefix {
+  flex: none;
+  color: var(--bread-text-tertiary);
+}
+
+.bread-creator-attribution__identity {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bread-creator-attribution--token-header {
+  font-size: 13px;
+  line-height: 18px;
+}
+
 .bread-button {
   min-width: var(--bread-touch-target);
   min-height: var(--bread-button-standard);
