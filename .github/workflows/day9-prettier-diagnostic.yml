@@ -24,23 +24,21 @@ jobs:
           version: 11.15.1
           run_install: false
       - run: pnpm install --frozen-lockfile
-      - name: Format exact focused files
+      - name: Format TypeScript focused files
         run: >-
           pnpm exec prettier --write
-          .github/workflows/day9-lan-provider-runtime.yml
           apps/indexer/src/lan/chain-client.ts
           tests/day9/lan-runtime-provider-boundaries.test.ts
-      - name: Commit exact formatter output
+      - name: Commit exact TypeScript formatter output
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .github/workflows/day9-lan-provider-runtime.yml \
             apps/indexer/src/lan/chain-client.ts \
             tests/day9/lan-runtime-provider-boundaries.test.ts
           if git diff --cached --quiet; then
-            echo "No formatting changes required."
+            echo "No TypeScript formatting changes required."
             exit 0
           fi
-          git commit -m "style(day9): format LAN provider runtime files"
+          git commit -m "style(day9): format LAN provider runtime TypeScript"
           git push origin HEAD:day9/synthra-arc-testnet-v3-candidate
