@@ -147,6 +147,13 @@ textarea:focus-visible {
   line-height: 18px;
 }
 
+.bread-page-container {
+  width: 100%;
+  max-width: var(--bread-max-width);
+  margin-inline: auto;
+  padding-inline: var(--bread-gutter-mobile);
+}
+
 .bread-button {
   min-width: var(--bread-touch-target);
   min-height: var(--bread-button-standard);
@@ -295,6 +302,24 @@ textarea:focus-visible {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (min-width: 768px) {
+  .bread-page-container {
+    padding-inline: var(--bread-gutter-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bread-page-container {
+    padding-inline: var(--bread-gutter-desktop);
+  }
+}
+
+@media (min-width: 1536px) {
+  .bread-page-container--explore {
+    max-width: var(--bread-explore-max-width);
+  }
 }
 
 @media (pointer: coarse) {
