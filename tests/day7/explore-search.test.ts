@@ -22,6 +22,19 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(resolveExploreView('invented')).toBe('new');
   });
 
+  it('uses the ratified v2.2 discovery labels without changing indexed feed semantics', () => {
+    const source = readFileSync(
+      new URL('../../apps/web/components/explore/explore-client.tsx', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain("{ value: 'new', label: 'New' }");
+    expect(source).toContain("{ value: 'trending', label: 'Trending' }");
+    expect(source).toContain("{ value: 'graduating', label: 'Almost Baked' }");
+    expect(source).toContain("{ value: 'graduated', label: 'Graduated' }");
+    expect(source).not.toContain("label: 'Near Graduation'");
+  });
+
   it('starts exact-address search immediately but waits for two text characters', () => {
     expect(searchIntent('')).toEqual({ kind: 'idle' });
     expect(searchIntent('b')).toEqual({ kind: 'idle' });
