@@ -24,6 +24,7 @@ export type TokenCardModel = Readonly<{
   symbol: string;
   price: IndexedPriceSummary | null;
   volume24h: string | null;
+  holderCount: string | null;
   priceChange24h: null;
   progress: Readonly<{
     bps: number;
@@ -86,6 +87,7 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     symbol: source.symbol?.trim() || '—',
     price: source.metrics?.lastPrice ?? null,
     volume24h: source.metrics?.quoteVolume.h24 ?? null,
+    holderCount: source.metrics?.holderCount ?? null,
     priceChange24h: null,
     progress: progressModel(source.progress),
   };
