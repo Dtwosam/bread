@@ -98,6 +98,14 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(source).not.toContain('creatorAddress={item.creatorFeeRecipient}');
   });
 
+  it('uses the v2.2 five-pixel brand-butter baked-progress treatment', () => {
+    const source = readFileSync(new URL('../../apps/web/app/shell-v2.css', import.meta.url), 'utf8');
+    expect(source).toMatch(/\.bread-progress-track\s*\{[^}]*height:\s*5px;/s);
+    expect(source).toMatch(
+      /\.bread-progress-value\s*\{[^}]*background:\s*var\(--bread-brand-butter\);/s,
+    );
+  });
+
   it('keeps Explore/Search rendering free of per-card API or raw-RPC fanout', () => {
     for (const path of [
       '../../apps/web/components/token-card.tsx',
