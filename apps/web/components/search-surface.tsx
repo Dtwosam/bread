@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
 
 import type { IndexedSearchResult } from '../../../packages/types/src/index';
-import { Button, Icon } from '@bread/ui';
+import { Button, CreatorAttribution, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
-import { searchIntent } from './explore/model';
+import { searchIntent, shortAddress } from './explore/model';
 import { FreshnessBanner } from './freshness-banner';
 
 function SearchGlyph() {
@@ -190,8 +190,14 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
                   <span>
                     <strong>{result.name?.trim() || 'Unnamed token'}</strong>
                     <span>${result.symbol?.trim() || '—'}</span>
+                    <CreatorAttribution creatorAddress={result.deployerAddress} />
                   </span>
-                  <code className="bread-technical">{result.tokenAddress}</code>
+                  <span>
+                    {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
+                    <code className="bread-technical" title={result.tokenAddress}>
+                      {shortAddress(result.tokenAddress)}
+                    </code>
+                  </span>
                 </a>
               ))}
             </div>
