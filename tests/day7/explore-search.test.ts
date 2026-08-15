@@ -99,7 +99,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
   });
 
   it('uses the v2.2 five-pixel brand-butter baked-progress treatment', () => {
-    const source = readFileSync(new URL('../../apps/web/app/shell-v2.css', import.meta.url), 'utf8');
+    const source = readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8');
     expect(source).toMatch(/\.bread-progress-track\s*\{[^}]*height:\s*5px;/s);
     expect(source).toMatch(
       /\.bread-progress-value\s*\{[^}]*background:\s*var\(--bread-brand-butter\);/s,
