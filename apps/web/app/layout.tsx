@@ -8,6 +8,7 @@ import { Providers } from '../components/providers';
 import { SearchSurface } from '../components/search-surface';
 import { WalletButton } from '../components/wallet/wallet-button';
 import './globals.css';
+import './shell-v2.css';
 import './portfolio-creator.css';
 import './wallet.css';
 
