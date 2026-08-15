@@ -62,9 +62,10 @@ function resolveProviderSafeReadOptions(
     // request succeeds when calls are spaced by three seconds. This remains a
     // retry cooldown only; it is not treated as a claimed throughput limit.
     baseBackoffMs: positiveInteger(options.baseBackoffMs ?? 3_000, 'baseBackoffMs'),
-    // A transport timeout is transient but must never be converted into range
-    // splitting or an unbounded retry loop. Retry the exact same logical read
-    // a small bounded number of times, then fail closed if Arc remains slow.
+    // A transport timeout or failed fetch is transient but must never be
+    // converted into range splitting or an unbounded retry loop. Retry the
+    // exact same logical read a small bounded number of times, then fail closed
+    // if Arc remains unavailable.
     maxTransientRetries: nonnegativeInteger(
       options.maxTransientRetries ?? 2,
       'maxTransientRetries',
@@ -135,9 +136,11 @@ export function classifyArcRpcLimitError(error: unknown): ArcRpcLimitKind | null
   return null;
 }
 
-function isArcTransientTimeoutError(error: unknown): boolean {
+function isArcTransientTransportError(error: unknown): boolean {
   const text = errorText(error);
-  return /(request took too long to respond|request timed out|timed out|timeout|timeouterror)/i.test(text);
+  return /(request took too long to respond|request timed out|timed out|timeout|timeouterror|fetch failed)/i.test(
+    text,
+  );
 }
 
 function blockBounds(request: Readonly<Record<string, unknown>>): Readonly<{
@@ -192,7 +195,7 @@ class ArcRpcRateGate {
             continue;
           }
 
-          if (isArcTransientTimeoutError(error)) {
+          if (isArcTransientTransportError(error)) {
             if (transientRetries >= this.options.maxTransientRetries) throw error;
             await this.options.sleep(this.options.transientBackoffMs * 2 ** transientRetries);
             transientRetries += 1;
