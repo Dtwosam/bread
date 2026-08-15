@@ -3,9 +3,12 @@ import type { FastifyInstance } from "fastify";
 import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
 import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
 import {
+  decodeGraduatedFeedCursor,
   decodeNewFeedCursor,
   DEFAULT_FEED_LIMIT,
+  encodeGraduatedFeedCursor,
   encodeNewFeedCursor,
+  GRADUATED_FEED_CURSOR_VERSION,
   MAX_FEED_LIMIT,
   NEW_FEED_CURSOR_VERSION,
 } from "../pagination.js";
@@ -39,7 +42,7 @@ export function registerFeedRoute(
         },
       });
     }
-    if (view !== "new") {
+    if (view !== "new" && view !== "graduated") {
       return reply.code(503).send({
         error: {
           code: "FEED_VIEW_NOT_READY",
@@ -65,7 +68,7 @@ export function registerFeedRoute(
       });
     }
 
-    let cursor:
+    let newCursor:
       | Readonly<{
           launchBlockNumber: string;
           launchTimestamp: string;
@@ -73,15 +76,31 @@ export function registerFeedRoute(
           tokenAddress: string;
         }>
       | undefined;
+    let graduatedCursor:
+      | Readonly<{
+          graduationCompletedBlock: string;
+          graduationCompletedLogIndex: number;
+          tokenAddress: string;
+        }>
+      | undefined;
     if (query.cursor !== undefined) {
       try {
-        const decoded = decodeNewFeedCursor(query.cursor);
-        cursor = {
-          launchBlockNumber: decoded.launchBlockNumber,
-          launchTimestamp: decoded.launchTimestamp,
-          launchLogIndex: decoded.launchLogIndex,
-          tokenAddress: decoded.tokenAddress,
-        };
+        if (view === "graduated") {
+          const decoded = decodeGraduatedFeedCursor(query.cursor);
+          graduatedCursor = {
+            graduationCompletedBlock: decoded.graduationCompletedBlock,
+            graduationCompletedLogIndex: decoded.graduationCompletedLogIndex,
+            tokenAddress: decoded.tokenAddress,
+          };
+        } else {
+          const decoded = decodeNewFeedCursor(query.cursor);
+          newCursor = {
+            launchBlockNumber: decoded.launchBlockNumber,
+            launchTimestamp: decoded.launchTimestamp,
+            launchLogIndex: decoded.launchLogIndex,
+            tokenAddress: decoded.tokenAddress,
+          };
+        }
       } catch {
         return reply.code(400).send({
           error: {
@@ -110,27 +129,48 @@ export function registerFeedRoute(
     }
 
     const load = async () => {
-      const fetched = await deps.repository.listNewLaunches(
-        deps.context.chainId,
-        deps.context.stackVersion,
-        deps.context.factoryAddress,
-        parsedLimit + 1,
-        cursor,
-      );
+      const fetched =
+        view === "graduated"
+          ? await deps.repository.listGraduatedLaunches(
+              deps.context.chainId,
+              deps.context.stackVersion,
+              deps.context.factoryAddress,
+              parsedLimit + 1,
+              graduatedCursor,
+            )
+          : await deps.repository.listNewLaunches(
+              deps.context.chainId,
+              deps.context.stackVersion,
+              deps.context.factoryAddress,
+              parsedLimit + 1,
+              newCursor,
+            );
       const hasMore = fetched.length > parsedLimit;
       const launches = fetched.slice(0, parsedLimit);
       const last = launches.at(-1);
       let nextCursor: string | undefined;
       if (hasMore && last) {
-        if (last.launchTimestamp === null)
-          throw new Error("New-feed row is missing launch timestamp");
-        nextCursor = encodeNewFeedCursor({
-          version: NEW_FEED_CURSOR_VERSION,
-          launchBlockNumber: last.launchBlockNumber.toString(10),
-          launchTimestamp: last.launchTimestamp.toString(10),
-          launchLogIndex: last.launchLogIndex,
-          tokenAddress: last.tokenAddress,
-        });
+        if (view === "graduated") {
+          if (!("graduationCompletedBlock" in last) || !("graduationCompletedLogIndex" in last)) {
+            throw new Error("Graduated-feed row is missing completion cursor state");
+          }
+          nextCursor = encodeGraduatedFeedCursor({
+            version: GRADUATED_FEED_CURSOR_VERSION,
+            graduationCompletedBlock: last.graduationCompletedBlock.toString(10),
+            graduationCompletedLogIndex: last.graduationCompletedLogIndex,
+            tokenAddress: last.tokenAddress,
+          });
+        } else {
+          if (last.launchTimestamp === null)
+            throw new Error("New-feed row is missing launch timestamp");
+          nextCursor = encodeNewFeedCursor({
+            version: NEW_FEED_CURSOR_VERSION,
+            launchBlockNumber: last.launchBlockNumber.toString(10),
+            launchTimestamp: last.launchTimestamp.toString(10),
+            launchLogIndex: last.launchLogIndex,
+            tokenAddress: last.tokenAddress,
+          });
+        }
       }
 
       const tokenAddresses = launches.map((launch) => launch.tokenAddress);
