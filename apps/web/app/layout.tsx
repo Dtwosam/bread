@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from 'next/font/google';
 
 import { MobileNavigation, Navigation } from '@bread/ui';
 import '@bread/ui/theme.css';
+import { BreadBrand } from '../components/bread-brand';
 import { LiveActivityStripStatus } from '../components/live-activity-strip-status';
 import { PrimaryMobileNavigation, PrimaryNavigation } from '../components/primary-navigation';
 import { Providers } from '../components/providers';
@@ -50,9 +51,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <div className="bread-shell">
             <header className="bread-header">
               <div className="bread-header__inner">
-                <a className="bread-brand" href="/explore" aria-label="Bread home">
-                  Bread
-                </a>
+                <BreadBrand />
                 <Suspense fallback={<Navigation />}>
                   <PrimaryNavigation />
                 </Suspense>
@@ -69,9 +68,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             </div>
 
             <div className="bread-mobile-top">
-              <a className="bread-brand" href="/explore" aria-label="Bread home">
-                Bread
-              </a>
+              <BreadBrand />
               <SearchSurface compact />
               <WalletButton />
             </div>
