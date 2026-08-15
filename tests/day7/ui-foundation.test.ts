@@ -141,6 +141,28 @@ describe('Bread UI/UX v2.2 public web design foundation', () => {
     expect(reduced).toContain('transform: none;');
   });
 
+  it('provides one source-exact responsive page-container primitive', () => {
+    expect(exports).toHaveProperty('PageContainer');
+    const PageContainer = exports.PageContainer as ((props: Record<string, unknown>) => unknown) | undefined;
+    expect(typeof PageContainer).toBe('function');
+    const standard = PageContainer?.({ children: 'content' }) as ElementLike | undefined;
+    const explore = PageContainer?.({ children: 'content', variant: 'explore' }) as ElementLike | undefined;
+    expect(standard?.props?.className).toBe('bread-page-container');
+    expect(explore?.props?.className).toBe('bread-page-container bread-page-container--explore');
+
+    const css = readFileSync(new URL('../../packages/ui/src/theme.css', import.meta.url), 'utf8');
+    expect(css).toContain('.bread-page-container {');
+    expect(css).toContain('max-width: var(--bread-max-width);');
+    expect(css).toContain('padding-inline: var(--bread-gutter-mobile);');
+    expect(css).toContain('@media (min-width: 768px)');
+    expect(css).toContain('padding-inline: var(--bread-gutter-tablet);');
+    expect(css).toContain('@media (min-width: 1024px)');
+    expect(css).toContain('padding-inline: var(--bread-gutter-desktop);');
+    expect(css).toContain('@media (min-width: 1536px)');
+    expect(css).toContain('.bread-page-container--explore');
+    expect(css).toContain('max-width: var(--bread-explore-max-width);');
+  });
+
   it('provides one shared secondary CreatorAttribution primitive', () => {
     expect(exports).toHaveProperty('CreatorAttribution');
     const CreatorAttribution = exports.CreatorAttribution as ((props: Record<string, unknown>) => unknown) | undefined;
