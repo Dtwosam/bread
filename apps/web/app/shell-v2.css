@@ -17,6 +17,10 @@
   width: max-content;
 }
 
+.bread-header .bread-navigation__link {
+  gap: var(--bread-space-8);
+}
+
 .bread-brand {
   font-size: 20px;
   line-height: 26px;
