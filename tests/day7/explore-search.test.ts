@@ -108,6 +108,16 @@ describe('Day 7 Explore/Search interaction contract', () => {
     );
   });
 
+  it('uses the exact v2.2 TokenCard name typography across desktop and mobile', () => {
+    const source = readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8');
+    expect(source).toMatch(
+      /\.bread-token-card__identity strong\s*\{[^}]*font-size:\s*15px;[^}]*line-height:\s*20px;[^}]*font-weight:\s*600;/s,
+    );
+    expect(source).toMatch(
+      /@media \(max-width:\s*767px\)[\s\S]*?\.bread-token-card__identity strong\s*\{[^}]*font-size:\s*16px;/s,
+    );
+  });
+
   it('keeps Explore/Search rendering free of per-card API or raw-RPC fanout', () => {
     for (const path of [
       '../../apps/web/components/token-card.tsx',
