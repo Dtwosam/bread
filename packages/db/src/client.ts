@@ -87,6 +87,13 @@ async function readMigrationSql(): Promise<readonly string[]> {
       ),
       "utf8",
     ),
+    readFile(
+      new URL(
+        "../drizzle/0008_ui_v2_trending_feed_index.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
   ]);
   return migrationSqlPromise;
 }
