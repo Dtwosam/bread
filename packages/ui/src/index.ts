@@ -7,6 +7,7 @@ export {
   type CreatorAttributionProps,
   type CreatorAttributionSize,
 } from './creator-attribution';
+export { Icon, type IconProps, type IconSize } from './icon';
 export {
   PageContainer,
   type PageContainerProps,
