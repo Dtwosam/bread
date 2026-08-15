@@ -1,6 +1,6 @@
-schema_version: 1.71
+schema_version: 1.72
 project: Bread
-updated_at: 2026-08-15T21:08:00+01:00
+updated_at: 2026-08-15T21:16:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -39,6 +39,7 @@ completed_checkpoints:
   - "Approved visual-reference reconciliation infrastructure: exact 1586x992 Playwright screenshot artifact captured per head; first capture exposed material shell drift and visual gate remained FAIL/PENDING."
   - "Canonical Figma shell continuity repaired from frozen written v2.2 + approved visual reference: editable shell-only target node 7:2, header 7:3, live strip 7:28; no Lane-3 page composition invented."
   - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7; focused 31905629819 PASS, root CI 31905629721 PASS, primary browser/screenshot 31905629698 PASS, frontend-security 31905629722 PASS, Day-9 truthfulness 31905629753 PASS."
+  - "Lane 2 visual correction — truthful live activity strip: RED 750affd -> accepted GREEN 0829cf18c438ff7adcf31f41fddbf5a906bc9e50. Shared component owns stable bread-live-strip root + data-status state and shared theme owns 40px single-surface styling; web shell owns placement only. Focused 31906372671 PASS, root CI 31906372499 PASS, primary browser/screenshot 31906372472 PASS, frontend-security 31906372424 PASS, Explore/Search 31906372516 PASS, wallet/network 31906372540 PASS, Day-9 truthfulness 31906372506 PASS. Exact-head 1586x992 artifact 9252476635 shows truthful Checking live updates and no fabricated market metrics."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -50,7 +51,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 7c7d2a7f3474fe1f5cb1d14ed981356320f1a7cd
+  ui_accepted_head_before_this_state_sync: 0829cf18c438ff7adcf31f41fddbf5a906bc9e50
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -101,6 +102,17 @@ verification:
   lane2_nav_icon_frontend_security: PASS_RUN_31905629722
   lane2_nav_icon_day9_truthfulness: PASS_RUN_31905629753
   visual_reference_capture_7c7d2a7_artifact: 9252268211
+  lane2_live_strip_red: 750affd9b7c58d2df1bbc7492e8a653236fc8fa6
+  lane2_live_strip_green: 0829cf18c438ff7adcf31f41fddbf5a906bc9e50
+  lane2_live_strip_focused_green: PASS_RUN_31906372671
+  lane2_live_strip_root_ci: PASS_RUN_31906372499
+  lane2_live_strip_primary_browser: PASS_RUN_31906372472
+  lane2_live_strip_frontend_security: PASS_RUN_31906372424
+  lane2_live_strip_explore_search: PASS_RUN_31906372516
+  lane2_live_strip_wallet_network: PASS_RUN_31906372540
+  lane2_live_strip_day9_truthfulness: PASS_RUN_31906372506
+  visual_reference_capture_0829cf18_artifact: 9252476635
+  visual_reference_capture_0829cf18_digest: sha256:b0004446582306161e1eaf6bac9d5674560d7f817994f432010d080ec0b82d7e
 
 lan_acceptance:
   status: PASS
@@ -131,6 +143,9 @@ ui_ux_v2_2:
   figma_reconciled_header_node: "7:3"
   figma_reconciled_live_strip_node: "7:28"
   figma_continuity_note: "Earlier recorded shell node IDs were not present on fresh metadata readback; canonical shell-only target was rebuilt from frozen written v2.2 plus approved reference without inventing Lane-3 page composition."
+  figma_mcp_status: STARTER_PLAN_CALL_LIMIT_REACHED_DURING_RECONCILIATION
+  figma_sync_debt: "Any subsequent source-compatible shell correction must be synchronized back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the visual QA bar."
+  temporary_visual_conformance_path: "Written v2.2 + approved visual reference + established canonical Figma node 7:2 + exact-head Playwright rendered evidence."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
   current_lane: "Lane 2 — Global shell/navigation visual reconciliation"
@@ -145,11 +160,16 @@ ui_ux_v2_2:
     - PRIMARY_NAVIGATION_ORDER_AND_ACTIVE_STATE
     - DESKTOP_HEADER_COMPOSITION_AND_GEOMETRY
     - DECORATIVE_CANONICAL_NAVIGATION_ICON_CHARACTER
+    - TRUTHFUL_LIVE_ACTIVITY_STRIP_DESKTOP
   visual_findings_open:
-    - LIVE_ACTIVITY_STRIP_MISSING
-    - BRAND_MASCOT_ASSET_NOT_ESTABLISHED_IN_REPOSITORY
+    - BRAND_MASCOT_MARK_MISSING_FROM_RENDERED_HEADER
     - SEARCH_SHORTCUT_AND_SEARCH_ICON_PENDING_DEDICATED_LANE2_SLICE
-    - MOBILE_SHELL_CHARACTER_PENDING_DEDICATED_LANE2_SLICE
+    - MOBILE_LIVE_STRIP_CURRENTLY_HIDDEN_BUT_V2_2_REQUIRES_COMPACT_36PX_STRIP
+    - MOBILE_TOP_BOTTOM_NAV_CHARACTER_AND_390X844_RENDERED_RECONCILIATION_PENDING
+  intentional_differences:
+    - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's full-canvas x32 content origin at 1586px. Do not widen code to imitate a conflicting concept geometry; sync Figma later."
+    - "Approved-reference sample live movers/trades/volume are not reproduced until reliable Bread indexed data supports them; current status-only strip is intentionally truthful rather than fabricated."
+    - "Explore card/feed body remains pre-v2.2 until Lane 3 and is intentionally excluded from Lane-2 page-composition repair."
   intentional_scope_boundary: "Explore card/feed body remains pre-v2.2 until Lane 3 and is not to be silently redesigned during Lane 2 reconciliation."
 
 blockers:
@@ -174,12 +194,12 @@ blocker_scope:
 
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
-  figma: CANONICAL_FREE_STARTER_COMPATIBLE_SHELL_RECONCILED_AT_NODE_7_2
+  figma: CANONICAL_STARTER_SHELL_ESTABLISHED_BUT_MCP_CALL_LIMIT_CURRENTLY_REACHED
   vercel: CONNECTED_BUT_NOT_SUBSTITUTE_FOR_GITHUB_CI
-  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_1586X992_ARTIFACT_PER_EXACT_HEAD
+  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Continue Lane 2 visual-reference reconciliation with one independently reviewable RED -> GREEN slice: implement the truthful Live Activity Strip directly below the desktop header. Use the existing indexed /v1/status freshness/health boundary only for the first structural slice; do not fabricate approved-sample movers, trades/min, volume, launch counts, or token values that the current API does not provide. Desktop height is exactly 40px within a single subtle bordered surface; maximum four informational groups; no marquee, no width-shifting nav counters, and an unavailable/lagging/rebuilding/degraded API state must not present stale data as LIVE. Preserve the canonical Figma shell target at node 7:2 / live strip 7:28. Run focused shell tests, root CI, Explore/Search + wallet/network + frontend-security regressions, primary rendered-browser capture at 1586x992, and Day-9 truthfulness. Do not begin Lane 3. Keep /tmp/bread-synthra-fork-proof untouched.
+  Continue Lane 2 visual-reference reconciliation with one independently reviewable RED -> GREEN slice: restore the Bread-specific brand mark in the shared global shell without changing product semantics. The frozen approved reference and canonical Figma header show a 36x36 brand-butter mascot/mark immediately before the BREAD wordmark; written v2.2 permits the mascot sparingly in the logo. Reuse one source-owned BreadBrand primitive for desktop and mobile rather than duplicating markup. Keep the mark decorative/non-semantic, preserve the 64px desktop and 56px mobile shell contracts, source spacing/radius tokens, current 1440px max-width/gutter rules, and existing primary navigation/search/watchlist/wallet geometry. First add a focused failing test proving the mark is absent, verify the intended RED, then implement the minimum GREEN. Run focused shell tests, root CI, Explore/Search + wallet/network + frontend-security regressions, primary rendered-browser capture at 1586x992, and Day-9 truthfulness. Do not begin Lane 3. Keep /tmp/bread-synthra-fork-proof untouched. Figma synchronization is deferred only because the Starter MCP call limit is currently reached; do not alter the frozen target around that limitation.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
