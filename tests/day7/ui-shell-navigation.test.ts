@@ -82,7 +82,7 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
 
   it('composes the desktop header in the source-required Bread -> nav -> flexible search -> watchlist -> wallet order', () => {
     const layout = readFileSync(new URL('../../apps/web/app/layout.tsx', import.meta.url), 'utf8');
-    const brand = layout.indexOf('className="bread-brand"', layout.indexOf('<header className="bread-header">'));
+    const brand = layout.indexOf('<BreadBrand />', layout.indexOf('<header className="bread-header">'));
     const nav = layout.indexOf('<PrimaryNavigation />', brand);
     const search = layout.indexOf('className="bread-header__search"', nav);
     const watchlist = layout.indexOf('<WatchlistShellControl />', search);
@@ -93,6 +93,19 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
     expect(search).toBeGreaterThan(nav);
     expect(watchlist).toBeGreaterThan(search);
     expect(wallet).toBeGreaterThan(watchlist);
+  });
+
+  it('uses one shared Bread brand primitive with the approved decorative 36px butter mark', () => {
+    const layout = readFileSync(new URL('../../apps/web/app/layout.tsx', import.meta.url), 'utf8');
+    const shellCss = readFileSync(new URL('../../apps/web/app/shell-v2.css', import.meta.url), 'utf8');
+
+    expect(layout).toContain("import { BreadBrand } from '../components/bread-brand';");
+    expect(layout.match(/<BreadBrand \/>/g)).toHaveLength(2);
+    expect(layout).not.toContain('<a className="bread-brand" href="/explore" aria-label="Bread home">');
+    expect(shellCss).toContain('.bread-brand__mark {');
+    expect(shellCss).toContain('width: 36px;');
+    expect(shellCss).toContain('height: 36px;');
+    expect(shellCss).toContain('background: var(--bread-brand-butter);');
   });
 
   it('uses the approved compact desktop shell proportions without widening navigation or wallet controls', () => {
