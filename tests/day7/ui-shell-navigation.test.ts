@@ -81,7 +81,10 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
   });
 
   it('uses the approved compact desktop shell proportions without widening navigation or wallet controls', () => {
-    const css = readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8');
+    const css = [
+      readFileSync(new URL('../../apps/web/app/globals.css', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../apps/web/app/shell-v2.css', import.meta.url), 'utf8'),
+    ].join('\n');
 
     expect(css).toContain('height: var(--bread-header-desktop);');
     expect(css).toContain('max-width: var(--bread-max-width);');
