@@ -92,6 +92,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
       <Button
         variant="secondary"
         className={compact ? 'bread-search-trigger--compact' : 'bread-search-trigger'}
+        ariaLabel="Search"
         onClick={openSearch}
       >
         {compact ? 'Search' : 'Search token, ticker or contract…'}
