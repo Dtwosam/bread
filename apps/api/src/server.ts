@@ -4,6 +4,7 @@ import {
   CreatorRepository,
   ReadRepository,
   SearchRepository,
+  TrendingRepository,
   type BreadDb,
 } from "../../../packages/db/src/index.js";
 import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
@@ -75,6 +76,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
   const redis = input.redis ?? unavailableRedis();
   const gate = new BoundedReadGate(input.capacity ?? DEFAULT_CAPACITY);
   const repository = boundRepository(new ReadRepository(input.db), gate);
+  const trendingRepository = boundRepository(
+    new TrendingRepository(input.db),
+    gate,
+  );
   const creatorRepository = boundRepository(
     new CreatorRepository(input.db),
     gate,
@@ -111,6 +116,7 @@ export function createBreadApi(input: CreateBreadApiInput) {
 
   const deps = {
     repository,
+    trendingRepository,
     context: input.context,
     freshness,
     cache,
