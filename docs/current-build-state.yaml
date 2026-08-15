@@ -1,6 +1,6 @@
-schema_version: 1.73
+schema_version: 1.74
 project: Bread
-updated_at: 2026-08-15T21:31:00+01:00
+updated_at: 2026-08-15T21:45:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -41,6 +41,7 @@ completed_checkpoints:
   - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7; focused 31905629819 PASS, root CI 31905629721 PASS, primary browser/screenshot 31905629698 PASS, frontend-security 31905629722 PASS, Day-9 truthfulness 31905629753 PASS."
   - "Lane 2 visual correction — truthful live activity strip: RED 750affd -> accepted GREEN 0829cf18c438ff7adcf31f41fddbf5a906bc9e50. Shared component owns stable bread-live-strip root + data-status state and shared theme owns 40px single-surface styling; web shell owns placement only. Focused 31906372671 PASS, root CI 31906372499 PASS, primary browser/screenshot 31906372472 PASS, frontend-security 31906372424 PASS, Explore/Search 31906372516 PASS, wallet/network 31906372540 PASS, Day-9 truthfulness 31906372506 PASS. Exact-head 1586x992 artifact 9252476635 shows truthful Checking live updates and no fabricated market metrics."
   - "Lane 2 visual correction — Bread-specific brand mark: RED efd66d34fc83073b3da45fbef475a9192af69a44 -> accepted GREEN 439ee0103b84d05aa5042942cc03ece9d50f1372. One shared BreadBrand primitive now serves desktop/mobile with the canonical decorative 36x36 brand-butter •ᴗ• mark before BREAD. Focused 31906702590 PASS, root CI 31906702566 PASS, primary browser/screenshot 31906702585 PASS, frontend-security 31906702690 PASS, Explore/Search 31906702584 PASS, wallet/network 31906702501 PASS, production gates 31906702605 PASS, Day-9 truthfulness 31906702643 PASS. Exact-head 1586x992 artifact 9252564854 confirms the mark without geometry regression."
+  - "Lane 2 Search-shell correction: browser RED 303f704b650d1596cd84c18026de9f091c2fcfa5 proved missing Ctrl/Cmd+K and missing normal search icon. First implementation head e8b51522 fixed the icon but exposed an immediate pre-hydration test-timing issue; the same shortcut proof was rerun only after stable network load. Accepted GREEN 990dd5e9358cf23655cdc9ada45de650632002ae proves Ctrl+K and Cmd+K open the existing Search dialog, Escape closes it, accessible name Search is preserved, and the 16px glyph renders left-aligned in the 520px trigger. Root CI 31907280306 PASS, Explore/Search 31907280247 PASS, wallet/network 31907280250 PASS, frontend-security 31907280274 PASS, production gates 31907280227 PASS, browser 31907280287 PASS, Day-9 truthfulness 31907280233 PASS. Exact-head 1586x992 artifact 9252717293 confirms the visual correction."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -52,7 +53,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 439ee0103b84d05aa5042942cc03ece9d50f1372
+  ui_accepted_head_before_this_state_sync: 990dd5e9358cf23655cdc9ada45de650632002ae
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -86,45 +87,28 @@ verification:
   day9_verdict: INCOMPLETE
   lane1_foundations: PASS_AT_0358b4d6b3e3d31baf23c18b92d743382e41b025
   lane2a_navigation_integrated_green: 855c6c7c0f08eb2bf03acb26e871f3ff9edf32f6
-  lane2b_header_red: a871a7afff2690b5c53637f527573e986ea37eaf
   lane2b_header_integrated_green: c3f839d5f2b073e93fcf11981f107313813ed495
-  lane2b_focused_green: PASS_RUN_31905354837
-  lane2b_root_ci: PASS_RUN_31905354813
-  lane2b_day9_truthfulness: PASS_RUN_31905354836
-  lane2b_primary_browser: PASS_RUN_31905354936
-  lane2b_frontend_security: PASS_RUN_31905354805
-  visual_reference_capture_viewport: 1586x992
-  visual_reference_capture_c3f839d_artifact: 9252196829
-  lane2_nav_icon_red: FAIL_EXPECTED_RUN_31905553319
   lane2_nav_icon_green: 7c7d2a7f3474fe1f5cb1d14ed981356320f1a7cd
-  lane2_nav_icon_focused_green: PASS_RUN_31905629819
-  lane2_nav_icon_root_ci: PASS_RUN_31905629721
-  lane2_nav_icon_primary_browser: PASS_RUN_31905629698
-  lane2_nav_icon_frontend_security: PASS_RUN_31905629722
-  lane2_nav_icon_day9_truthfulness: PASS_RUN_31905629753
-  visual_reference_capture_7c7d2a7_artifact: 9252268211
-  lane2_live_strip_red: 750affd9b7c58d2df1bbc7492e8a653236fc8fa6
   lane2_live_strip_green: 0829cf18c438ff7adcf31f41fddbf5a906bc9e50
-  lane2_live_strip_focused_green: PASS_RUN_31906372671
-  lane2_live_strip_root_ci: PASS_RUN_31906372499
-  lane2_live_strip_primary_browser: PASS_RUN_31906372472
-  lane2_live_strip_frontend_security: PASS_RUN_31906372424
-  lane2_live_strip_explore_search: PASS_RUN_31906372516
-  lane2_live_strip_wallet_network: PASS_RUN_31906372540
-  lane2_live_strip_day9_truthfulness: PASS_RUN_31906372506
-  visual_reference_capture_0829cf18_artifact: 9252476635
   lane2_brand_red: efd66d34fc83073b3da45fbef475a9192af69a44
   lane2_brand_green: 439ee0103b84d05aa5042942cc03ece9d50f1372
   lane2_brand_focused_green: PASS_RUN_31906702590
   lane2_brand_root_ci: PASS_RUN_31906702566
   lane2_brand_primary_browser: PASS_RUN_31906702585
   lane2_brand_frontend_security: PASS_RUN_31906702690
-  lane2_brand_explore_search: PASS_RUN_31906702584
-  lane2_brand_wallet_network: PASS_RUN_31906702501
-  lane2_brand_production_gates: PASS_RUN_31906702605
-  lane2_brand_day9_truthfulness: PASS_RUN_31906702643
   visual_reference_capture_439ee010_artifact: 9252564854
-  visual_reference_capture_439ee010_digest: sha256:e75c7ec4863bb588442e0e8ade8e907594f24b57617b2c6d6a73d41938625af8
+  lane2_search_red: 303f704b650d1596cd84c18026de9f091c2fcfa5
+  lane2_search_green: 990dd5e9358cf23655cdc9ada45de650632002ae
+  lane2_search_root_ci: PASS_RUN_31907280306
+  lane2_search_explore_search: PASS_RUN_31907280247
+  lane2_search_wallet_network: PASS_RUN_31907280250
+  lane2_search_frontend_security: PASS_RUN_31907280274
+  lane2_search_production_gates: PASS_RUN_31907280227
+  lane2_search_primary_browser: PASS_RUN_31907280287
+  lane2_search_day9_truthfulness: PASS_RUN_31907280233
+  visual_reference_capture_viewport: 1586x992
+  visual_reference_capture_990dd5e9_artifact: 9252717293
+  visual_reference_capture_990dd5e9_digest: sha256:c499b6c75cee31f72fa107919d8ee3dcf0eead78a0c277f16e4535180c46c0cd
 
 lan_acceptance:
   status: PASS
@@ -156,7 +140,7 @@ ui_ux_v2_2:
   figma_reconciled_live_strip_node: "7:28"
   figma_continuity_note: "Earlier recorded shell node IDs were not present on fresh metadata readback; canonical shell-only target was rebuilt from frozen written v2.2 plus approved reference without inventing Lane-3 page composition."
   figma_mcp_status: STARTER_PLAN_CALL_LIMIT_REACHED_DURING_RECONCILIATION
-  figma_sync_debt: "Brand mark and any subsequent source-compatible shell correction must be synchronized back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the visual QA bar."
+  figma_sync_debt: "Brand/Search and any subsequent source-compatible shell correction must be synchronized back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the visual QA bar."
   temporary_visual_conformance_path: "Written v2.2 + approved visual reference + established canonical Figma node 7:2 + exact-head Playwright rendered evidence."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
@@ -174,8 +158,8 @@ ui_ux_v2_2:
     - DECORATIVE_CANONICAL_NAVIGATION_ICON_CHARACTER
     - TRUTHFUL_LIVE_ACTIVITY_STRIP_DESKTOP
     - SHARED_BREAD_BRAND_MARK
+    - DESKTOP_SEARCH_SHORTCUT_AND_GLYPH
   visual_findings_open:
-    - SEARCH_SHORTCUT_AND_SEARCH_ICON_PENDING_DEDICATED_LANE2_SLICE
     - MOBILE_LIVE_STRIP_CURRENTLY_HIDDEN_BUT_V2_2_REQUIRES_COMPACT_36PX_STRIP
     - MOBILE_TOP_BOTTOM_NAV_CHARACTER_AND_390X844_RENDERED_RECONCILIATION_PENDING
   intentional_differences:
@@ -211,7 +195,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Continue Lane 2 visual-reference reconciliation with one independently reviewable RED -> GREEN Search-shell slice. Written v2.2 requires desktop Ctrl+K/Cmd+K access and the approved reference/canonical Figma search trigger carries a restrained search-glyph character. Preserve the existing Search accessible name, modal focus return, Escape/focus-trap behavior, two-character/address-safe query rules, centered 520px geometry and mobile one-tap access. First add a focused failing test proving the global shortcut and decorative normal-size search icon are absent, verify intended RED, then implement the minimum SearchSurface-owned GREEN without changing search ranking/data semantics. Run focused Explore/Search + shell tests, root CI, wallet/network + frontend-security + production regressions, exact-head 1586x992 rendered capture and Day-9 truthfulness before acceptance. Do not begin Lane 3. Keep /tmp/bread-synthra-fork-proof untouched. Figma synchronization remains deferred only because the Starter MCP call limit is reached.
+  Continue Lane 2 with the final bounded mobile-shell visual reconciliation slice before the approved-reference gate can close. Written v2.2 requires a 56px mobile top bar (Bread logo + one-tap Search + Wallet), a compact truthful 36px live strip directly below the top bar, and a 64px + safe-area bottom nav with Explore/Trending/Create/Portfolio. Current CSS hides the live strip below 768px, so first add a failing mobile browser/source-conformance test at the authoritative 390x844 viewport proving the strip is absent/wrongly ordered and requiring a retained exact-head mobile screenshot artifact. Then make the minimum DOM/CSS correction so desktop remains header -> strip while mobile becomes top bar -> strip -> page, preserve truthfulness/no fake metrics and existing mobile navigation destinations, and render/inspect the exact 390x844 candidate. Run focused shell + mobile browser, root CI, Explore/Search, wallet/network, frontend-security, production gates and Day-9 truthfulness. Only after structured desktop+mobile visual diff shows no remaining material Lane-2 drift may APPROVED_VISUAL_REFERENCE_RECONCILIATION become PASS. Do not begin Lane 3 before that PASS. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
