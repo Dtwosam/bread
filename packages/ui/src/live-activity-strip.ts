@@ -23,15 +23,13 @@ function statusCopy(status: LiveActivityStatus): string {
 }
 
 export function LiveActivityStrip({ status, indexedThroughBlock }: LiveActivityStripProps) {
-  const isFresh = status === 'FRESH';
-  const classes = [
-    'bread-live-strip',
-    isFresh ? 'bread-live-strip--fresh' : 'bread-live-strip--degraded',
-  ].join(' ');
-
   return createElement(
     'div',
-    { className: classes, 'aria-live': 'polite' },
+    {
+      className: 'bread-live-strip',
+      'data-status': status,
+      'aria-live': 'polite',
+    },
     createElement(
       'span',
       { className: 'bread-live-strip__status' },
