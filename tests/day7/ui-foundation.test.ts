@@ -10,23 +10,26 @@ type ElementLike = Readonly<{
   props?: Record<string, unknown>;
 }>;
 
-describe('Day 7 public web design foundation', () => {
-  it('freezes the controlling 04B semantic tokens and shell geometry', () => {
+describe('Bread UI/UX v2.2 public web design foundation', () => {
+  it('matches the ratified v2.2 foundation-token contract exactly', () => {
     expect(exports).toHaveProperty('breadTheme');
 
     const theme = exports.breadTheme as
       | {
           colors: Record<string, string>;
           fonts: Record<string, string>;
+          typography: Record<string, { size: number; weight: number; lineHeight: number }>;
           controls: Record<string, number>;
           spacing: readonly number[];
+          radii: Record<string, number>;
           layout: Record<string, number>;
           breakpoints: Record<string, number>;
+          motion: Record<string, string | number>;
         }
       | undefined;
 
     expect(theme).toBeDefined();
-    expect(theme?.colors).toMatchObject({
+    expect(theme?.colors).toEqual({
       bgPrimary: '#0A0B0D',
       bgSecondary: '#0F1115',
       surface1: '#13161B',
@@ -41,16 +44,39 @@ describe('Day 7 public web design foundation', () => {
       accent: '#4C8DFF',
       accentHover: '#68A0FF',
       accentSoft: '#14233E',
+      brandButter: '#F4C35D',
+      brandButterHover: '#FFD477',
+      brandButterSoft: '#2B2210',
+      brandLavender: '#A98BFA',
+      brandLavenderSoft: '#211A35',
+      brandMint: '#47D7B0',
+      brandMintSoft: '#102B26',
       positive: '#32D583',
       positiveSoft: '#102A20',
       negative: '#F97066',
       negativeSoft: '#351817',
-      warning: '#FDB022',
-      warningSoft: '#35290D',
+      warning: '#F79009',
+      warningSoft: '#35240D',
     });
     expect(theme?.fonts).toEqual({
       primary: 'Inter',
       technical: 'Geist Mono',
+    });
+    expect(theme?.typography).toEqual({
+      display: { size: 32, weight: 700, lineHeight: 38 },
+      pageH1: { size: 24, weight: 700, lineHeight: 30 },
+      mobileH1: { size: 22, weight: 700, lineHeight: 28 },
+      tokenTitle: { size: 28, weight: 700, lineHeight: 34 },
+      sectionH2: { size: 20, weight: 600, lineHeight: 26 },
+      sectionH3: { size: 17, weight: 600, lineHeight: 23 },
+      cardName: { size: 15, weight: 600, lineHeight: 20 },
+      bodyLg: { size: 16, weight: 400, lineHeight: 24 },
+      body: { size: 14, weight: 400, lineHeight: 21 },
+      bodyMedium: { size: 14, weight: 500, lineHeight: 21 },
+      label: { size: 13, weight: 500, lineHeight: 18 },
+      creator: { size: 12, weight: 500, lineHeight: 17 },
+      small: { size: 12, weight: 400, lineHeight: 17 },
+      micro: { size: 11, weight: 600, lineHeight: 15 },
     });
     expect(theme?.controls).toEqual({
       standardButtonHeight: 40,
@@ -59,22 +85,52 @@ describe('Day 7 public web design foundation', () => {
       minimumTouchTarget: 44,
     });
     expect(theme?.spacing).toEqual([0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64]);
-    expect(theme?.layout).toMatchObject({
+    expect(theme?.radii).toEqual({
+      control: 8,
+      card: 12,
+      modal: 16,
+      full: 9999,
+    });
+    expect(theme?.layout).toEqual({
       mobilePageGutter: 16,
       tabletPageGutter: 24,
       desktopPageGutter: 32,
       maxWidth: 1440,
+      exploreMaxWidth: 1600,
       desktopTradePanel: 360,
+      filterRail: 232,
       desktopHeader: 64,
+      desktopLiveStrip: 40,
+      mobileLiveStrip: 36,
       mobileTopBar: 56,
       mobileBottomNav: 64,
       minimumTouchTarget: 44,
     });
-    expect(theme?.breakpoints.mobileMax).toBe(767);
-    expect(theme?.breakpoints.desktopTradeCollapseBelow).toBe(1024);
+    expect(theme?.breakpoints).toMatchObject({
+      xsMax: 479,
+      smMin: 480,
+      smMax: 767,
+      mdMin: 768,
+      mdMax: 1023,
+      lgMin: 1024,
+      lgMax: 1279,
+      xlMin: 1280,
+      xlMax: 1535,
+      xxlMin: 1536,
+      mobileMax: 767,
+      desktopTradeCollapseBelow: 1024,
+    });
+    expect(theme?.motion).toEqual({
+      instant: 80,
+      fast: 120,
+      standard: 180,
+      enter: 220,
+      sheet: 260,
+      easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    });
   });
 
-  it('exports the frozen public navigation and accessible loading button behavior', () => {
+  it('retains the existing navigation behavior until the dedicated shell/navigation lane', () => {
     expect(exports).toHaveProperty('desktopNavigation');
     expect(exports).toHaveProperty('mobileNavigation');
     expect(exports).toHaveProperty('Button');
