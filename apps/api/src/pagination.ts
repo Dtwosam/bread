@@ -1,6 +1,7 @@
 import { canonicalizeProtocolAddress } from '../../../packages/protocol-sdk/src/index.js';
 
 export const NEW_FEED_CURSOR_VERSION = 1 as const;
+export const GRADUATED_FEED_CURSOR_VERSION = 1 as const;
 export const TRADE_CURSOR_VERSION = 1 as const;
 export const HOLDER_CURSOR_VERSION = 1 as const;
 export const PORTFOLIO_CURSOR_VERSION = 1 as const;
@@ -21,6 +22,13 @@ export type NewFeedCursor = Readonly<{
   launchBlockNumber: string;
   launchTimestamp: string;
   launchLogIndex: number;
+  tokenAddress: string;
+}>;
+
+export type GraduatedFeedCursor = Readonly<{
+  version: number;
+  graduationCompletedBlock: string;
+  graduationCompletedLogIndex: number;
   tokenAddress: string;
 }>;
 
@@ -148,6 +156,35 @@ export function encodeNewFeedCursor(input: Readonly<Record<string, unknown>>): s
 export function decodeNewFeedCursor(input: string): NewFeedCursor {
   const cursor = normalizeFeedCursor(parseCursorJson(input));
   if (cursor.version !== NEW_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeGraduatedFeedCursor(input: Readonly<Record<string, unknown>>): GraduatedFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    graduationCompletedBlock: exactDecimal(input.graduationCompletedBlock, 'graduationCompletedBlock'),
+    graduationCompletedLogIndex: exactIndex(input.graduationCompletedLogIndex, 'graduationCompletedLogIndex'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeGraduatedFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeGraduatedFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    graduationCompletedBlock: cursor.graduationCompletedBlock,
+    graduationCompletedLogIndex: cursor.graduationCompletedLogIndex,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeGraduatedFeedCursor(input: string): GraduatedFeedCursor {
+  const cursor = normalizeGraduatedFeedCursor(parseCursorJson(input));
+  if (cursor.version !== GRADUATED_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
   return cursor;
 }
 
