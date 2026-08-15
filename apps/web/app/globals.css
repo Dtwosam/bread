@@ -177,8 +177,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
 }
 
 .bread-token-card__identity span,
@@ -817,6 +818,10 @@
 
   .bread-token-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bread-token-card__identity strong {
+    font-size: 16px;
   }
 
   .bread-token-card__metrics {
