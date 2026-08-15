@@ -71,6 +71,17 @@
   text-align: left;
 }
 
+.bread-header__search .bread-search-trigger .bread-button__content,
+.bread-header__search .bread-search-trigger .bread-button__label {
+  width: 100%;
+}
+
+.bread-header__search .bread-search-trigger .bread-button__label {
+  display: flex;
+  align-items: center;
+  gap: var(--bread-space-8);
+}
+
 .bread-header__search .bread-search-trigger:hover:not(:disabled) {
   border-color: var(--bread-accent);
   background: var(--bread-surface-1);
