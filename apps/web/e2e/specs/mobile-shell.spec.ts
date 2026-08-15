@@ -9,10 +9,19 @@ test('mobile shell exposes the source-defined navigation without viewport overfl
   const navigation = page.getByRole('navigation', { name: 'Mobile navigation' });
   await expect(navigation).toBeVisible();
   await expect(navigation.getByRole('link')).toHaveCount(4);
-  await expect(navigation.getByRole('link', { name: 'Explore' })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Trending' })).toBeVisible();
+  const explore = navigation.getByRole('link', { name: 'Explore' });
+  const trending = navigation.getByRole('link', { name: 'Trending' });
+  await expect(explore).toBeVisible();
+  await expect(trending).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Create' })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Portfolio' })).toBeVisible();
+  await expect(explore).toHaveAttribute('aria-current', 'page');
+  await expect(trending).not.toHaveAttribute('aria-current', 'page');
+
+  await trending.click();
+  await expect(page).toHaveURL(/\/explore\?view=trending$/);
+  await expect(trending).toHaveAttribute('aria-current', 'page');
+  await expect(explore).not.toHaveAttribute('aria-current', 'page');
 
   const horizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
