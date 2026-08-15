@@ -143,6 +143,7 @@
 
 @media (max-width: 767px) {
   .bread-live-strip-region {
-    display: none;
+    max-width: none;
+    padding: var(--bread-space-4) var(--bread-gutter-mobile);
   }
 }
