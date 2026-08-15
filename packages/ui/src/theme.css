@@ -296,6 +296,11 @@ textarea:focus-visible {
   background: var(--bread-surface-2);
 }
 
+.bread-navigation__link[aria-current="page"] {
+  color: var(--bread-accent);
+  background: var(--bread-accent-soft);
+}
+
 .bread-navigation--mobile {
   justify-content: space-around;
   width: 100%;
