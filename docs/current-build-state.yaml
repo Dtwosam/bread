@@ -1,6 +1,6 @@
-schema_version: 1.70
+schema_version: 1.71
 project: Bread
-updated_at: 2026-08-15T20:23:00+01:00
+updated_at: 2026-08-15T21:08:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -23,9 +23,9 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Lane 2 — global shell/navigation"
+active_lane: "UI/UX v2.2 Lane 2 — global shell/navigation visual-reference reconciliation"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-active_ui_gate: UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+active_ui_gate: APPROVED_VISUAL_REFERENCE_RECONCILIATION_PENDING
 day9_started: true
 day9_rc_tag_created: false
 
@@ -34,8 +34,11 @@ completed_checkpoints:
   - "Project Source Pack v1.6 ratified; 04B/04C retired; 04A/04D remain controlling."
   - "Day 9 LAN functional acceptance PASS — BREAD_LAN_ACCEPTANCE_READY."
   - "UI/UX v2.2 Lane 1 — Foundations PASS at 0358b4d6b3e3d31baf23c18b92d743382e41b025."
-  - "Lane 2 canonical Starter-compatible Figma shell compositions established in section 6:2: desktop 6:3, tablet 6:28, mobile 6:53."
-  - "Lane 2A primary navigation order + active-state contract: RED d87db48/e96ab0e -> package GREEN 0b2e20e -> integrated GREEN 855c6c7; focused 31904010726 PASS, root CI 31904010762 PASS, Day-9 truthfulness 31904010703 PASS, primary browser 31904010857 PASS, frontend-security 31904010770 PASS."
+  - "Lane 2A primary navigation order + active-state contract: integrated GREEN 855c6c7; focused/root/truthfulness/browser/frontend-security PASS."
+  - "Lane 2B desktop header composition/geometry: RED a871a7a -> integrated safe GREEN c3f839d; 64px header, 1440px max inner width, centered flexible Search, watchlist shell slot and wallet proportions; focused 31905354837 PASS, root CI 31905354813 PASS, primary browser 31905354936 PASS, frontend-security 31905354805 PASS, Day-9 truthfulness 31905354836 PASS."
+  - "Approved visual-reference reconciliation infrastructure: exact 1586x992 Playwright screenshot artifact captured per head; first capture exposed material shell drift and visual gate remained FAIL/PENDING."
+  - "Canonical Figma shell continuity repaired from frozen written v2.2 + approved visual reference: editable shell-only target node 7:2, header 7:3, live strip 7:28; no Lane-3 page composition invented."
+  - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7; focused 31905629819 PASS, root CI 31905629721 PASS, primary browser/screenshot 31905629698 PASS, frontend-security 31905629722 PASS, Day-9 truthfulness 31905629753 PASS."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -47,7 +50,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: 855c6c7c0f08eb2bf03acb26e871f3ff9edf32f6
+  ui_accepted_head_before_this_state_sync: 7c7d2a7f3474fe1f5cb1d14ed981356320f1a7cd
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -80,14 +83,24 @@ verification:
   bread_day9_rc1_tag_lookup: NOT_FOUND
   day9_verdict: INCOMPLETE
   lane1_foundations: PASS_AT_0358b4d6b3e3d31baf23c18b92d743382e41b025
-  lane2a_navigation_red: FAIL_EXPECTED_RUN_31903741347
-  lane2a_navigation_package_green: 0b2e20e8f43ebc9b1737d4c9bc310aaa95aaeb57
   lane2a_navigation_integrated_green: 855c6c7c0f08eb2bf03acb26e871f3ff9edf32f6
-  lane2a_focused_green: PASS_RUN_31904010726
-  lane2a_root_ci: PASS_RUN_31904010762
-  lane2a_day9_truthfulness: PASS_RUN_31904010703
-  lane2a_primary_browser: PASS_RUN_31904010857
-  lane2a_frontend_security: PASS_RUN_31904010770
+  lane2b_header_red: a871a7afff2690b5c53637f527573e986ea37eaf
+  lane2b_header_integrated_green: c3f839d5f2b073e93fcf11981f107313813ed495
+  lane2b_focused_green: PASS_RUN_31905354837
+  lane2b_root_ci: PASS_RUN_31905354813
+  lane2b_day9_truthfulness: PASS_RUN_31905354836
+  lane2b_primary_browser: PASS_RUN_31905354936
+  lane2b_frontend_security: PASS_RUN_31905354805
+  visual_reference_capture_viewport: 1586x992
+  visual_reference_capture_c3f839d_artifact: 9252196829
+  lane2_nav_icon_red: FAIL_EXPECTED_RUN_31905553319
+  lane2_nav_icon_green: 7c7d2a7f3474fe1f5cb1d14ed981356320f1a7cd
+  lane2_nav_icon_focused_green: PASS_RUN_31905629819
+  lane2_nav_icon_root_ci: PASS_RUN_31905629721
+  lane2_nav_icon_primary_browser: PASS_RUN_31905629698
+  lane2_nav_icon_frontend_security: PASS_RUN_31905629722
+  lane2_nav_icon_day9_truthfulness: PASS_RUN_31905629753
+  visual_reference_capture_7c7d2a7_artifact: 9252268211
 
 lan_acceptance:
   status: PASS
@@ -108,22 +121,19 @@ ui_ux_v2_2:
   source_ratification: RATIFIED
   lan_functional_acceptance: PASS
   production_implementation: AUTHORIZED_IN_ISOLATED_UI_LANE
+  approved_visual_reference: FROZEN_CONTROLLING_CLARIFICATION_WHERE_COMPATIBLE_WITH_WRITTEN_V2_2
+  approved_visual_reference_reconciliation: PENDING
   figma_required: true
   figma_free_starter_compatible: true
   figma_file_key: DsjM9F9yt0WZRhyKGHOvCl
   figma_file_name: "Bread UI/UX v2.2 — Canonical Design System"
-  figma_foundations_page: "00 Foundations"
-  figma_components_page: "01 Components"
-  figma_page_container_component_set: "3:22"
-  figma_icon_component_set: "4:22"
-  figma_shell_section: "6:2"
-  figma_shell_desktop: "6:3"
-  figma_shell_tablet: "6:28"
-  figma_shell_mobile: "6:53"
-  figma_starter_page_limit_handling: "PASS — shell compositions kept in existing editable Components page; no paid-tier dependency introduced."
+  figma_reconciled_shell_node: "7:2"
+  figma_reconciled_header_node: "7:3"
+  figma_reconciled_live_strip_node: "7:28"
+  figma_continuity_note: "Earlier recorded shell node IDs were not present on fresh metadata readback; canonical shell-only target was rebuilt from frozen written v2.2 plus approved reference without inventing Lane-3 page composition."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Lane 2 — Global shell/navigation"
+  current_lane: "Lane 2 — Global shell/navigation visual reconciliation"
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
@@ -133,10 +143,19 @@ ui_ux_v2_2:
     - ICON_PRESENTATION_BOUNDARY
   accepted_shell_behaviors:
     - PRIMARY_NAVIGATION_ORDER_AND_ACTIVE_STATE
+    - DESKTOP_HEADER_COMPOSITION_AND_GEOMETRY
+    - DECORATIVE_CANONICAL_NAVIGATION_ICON_CHARACTER
+  visual_findings_open:
+    - LIVE_ACTIVITY_STRIP_MISSING
+    - BRAND_MASCOT_ASSET_NOT_ESTABLISHED_IN_REPOSITORY
+    - SEARCH_SHORTCUT_AND_SEARCH_ICON_PENDING_DEDICATED_LANE2_SLICE
+    - MOBILE_SHELL_CHARACTER_PENDING_DEDICATED_LANE2_SLICE
+  intentional_scope_boundary: "Explore card/feed body remains pre-v2.2 until Lane 3 and is not to be silently redesigned during Lane 2 reconciliation."
 
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+  - APPROVED_VISUAL_REFERENCE_RECONCILIATION_PENDING
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
   - BREAD_PRODUCTION_ECONOMICS_CONFIG
@@ -146,6 +165,7 @@ blockers:
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
   UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Continue ratified redesign lane-by-lane with canonical Figma, tests, browser QA, 04D gates, affected 06I regressions and exact-head evidence."
+  APPROVED_VISUAL_REFERENCE_RECONCILIATION_PENDING: "Lane 2 must match the approved Bread composition/hierarchy/proportions/character where source-compatible before Lane 3 begins; dark colors alone are insufficient."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
@@ -154,15 +174,17 @@ blocker_scope:
 
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
-  figma: CANONICAL_FREE_STARTER_COMPATIBLE_DESIGN_SOURCE_ACTIVE
+  figma: CANONICAL_FREE_STARTER_COMPATIBLE_SHELL_RECONCILED_AT_NODE_7_2
   vercel: CONNECTED_BUT_NOT_SUBSTITUTE_FOR_GITHUB_CI
+  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_1586X992_ARTIFACT_PER_EXACT_HEAD
 
 next_action: >-
-  Continue Lane 2 one independently reviewable behavior at a time. Next: desktop header composition/geometry only. Under RED -> GREEN, enforce a 64px sticky desktop header, 1440px standard inner max width, 32px desktop gutters, stable Bread brand + accepted primary navigation + flexible Search + watchlist-icon slot + Wallet/Network ordering, with no width-changing live counters. Do not implement watchlist data/state in this slice; Lane 8 owns watchlist content. The shell control may expose only the source-required watchlist access surface without inventing persistence/data semantics. Keep tablet/mobile behavior, Cmd/Ctrl+K, wallet/network state changes, and live strip as later separate Lane-2 slices. Verify focused shell tests, adjacent desktop/mobile browser regression, source conformance, root CI, and Day-9 truthfulness before acceptance. Keep /tmp/bread-synthra-fork-proof untouched.
+  Continue Lane 2 visual-reference reconciliation with one independently reviewable RED -> GREEN slice: implement the truthful Live Activity Strip directly below the desktop header. Use the existing indexed /v1/status freshness/health boundary only for the first structural slice; do not fabricate approved-sample movers, trades/min, volume, launch counts, or token values that the current API does not provide. Desktop height is exactly 40px within a single subtle bordered surface; maximum four informational groups; no marquee, no width-shifting nav counters, and an unavailable/lagging/rebuilding/degraded API state must not present stale data as LIVE. Preserve the canonical Figma shell target at node 7:2 / live strip 7:28. Run focused shell tests, root CI, Explore/Search + wallet/network + frontend-security regressions, primary rendered-browser capture at 1586x992, and Day-9 truthfulness. Do not begin Lane 3. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
-  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, or physical-device gates remain open."
+  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, visual-reference or physical-device gates remain open."
+  - "Do not begin Lane 3 until APPROVED_VISUAL_REFERENCE_RECONCILIATION = PASS."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
-  - "Do not fabricate performance, physical-device, contract/config or live-state evidence."
+  - "Do not fabricate performance, physical-device, contract/config, market or live-state evidence."
