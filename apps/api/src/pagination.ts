@@ -1,6 +1,7 @@
 import { canonicalizeProtocolAddress } from '../../../packages/protocol-sdk/src/index.js';
 
 export const NEW_FEED_CURSOR_VERSION = 1 as const;
+export const TRENDING_FEED_CURSOR_VERSION = 1 as const;
 export const GRADUATED_FEED_CURSOR_VERSION = 1 as const;
 export const TRADE_CURSOR_VERSION = 1 as const;
 export const HOLDER_CURSOR_VERSION = 1 as const;
@@ -22,6 +23,16 @@ export type NewFeedCursor = Readonly<{
   launchBlockNumber: string;
   launchTimestamp: string;
   launchLogIndex: number;
+  tokenAddress: string;
+}>;
+
+export type TrendingFeedCursor = Readonly<{
+  version: number;
+  quoteVolume1h: string;
+  uniqueTraders1h: string;
+  tradeCount1h: string;
+  latestActivityBlockNumber: string;
+  latestActivityLogIndex: number;
   tokenAddress: string;
 }>;
 
@@ -156,6 +167,41 @@ export function encodeNewFeedCursor(input: Readonly<Record<string, unknown>>): s
 export function decodeNewFeedCursor(input: string): NewFeedCursor {
   const cursor = normalizeFeedCursor(parseCursorJson(input));
   if (cursor.version !== NEW_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeTrendingFeedCursor(input: Readonly<Record<string, unknown>>): TrendingFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    quoteVolume1h: exactDecimal(input.quoteVolume1h, 'quoteVolume1h'),
+    uniqueTraders1h: exactDecimal(input.uniqueTraders1h, 'uniqueTraders1h'),
+    tradeCount1h: exactDecimal(input.tradeCount1h, 'tradeCount1h'),
+    latestActivityBlockNumber: exactDecimal(input.latestActivityBlockNumber, 'latestActivityBlockNumber'),
+    latestActivityLogIndex: exactIndex(input.latestActivityLogIndex, 'latestActivityLogIndex'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeTrendingFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeTrendingFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    quoteVolume1h: cursor.quoteVolume1h,
+    uniqueTraders1h: cursor.uniqueTraders1h,
+    tradeCount1h: cursor.tradeCount1h,
+    latestActivityBlockNumber: cursor.latestActivityBlockNumber,
+    latestActivityLogIndex: cursor.latestActivityLogIndex,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeTrendingFeedCursor(input: string): TrendingFeedCursor {
+  const cursor = normalizeTrendingFeedCursor(parseCursorJson(input));
+  if (cursor.version !== TRENDING_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
   return cursor;
 }
 
