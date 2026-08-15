@@ -8,6 +8,7 @@ on:
       - "apps/indexer/src/lan/chain-client.d.ts"
       - "apps/indexer/src/lan/indexer-runner.ts"
       - "tests/day9/lan-runtime-provider-boundaries.test.ts"
+      - "tests/day9/lan-runtime-timeout-splitting.test.ts"
       - "scripts/day9/lan/**"
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - "apps/indexer/src/lan/chain-client.d.ts"
       - "apps/indexer/src/lan/indexer-runner.ts"
       - "tests/day9/lan-runtime-provider-boundaries.test.ts"
+      - "tests/day9/lan-runtime-timeout-splitting.test.ts"
       - "scripts/day9/lan/**"
   workflow_dispatch:
 
@@ -39,10 +41,14 @@ jobs:
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Run Day 9 LAN provider/runtime regressions
-        run: pnpm exec vitest run tests/day9/lan-runtime-provider-boundaries.test.ts
+        run: >-
+          pnpm exec vitest run
+          tests/day9/lan-runtime-provider-boundaries.test.ts
+          tests/day9/lan-runtime-timeout-splitting.test.ts
       - name: Check focused files are formatted
         run: >-
           pnpm exec prettier --check
           .github/workflows/day9-lan-provider-runtime.yml
           apps/indexer/src/lan/chain-client.ts
           tests/day9/lan-runtime-provider-boundaries.test.ts
+          tests/day9/lan-runtime-timeout-splitting.test.ts
