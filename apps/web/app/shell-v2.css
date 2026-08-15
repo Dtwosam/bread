@@ -91,43 +91,6 @@
   padding: var(--bread-space-8) var(--bread-gutter-desktop);
 }
 
-.bread-live-strip {
-  height: var(--bread-live-strip-desktop);
-  display: flex;
-  align-items: center;
-  gap: var(--bread-space-24);
-  padding-inline: var(--bread-space-12);
-  border: 1px solid var(--bread-border-subtle);
-  border-radius: var(--bread-radius-control);
-  background: var(--bread-bg-secondary);
-  color: var(--bread-text-secondary);
-  overflow: hidden;
-  font-size: 12px;
-  line-height: 17px;
-  white-space: nowrap;
-}
-
-.bread-live-strip__status {
-  flex: none;
-  font-size: 11px;
-  line-height: 15px;
-  font-weight: 600;
-}
-
-.bread-live-strip--fresh .bread-live-strip__status {
-  color: var(--bread-brand-mint);
-}
-
-.bread-live-strip--degraded .bread-live-strip__status {
-  color: var(--bread-text-secondary);
-}
-
-.bread-live-strip__detail {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 @media (max-width: 1279px) {
   .bread-header__inner {
     gap: var(--bread-space-12);
