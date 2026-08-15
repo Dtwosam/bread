@@ -162,6 +162,10 @@ textarea:focus-visible {
     transform var(--bread-motion-fast) var(--bread-easing);
 }
 
+.bread-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
 .bread-button:active:not(:disabled) {
   transform: translateY(1px);
 }
@@ -308,5 +312,10 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+
+  .bread-button:hover:not(:disabled),
+  .bread-button:active:not(:disabled) {
+    transform: none;
   }
 }
