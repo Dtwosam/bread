@@ -73,6 +73,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
         symbol: 'BRD',
         metrics: {
           lastPrice: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
+          holderCount: '42',
           quoteVolume: { m5: '1000000', h1: '2000000', h24: '5000000' },
           tradeCount: { h1: '3', h24: '9' },
           uniqueTraders: { h1: '2', h24: '5' },
@@ -86,9 +87,17 @@ describe('Day 7 Explore/Search interaction contract', () => {
       symbol: 'BRD',
       price: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
       volume24h: '5000000',
+      holderCount: '42',
       priceChange24h: null,
       progress: { bps: 6250, percent: 62.5, state: 'CURVE_ACTIVE' },
     });
+  });
+
+  it('wires canonical holder count through the shared feed DTO and API serializer', () => {
+    const typeSource = readFileSync(new URL('../../packages/types/src/api.ts', import.meta.url), 'utf8');
+    const routeSource = readFileSync(new URL('../../apps/api/src/routes/token.ts', import.meta.url), 'utf8');
+    expect(typeSource).toContain('holderCount: string | null;');
+    expect(routeSource).toContain('holderCount: row.holderCount?.toString(10) ?? null');
   });
 
   it('renders the authoritative indexed creator wallet directly below TokenCard identity', () => {
@@ -96,6 +105,16 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(source).toContain('CreatorAttribution');
     expect(source).toContain('creatorAddress={model.creatorAddress}');
     expect(source).not.toContain('creatorAddress={item.creatorFeeRecipient}');
+  });
+
+  it('uses the v2.2 decision-data hierarchy without fabricating unavailable market data', () => {
+    const source = readFileSync(new URL('../../apps/web/components/token-card.tsx', import.meta.url), 'utf8');
+    expect(source).toContain('<dt>Market cap</dt>');
+    expect(source).toContain('<dt>24h change</dt>');
+    expect(source).toContain('<dt>24h volume</dt>');
+    expect(source).toContain('<dt>Holders</dt>');
+    expect(source).toContain('{model.holderCount ?? \'—\'}');
+    expect(source).not.toContain('Indexed price ratio');
   });
 
   it('uses the v2.2 five-pixel brand-butter baked-progress treatment without shrinking shared progress', () => {
