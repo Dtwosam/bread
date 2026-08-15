@@ -100,15 +100,21 @@ test('Explore filters and Search preserve contract identity plus keyboard contai
   await expect(results).toHaveCount(2);
   const activeResult = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
   const pendingResult = dialog.locator(`a[href="/token/${PENDING_TOKEN}"]`);
-  const activeShort = `${ACTIVE_TOKEN.slice(0, 6)}…${ACTIVE_TOKEN.slice(-4)}`;
-  const pendingShort = `${PENDING_TOKEN.slice(0, 6)}…${PENDING_TOKEN.slice(-4)}`;
+  const activeShort = `${ACTIVE_TOKEN.slice(0, 8)}…${ACTIVE_TOKEN.slice(-6)}`;
+  const pendingShort = `${PENDING_TOKEN.slice(0, 8)}…${PENDING_TOKEN.slice(-6)}`;
   const creatorShort = `${E2E_DEPLOYER.slice(0, 6)}…${E2E_DEPLOYER.slice(-4)}`;
   await expect(activeResult).toContainText(activeShort);
   await expect(pendingResult).toContainText(pendingShort);
   await expect(activeResult).not.toContainText(ACTIVE_TOKEN);
   await expect(pendingResult).not.toContainText(PENDING_TOKEN);
-  await expect(activeResult.getByText(`by${creatorShort}`)).toBeVisible();
-  await expect(pendingResult.getByText(`by${creatorShort}`)).toBeVisible();
+  const activeCreator = activeResult.locator('.bread-creator-attribution');
+  const pendingCreator = pendingResult.locator('.bread-creator-attribution');
+  await expect(activeCreator).toContainText('by');
+  await expect(activeCreator).toContainText(creatorShort);
+  await expect(activeCreator).toHaveAttribute('data-creator-address', E2E_DEPLOYER);
+  await expect(pendingCreator).toContainText('by');
+  await expect(pendingCreator).toContainText(creatorShort);
+  await expect(pendingCreator).toHaveAttribute('data-creator-address', E2E_DEPLOYER);
 
   await close.focus();
   await page.keyboard.press('Shift+Tab');
