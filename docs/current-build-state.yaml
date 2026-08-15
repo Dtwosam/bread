@@ -1,6 +1,6 @@
-schema_version: 1.66
+schema_version: 1.67
 project: Bread
-updated_at: 2026-08-15T20:01:00+01:00
+updated_at: 2026-08-15T20:04:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -47,6 +47,7 @@ completed_checkpoints:
   - "Lane 1 slice 1: exact v2.2 theme token contract RED 0b44473 -> GREEN 9cf15bc; state-compatibility correction verified by root CI 31901898791"
   - "Lane 1 slice 2: shared CreatorAttribution RED 6795dd1 -> GREEN 5c996cf; focused workflow 31902113415 PASS and root CI 31902113406 PASS"
   - "Lane 1 slice 3: runtime CSS token surface RED 7adaf4e -> GREEN b0e6c88; focused workflow 31902360616 PASS and root CI 31902360622 PASS"
+  - "Lane 1 slice 4: focus-visible and motion primitives RED 621da8a -> GREEN ca2209a; state compatibility ac9588a; focused workflow 31902811181 PASS, root CI 31902811220 PASS, Day-9 truthfulness 31902811146 PASS"
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -58,7 +59,7 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
-  ui_accepted_head_before_this_state_sync: b0e6c88c721f5759fd8a237ec09c1492e971f3cc
+  ui_accepted_head_before_this_state_sync: ac9588a42cdca402b7821da49c7b920acba5132a
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -103,6 +104,13 @@ verification:
   ui_lane1_runtime_css_red: FAIL_EXPECTED_RUN_31902301384
   ui_lane1_runtime_css_focused_green: PASS_RUN_31902360616
   ui_lane1_runtime_css_root_ci: PASS_RUN_31902360622
+  ui_lane1_focus_motion_red: FAIL_EXPECTED_RUN_31902466071
+  ui_lane1_focus_motion_green_candidate: ca2209a4e4b5deb089936703f93b9732a4cf6cce
+  ui_lane1_focus_motion_state_compatibility: ac9588a42cdca402b7821da49c7b920acba5132a
+  ui_lane1_focus_motion_focused_green: PASS_RUN_31902811181
+  ui_lane1_focus_motion_root_ci: PASS_RUN_31902811220
+  ui_lane1_focus_motion_day9_truthfulness: PASS_RUN_31902811146
+  ui_lane1_focus_motion_primary_browser: PASS_RUN_31902811226
 
 lan_acceptance:
   status: PASS
@@ -144,6 +152,7 @@ ui_ux_v2_2:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
     - EXACT_V2_2_RUNTIME_CSS_TOKEN_SURFACE
+    - FOCUS_VISIBLE_AND_MOTION_PRIMITIVES
   implementation_order:
     - "Lane 0 — current UI conformance audit / frozen impact map"
     - "Lane 1 — foundations"
@@ -194,14 +203,14 @@ decisions_since_last_state:
   - "LAN functional acceptance PASS recorded from BREAD_LAN_ACCEPTANCE_READY without touching the running environment."
   - "Dedicated remote UI implementation branch and draft PR #94 established from the source-hygiene descendant of the Day-9 head."
   - "Canonical Figma foundations/components established and visually validated before production Lane-1 code."
-  - "Exact theme tokens, CreatorAttribution, and runtime CSS token surface are accepted with RED evidence plus focused and root-CI GREEN evidence."
+  - "Exact theme tokens, CreatorAttribution, runtime CSS tokens, and focus/motion primitives are accepted with RED evidence plus focused/root/truthfulness regressions."
 
 next_action: >-
-  Continue Lane 1 with the next independently reviewable foundation behavior under 06D RED -> GREEN discipline: implement the ratified focus-visible and motion primitives exactly as frozen in Figma/source, including a visible 2px accent outer focus ring with offset, hover movement capped at translateY(-1px) with no scale, and reduced-motion suppression/simplification. Verify focused UI-foundation tests, adjacent regressions, source-conformance, and root CI before advancing. Then continue remaining Lane-1 responsive/icon primitives one bounded behavior at a time. Keep /tmp/bread-synthra-fork-proof untouched.
+  Continue Lane 1 one independently reviewable foundation behavior at a time. Next: implement the source-exact responsive page-container primitive under RED -> GREEN discipline, encoding 16px mobile, 24px tablet, and 32px desktop gutters; 1440px standard max width; and the Explore-only 1600px allowance at 2xl without changing navigation or page composition. Verify focused UI-foundation tests, adjacent browser regression, source-conformance, and root CI before acceptance. After that, implement icon sizing/canonical-set rules as a separate bounded slice. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof, its LAN/indexer process, containers, database, checkpoint or acceptance evidence."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
-  - "Do not fabricate performance, physical-device, contract/config values or live-state evidence."
+  - "Do not fabricate performance, physical-device, contract/config or live-state evidence."
