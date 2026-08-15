@@ -5,25 +5,28 @@ import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
 import {
   decodeGraduatedFeedCursor,
   decodeNewFeedCursor,
+  decodeTrendingFeedCursor,
   DEFAULT_FEED_LIMIT,
   encodeGraduatedFeedCursor,
   encodeNewFeedCursor,
+  encodeTrendingFeedCursor,
   GRADUATED_FEED_CURSOR_VERSION,
   MAX_FEED_LIMIT,
   NEW_FEED_CURSOR_VERSION,
+  TRENDING_FEED_CURSOR_VERSION,
 } from "../pagination.js";
 import {
   serializeGraduationProgress,
   serializeLaunch,
   serializeTradeMetrics,
 } from "./token.js";
-import type { BreadReadRouteDeps } from "./types.js";
+import type { BreadFeedRouteDeps } from "./types.js";
 
 const SOURCE_VIEWS = new Set(["new", "trending", "graduating", "graduated"]);
 
 export function registerFeedRoute(
   app: FastifyInstance,
-  deps: BreadReadRouteDeps,
+  deps: BreadFeedRouteDeps,
 ): void {
   app.get("/v1/feed", async (request, reply) => {
     markNoStore(reply);
@@ -42,7 +45,7 @@ export function registerFeedRoute(
         },
       });
     }
-    if (view !== "new" && view !== "graduated") {
+    if (view === "graduating") {
       return reply.code(503).send({
         error: {
           code: "FEED_VIEW_NOT_READY",
@@ -76,6 +79,16 @@ export function registerFeedRoute(
           tokenAddress: string;
         }>
       | undefined;
+    let trendingCursor:
+      | Readonly<{
+          quoteVolume1h: string;
+          uniqueTraders1h: string;
+          tradeCount1h: string;
+          latestActivityBlockNumber: string;
+          latestActivityLogIndex: number;
+          tokenAddress: string;
+        }>
+      | undefined;
     let graduatedCursor:
       | Readonly<{
           graduationCompletedBlock: string;
@@ -90,6 +103,16 @@ export function registerFeedRoute(
           graduatedCursor = {
             graduationCompletedBlock: decoded.graduationCompletedBlock,
             graduationCompletedLogIndex: decoded.graduationCompletedLogIndex,
+            tokenAddress: decoded.tokenAddress,
+          };
+        } else if (view === "trending") {
+          const decoded = decodeTrendingFeedCursor(query.cursor);
+          trendingCursor = {
+            quoteVolume1h: decoded.quoteVolume1h,
+            uniqueTraders1h: decoded.uniqueTraders1h,
+            tradeCount1h: decoded.tradeCount1h,
+            latestActivityBlockNumber: decoded.latestActivityBlockNumber,
+            latestActivityLogIndex: decoded.latestActivityLogIndex,
             tokenAddress: decoded.tokenAddress,
           };
         } else {
@@ -129,6 +152,7 @@ export function registerFeedRoute(
     }
 
     const load = async () => {
+      const trendingMeta = view === "trending" ? await deps.freshness() : undefined;
       const fetched =
         view === "graduated"
           ? await deps.repository.listGraduatedLaunches(
@@ -138,13 +162,22 @@ export function registerFeedRoute(
               parsedLimit + 1,
               graduatedCursor,
             )
-          : await deps.repository.listNewLaunches(
-              deps.context.chainId,
-              deps.context.stackVersion,
-              deps.context.factoryAddress,
-              parsedLimit + 1,
-              newCursor,
-            );
+          : view === "trending"
+            ? await deps.trendingRepository.listTrendingLaunches(
+                deps.context.chainId,
+                deps.context.stackVersion,
+                deps.context.factoryAddress,
+                trendingMeta!.indexedThroughBlockTimestamp,
+                parsedLimit + 1,
+                trendingCursor,
+              )
+            : await deps.repository.listNewLaunches(
+                deps.context.chainId,
+                deps.context.stackVersion,
+                deps.context.factoryAddress,
+                parsedLimit + 1,
+                newCursor,
+              );
       const hasMore = fetched.length > parsedLimit;
       const launches = fetched.slice(0, parsedLimit);
       const last = launches.at(-1);
@@ -163,6 +196,39 @@ export function registerFeedRoute(
             version: GRADUATED_FEED_CURSOR_VERSION,
             graduationCompletedBlock: graduationCompletedBlock.toString(10),
             graduationCompletedLogIndex,
+            tokenAddress: last.tokenAddress,
+          });
+        } else if (view === "trending") {
+          if (
+            !("quoteVolume1h" in last) ||
+            !("uniqueTraders1h" in last) ||
+            !("tradeCount1h" in last) ||
+            !("latestActivityBlockNumber" in last) ||
+            !("latestActivityLogIndex" in last)
+          ) {
+            throw new Error("Trending-feed row is missing ranking cursor state");
+          }
+          const quoteVolume1h = last.quoteVolume1h;
+          const uniqueTraders1h = last.uniqueTraders1h;
+          const tradeCount1h = last.tradeCount1h;
+          const latestActivityBlockNumber = last.latestActivityBlockNumber;
+          const latestActivityLogIndex = last.latestActivityLogIndex;
+          if (
+            typeof quoteVolume1h !== "bigint" ||
+            typeof uniqueTraders1h !== "bigint" ||
+            typeof tradeCount1h !== "bigint" ||
+            typeof latestActivityBlockNumber !== "bigint" ||
+            typeof latestActivityLogIndex !== "number"
+          ) {
+            throw new Error("Trending-feed row has invalid ranking cursor state");
+          }
+          nextCursor = encodeTrendingFeedCursor({
+            version: TRENDING_FEED_CURSOR_VERSION,
+            quoteVolume1h: quoteVolume1h.toString(10),
+            uniqueTraders1h: uniqueTraders1h.toString(10),
+            tradeCount1h: tradeCount1h.toString(10),
+            latestActivityBlockNumber: latestActivityBlockNumber.toString(10),
+            latestActivityLogIndex,
             tokenAddress: last.tokenAddress,
           });
         } else {
@@ -189,7 +255,7 @@ export function registerFeedRoute(
       const statesByToken = new Map(
         stateRows.map((row) => [row.tokenAddress.toLowerCase(), row]),
       );
-      const meta = await deps.freshness();
+      const meta = trendingMeta ?? await deps.freshness();
       return {
         data: launches.map((launch) => {
           const tokenKey = launch.tokenAddress.toLowerCase();
