@@ -100,18 +100,11 @@ export const breadTheme = {
   },
 } as const;
 
-// Navigation is deliberately unchanged in the foundations lane. The ratified
-// v2.2 shell/navigation contract is implemented and reviewed in Lane 2.
 export const desktopNavigation = [
-  { label: 'Explore', href: '/explore' },
-  { label: 'Graduating', href: '/explore?view=graduating' },
-  { label: 'Portfolio', href: '/portfolio' },
-  { label: 'Create', href: '/create' },
-] as const;
-
-export const mobileNavigation = [
   { label: 'Explore', href: '/explore' },
   { label: 'Trending', href: '/explore?view=trending' },
   { label: 'Create', href: '/create' },
   { label: 'Portfolio', href: '/portfolio' },
 ] as const;
+
+export const mobileNavigation = desktopNavigation;
