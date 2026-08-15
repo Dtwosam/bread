@@ -69,10 +69,10 @@ function resolveProviderSafeReadOptions(
       options.baseBackoffMs ?? 3_000,
       "baseBackoffMs",
     ),
-    // A transport timeout or failed fetch is transient but must never be
-    // converted into range splitting or an unbounded retry loop. Retry the
-    // exact same logical read a small bounded number of times, then fail closed
-    // if Arc remains unavailable.
+    // Transient transport failures retry the exact same logical read first.
+    // If a bounded eth_getLogs timeout exhausts that retry budget, the log
+    // reader may then split only the block interval. Generic fetch failures do
+    // not become split-eligible and still fail closed after bounded retries.
     maxTransientRetries: nonnegativeInteger(
       options.maxTransientRetries ?? 2,
       "maxTransientRetries",
@@ -166,10 +166,16 @@ export function classifyArcRpcLimitError(
   return null;
 }
 
-function isArcTransientTransportError(error: unknown): boolean {
+function isArcTransientTimeoutError(error: unknown): boolean {
   const text = errorText(error);
-  return /(request took too long to respond|request timed out|timed out|timeout|timeouterror|fetch failed)/i.test(
+  return /(request took too long to respond|request timed out|timed out|timeout|timeouterror)/i.test(
     text,
+  );
+}
+
+function isArcTransientTransportError(error: unknown): boolean {
+  return (
+    isArcTransientTimeoutError(error) || /fetch failed/i.test(errorText(error))
   );
 }
 
@@ -279,7 +285,9 @@ function createProviderSafeLogReader(
           return await gate.run(() => raw.getLogs(currentRequest));
         } catch (error) {
           const kind = classifyArcRpcLimitError(error);
-          if (kind !== "REQUEST_LIMIT") throw error;
+          const timeoutAfterRetries =
+            kind === null && isArcTransientTimeoutError(error);
+          if (kind !== "REQUEST_LIMIT" && !timeoutAfterRetries) throw error;
 
           const bounds = blockBounds(currentRequest);
           if (
@@ -323,7 +331,8 @@ function createProviderSafeLogReader(
 /**
  * Focused eth_getLogs adapter retained for tests and narrow callers. Provider
  * retries are serialized by the same gate model used by the full read client;
- * genuine request-shape limits may still split an exact logical block interval.
+ * genuine request-shape limits and exhausted bounded timeouts may split an
+ * exact logical block interval.
  */
 export function createArcProviderSafeLogClient(
   raw: LogClient,
