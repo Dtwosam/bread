@@ -67,11 +67,11 @@ describe('Bread UI/UX v2.2 Lane 2 primary navigation', () => {
 
   it('composes the desktop header in the source-required Bread -> nav -> flexible search -> watchlist -> wallet order', () => {
     const layout = readFileSync(new URL('../../apps/web/app/layout.tsx', import.meta.url), 'utf8');
-    const brand = layout.indexOf('className="bread-brand"');
-    const nav = layout.indexOf('<PrimaryNavigation />');
-    const search = layout.indexOf('className="bread-header__search"');
-    const watchlist = layout.indexOf('className="bread-header__watchlist"');
-    const wallet = layout.indexOf('<WalletButton />');
+    const brand = layout.indexOf('className="bread-brand"', layout.indexOf('<header className="bread-header">'));
+    const nav = layout.indexOf('<PrimaryNavigation />', brand);
+    const search = layout.indexOf('className="bread-header__search"', nav);
+    const watchlist = layout.indexOf('<WatchlistShellControl />', search);
+    const wallet = layout.indexOf('<WalletButton />', watchlist);
 
     expect(brand).toBeGreaterThanOrEqual(0);
     expect(nav).toBeGreaterThan(brand);
