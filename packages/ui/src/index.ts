@@ -7,6 +7,11 @@ export {
   type CreatorAttributionProps,
   type CreatorAttributionSize,
 } from './creator-attribution';
+export {
+  PageContainer,
+  type PageContainerProps,
+  type PageContainerVariant,
+} from './page-container';
 export { MobileNavigation, Navigation } from './navigation';
 export { EmptyState, ErrorState, Skeleton } from './states';
 export { breadTheme, desktopNavigation, mobileNavigation } from './theme';
