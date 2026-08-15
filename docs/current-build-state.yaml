@@ -1,28 +1,22 @@
-schema_version: 1.61
+schema_version: 1.62
 project: Bread
-updated_at: 2026-08-15T17:43:00+01:00
+updated_at: 2026-08-15T19:25:00+01:00
 
 source_pack:
-  current_ratified: v1.5-day5-preflight-consolidated
-  proposed_replacement: v1.6-pre-rc-ui-ux-v2.2
-  corrected_artifacts_prepared:
-    - Bread-UI-UX-v2-complete-interface-specification-v2.2.docx
-    - bread-10-day-implementation-plan-v1.6.md
-    - CURRENT-BUILD-STATE-v1.7.docx
-  corrected_project_source_replacement: PENDING_USER_UPLOAD
-  ratification: PENDING_CORRECTED_UPLOAD_READBACK_RECONCILIATION
-  post_ratification_authority:
-    retired_only:
-      - 04B-visual-design-system-component-specification
-      - 04C-page-by-page-responsive-specification
-    remains_controlling:
-      - 04A-product-information-architecture-user-journeys
-      - 04D-ux-performance-accessibility-production-gates
-    ui_detail_authority: Bread-UI-UX-v2-complete-interface-specification-v2.2.docx
+  current_ratified: v1.6-pre-rc-ui-ux-v2.2
+  ratification: RATIFIED
+  project_source_pack_ratified: v1.6-pre-rc-ui-ux-v2.2
+  retired_only:
+    - 04B-visual-design-system-component-specification
+    - 04C-page-by-page-responsive-specification
+  remains_controlling:
+    - 04A-product-information-architecture-user-journeys
+    - 04D-ux-performance-accessibility-production-gates
+  ui_detail_authority: Bread-UI-UX-v2-complete-interface-specification-v2.2.docx
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "Project Source/current-state hygiene correction only; real Arc Testnet LAN/indexer acceptance is running externally and must remain untouched"
-active_gate: "UI_UX_V2_2_SOURCE_RATIFICATION_REQUIRED + LAN_FUNCTIONAL_ACCEPTANCE_REQUIRED + PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED"
+active_lane: "UI/UX v2.2 implementation opening after source ratification + LAN functional acceptance PASS"
+active_gate: "UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE + PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED"
 
 completed_checkpoints:
   - "1-6I: specification checkpoints complete per Project Sources"
@@ -36,14 +30,18 @@ completed_checkpoints:
   - "Day 6: SDK_INDEXER_API_INTEGRATED_PASS_DURABLE"
   - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
   - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
+  - "Project Source Pack v1.6: PROJECT_SOURCE_PACK_RATIFIED = v1.6-pre-rc-ui-ux-v2.2"
+  - "Day 9 LAN functional acceptance: PASS — BREAD_LAN_ACCEPTANCE_READY"
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
-  active_implementation_branch: day9/synthra-arc-testnet-v3-candidate
+  day9_branch: day9/synthra-arc-testnet-v3-candidate
   active_pr: 93
   active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
   verified_code_bearing_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
   source_hygiene_branch: docs/ui-v2-2-source-pack-hygiene
+  ui_implementation_branch: agent/ui-ux-v2-2-implementation
+  ui_baseline_rule: "Create from this synchronized source-hygiene descendant of the verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
   - day9/synthra-arc-testnet-v3-candidate
@@ -55,12 +53,12 @@ repository:
   active_pr: 93
   active_pr_state: OPEN_DRAFT_UNMERGED
   active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
-  active_pr_vs_main: AHEAD_478_BEHIND_0
-  repository_status: REMOTE_GITHUB_VERIFIED_NO_LOCAL_REPOSITORY_WORKTREE_USED_FOR_THIS_CORRECTION
   day9_complete: false
   rc_tag_created: false
   day10_started: false
   ui_implementation_branch_created: false
+  local_ui_worktree_created: false
+  local_ui_worktree_limitation: "No repository checkout is mounted in this ChatGPT runtime; remote branch creation is available through GitHub, but a local git worktree cannot be materialized here."
 
 verification:
   root_ci_current_pr_head: PASS_RUN_31894437375
@@ -75,35 +73,57 @@ verification:
   day9_verdict: INCOMPLETE
 
 lan_acceptance:
-  status: RUNNING_EXTERNALLY_OPERATOR_REPORTED
+  status: PASS
+  evidence_owner: OPERATOR_PROVIDED_GENUINE_OUTPUT
+  indexer_caught_up_checkpoint: 57159822
+  indexer_caught_up_head: 57159822
+  catchup_cycles: 639
+  degraded_post_commit_cycles: 0
+  subsequent_progress_checkpoint: 57159858
+  api_loopback: http://127.0.0.1:4010
+  web_loopback: http://127.0.0.1:4020
+  bounded_lan_origin: http://10.207.2.95:4000
+  same_origin_status: http://10.207.2.95:4000/v1/status
+  production_next_build: PASS
+  readiness_marker: BREAD_LAN_ACCEPTANCE_READY
   path: /tmp/bread-synthra-fork-proof
-  completion_evidence: NOT_YET_RECORDED
-  immutable_during_source_hygiene_lane: true
-  do_not_touch_processes_containers_database_checkpoint_or_evidence: true
+  environment_still_external: true
+  ui_lane_must_not_touch_environment: true
 
 ui_ux_v2_2:
   direction: USER_APPROVED
-  production_implementation: NOT_AUTHORIZED_UNTIL_RATIFIED_AND_LAN_ACCEPTANCE_COMPLETE
+  source_ratification: RATIFIED
+  lan_functional_acceptance: PASS
+  production_implementation: AUTHORIZED_IN_ISOLATED_UI_LANE
+  figma_required: true
+  figma_free_starter_compatible: true
   figma_started: false
   ui_worktree_created: false
   ui_branch_created: false
+  implementation_order:
+    - "Lane 0 — current UI conformance audit / frozen impact map"
+    - "Lane 1 — foundations"
+    - "Lane 2 — global shell/navigation"
+    - "Lane 3 — Explore/discovery"
+    - "Lane 4 — Search"
+    - "Lane 5 — token/trading"
+    - "Lane 6 — graduated token"
+    - "Lane 7 — Create"
+    - "Lane 8 — Portfolio/watchlist"
+    - "Lane 9 — Creator dashboard/claims"
+    - "Lane 10 — degraded/loading/error/recovery states"
+    - "Lane 11 — responsive/accessibility/performance closure"
 
 blockers:
-  - UI_UX_V2_2_SOURCE_RATIFICATION_REQUIRED
-  - LAN_FUNCTIONAL_ACCEPTANCE_REQUIRED
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-  - CURRENT_PONS_FACTORY_SOURCE_PARITY
-  - PONS_V2_RUNTIME_REFERENCE
+  - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
   - BREAD_PRODUCTION_ECONOMICS_CONFIG
   - PONS_AUDIT_FINDINGS
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  UI_UX_V2_2_SOURCE_RATIFICATION_REQUIRED: "Three corrected hygiene artifacts must be replaced in Project Sources, read back and reconciled with Git/current state before v1.6 may be ratified."
-  LAN_FUNCTIONAL_ACCEPTANCE_REQUIRED: "Real Arc Testnet LAN/indexer acceptance is currently running externally in /tmp/bread-synthra-fork-proof; no completion evidence is recorded yet and the environment must not be touched by this lane."
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge still require genuine execution/evidence on the final candidate."
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; do not claim exact-current Pons parity"
-  PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge still require genuine execution/evidence on the final redesigned candidate."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Ratified redesign must be implemented lane-by-lane with canonical Figma, tests, rendered QA, 04D performance/accessibility gates, affected 06I regressions and exact-head evidence before Day-9 RC."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
   PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
   ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
@@ -117,22 +137,15 @@ deployments:
 
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
-  vercel: CONNECTED_BUT_NOT_USED_AS_SUBSTITUTE_FOR_GITHUB_CI
-  figma: NOT_STARTED_SOURCE_RATIFICATION_AND_LAN_GATE_OPEN
-
-decisions_since_last_state:
-  - "Source-hygiene correction only: UI specification internal version metadata corrected 2.1 -> 2.2."
-  - "Source-hygiene correction only: implementation-plan document identity corrected to v1.6 consolidated + Pre-RC UI/UX v2.2 amendment."
-  - "CURRENT-BUILD-STATE corrected to actual PR #93 head 18952b20a56021350000c0f5d89552380c883be3 and the externally running LAN/indexer acceptance state."
-  - "No UI/product/protocol/economic/security requirement is changed by this correction lane."
+  vercel: CONNECTED_BUT_NOT_SUBSTITUTE_FOR_GITHUB_CI
+  figma: AUTHORIZED_TO_START_CANONICAL_FREE_STARTER_COMPATIBLE_PIPELINE
 
 next_action: >-
-  User replaces the three corrected hygiene artifacts in Project Sources with the exact corrected files from this lane. Then the active chat must read back the corrected artifacts, re-read/reconcile the full six-file v1.6 replacement pack against GitHub PR #93 at 18952b20a56021350000c0f5d89552380c883be3 and this YAML mirror, and only if every identity/authority/current-state discrepancy is closed record PROJECT_SOURCE_PACK_RATIFIED = v1.6-pre-rc-ui-ux-v2.2. Independently, allow the already-running LAN/indexer acceptance proof in /tmp/bread-synthra-fork-proof to complete without interference. Do not create the UI implementation worktree/branch, start Figma or write production UI until both source ratification and LAN functional acceptance are complete.
+  Create agent/ui-ux-v2-2-implementation from this synchronized source-hygiene descendant of the verified Day-9 lineage. Do not use or modify /tmp/bread-synthra-fork-proof. Establish the canonical free/Starter-compatible Figma foundations/variables/reusable components first. Only then begin Lane 1 production UI work using 06D source-read -> RED -> GREEN -> focused tests -> adjacent regressions -> source-conformance review -> exact-head evidence.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof, its LAN/indexer process, containers, database, checkpoint or acceptance evidence."
-  - "Do not create the UI implementation worktree/branch, start Figma or write production UI while source ratification or LAN functional acceptance is open."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
-  - "Do not begin Day 10 or claim Day-9 PASS while any non-waivable Day-9 end gate is open."
-  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics or financial ledgers in this source-hygiene lane."
-  - "Do not fabricate performance, LAN, physical-device, contract/config or live-state evidence."
+  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load, or physical-device gates remain open."
+  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
+  - "Do not fabricate performance, physical-device, contract/config or live-state evidence."
