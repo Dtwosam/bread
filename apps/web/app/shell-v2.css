@@ -22,11 +22,36 @@
 }
 
 .bread-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bread-space-8);
+  color: var(--bread-text-primary);
   font-size: 20px;
   line-height: 26px;
   letter-spacing: 0.04em;
+  text-decoration: none;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.bread-brand__mark {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-brand-butter);
+  color: var(--bread-bg-primary);
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bread-brand__wordmark {
+  font: inherit;
 }
 
 .bread-header__search {
