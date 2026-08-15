@@ -101,6 +101,31 @@ test('Search explicitly labels the exact contract match and keeps the full contr
   expect(rpcState.requests).toEqual([]);
 });
 
+test('Search arrow keys move through results and Enter opens the selected token', async ({ page, rpcState }) => {
+  await page.goto('/explore');
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Search Bread' });
+  const input = dialog.getByPlaceholder('Search by name, ticker, contract or creator');
+  await input.fill('Twin');
+
+  const activeResult = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
+  const pendingResult = dialog.locator(`a[href="/token/${PENDING_TOKEN}"]`);
+  await expect(activeResult).toBeVisible();
+  await expect(pendingResult).toBeVisible();
+  await expect(input).toBeFocused();
+
+  await page.keyboard.press('ArrowDown');
+  await expect(activeResult).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(pendingResult).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  await expect(activeResult).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(new RegExp(`/token/${ACTIVE_TOKEN}$`));
+  expect(rpcState.requests).toEqual([]);
+});
+
 test('Explore filters and Search preserve contract identity plus keyboard containment', async ({
   page,
   indexedApiState,
