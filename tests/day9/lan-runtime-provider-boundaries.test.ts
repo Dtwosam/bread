@@ -393,7 +393,7 @@ describe('Day 9 LAN provider/runtime regressions', () => {
     expect(chainClient).toContain("http(rpcUrls[0], { retryCount: 0 })");
     expect(chainClient).toContain('options.minimumIntervalMs ?? 500');
     expect(runner).toContain('createArcProviderSafeReadClient(rawClient)');
-    expect(runner).toContain('discoverRange(\n        client as never,');
+    expect(runner).toMatch(/discoverRange\(\s*client as never,/);
     expect(runner).toContain('client: client as never');
     expect(runner).toContain('BREAD_INDEXER_PROGRESS checkpoint=');
   });
