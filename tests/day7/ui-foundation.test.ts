@@ -241,14 +241,8 @@ describe('Bread UI/UX v2.2 public web design foundation', () => {
     expect(css).not.toContain('.bread-creator-attribution {\n  color: var(--bread-negative)');
   });
 
-  it('retains the existing navigation behavior until the dedicated shell/navigation lane', () => {
-    expect(exports).toHaveProperty('desktopNavigation');
-    expect(exports).toHaveProperty('mobileNavigation');
+  it('retains shared button behavior while Lane 2 owns navigation changes', () => {
     expect(exports).toHaveProperty('Button');
-    const desktopNavigation = exports.desktopNavigation as readonly { label: string; href: string }[];
-    const mobileNavigation = exports.mobileNavigation as readonly { label: string; href: string }[];
-    expect(desktopNavigation.map(({ label }) => label)).toEqual(['Explore', 'Graduating', 'Portfolio', 'Create']);
-    expect(mobileNavigation.map(({ label }) => label)).toEqual(['Explore', 'Trending', 'Create', 'Portfolio']);
     const Button = exports.Button as ((props: Record<string, unknown>) => unknown) | undefined;
     expect(typeof Button).toBe('function');
     const element = Button?.({ loading: true, children: 'Confirm' }) as ElementLike | undefined;
