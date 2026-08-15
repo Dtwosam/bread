@@ -58,6 +58,14 @@ jobs:
           path: apps/web/test-results/visual-reference/desktop-shell-1586x992.png
           if-no-files-found: warn
           retention-days: 7
+      - name: Upload Lane 2 mobile visual evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bread-ui-lane2-mobile-shell-${{ github.event.pull_request.head.sha || github.sha }}
+          path: apps/web/test-results/visual-reference/mobile-shell-390x844.png
+          if-no-files-found: warn
+          retention-days: 7
       - name: Verify E2E fixture restored canonical manifests
         if: always()
         run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json
