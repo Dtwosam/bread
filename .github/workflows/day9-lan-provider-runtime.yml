@@ -9,6 +9,7 @@ on:
       - "apps/indexer/src/lan/indexer-runner.ts"
       - "tests/day9/lan-runtime-provider-boundaries.test.ts"
       - "tests/day9/lan-runtime-timeout-splitting.test.ts"
+      - "tests/day9/lan-runtime-resume-state.test.ts"
       - "scripts/day9/lan/**"
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - "apps/indexer/src/lan/indexer-runner.ts"
       - "tests/day9/lan-runtime-provider-boundaries.test.ts"
       - "tests/day9/lan-runtime-timeout-splitting.test.ts"
+      - "tests/day9/lan-runtime-resume-state.test.ts"
       - "scripts/day9/lan/**"
   workflow_dispatch:
 
@@ -45,6 +47,7 @@ jobs:
           pnpm exec vitest run
           tests/day9/lan-runtime-provider-boundaries.test.ts
           tests/day9/lan-runtime-timeout-splitting.test.ts
+          tests/day9/lan-runtime-resume-state.test.ts
       - name: Check focused files are formatted
         run: >-
           pnpm exec prettier --check
@@ -52,3 +55,4 @@ jobs:
           apps/indexer/src/lan/chain-client.ts
           tests/day9/lan-runtime-provider-boundaries.test.ts
           tests/day9/lan-runtime-timeout-splitting.test.ts
+          tests/day9/lan-runtime-resume-state.test.ts
