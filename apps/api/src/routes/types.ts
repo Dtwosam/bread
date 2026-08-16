@@ -1,5 +1,6 @@
 import type {
   AlmostBakedRepository,
+  ExploreAgeReadRepository,
   ReadRepository,
   TrendingRepository,
 } from '../../../../packages/db/src/index.js';
@@ -19,6 +20,7 @@ export type BreadReadRouteDeps = Readonly<{
 }>;
 
 export type BreadFeedRouteDeps = BreadReadRouteDeps & Readonly<{
+  exploreAgeRepository: ExploreAgeReadRepository;
   almostBakedRepository: AlmostBakedRepository;
   trendingRepository: TrendingRepository;
 }>;
