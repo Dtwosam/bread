@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
+import arcTestnetManifest from '../../../../config/networks/arc-testnet.json';
 import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
 import { Button } from '@bread/ui';
 import { breadQueryKeys } from '../../lib/api/queries';
@@ -37,6 +38,11 @@ function remainingQuote(
   const reserve = BigInt(realQuoteReserve);
   const target = BigInt(graduationThreshold);
   return (target > reserve ? target - reserve : BigInt(0)).toString(10);
+}
+
+function graduatedVenueLabel(kind: string | null | undefined): string {
+  if (kind === 'UNISWAP_V3') return 'Uniswap V3';
+  return kind ?? '—';
 }
 
 function displayState(token: IndexedTokenDetail): 'Active' | 'Graduating' | 'Graduation pending' | 'Graduated' {
@@ -76,6 +82,13 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
   const graduationPhase = token.curveState?.graduationPhase ?? null;
   const poolId = token.curveState?.poolId ?? null;
   const positionLocked = token.curveState?.positionLocked ?? null;
+  const positionManager = token.curveState?.positionManager ?? null;
+  const positionManagerAddress = positionManager && ADDRESS.test(positionManager)
+    ? positionManager as Address
+    : null;
+  const positionManagerHref = positionManagerAddress
+    ? `${arcTestnetManifest.explorer}/address/${positionManagerAddress}`
+    : null;
   const accumulatedQuote = token.curveState?.realQuoteReserve ?? null;
   const remainingQuoteAmount = remainingQuote(accumulatedQuote, token.graduationThreshold);
   const tokenAddress = ADDRESS.test(token.tokenAddress) ? token.tokenAddress as Address : null;
@@ -177,11 +190,13 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
           </p>
         </div>
         <strong>
-          {state === 'Active' && percent !== null
-            ? `${percent.toFixed(1)}% baked`
-            : progressBps === null
-              ? '—'
-              : `${progressBps} bps`}
+          {state === 'Graduated'
+            ? graduatedVenueLabel(token.graduatedVenueKind)
+            : state === 'Active' && percent !== null
+              ? `${percent.toFixed(1)}% baked`
+              : progressBps === null
+                ? '—'
+                : `${progressBps} bps`}
         </strong>
       </div>
 
@@ -205,6 +220,44 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
               <dd>{formatUsdcBaseUnits(remainingQuoteAmount)}</dd>
             </div>
           </>
+        ) : state === 'Graduated' ? (
+          <>
+            <div>
+              <dt>Venue</dt>
+              <dd>{graduatedVenueLabel(token.graduatedVenueKind)}</dd>
+            </div>
+            <div>
+              <dt>Liquidity USDC</dt>
+              <dd>{formatUsdcBaseUnits(token.curveState?.usdcUsed ?? null)}</dd>
+            </div>
+            <div>
+              <dt>Pool ID</dt>
+              <dd>{poolId ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>Position manager</dt>
+              <dd>
+                {positionManagerHref && positionManagerAddress ? (
+                  <a
+                    href={positionManagerHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open position manager in Arcscan"
+                  >
+                    {positionManagerAddress}
+                  </a>
+                ) : positionManager ?? '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>Adapter</dt>
+              <dd>{token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>Permanent lock</dt>
+              <dd>{positionLocked === true ? 'Indexed locked' : 'Not yet indexed locked'}</dd>
+            </div>
+          </>
         ) : (
           <>
             <div>
@@ -215,24 +268,24 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
               <dt>Snapshotted target</dt>
               <dd>{formatUsdcBaseUnits(token.graduationThreshold)}</dd>
             </div>
+            <div>
+              <dt>Phase</dt>
+              <dd>{graduationPhase ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>Adapter</dt>
+              <dd>{token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>Pool</dt>
+              <dd>{poolId ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>Permanent-lock evidence</dt>
+              <dd>{positionLocked === null ? '—' : positionLocked ? 'Indexed locked' : 'Not yet indexed locked'}</dd>
+            </div>
           </>
         )}
-        <div>
-          <dt>Phase</dt>
-          <dd>{graduationPhase ?? '—'}</dd>
-        </div>
-        <div>
-          <dt>Adapter</dt>
-          <dd>{token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'}</dd>
-        </div>
-        <div>
-          <dt>Pool</dt>
-          <dd>{poolId ?? '—'}</dd>
-        </div>
-        <div>
-          <dt>Permanent-lock evidence</dt>
-          <dd>{positionLocked === null ? '—' : positionLocked ? 'Indexed locked' : 'Not yet indexed locked'}</dd>
-        </div>
       </dl>
 
       {eligible ? (
@@ -250,7 +303,9 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
       ) : null}
 
       <p className="bread-token-note">
-        Graduation and lock labels reflect indexed protocol events. Retry preparation re-reads authoritative onchain coordinator state before the wallet opens. Status labels are evidence, not a protocol security assessment.
+        {state === 'Graduated'
+          ? 'Venue, pool and permanent-lock status reflect indexed protocol evidence. Permanent lock is not a safety guarantee or protocol security assessment.'
+          : 'Graduation and lock labels reflect indexed protocol events. Retry preparation re-reads authoritative onchain coordinator state before the wallet opens. Status labels are evidence, not a protocol security assessment.'}
       </p>
     </section>
   );
