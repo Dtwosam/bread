@@ -2,6 +2,7 @@ import { canonicalizeProtocolAddress } from '../../../packages/protocol-sdk/src/
 
 export const NEW_FEED_CURSOR_VERSION = 1 as const;
 export const TRENDING_FEED_CURSOR_VERSION = 1 as const;
+export const ALMOST_BAKED_FEED_CURSOR_VERSION = 1 as const;
 export const GRADUATED_FEED_CURSOR_VERSION = 1 as const;
 export const TRADE_CURSOR_VERSION = 1 as const;
 export const HOLDER_CURSOR_VERSION = 1 as const;
@@ -33,6 +34,14 @@ export type TrendingFeedCursor = Readonly<{
   tradeCount1h: string;
   latestActivityBlockNumber: string;
   latestActivityLogIndex: number;
+  tokenAddress: string;
+}>;
+
+export type AlmostBakedFeedCursor = Readonly<{
+  version: number;
+  graduationProgressBps: string;
+  quoteVolume1h: string;
+  launchTimestamp: string;
   tokenAddress: string;
 }>;
 
@@ -202,6 +211,39 @@ export function encodeTrendingFeedCursor(input: Readonly<Record<string, unknown>
 export function decodeTrendingFeedCursor(input: string): TrendingFeedCursor {
   const cursor = normalizeTrendingFeedCursor(parseCursorJson(input));
   if (cursor.version !== TRENDING_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeAlmostBakedFeedCursor(input: Readonly<Record<string, unknown>>): AlmostBakedFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    graduationProgressBps: exactDecimal(input.graduationProgressBps, 'graduationProgressBps'),
+    quoteVolume1h: exactDecimal(input.quoteVolume1h, 'quoteVolume1h'),
+    launchTimestamp: exactDecimal(input.launchTimestamp, 'launchTimestamp'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeAlmostBakedFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeAlmostBakedFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    graduationProgressBps: cursor.graduationProgressBps,
+    quoteVolume1h: cursor.quoteVolume1h,
+    launchTimestamp: cursor.launchTimestamp,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeAlmostBakedFeedCursor(input: string): AlmostBakedFeedCursor {
+  const cursor = normalizeAlmostBakedFeedCursor(parseCursorJson(input));
+  if (cursor.version !== ALMOST_BAKED_FEED_CURSOR_VERSION) {
+    throw new Error(`unsupported cursor version: ${cursor.version}`);
+  }
   return cursor;
 }
 
