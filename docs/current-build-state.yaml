@@ -1,6 +1,6 @@
-schema_version: 1.75
+schema_version: 1.76
 project: Bread
-updated_at: 2026-08-15T22:03:00+01:00
+updated_at: 2026-08-16T09:45:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -13,6 +13,18 @@ source_pack:
     - 04A-product-information-architecture-user-journeys
     - 04D-ux-performance-accessibility-production-gates
   ui_detail_authority: Bread-UI-UX-v2-complete-interface-specification-v2.2.docx
+  current_slice_sources_reread:
+    - 00-bread-master-source-of-truth-v1.6
+    - Bread-UI-UX-v2-complete-interface-specification-v2.2
+    - 04A-product-information-architecture-user-journeys
+    - 04D-ux-performance-accessibility-production-gates
+    - 06B-interfaces-data-model-indexer-runtime-contracts
+    - 06C-exact-10-day-build-order-daily-gates-v1.6
+    - 06D-chatgpt-agent-execution-protocol-quality-gates-v1.5
+    - 06F-nested-lane-checkpoint-continuity-integration-gates-v1.4
+    - 06H-cross-chat-continuity-build-state-handoff-protocol-v1.4
+    - 06I-high-traffic-bot-burst-launch-stampede-scalability
+  per_slice_source_rule: "Before each new implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or the previous slice's source pass."
 
 legacy_ratifications:
   day4:
@@ -23,7 +35,7 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Lane 3 — Explore / TokenCard / filters READY"
+active_lane: "UI/UX v2.2 Lane 3 — Explore / TokenCard / filters IN PROGRESS — Baked Progress browser RED"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_ui_gate: UI_UX_V2_2_LANE3_IMPLEMENTATION
 day9_started: true
@@ -42,6 +54,10 @@ completed_checkpoints:
   - "Lane 2 Search-shell correction: RED 303f704b650d1596cd84c18026de9f091c2fcfa5 -> accepted GREEN 990dd5e9358cf23655cdc9ada45de650632002ae; Ctrl+K/Cmd+K + 16px search glyph, accessible Search name preserved."
   - "Lane 2 mobile-shell correction: RED 577a8305106a63a5ae410e1080e4392f5310cdb9 proved the 390x844 live strip was hidden while 26 other browser journeys passed. Production GREEN 83220005d2ae93755ec380abf4566a6929feeeee restores 56px mobile top -> truthful 36px strip -> page, retains persistent bottom nav, and adds exact mobile screenshot evidence."
   - "APPROVED_VISUAL_REFERENCE_RECONCILIATION PASS at accepted evidence head 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3. Evidence: docs/evidence/ui-v2-2-lane2-approved-visual-reference-reconciliation.md. Desktop 1586x992 artifact 9252919190; mobile 390x844 artifact 9252919323; exact-head root/browser/security/wallet/production/truthfulness regressions PASS."
+  - "Lane 3 Explore feed authority accepted: New uses backend launch order; Trending accepted at 8a1698f538be8b399e23bbcf461c089e572bb8fb; canonical Baked-progress projection repaired at cef4090679faa2ea59859d816e01fff13fbb12df; Almost Baked accepted at 723204b4be0eeaf759a2ca5c1c7e255a2f132ee3; Graduated accepted at e7171022979621935c142ba4e860453341c5da07. All four v2.2 tabs have backend-backed membership/order authority; no frontend ranking/classification is accepted."
+  - "Lane 3 Search interaction state accepted through keyboard result navigation, exact-contract labeling, compact contract identity, canonical creator attribution, focus containment/return, desktop shortcut and mobile full-height behavior. Search enrichment remains open where the indexed DTO does not project required market/holder/age/lifecycle/group/recent/trending data; missing values may not be fabricated."
+  - "Lane 3 Age filter accepted cross-layer: backend exact head 3e4330c6b1ced9678f2e90a5690ebb8b27193bcf; final UI/browser exact head 57d1636522790f11f810b5164f36c27431940fc8. Presets are <5m, <1h, 1–24h and 1–7d against committed indexed-head time; invalid values fail closed; feed URL context/chips/Reset are preserved without client membership filtering."
+  - "Lane 3 Holder filter accepted cross-layer at exact head 6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069. Inclusive indexed holder bounds apply across New/Trending/Almost Baked/Graduated; invalid/inverted values fail closed; Age/feed context and removable Holder + Age chips/Reset are preserved; no client-side holder filtering or raw-RPC fanout."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -53,8 +69,20 @@ integration_baseline:
   source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
+  ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  ui_current_code_bearing_head_before_handoff_sync: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  ui_current_code_state: "Baked Progress backend predicate repairs present; focused desktop/mobile browser RED added and verified; UI GREEN not yet implemented."
   ui_lane2_accepted_implementation_evidence_head: 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
   ui_lane2_last_production_shell_change: 83220005d2ae93755ec380abf4566a6929feeeee
+  ui_lane3_age_backend_head: 3e4330c6b1ced9678f2e90a5690ebb8b27193bcf
+  ui_lane3_age_final_head: 57d1636522790f11f810b5164f36c27431940fc8
+  ui_lane3_holder_accepted_head: 6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069
+  ui_lane3_baked_progress_projection_authority_head: cef4090679faa2ea59859d816e01fff13fbb12df
+  ui_lane3_baked_progress_initial_api_green_attempt: f4f42511dcb9ff1e46196754eeea75bd8177f692
+  ui_lane3_baked_progress_non_graduated_scope_repairs:
+    - b2e5109fd88e05dfe01842df696e11a390c29a75
+    - 4a18e532a5f431db5a280d148d02b902e1df5f1a
+  ui_lane3_baked_progress_browser_red_head: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -70,6 +98,9 @@ repository:
   active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
   ui_implementation_pr: 94
   ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
+  ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
+  ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  ui_implementation_code_head_at_reconciliation: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
   repository_status: REMOTE_GITHUB_VERIFIED_UI_BRANCH_ISOLATED_FROM_RUNNING_LAN_ENVIRONMENT
   day9_complete: false
   rc_tag_created: false
@@ -115,6 +146,29 @@ verification:
   lane2_mobile_artifact: 9252919323
   lane2_mobile_artifact_digest: sha256:e7f48c573b58f200f6d1ccd47fb58efe302d72576ad6a445f0e79598caaa306b
   lane2_mobile_png_sha256: 5431247887d0570d3ce69a110d8cedc0128db605cd28dcbf8a04301dd8672688
+  lane3_feed_new: BACKEND_LAUNCH_ORDER_ACCEPTED
+  lane3_feed_trending: PASS_AT_8a1698f538be8b399e23bbcf461c089e572bb8fb
+  lane3_baked_progress_projection_authority: PASS_AT_cef4090679faa2ea59859d816e01fff13fbb12df_REAL_QUOTE_RESERVE_OVER_SNAPSHOTTED_THRESHOLD_EXACT_BPS_CLAMP_10000
+  lane3_feed_almost_baked: PASS_AT_723204b4be0eeaf759a2ca5c1c7e255a2f132ee3
+  lane3_feed_graduated: PASS_AT_e7171022979621935c142ba4e860453341c5da07
+  lane3_search_interactions: ACCEPTED_RECORDED_IN_PR94_HISTORY_ENRICHMENT_GAPS_REMAIN_OPEN
+  lane3_age_filter: PASS_BACKEND_3e4330c6b1ced9678f2e90a5690ebb8b27193bcf_UI_57d1636522790f11f810b5164f36c27431940fc8
+  lane3_holder_filter: PASS_AT_6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069
+  lane3_holder_root_ci: PASS_RUN_31936379347
+  lane3_holder_indexed_read_boundary: PASS_RUN_31936379250
+  lane3_holder_primary_browser: PASS_RUN_31936379233
+  lane3_holder_cross_browser_probe: PASS_RUN_31936379273
+  lane3_holder_hot_launch_capacity: PASS_RUN_31936379268
+  lane3_holder_day9_recovery: PASS_RUN_31936379275
+  lane3_holder_release_browser_matrix: PASS_RUN_31936379318
+  lane3_baked_progress_backend_initial_red: FAIL_EXPECTED_RUN_31936685449_MISSING_PREDICATE
+  lane3_baked_progress_first_api_green_attempt: FAIL_RUN_31936872188_AT_f4f42511dcb9ff1e46196754eeea75bd8177f692
+  lane3_baked_progress_scope_repair: "v2.2 says Baked progress is a 0–100% range for bonding tokens; b2e5109 + 4a18e53 keep the predicate scoped to non-graduated launches and do not turn percentage into lifecycle state."
+  lane3_baked_progress_backend_current_postgres: PASS_RUN_31937084816_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  lane3_baked_progress_current_root_ci: PASS_RUN_31937084774_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  lane3_baked_progress_current_hot_launch_capacity: PASS_RUN_31937084807_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  lane3_baked_progress_browser_red: "EXPECTED_FAIL run 31937084805 job 95140600497 at a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913: desktop+mobile Chromium wait for missing accessible label 'Baked progress min'; Playwright summary 2 failed / 43 passed / 19 skipped."
+  lane3_baked_progress_acceptance: NOT_PASS_BROWSER_RED_ACTIVE
 
 lan_acceptance:
   status: PASS
@@ -151,7 +205,7 @@ ui_ux_v2_2:
   vercel_preview_status: "CONNECTOR_TEAM_AVAILABLE_BUT_NO_BREAD_PROJECT_CONFIGURED; no preview evidence fabricated."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Lane 3 — Explore / TokenCard / filters READY_NOT_STARTED"
+  current_lane: "Lane 3 — Explore / TokenCard / filters IN_PROGRESS_BAKED_PROGRESS_BROWSER_RED"
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
@@ -168,13 +222,37 @@ ui_ux_v2_2:
     - DESKTOP_SEARCH_SHORTCUT_AND_GLYPH
     - MOBILE_56_TOP_36_LIVE_64_BOTTOM_COMPOSITION
     - MOBILE_390_NO_HORIZONTAL_OVERFLOW_OR_CONTROL_LABEL_CLIPPING
+  accepted_lane3_behaviors:
+    - BACKEND_BACKED_NEW_FEED_AUTHORITY
+    - BACKEND_BACKED_TRENDING_FEED_AUTHORITY
+    - BACKEND_BACKED_ALMOST_BAKED_FEED_AUTHORITY
+    - BACKEND_BACKED_GRADUATED_FEED_AUTHORITY
+    - SEARCH_INTERACTIONS_ACCEPTED_WITH_INDEXED_ENRICHMENT_GAPS_EXPLICITLY_OPEN
+    - AGE_FILTER_BACKEND_BACKED_WITH_URL_CHIPS_RESET
+    - HOLDER_FILTER_BACKEND_BACKED_WITH_URL_CHIPS_RESET
+  baked_progress_contract:
+    user_facing_unit: PERCENT_0_TO_100
+    canonical_projection: graduation_progress_bps
+    canonical_projection_unit: BPS_0_TO_10000
+    applies_to: BONDING_NON_GRADUATED_TOKENS
+    lifecycle_independence: "Progress percentage is not lifecycle classification; do not infer New/Active/Almost Baked/Processing/Graduated thresholds from this filter."
+    ui_transport_rule: "UI may convert user-entered percent to exact bps query bounds; server remains membership authority."
+    current_state: RED_VERIFIED_UI_CONTROL_MISSING
+  unresolved_filter_sort_gaps:
+    market_cap_filter_sort: "OPEN — token_metrics.market_cap exists but current trade projection writes NULL and no source-backed market-cap formula is confirmed; do not invent."
+    volume_24h_filter_sort: "OPEN — existing 24h metric snapshots require indexed-head freshness repair before they can be treated as deterministic trailing-24h authority."
+    lifecycle_filter: "PARTIALLY_BLOCKED — v2.2 names New / Active / Almost Baked / Processing / Graduated but no source-backed New cutoff or Active-vs-Almost-Baked threshold is confirmed; do not invent."
+    creator_filter: "OPEN — must use canonical onchain creator wallet identity, not creator fee-recipient metadata."
+    baked_progress_filter: "IN_PROGRESS_RED — backend predicate/projection path is present and browser RED is verified; UI GREEN/evidence still required."
+    baked_progress_sort: "OPEN — separate future slice after current filter acceptance and a fresh relevant Project Source read."
+    other_required_sorts: "OPEN — Newest, market cap, volume, holders; Trending remains a feed/tab, not a hidden sort formula."
   visual_findings_open: []
   intentional_differences:
     - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's earlier full-canvas x32 content origin at 1586px. Do not widen code to imitate conflicting concept geometry; sync Figma later."
     - "Approved-reference sample live movers/trades/volume are not reproduced until reliable Bread indexed data supports them; current status-only strip is intentionally truthful rather than fabricated."
-    - "Explore card/feed body remains pre-v2.2 until Lane 3 and was intentionally excluded from Lane-2 shell reconciliation."
+    - "Explore card/feed body has advanced through accepted feed authority, Search, Age and Holder slices; remaining filter/sort gaps stay explicit and Lane 3 remains open."
     - "The Next.js development indicator visible at bottom-left in Playwright captures is a non-product test-harness overlay and is excluded from Bread UI comparison."
-  intentional_scope_boundary: "Lane 2 PASS covers global shell/navigation only. Explore card/feed composition begins in Lane 3."
+  intentional_scope_boundary: "Lane 3 remains OPEN until all required source-backed Explore filters/sorts and integrated API/UI/browser evidence are accepted; blocked semantics remain explicit rather than fabricated."
 
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
@@ -187,7 +265,7 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 2 is complete; continue ratified redesign Lane 3 onward with tests, rendered QA, accessibility/performance evidence and exact-head CI."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 3 remains open. Accepted feeds/Search/Age/Holder are retained; Baked Progress is at verified browser RED; remaining filters/sorts and final affected evidence remain required."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
@@ -201,7 +279,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_DESKTOP_AND_MOBILE_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Begin UI/UX v2.2 Lane 3 from the accepted Lane-2 baseline using small RED -> GREEN slices. First reconcile the Explore discovery surface only: written v2.2 requires first-viewport real tokens, tabs New / Trending / Almost Baked / Graduated, calm progressive filters, and TokenCard information hierarchy with creator attribution visible at first glance. Do not implement the whole page in one sweep. Start with a focused failing source/browser test for the first independently reviewable Explore behavior, preserve the existing indexed API/query semantics and no-per-card-RPC architecture, then make the minimum implementation change and run focused + adjacent browser/CI regressions. Figma MCP is currently rate-limited; because the written design and approved reference are frozen, use the recorded fallback path without inventing new design decisions and queue synchronization for when writable Figma access returns. Keep /tmp/bread-synthra-fork-proof untouched.
+  Continue the current Baked Progress filter RED -> GREEN from code-bearing head a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913 after this handoff-only synchronization commit. The verified browser RED is the missing accessible Baked progress min/max UI. Implement only the minimum v2.2 control needed to expose a user-facing 0–100% bonding-token range, translate exact percent bounds to the existing backend graduation_progress_bps query contract, preserve existing view + Age + Holder URL/filter context, expose removable active state and Reset, and render only server-selected membership. Do not derive lifecycle from percentage. Then run focused desktop/mobile browser GREEN, focused PostgreSQL/API proof, adjacent Explore/Search/indexed-read regressions, type/build/static checks, 04D-relevant browser/accessibility/production gates, affected 06I 10k hot-launch/load regression, recovery/browser matrix and exact-head root CI. Baked Progress remains NOT PASS until all required exact-head evidence is green. Before starting any subsequent slice such as Baked Progress sort, re-read its relevant Project Sources first. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
@@ -209,3 +287,5 @@ do_not_do:
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
   - "Do not fabricate performance, physical-device, Vercel, contract/config, market or live-state evidence."
+  - "Do not mark Baked Progress PASS while the verified browser RED remains or before focused + adjacent + required browser/load/CI evidence is green on one exact head."
+  - "Do not use Baked progress percentage to invent lifecycle thresholds or classify graduated tokens; v2.2 defines this range for bonding tokens."
