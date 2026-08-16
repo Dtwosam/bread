@@ -15,6 +15,7 @@ const FEED_AGES = new Set(['lt5m', 'lt1h', '1h-24h', '1d-7d']);
 const ADDRESS_LIKE = /^0x/i;
 const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
 const DECIMAL_INTEGER = /^\d+$/;
+const EXACT_QUOTE_INTEGER = /^\d{1,78}$/;
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -29,6 +30,8 @@ export type FeedParams = Readonly<{
   progressMinBps?: string;
   progressMaxBps?: string;
   creator?: string;
+  volumeMinQuote?: string;
+  volumeMaxQuote?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -90,6 +93,30 @@ function parseBps(value: string | undefined, label: string): number | undefined 
   return parsed;
 }
 
+function canonicalInteger(value: string): string {
+  return value.replace(/^0+(?=\d)/, '');
+}
+
+function compareCanonicalIntegers(left: string, right: string): number {
+  const a = canonicalInteger(left);
+  const b = canonicalInteger(right);
+  if (a.length !== b.length) return a.length < b.length ? -1 : 1;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function assertQuoteBounds(min: string | undefined, max: string | undefined): void {
+  if (min !== undefined && !EXACT_QUOTE_INTEGER.test(min)) {
+    throw new RangeError('volumeMinQuote must be a non-negative integer quote amount.');
+  }
+  if (max !== undefined && !EXACT_QUOTE_INTEGER.test(max)) {
+    throw new RangeError('volumeMaxQuote must be a non-negative integer quote amount.');
+  }
+  if (min !== undefined && max !== undefined && compareCanonicalIntegers(min, max) > 0) {
+    throw new RangeError('volumeMinQuote must not exceed volumeMaxQuote.');
+  }
+}
+
 function assertFeedParams(params: FeedParams): void {
   if (params.view !== undefined && !FEED_VIEWS.has(params.view)) {
     throw new RangeError('feed view is not supported.');
@@ -105,6 +132,7 @@ function assertFeedParams(params: FeedParams): void {
   if (params.creator !== undefined && !ADDRESS_SHAPE.test(params.creator)) {
     throw new RangeError('creator must be a valid address.');
   }
+  assertQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote);
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
 }
@@ -214,6 +242,8 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       addOptional(params, 'progressMinBps', input.progressMinBps);
       addOptional(params, 'progressMaxBps', input.progressMaxBps);
       addOptional(params, 'creator', input.creator);
+      addOptional(params, 'volumeMinQuote', input.volumeMinQuote);
+      addOptional(params, 'volumeMaxQuote', input.volumeMaxQuote);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);
