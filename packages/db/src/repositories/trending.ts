@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
+import type { ExploreProgressBounds } from './explore-progress.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type TrendingLaunchCursorKey = Readonly<{
@@ -102,6 +103,31 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
   } as const;
 }
 
+function progressClauses(bounds: ExploreProgressBounds | undefined) {
+  if (!bounds) {
+    return {
+      joinClause: sql``,
+      knownClause: sql``,
+      minClause: sql``,
+      maxClause: sql``,
+    } as const;
+  }
+  return {
+    joinClause: sql`INNER JOIN token_metrics progress_metric
+      ON progress_metric.chain_id = launch_scope.chain_id
+     AND progress_metric.token_address = launch_scope.token_address`,
+    knownClause: sql`AND progress_metric.graduation_progress_bps IS NOT NULL`,
+    minClause:
+      bounds.minBps === undefined
+        ? sql``
+        : sql`AND progress_metric.graduation_progress_bps >= CAST(${bounds.minBps} AS numeric)`,
+    maxClause:
+      bounds.maxBps === undefined
+        ? sql``
+        : sql`AND progress_metric.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
+  } as const;
+}
+
 export class TrendingRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -114,6 +140,7 @@ export class TrendingRepository {
     cursor?: TrendingLaunchCursorKey,
     ageBounds?: ExploreAgeBounds,
     holderBounds?: ExploreHolderBounds,
+    progressBounds?: ExploreProgressBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -121,6 +148,7 @@ export class TrendingRepository {
     const canonicalFactory = factoryAddress.toLowerCase();
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const holder = holderClauses(holderBounds);
+    const progress = progressClauses(progressBounds);
     const cursorClause = cursor
       ? sql`AND (
           r.quote_volume_1h < CAST(${cursor.quoteVolume1h} AS numeric)
@@ -160,6 +188,7 @@ export class TrendingRepository {
           ON launch_scope.chain_id = t.chain_id
          AND launch_scope.token_address = t.token_address
         ${holder.joinClause}
+        ${progress.joinClause}
         WHERE t.chain_id = ${chainId}
           AND t.stack_version = ${stackVersion}
           AND launch_scope.stack_version = ${stackVersion}
@@ -170,6 +199,9 @@ export class TrendingRepository {
           ${holder.knownClause}
           ${holder.minClause}
           ${holder.maxClause}
+          ${progress.knownClause}
+          ${progress.minClause}
+          ${progress.maxClause}
           AND t.block_timestamp IS NOT NULL
           AND t.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
           AND t.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
