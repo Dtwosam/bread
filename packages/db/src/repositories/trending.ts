@@ -4,6 +4,7 @@ import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
+import type { ExploreVolumeBounds } from './explore-volume.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type TrendingLaunchCursorKey = Readonly<{
@@ -140,6 +141,33 @@ function creatorClause(creatorAddress: string | undefined) {
     : sql`AND launch_scope.deployer_address = ${creatorAddress}`;
 }
 
+function volumeClauses(bounds: ExploreVolumeBounds | undefined, headTimestamp: bigint) {
+  if (!bounds) {
+    return { joinClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  }
+  const cutoffTimestamp = headTimestamp > 86_400n ? headTimestamp - 86_400n : 0n;
+  return {
+    joinClause: sql`LEFT JOIN LATERAL (
+      SELECT COALESCE(SUM(volume_trade.quote_amount), 0) AS quote_volume_24h
+      FROM trades volume_trade
+      WHERE volume_trade.chain_id = l.chain_id
+        AND volume_trade.token_address = l.token_address
+        AND volume_trade.stack_version = l.stack_version
+        AND volume_trade.block_timestamp IS NOT NULL
+        AND volume_trade.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
+        AND volume_trade.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
+    ) volume24 ON TRUE`,
+    minClause:
+      bounds.minQuote === undefined
+        ? sql``
+        : sql`AND COALESCE(volume24.quote_volume_24h, 0) >= CAST(${bounds.minQuote} AS numeric)`,
+    maxClause:
+      bounds.maxQuote === undefined
+        ? sql``
+        : sql`AND COALESCE(volume24.quote_volume_24h, 0) <= CAST(${bounds.maxQuote} AS numeric)`,
+  } as const;
+}
+
 export class TrendingRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -154,6 +182,7 @@ export class TrendingRepository {
     holderBounds?: ExploreHolderBounds,
     progressBounds?: ExploreProgressBounds,
     creatorAddress?: string,
+    volumeBounds?: ExploreVolumeBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -163,6 +192,7 @@ export class TrendingRepository {
     const holder = holderClauses(holderBounds);
     const progress = progressClauses(progressBounds);
     const creator = creatorClause(creatorAddress);
+    const volume24 = volumeClauses(volumeBounds, headTimestamp);
     const cursorClause = cursor
       ? sql`AND (
           r.quote_volume_1h < CAST(${cursor.quoteVolume1h} AS numeric)
@@ -294,7 +324,10 @@ export class TrendingRepository {
        AND l.token_address = r.token_address
        AND l.stack_version = ${stackVersion}
        AND l.factory_address = ${canonicalFactory}
+      ${volume24.joinClause}
       WHERE true
+        ${volume24.minClause}
+        ${volume24.maxClause}
         ${cursorClause}
       ORDER BY
         r.quote_volume_1h DESC,
