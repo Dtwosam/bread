@@ -219,7 +219,7 @@ describe.skipIf(!RUN_DB)('Day 6 Explore holder-count filters', () => {
     await app.close();
   });
 
-  it('applies inclusive canonical graduation-progress bps bounds before pagination on every Explore view', async () => {
+  it('applies inclusive canonical graduation-progress bps bounds only to non-graduated launches before pagination', async () => {
     const dbModule = await import('../../packages/db/src/index.ts');
     const apiModule = await import('../../apps/api/src/server.ts');
     const app = apiModule.createBreadApi({
@@ -242,11 +242,13 @@ describe.skipIf(!RUN_DB)('Day 6 Explore holder-count filters', () => {
         graduating: [activeLow],
         graduated: [],
       },
+      // Graduated rows retain a historical 10_000-bps metric, but v2.2 scopes
+      // the Baked Progress filter to bonding/non-graduated token surfaces.
       'progressMinBps=10000': {
-        new: [graduatedMid, graduatedHigh],
+        new: [],
         trending: [],
         graduating: [],
-        graduated: [graduatedHigh, graduatedMid],
+        graduated: [],
       },
     } as const;
 
