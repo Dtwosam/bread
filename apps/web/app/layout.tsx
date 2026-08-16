@@ -12,6 +12,7 @@ import { WalletButton } from '../components/wallet/wallet-button';
 import './globals.css';
 import './shell-v2.css';
 import './portfolio-creator.css';
+import './secondary.css';
 import './wallet.css';
 
 const inter = Inter({
@@ -34,7 +35,7 @@ function WatchlistShellControl() {
       className="bread-header__watchlist"
       aria-label="Watchlist"
       disabled
-      title="Watchlist will be enabled in the Portfolio and watchlist lane."
+      title="Watchlist is unavailable until Bread has an indexed watchlist data source."
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="m12 3.7 2.5 5.06 5.58.81-4.04 3.94.95 5.56L12 16.45l-4.99 2.62.95-5.56-4.04-3.94 5.58-.81L12 3.7Z" />
