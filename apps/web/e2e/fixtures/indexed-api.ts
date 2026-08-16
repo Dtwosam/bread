@@ -212,6 +212,7 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     name: item.name,
     symbol: item.symbol,
     matchKind,
+    ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
   };
 }
 
