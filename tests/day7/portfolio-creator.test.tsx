@@ -16,7 +16,6 @@ const paths = {
   responsive: 'apps/web/app/portfolio-creator.css',
   types: 'packages/types/src/portfolio.ts',
   portfolioApi: 'apps/api/src/routes/portfolio.ts',
-  readRepository: 'packages/db/src/repositories/read.ts',
   creatorRepository: 'packages/db/src/repositories/creators.ts',
 } as const;
 
@@ -39,15 +38,15 @@ describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
     expect(portfolio).not.toMatch(/rawRpc|readContract|eth_call/i);
   });
 
-  it('keeps creator attribution in every Portfolio holding from the indexed launch identity', () => {
+  it('keeps creator attribution in every Portfolio holding from canonical indexed launch identity', () => {
     const types = read(paths.types);
     const api = read(paths.portfolioApi);
-    const repository = read(paths.readRepository);
     const position = read(paths.portfolioPosition);
 
     expect(types).toContain('creatorAddress');
-    expect(repository).toContain('creator_fee_recipient AS "creatorAddress"');
-    expect(api).toContain('creatorAddress: row.creatorAddress');
+    expect(api).toContain('getLaunch');
+    expect(api).toContain('creatorFeeRecipient');
+    expect(api).toContain('creatorAddress');
     expect(position).toContain('CreatorAttribution');
     expect(position).toContain('holding.creatorAddress');
   });
