@@ -39,6 +39,7 @@ export function TradePanel({
   slippageBps,
   review,
   reviewRoute,
+  quoteNeedsRefresh,
   spendableBalance,
   tokenSymbol,
   transactionState,
@@ -52,6 +53,7 @@ export function TradePanel({
   onPreset,
   onConnectionAction,
   onReview,
+  onRefreshQuote,
   onSubmit,
 }: Readonly<{
   action: TradeAction;
@@ -59,6 +61,7 @@ export function TradePanel({
   slippageBps: number;
   review: TradeReview | null;
   reviewRoute: CanonicalTradeRoute | null;
+  quoteNeedsRefresh: boolean;
   spendableBalance: bigint | null;
   tokenSymbol: string | null;
   transactionState: TransactionState;
@@ -72,6 +75,7 @@ export function TradePanel({
   onPreset: (preset: Preset) => void;
   onConnectionAction: () => void;
   onReview: () => void;
+  onRefreshQuote: () => void;
   onSubmit: () => void;
 }>) {
   const presets: readonly Preset[] = action === 'BUY' ? ['$25', '$50', '$100', 'MAX'] : ['25%', '50%', '75%', 'MAX'];
@@ -96,18 +100,22 @@ export function TradePanel({
       ? 'Connect wallet'
       : connectionStatus === 'WRONG_NETWORK'
         ? 'Switch to Arc'
-        : review
-          ? reviewedActionLabel
-          : `Review ${actionLabel}`;
+        : quoteNeedsRefresh
+          ? 'Refresh Quote'
+          : review
+            ? reviewedActionLabel
+            : `Review ${actionLabel}`;
   const primaryAriaLabel = routeUnavailable
     ? 'Trading unavailable while graduation completes'
     : connectionStatus === 'DISCONNECTED'
       ? 'Connect wallet'
       : connectionStatus === 'WRONG_NETWORK'
         ? 'Switch wallet to Arc Testnet'
-        : review
-          ? `${reviewedActionLabel} after reviewing current values`
-          : `Review ${actionLabel.toLowerCase()}`;
+        : quoteNeedsRefresh
+          ? 'Refresh Quote'
+          : review
+            ? `${reviewedActionLabel} after reviewing current values`
+            : `Review ${actionLabel.toLowerCase()}`;
 
   return (
     <div className="bread-trade-panel">
@@ -210,7 +218,7 @@ export function TradePanel({
         variant={action === 'BUY' ? 'buy' : 'sell'}
         disabled={busy || routeUnavailable || (walletReady && amount.trim() === '')}
         ariaLabel={primaryAriaLabel}
-        onClick={walletReady ? (review ? onSubmit : onReview) : onConnectionAction}
+        onClick={walletReady ? (quoteNeedsRefresh ? onRefreshQuote : review ? onSubmit : onReview) : onConnectionAction}
       >
         {primaryLabel}
       </Button>
