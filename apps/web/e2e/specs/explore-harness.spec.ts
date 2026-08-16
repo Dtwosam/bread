@@ -114,6 +114,7 @@ test('Explore Age filter is backend-backed, preserves view context, and resets c
   await expect(page).toHaveURL(/\/explore\?view=trending&age=lt5m$/);
   await expect(page.getByRole('button', { name: 'Age: <5m' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reset filters' })).toBeVisible();
+  await expect(page.getByText('Bread Twin')).toHaveCount(1);
   await expect(page.getByRole('link', { name: 'Graduated' })).toHaveAttribute(
     'href',
     '/explore?view=graduated&age=lt5m',
