@@ -19,12 +19,14 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
   it('reserves the exact v2.2 TokenCard image slot and keeps age in the identity cluster', () => {
     const card = read('../../apps/web/components/token-card.tsx');
     const client = read('../../apps/web/components/explore/explore-client.tsx');
-    const css = read('../../apps/web/app/globals.css');
+    const css = read('../../apps/web/app/explore-search-v2.css');
+    const layout = read('../../apps/web/app/layout.tsx');
 
     expect(card).toContain('bread-token-card__image');
     expect(card).toContain('indexedThroughBlockTimestamp');
     expect(card).toContain('formatIndexedAge');
     expect(client).toContain('indexedThroughBlockTimestamp={latestMeta?.indexedThroughBlockTimestamp ?? null}');
+    expect(layout).toContain("import './explore-search-v2.css';");
     expect(css).toMatch(/\.bread-token-card__image\s*\{[^}]*width:\s*48px;[^}]*height:\s*48px;/s);
     expect(css).toMatch(/@media \(max-width:\s*767px\)[\s\S]*?\.bread-token-card__image\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/s);
   });
