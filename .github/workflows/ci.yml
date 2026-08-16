@@ -116,7 +116,7 @@ jobs:
         env:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
-        run: pnpm exec vitest run tests/day6/db-schema.test.ts tests/day6/db-schema-contract.test.ts tests/day6/launch-vertical.test.ts tests/day6/feed-cursor-db.test.ts
+        run: pnpm exec vitest run tests/day6/db-schema.test.ts tests/day6/db-schema-contract.test.ts tests/day6/launch-vertical.test.ts tests/day6/feed-cursor-db.test.ts tests/day6/almost-baked-feed-db.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
