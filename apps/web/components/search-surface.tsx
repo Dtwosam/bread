@@ -37,8 +37,16 @@ function formatSearchAge(ageSeconds: string | null): string | null {
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
+function searchLifecycleLabel(state: IndexedSearchResult['lifecycleState']): string | null {
+  if (state === 'PROCESSING') return 'Graduating';
+  if (state === 'GRADUATION_PENDING') return 'Graduation pending';
+  if (state === 'GRADUATED') return 'Graduated';
+  return null;
+}
+
 function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>) {
   const age = formatSearchAge(result.ageSeconds);
+  const lifecycle = searchLifecycleLabel(result.lifecycleState);
   return (
     <a
       className="bread-search-result"
@@ -51,6 +59,7 @@ function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>)
         <CreatorAttribution creatorAddress={result.deployerAddress} />
         {age === null ? null : <span>Age {age}</span>}
         {result.holderCount === null ? null : <span>{result.holderCount} holders</span>}
+        {lifecycle === null ? null : <span>{lifecycle}</span>}
       </span>
       <span>
         {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
