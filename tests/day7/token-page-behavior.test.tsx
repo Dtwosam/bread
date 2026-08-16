@@ -47,7 +47,7 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(identity).toContain('{token.tokenAddress}');
     expect(identity).not.toContain('shortAddress(token.tokenAddress)');
     expect(stats).toContain('Market cap');
-    expect(stats).toContain('24h change');
+    expect(stats).toContain('Trades');
     expect(stats.match(/—/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
