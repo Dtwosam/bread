@@ -1,6 +1,6 @@
-schema_version: 1.85
+schema_version: 1.86
 project: Bread
-updated_at: 2026-08-16T15:01:00+01:00
+updated_at: 2026-08-16T14:42:18Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -37,7 +37,7 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Token header canonical creator attribution + primary indexed Holder stat ACCEPTED; next Token/Trade slice not started; Explore/Search Lane 3 remains OPEN with recorded source/security blockers"
+active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Token creator attribution, primary indexed Holder stat, and active-token reserve-backed baked progress ACCEPTED; Processing/Pending/Graduated and other Token/Trade sub-surfaces remain; Explore/Search Lane 3 remains OPEN with recorded source/security blockers"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_ui_gate: UI_UX_V2_2_TOKEN_TRADE_IMPLEMENTATION
 day9_started: true
@@ -69,6 +69,8 @@ accepted_state:
     canonical_creator_attribution: PASS_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
     primary_indexed_holder_stat: PASS_AT_5ca948568e7b5c24f652ef2fb5beaba979c1abbd
     holder_stat_handoff: docs/handoffs/ui-v2-2-token-holder-count-5ca9485.md
+    active_graduation_baked_progress: PASS_AT_01c6c10ac357453d77e942ff667ba026671dea1a_REAL_QUOTE_RESERVE_AUTHORITY
+    active_graduation_handoff: docs/handoffs/ui-v2-2-token-active-graduation-01c6c10.md
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -81,9 +83,9 @@ integration_baseline:
   ui_pr_state: OPEN_DRAFT_UNMERGED
   ui_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_current_code_bearing_head: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
-  ui_current_code_state: "Token creator attribution and primary indexed Holder stat accepted; Token/Trade major lane remains in progress."
-  handoff_parent_after_holder_acceptance_record: 68654f8758b27e41464ee7e5fd0c680502d83148
+  ui_current_code_bearing_head: 01c6c10ac357453d77e942ff667ba026671dea1a
+  ui_current_code_state: "Token creator attribution, primary indexed Holder stat, and active reserve-backed baked progress accepted; Token/Trade major lane remains in progress."
+  handoff_record_head_after_active_graduation: 0141f6ca793acd5ac59a6a8433923a7bbaa12bb8
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
@@ -101,7 +103,7 @@ repository:
   ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
   ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_code_head_at_reconciliation: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
+  ui_implementation_code_head_at_reconciliation: 01c6c10ac357453d77e942ff667ba026671dea1a
   day9_complete: false
   rc_tag_created: false
   day10_started: false
@@ -112,20 +114,31 @@ verification:
   token_holder_root_ci: PASS_RUN_31951696034
   token_holder_token_page: PASS_RUN_31951696011
   token_holder_primary_browser: PASS_RUN_31951696072
-  token_holder_trade_lifecycle: PASS_RUN_31951696044
-  token_holder_wallet_network: PASS_RUN_31951696069
-  token_holder_explore_search: PASS_RUN_31951696051
-  token_holder_indexed_read: PASS_RUN_31951696077
-  token_holder_shared_types: PASS_RUN_31951696057
-  token_holder_production_gates: PASS_RUN_31951696012
-  token_holder_frontend_security: PASS_RUN_31951696070
-  token_holder_rebuild_reconcile: PASS_RUN_31951696043
   token_holder_cross_browser: PASS_RUN_31951696038
   token_holder_hot_launch_10k: PASS_RUN_31951696067
-  token_holder_service_rollback: PASS_RUN_31951696025
   token_holder_day9_recovery: PASS_RUN_31951696015
   token_holder_release_browser_matrix: PASS_RUN_31951696062
-  token_holder_day9_truthfulness: PASS_RUN_31951696019_PHYSICAL_BLOCKER_RETAINED
+  active_graduation_red_head: 71c2ba3ce4731bfd761abda5a25daedba3cbaaec
+  active_graduation_static_red_parent: b8c5d7b62c2b8eb860b346c1d498c1d90d799b19
+  active_graduation_accepted_code_head: 01c6c10ac357453d77e942ff667ba026671dea1a
+  active_graduation_root_ci: PASS_RUN_31953224240
+  active_graduation_token_page: PASS_RUN_31953224252
+  active_graduation_primary_browser: PASS_RUN_31953224253
+  active_graduation_trade_lifecycle: PASS_RUN_31953224223
+  active_graduation_wallet_network: PASS_RUN_31953224238
+  active_graduation_explore_search: PASS_RUN_31953224231
+  active_graduation_indexed_read: PASS_RUN_31953224236
+  active_graduation_shared_types: PASS_RUN_31953224235
+  active_graduation_production_gates: PASS_RUN_31953224257
+  active_graduation_frontend_security: PASS_RUN_31953224208
+  active_graduation_rebuild_reconcile: PASS_RUN_31953224215
+  active_graduation_cross_browser: PASS_RUN_31953224193
+  active_graduation_hot_launch_10k: PASS_RUN_31953224248
+  active_graduation_service_rollback: PASS_RUN_31953224226
+  active_graduation_failure_recovery: PASS_RUN_31953224195
+  active_graduation_day9_recovery: PASS_RUN_31953224198
+  active_graduation_release_browser_matrix: PASS_RUN_31953224242
+  active_graduation_day9_truthfulness: PASS_RUN_31953224221_PHYSICAL_BLOCKER_RETAINED
   day9_verdict: INCOMPLETE
 
 unresolved_earlier_lane_blockers:
@@ -150,7 +163,8 @@ major_lane_tracking:
 lane4_token_trade_completion_tracking:
   token_header_creator_attribution: COMPLETE
   primary_holder_stat: COMPLETE
-  active_token_treatment: OPEN
+  active_token_treatment: IN_PROGRESS_PARTIAL
+  active_token_graduation_baked_progress: COMPLETE
   graduation_pending_processing_variants: OPEN
   graduated_token_treatment: OPEN
   chart_surface: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
@@ -189,7 +203,7 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade is in progress; later major lanes and final responsive/accessibility/performance/browser evidence remain."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade is in progress; Processing/Pending/Graduated treatment, other Token/Trade sub-surfaces, later major lanes and final responsive/accessibility/performance/browser evidence remain."
   EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Lane 3 stays open until market-cap, sort, full lifecycle, Search image proxy policy and Recent/Trending Search semantics are implemented from authority or resolved through the proper source-decision process."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
@@ -204,7 +218,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Do not begin another implementation slice from memory. First verify this handoff against the live PR #94 branch, then re-read the relevant ratified v2.2 Token/Trade section(s), 04A/04D, 06B/06D/06F/06H and 06I where performance/load may be affected, plus the exact owning interfaces. Select the next missing Token/Trade behavior only if its semantics and data authority are source-backed. Write and verify the expected RED before production code, implement the minimum GREEN, then run focused + adjacent + type/build + responsive/browser/accessibility/performance + affected 06I load and exact-head CI as required. Preserve explicit completion tracking for graduated-token treatment, mobile trading, degraded/loading/error/recovery, wallet/network, responsive, accessibility, performance and final visual/browser evidence. Keep Explore/Search Lane 3 open until its blockers are authoritatively resolved. Keep /tmp/bread-synthra-fork-proof untouched.
+  Do not begin another implementation slice from memory. First verify this handoff against the live PR #94 branch, then perform a fresh read of the ratified v2.2 Token graduation-state variants, 04A/04D, 06B/06D/06F/06H and 06I where performance/load may be affected, plus the exact GraduationModule/Token DTO/browser fixtures. A likely next source-backed slice is Processing/Pending graduation treatment, but it must be bounded so accepted active baked progress, transaction recovery and graduated routing are not reopened. Write and verify the expected RED before production code, implement the minimum GREEN, then run focused + adjacent + type/build + responsive/browser/accessibility/performance + affected 06I load and exact-head CI as required. Preserve separate tracking for graduated-token treatment, mobile trading, degraded/loading/error/recovery, wallet/network, responsive, accessibility, performance and final visual/browser evidence. Keep Explore/Search Lane 3 open until its blockers are authoritatively resolved. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
@@ -212,7 +226,7 @@ do_not_do:
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, final performance/load or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in a UI slice without a separate source/impact review."
   - "Do not fabricate market cap, movement, lifecycle, sort, image-security, Recent/Trending Search, performance, physical-device, Vercel, contract/config or live-state evidence."
-  - "Do not reopen accepted Lane 1/2, accepted Lane-3 sub-slices, Token creator attribution or Token Holder stat without a demonstrated regression."
+  - "Do not reopen accepted Lane 1/2, accepted Lane-3 sub-slices, Token creator attribution, Token Holder stat or active reserve-backed baked progress without a demonstrated regression."
   - "Do not substitute creator fee-recipient metadata for canonical onchain creator/deployer identity."
   - "Do not substitute token_metrics.quote_volume_24h for the accepted committed-head trailing-trade Explore filter authority."
   - "Do not infer New/Active/Almost-Baked or other undefined lifecycle categories from age or baked progress."
