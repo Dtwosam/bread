@@ -39,7 +39,7 @@ function remainingQuote(
   return (target > reserve ? target - reserve : BigInt(0)).toString(10);
 }
 
-function displayState(token: IndexedTokenDetail): 'Active' | 'Processing' | 'Graduation pending' | 'Graduated' {
+function displayState(token: IndexedTokenDetail): 'Active' | 'Graduating' | 'Graduation pending' | 'Graduated' {
   if (token.curveState?.positionLocked === true) return 'Graduated';
   if (token.curveState?.graduationFailureReasonHash) return 'Graduation pending';
   const graduationPhase = token.curveState?.graduationPhase;
@@ -47,7 +47,7 @@ function displayState(token: IndexedTokenDetail): 'Active' | 'Processing' | 'Gra
     token.curveState?.readyToGraduate ||
     (graduationPhase !== null && graduationPhase !== undefined && graduationPhase !== 'NOT_GRADUATED')
   ) {
-    return 'Processing';
+    return 'Graduating';
   }
   return 'Active';
 }
@@ -64,10 +64,7 @@ function recoveryCopy(token: IndexedTokenDetail): string {
   if (token.curveState?.graduationFailureReasonHash) {
     return 'Your completed trade remains confirmed. Automatic graduation did not complete. The next permissionless graduation step can be retried from fresh onchain coordinator state.';
   }
-  if (token.curveState?.graduationPhase === 'SWEPT') {
-    return 'The curve sweep is complete. The next permissionless step can create and permanently lock the canonical liquidity position.';
-  }
-  return 'The curve is complete. Graduation can be advanced permissionlessly from fresh onchain coordinator state.';
+  return 'The bonding curve is complete. Liquidity creation is in progress. Completed trades remain confirmed. The next permissionless graduation step re-reads fresh onchain coordinator state before the wallet opens.';
 }
 
 export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail }>) {
@@ -162,12 +159,12 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
     }
   }
 
-  const recoveryLabel = runtime?.connectionStatus === 'DISCONNECTED'
-    ? 'Connect wallet to retry'
-    : runtime?.connectionStatus === 'WRONG_NETWORK'
-      ? 'Switch to Arc'
-      : graduationPhase === 'SWEPT'
-        ? 'Continue graduation'
+  const recoveryLabel = state === 'Graduating'
+    ? 'Continue graduation'
+    : runtime?.connectionStatus === 'DISCONNECTED'
+      ? 'Connect wallet to retry'
+      : runtime?.connectionStatus === 'WRONG_NETWORK'
+        ? 'Switch to Arc'
         : 'Retry graduation';
 
   return (
