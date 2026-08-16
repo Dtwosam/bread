@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
+import type { ExploreAgeBounds } from './explore-age.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AlmostBakedLaunchCursorKey = Readonly<{
@@ -55,6 +56,21 @@ function optionalBigInt(value: string | null): bigint | null {
   return value === null ? null : decimalIntegerToBigInt(value);
 }
 
+function launchAgeClauses(bounds: ExploreAgeBounds | undefined) {
+  if (!bounds) return { minClause: sql``, maxClause: sql`` } as const;
+  const min = bounds.minLaunchTimestamp;
+  const minClause =
+    min === undefined
+      ? sql``
+      : bounds.minInclusive
+        ? sql`AND l.launch_timestamp >= CAST(${min} AS numeric)`
+        : sql`AND l.launch_timestamp > CAST(${min} AS numeric)`;
+  const maxClause = bounds.maxInclusive
+    ? sql`AND l.launch_timestamp <= CAST(${bounds.maxLaunchTimestamp} AS numeric)`
+    : sql`AND l.launch_timestamp < CAST(${bounds.maxLaunchTimestamp} AS numeric)`;
+  return { minClause, maxClause } as const;
+}
+
 export class AlmostBakedRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -65,11 +81,13 @@ export class AlmostBakedRepository {
     indexedHeadTimestamp: string,
     limit: number,
     cursor?: AlmostBakedLaunchCursorKey,
+    ageBounds?: ExploreAgeBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
     const cutoffTimestamp = headTimestamp > 3_600n ? headTimestamp - 3_600n : 0n;
     const canonicalFactory = factoryAddress.toLowerCase();
+    const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const cursorClause = cursor
       ? sql`AND (
           r.graduation_progress_bps < CAST(${cursor.graduationProgressBps} AS numeric)
@@ -122,6 +140,8 @@ export class AlmostBakedRepository {
           AND l.stack_version = ${stackVersion}
           AND l.factory_address = ${canonicalFactory}
           AND l.launch_timestamp IS NOT NULL
+          ${minClause}
+          ${maxClause}
           AND m.graduation_progress_bps IS NOT NULL
           AND COALESCE(s.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'
       )
