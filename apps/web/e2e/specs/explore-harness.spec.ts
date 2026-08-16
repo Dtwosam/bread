@@ -50,6 +50,30 @@ test('Explore Trending view renders only backend-projected trailing-window membe
   expect(rawRpcRequests).toEqual([]);
 });
 
+test('Explore Almost Baked view renders only backend-projected non-graduated membership', async ({ page }) => {
+  const state = createIndexedApiFixtureState();
+  const rawRpcRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().startsWith(ARC_TESTNET_RPC)) rawRpcRequests.push(request.url());
+  });
+  await installIndexedApiRoutes(page, state);
+
+  await page.goto('/explore?view=graduating');
+
+  const feedNav = page.getByRole('navigation', { name: 'Explore feed' });
+  await expect(feedNav.getByRole('link', { name: 'Almost Baked' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Bread Twin')).toHaveCount(2);
+  await expect(page.getByText('Bread Locked')).toHaveCount(0);
+  expect(
+    state.requests.some((request) => {
+      const url = new URL(request);
+      return url.pathname === '/v1/feed' && url.searchParams.get('view') === 'graduating';
+    }),
+  ).toBe(true);
+  expect(rawRpcRequests).toEqual([]);
+});
+
 test('Explore Graduated view renders only canonical graduated feed membership', async ({ page }) => {
   const state = createIndexedApiFixtureState();
   const rawRpcRequests: string[] = [];
