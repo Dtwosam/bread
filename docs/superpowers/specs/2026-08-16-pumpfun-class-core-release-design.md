@@ -1,311 +1,243 @@
-# Bread Pump.fun-Class Core Release Closure Design
+# Bread UI/UX v2.2 Source-Conformance Release Closure
 
-**Status:** APPROVED DIRECTION — written specification pending final user review
+**Status:** SOURCE-DERIVED IMPLEMENTATION NOTE — NON-AUTHORITATIVE
 
 **Date:** 2026-08-16
 
-**Scope:** Close the remaining Bread UI/UX v2.2 software lanes to a competitive launchpad release standard without changing protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction, or financial ledgers.
+**Purpose:** Close remaining Bread UI/UX v2.2 software lanes by implementing the existing ratified Project Sources literally. This file does not create product, protocol, market-data, storage, ranking, lifecycle, or financial semantics.
 
-## 1. Product Goal
+## 1. Authority
 
-Bread should ship a fast, understandable launchpad loop:
+The implementation authority is the ratified Bread Project Source pack, not this repository note and not competitor behavior.
 
-1. discover a token,
-2. understand its identity, creator, market state, and lifecycle,
-3. buy or sell with explicit transaction consequences,
-4. create a token through a staged review flow,
-5. monitor holdings and creator revenue,
-6. repeat the loop comfortably on desktop and mobile.
+Controlling hierarchy for this closure:
 
-The target is **Pump.fun-class core usability**, not feature-for-feature cloning. Bread keeps its own Arc/USDC architecture, protocol semantics, information architecture, and visual identity.
+1. `00-bread-master-source-of-truth-v1.6` — top-level scope, protocol/security/release authority.
+2. `Bread-UI-UX-v2-complete-interface-specification-v2.2` — detailed visual/component/page/responsive UI authority after v1.6 ratification.
+3. `04A-product-information-architecture-user-journeys` — core product jobs, routes, required page content and journeys.
+4. `04D-ux-performance-accessibility-production-gates` — performance, accessibility, transaction recovery, metadata security, browser/device and production gates.
+5. `06B-interfaces-data-model-indexer-runtime-contracts` — canonical cross-layer identities, indexed/read boundaries and shared interface rules.
+6. `06D-chatgpt-agent-execution-protocol-quality-gates` — source-first RED -> GREEN implementation workflow and stop conditions.
+7. `06H-cross-chat-continuity-build-state-handoff-protocol` and the current `CURRENT-BUILD-STATE` — workflow position and continuation state only; they do not replace product/protocol semantics.
 
-## 2. Non-Goals
+Where sources are silent, conflicting, or require an authority that the repository does not yet expose, implementation stops and reports the gap. It must not invent a substitute.
 
-This closure does not add livestreaming, voice/social rooms, reputation scores, automated trading modes, speculative ranking systems, or new protocol economics.
+## 2. Pump.fun Benchmark Boundary
 
-It does not invent missing source authority. Unknown or unavailable values remain visibly unavailable until a canonical source exists.
+The v2.2 source itself states that **Pump.fun-level simplicity and personality is the minimum bar, not the final target**. That is the only role of the Pump.fun comparison in this closure.
 
-It does not weaken the existing `PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED` release gate or fabricate device evidence.
+It does **not** authorize copying Pump.fun features, ranking, economics, media/storage choices, social systems, lifecycle vocabulary, analytics, or interaction semantics.
 
-## 3. Search and Discovery Closure
+The same v2.2 source explicitly requires Bread to keep its own visual identity and forbids cloning a competitor. Therefore every implementation decision below comes from Bread sources or existing canonical Bread repository authority.
 
-### 3.1 Recent searches
+## 3. No-Drift Rule
 
-Recent searches are a local-device convenience only.
+The v2.2 written specification is to be followed literally. Implementation may not improvise alternate colors, spacing, hierarchy, creator prominence, page structure, interaction states, financial fields, breakpoints, or copy conventions.
 
-- Store at most 8 unique normalized search entries.
-- Order newest first.
-- Re-selecting an existing entry moves it to the front rather than duplicating it.
-- Users can remove an individual entry and clear all entries.
-- Do not sync recent searches to a wallet, account, API, analytics system, or blockchain.
-- If browser storage is unavailable or blocked, Search continues to function normally without recents.
+04A and 04D remain controlling and are not weakened. Protocol economics, Arc/USDC rules, security invariants, transaction construction, adapter semantics, custody/admin authority and financial ledgers remain unchanged.
 
-### 3.2 Trending searches
+## 4. Search Closure
 
-Do not create a second ranking system for Search.
+Source-required Search behavior includes:
 
-- Search trending suggestions are derived from the same canonical backend-backed **Trending** token feed already used by Explore.
-- The Search UI may present a bounded subset of those authoritative Trending results as suggestions before a query is entered.
-- Search suggestion presentation must not alter Trending membership or ranking.
-- No browser-side popularity scoring, wallet telemetry, or fabricated search-frequency metric is introduced.
+- desktop command-style overlay and mobile full-height search surface,
+- exact contract match ranked first and explicitly labeled,
+- text queries beginning around two characters and immediate address-like search,
+- result groups: Exact match, Tokens, Creators/wallets, Recent searches, Trending searches,
+- token rows showing image, name/ticker, creator attribution, short contract, market cap, holders, age and lifecycle state,
+- duplicate names/tickers retaining contract identity,
+- creator-wallet results supporting creator-filtered discovery rather than a public reputation product,
+- keyboard up/down navigation, Enter open, Esc close and focus return.
 
-### 3.3 Exact identity and creator behavior
+### Search semantics that are not defined by current sources
 
-Retain accepted Search semantics:
+The current sources require `Recent searches` and `Trending searches` as groups, but do not define:
 
-- exact contract-address matches remain visually distinct,
-- creator identity is the canonical launch deployer identity,
-- `creator_fee_recipient` is not creator-search authority,
-- token and creator/wallet results remain grouped without changing backend membership or ranking.
+- Recent-search persistence/storage location,
+- retention count or expiry,
+- deduplication/removal semantics,
+- Search-specific trending ranking/window,
+- whether Search Trending must reuse the Explore Trending feed.
 
-## 4. Canonical Market Cap
+Therefore this closure must first inspect existing canonical repository behavior. If no already-authoritative implementation exists, those exact semantics remain a source gap and must not be invented in code.
 
-Market cap becomes a first-class indexed market metric, but it must have one canonical backend definition.
+The previously proposed `localStorage`, maximum-eight retention, and automatic reuse of the Explore Trending feed are withdrawn as implementation requirements because they are not stated by the controlling sources.
 
-### 4.1 Authority
+## 5. Explore, Token Cards and Market Cap
 
-The backend/indexed layer owns market-cap calculation and projection. React components do not independently calculate market cap.
+Source-required Explore behavior includes New, Trending, Almost Baked and Graduated feeds; indexed Trending authority; required filters/sorts as supported; first-viewport real tokens; stable card positions; and no paid placement disguised as organic Trending.
 
-For a token with authoritative price and supply inputs:
+Source-required TokenCard content includes token image, name/ticker/age, creator, market cap, movement, compact volume/holders, baked progress or graduated state, and at most one primary badge. Market cap and recent movement are the strongest data row.
 
-`marketCapQuote = canonicalTokenPriceInUSDC × canonicalCirculatingSupply`
+Market cap is also required on Search rows, Token detail, Creator launch rows and the relevant Explore controls.
 
-The implementation must use the repository's existing canonical fixed-point/base-unit conventions and must not introduce floating-point money arithmetic.
+### Market-cap authority boundary
 
-### 4.2 Lifecycle-aware supply source
+The sources require market cap to be displayed, but the source material reviewed for this closure does not define a new market-cap formula. `06B` establishes `token_metrics` as the derived market/activity projection and prohibits lanes from inventing private interpretations of shared interfaces.
 
-The calculation must consume the authoritative supply quantity already defined by the Bread protocol/indexer for the token's current lifecycle. If the repository does not expose a trustworthy circulating-supply input for a lifecycle state, market cap is `null` for that state rather than guessed.
+Therefore:
 
-### 4.3 Presentation
+- use an existing canonical indexed/repository market-cap definition if one is already present and source-conformant;
+- propagate that canonical value through shared types/API/UI where required;
+- if the repository does not contain an authoritative market-cap derivation, stop and record a source/interface gap;
+- do not introduce a new formula such as `price × circulating supply` merely because it is conventional.
 
-Market cap is projected through shared API types and reused by:
+The previous independent market-cap formula in this note is withdrawn.
 
-- Explore TokenCard,
-- Search result metadata where space permits,
-- Token detail primary stats,
-- Creator launch rows,
-- any future Stats aggregation that has reliable indexed authority.
+## 6. Token Media / Metadata
 
-Missing market cap renders `—`; it is never reconstructed client-side.
+Bread sources require token images across Explore, Search, Token, Create/Success, Portfolio and Creator contexts.
 
-## 5. Secure Token Media Pipeline
+04D additionally requires:
 
-A public launchpad needs real token imagery, but arbitrary user-controlled URLs must not become an SSRF or unsafe-media path.
+- token images to be resized/cached and delivered at appropriate dimensions,
+- image dimensions/aspect ratio reserved to prevent CLS,
+- token images/metadata treated as untrusted,
+- no arbitrary HTML rendering from metadata,
+- external URLs sanitized/normalized with javascript/data URL injection prevented,
+- malicious or unavailable token metadata/image behavior included in failure testing.
 
-### 5.1 Creation input
+06B separates sanitized display metadata from finance state.
 
-The Create flow supports an actual image selection/upload experience rather than pretending an arbitrary URL is a complete upload system.
+### Storage/upload authority boundary
 
-Allowed initial scope:
+The current sources require an image field in Create and safe image handling, but the reviewed sources do not select a storage provider, signed-upload protocol, file-size limit, MIME allowlist, SVG policy, or third-party media service.
 
-- common static web image formats supported by the selected storage/proxy implementation,
-- explicit file-size limit,
-- explicit MIME/type validation,
-- no SVG unless the existing security policy and sanitization path already permits it,
-- no executable or HTML content.
+Therefore implementation must reuse an already-approved repository/service boundary if one exists. If none exists, the production upload/storage mechanism remains a source/architecture gap. Do not choose a new provider or invent limits/policies in this lane.
 
-### 5.2 Storage boundary
+The previously proposed storage-provider selection, MIME/file-size policy and SVG rule are withdrawn as independent design requirements.
 
-The image-upload implementation must use an approved repository/service integration. If no approved storage provider or signed-upload boundary exists in the current project configuration, the production upload path remains gated and the UI must not silently substitute arbitrary remote URLs.
+## 7. Lifecycle Vocabulary
 
-The implementation plan must first inspect existing repository storage, deployment, and environment support before selecting the narrowest compatible provider path.
+Use the lifecycle/state vocabulary in v2.2 and the existing protocol/indexer authority. Do not replace it with a simplified three-state model.
 
-### 5.3 Canonical projection
+Source-backed UI states include, as supported by canonical state:
 
-Once accepted, token media is represented by a canonical indexed/API field. Consumer components render only that canonical field or a deterministic Bread placeholder.
+- Active with baked progress,
+- Almost Baked,
+- Graduating / Processing,
+- Graduation pending after failed auto-graduation,
+- Graduated,
+- any existing exceptional/rescued treatment already defined by protocol sources.
 
-Client components must not fetch arbitrary token metadata URLs to discover images.
+Explore lifecycle filtering is `New / Active / Almost Baked / Processing / Graduated` as supported.
 
-### 5.4 Failure behavior
+Lifecycle must not be inferred from age, market cap, volume, holders or a guessed threshold. Graduation must not be presented as an investment-safety guarantee.
 
-Bad, missing, unsupported, or failed media resolves to a stable placeholder without blocking discovery, trading, portfolio, or creator surfaces.
+The previous `Bonding / Graduating / Graduated` simplification is withdrawn.
 
-## 6. Lifecycle Vocabulary
+## 8. Token / Trade
 
-User-facing lifecycle labels remain intentionally small and deterministic:
+Retain the v2.2 Token/Trade requirements already implemented or still needing exact-head closure:
 
-- **Bonding** — token remains on the bonding path before graduation processing.
-- **Graduating** — canonical protocol/indexer state says graduation is being processed/pending.
-- **Graduated** — canonical successful pool-created/graduated state.
+- compact token identity with creator attribution and contract identity,
+- primary market stats where authoritative,
+- chart never blocking Buy/Sell,
+- baked/graduation module,
+- sticky desktop TradePanel and mobile persistent Buy/Sell actions/sheet,
+- visible expected output, minimum output, base fee, creator tax, opening tax, price impact and slippage,
+- exact opening-protection warning/cost,
+- current-estimation Buy MAX Arc gas reserve without changing ordinary balance display or Sell MAX semantics,
+- stale-review/quote invalidation before signing,
+- transaction hash persistence/recovery and explorer link,
+- truthful disconnected, wrong-network, RPC/indexer-degraded and route-changed states.
 
-Do not infer lifecycle from age, market cap, volume, holder count, or progress percentage.
+No transaction-construction, protocol-economic or financial-ledger semantics change here.
 
-Existing protocol-specific exceptional states continue to use their established source-backed treatment and are not relabeled as successful graduation.
+## 9. Create / Review / Success
 
-## 7. Core Surface Release Bar
+Implement only the source-defined staged Create/Review flow and fields.
 
-### 7.1 Explore
+Source-required Create content includes image, name, ticker, description, optional links, creator tax, buyback choice and optional initial buy. The mandatory Review presents fixed supply, quote currency, creator tax, buyback, initial buy, launch fee, graduation target, creator revenue wallet and permanent-liquidity-lock behavior. Final CTA is exactly `Launch` or `Launch & Buy` based on the prepared operation.
 
-A normal token card should surface, when canonically available:
+The v2.2 success state requires token image/name/ticker, creator attribution, contract address, View Token, Copy Link, Share, transaction status/hash and creator economics summary.
 
-- token image,
-- name and ticker,
-- canonical creator,
-- market cap,
-- age,
-- trailing 24h volume,
-- holder count,
-- bonding/graduation progress for applicable tokens,
-- lifecycle treatment.
+Prepared economics/config must be re-read where required and stale review values highlighted rather than silently accepted.
 
-Unknown fields remain quiet and explicit rather than fabricated.
+Do not expose protocol-only concepts to normal creators and do not invent a storage/upload mechanism beyond existing authority described in Section 6.
 
-### 7.2 Token / Trade
+## 10. Portfolio and Creator Dashboard
 
-The token page keeps trading visually dominant and exposes:
+Portfolio remains holdings-first and calm. Required values are shown only where reliable; PnL/average entry require complete trustworthy cost basis. Creator attribution stays secondary and Trade/value stays stronger.
 
-- token identity and canonical creator,
-- chart/activity surfaces already supported by canonical data,
-- market cap, holders, volume, and lifecycle/progress where available,
-- explicit Buy/Sell state,
-- current-balance semantics,
-- Buy MAX gas-reserve behavior already implemented,
-- exact prepared review values and opening-protection cost before signing,
-- stale-quote refresh and transaction explorer recovery behavior.
+Creator remains the creator's own operational dashboard, not a reputation product. Source-required summary/list fields include total earned, claimable USDC, active launches, locked buyback where applicable, token identity, `by you`, market cap, lifecycle, revenue and claim status. The claim panel must show exact claimable USDC and recipient before signature.
 
-No trade transaction-construction semantics change in this closure.
+Where a source-required value has no trustworthy current projection, do not fabricate it or derive it from unrelated fields.
 
-### 7.3 Create / Review / Success
+Canonical creator identity remains the onchain creator/deployer identity established by the current repository/source reconciliation, not the creator fee-recipient wallet.
 
-Retain the staged v2.2 structure:
+## 11. Secondary Routes and Failure States
 
-`Token → Economics → Review → Success`
+Retain the source-defined treatment:
 
-Finish the production-quality token image path described in Section 5 while retaining:
+- `/activity`: use reliable activity data only; do not invent fields when scope is limited,
+- `/stats`: platform statistics only from reliable indexed data,
+- `/docs`: readable 720-840px documentation shell with sticky desktop section nav and Geist Mono code/address blocks,
+- `/legal/terms`, `/legal/privacy`, `/legal/risks`: readable legal templates; do not fabricate approved legal content,
+- `/profile/:address`: minimal compatibility route or creator-filtered discovery; no reputation product,
+- 404: distinguish ordinary not-found from a valid-looking non-Bread launch address,
+- maintenance/error: distinguish website/API failure from onchain contract state.
 
-- canonical launch economics/config readback,
-- exact prepared review values,
-- stale-review change highlighting,
-- creator/deployer identity,
-- contract identity,
-- View Token, Copy Link, and sharing affordances.
+## 12. Accessibility, Performance and Security Gates
 
-### 7.4 Portfolio
+04D remains a release gate, not optional polish.
 
-Retain holdings as the primary surface. Show only reliable values:
+Required closure includes:
 
-- token identity/image,
-- canonical creator,
-- amount,
-- current value,
-- market movement only when a reliable indexed projection exists,
-- cost basis/PnL only when complete trustworthy inputs exist,
-- Trade action where tradeable,
-- recent indexed wallet activity.
+- LCP target <=2.0s p75 and release ceiling <=2.5s,
+- INP target <=150ms p75 and release ceiling <=200ms,
+- CLS target <=0.05 and release ceiling <=0.10,
+- cached feed API p95 <=250ms,
+- token read API p95 <=350ms,
+- primary UI acknowledgement <=100ms,
+- quote refresh target <=500ms after input settles excluding wallet/RPC outages,
+- no per-card authoritative RPC fanout,
+- code-split secondary/chart/wallet-specific surfaces,
+- WCAG 2.2 AA target, keyboard access, visible focus, programmatic labels, live-region transaction status, reduced-motion support and non-color-only financial/status communication,
+- tested current Chrome/Edge, Safari, Firefox, iOS Safari, Android Chrome and explicitly claimed wallet-browser paths,
+- >=10,000-client hot-launch capacity gate with healthy read errors below 1% in the defined test,
+- malicious/unavailable token metadata/image, API/RPC failure, indexer delay and transaction recovery failure scenarios.
 
-### 7.5 Creator dashboard
+Performance or accessibility regressions block release even if the page looks better.
 
-Keep the creator dashboard operational rather than reputational:
+## 13. Implementation Workflow
 
-- total earned,
-- claimable USDC,
-- active launches when lifecycle coverage is complete,
-- launch identity/image,
-- canonical `by you` creator attribution,
-- market cap,
-- lifecycle,
-- revenue,
-- truthful claim status,
-- canonical FeeEscrow read/simulate/write/re-read claim flow.
+For every remaining implementation slice, follow 06D literally:
 
-Do not add creator reputation, trust scores, public history rankings, or fabricated per-launch outstanding claim allocation.
+1. read the relevant Project Sources and existing canonical interfaces,
+2. identify upstream/downstream consumers and affected regressions,
+3. write the focused failing test,
+4. verify the failure represents the missing source-required behavior,
+5. implement the minimum source-conformant change,
+6. run focused tests,
+7. run adjacent/regression tests,
+8. review the diff against the sources,
+9. run type/static/lint/build checks,
+10. commit one coherent change,
+11. run the required integrated exact-head verification before calling the lane complete.
 
-### 7.6 Secondary routes
+Stop instead of improvising when source docs conflict, a required public interface is undefined, a dependency differs from assumptions, or an architecture/security decision would be required.
 
-Retain truthful limited-source behavior for `/activity`, `/stats`, legal pages, profile compatibility, 404, and maintenance/error states.
+## 14. Lane Closure and Final Candidate
 
-- Global Activity is populated only if a reliable platform-wide indexed projection exists.
-- Stats are populated only from reliable indexed aggregates.
-- Legal pages do not fabricate approved legal copy.
-- `/profile/:address` remains a compatibility path rather than a reputation product.
-- Frontend/read-service failures stay clearly distinct from onchain contract state.
+Do not mark a lane complete merely because its component tests pass. The implementation plan and 06D require the continuously integrated system and affected journeys to remain green.
 
-## 8. Mobile and Accessibility Standard
+On the final unified candidate, rerun the affected root CI, indexed/API/read tests, Explore/Search, Token/Trade, Create, Portfolio/Creator, accessibility, production gates, frontend security, browser/Playwright, alternate-browser/release matrix, recovery/reconcile and 06I hot-launch/capacity evidence on one exact code-bearing head.
 
-Mobile is a first-class interaction target, not compressed desktop.
+`PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED` remains an independent Day-9 release gate. Software-lane completion does not fabricate or waive physical/current branded-device evidence.
 
-Closure requires:
+No RC tag is created and Day 10 does not begin until the controlling Day-9 gates allow it.
 
-- no horizontal overflow on supported mobile widths,
-- safe-area-aware sticky transaction/create controls,
-- full-height overlays/sheets that remain operable with mobile browser chrome,
-- keyboard-visible focus for all interactive controls,
-- logical tab order,
-- accessible names for icon-only controls,
-- sufficient hit targets,
-- no color-only state communication,
-- reduced-motion compatibility where animation exists,
-- error and pending states announced/readable without relying on transient visuals.
+## 15. Source-Gap Register for Remaining Closure
 
-Existing v2.2/04D accessibility and performance gates remain controlling where stricter.
+These are implementation blockers unless an already-authoritative repository path resolves them:
 
-## 9. Performance and Data-Access Rules
+- exact Recent-search persistence/retention/removal semantics,
+- exact Search-specific Trending-search semantics,
+- canonical market-cap derivation if not already defined by current indexed implementation,
+- approved token image upload/storage/provider contract if not already present,
+- any missing reliable global Activity/Stats aggregation,
+- approved legal Terms/Privacy/Risk copy,
+- any required production/mainnet economics/config/Arc values that remain externally gated.
 
-- No per-card or per-result raw-RPC fanout.
-- Discovery metrics come from indexed/backend projections.
-- Existing cache and pagination authority remains server-side.
-- Media loading must be bounded and resilient.
-- New Search recents use local browser storage only and must not delay initial Search usability.
-- Market-cap computation belongs in the indexed/backend data path, not repeated client-side.
-- Existing 10k hot-launch/capacity and recovery gates must be rerun on the final unified candidate.
-
-## 10. Error and Degraded-State Rules
-
-Every newly completed path must degrade truthfully:
-
-- missing canonical metric → `—`,
-- missing/bad image → deterministic placeholder,
-- local storage failure → Search works without recents,
-- Trending suggestion fetch failure → Search remains usable without suggestions,
-- API/read failure → state identifies website/read-service problem without implying an onchain state change,
-- pending transaction → explicit pending state until canonical re-read confirms outcome,
-- unknown lifecycle → do not infer a label from neighboring metrics.
-
-## 11. Testing and Lane Closure
-
-Every implementation slice follows repository RED → GREEN discipline.
-
-Required focused coverage includes:
-
-1. local recent-search persistence/deduplication/removal/failure fallback,
-2. Trending suggestions reuse authoritative Trending membership/order,
-3. canonical market-cap fixed-point calculation and null semantics,
-4. market-cap API/type/UI propagation without client recomputation,
-5. secure media validation and canonical projection/fallback behavior,
-6. lifecycle labels driven only by canonical state,
-7. desktop/mobile Search and Explore rendering,
-8. Token/Create/Portfolio/Creator regressions,
-9. accessibility keyboard/focus behavior,
-10. degraded/error behavior.
-
-After focused slices pass, one exact integrated head must run the affected root CI, production gates, frontend security, indexed read/API tests, Explore/Search, Token/Trade, Create, Portfolio/Creator, browser/Playwright, alternate-browser/release matrix, recovery/reconcile, and 10k hot-launch/capacity workflows.
-
-A software lane is only marked complete when its required integrated gates pass on the same code-bearing head.
-
-## 12. Release Boundary
-
-Software-lane completion does **not** by itself declare Day 9 complete.
-
-The following remain independent release gates:
-
-- genuine physical/current branded device evidence required by `PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED`,
-- approved production economics/runtime/mainnet values where still externally gated,
-- approved legal copy before a public legal representation is claimed,
-- any other explicitly retained source/security blocker that cannot be resolved from current repository authority.
-
-No RC tag is created and Day 10 does not begin until the controlling Day-9 release gates allow it.
-
-## 13. Implementation Order
-
-Close the release in this order so each step produces a usable, independently testable increment:
-
-1. Recent Search local persistence.
-2. Trending Search suggestions from the existing authoritative Trending feed.
-3. Canonical indexed market-cap authority and propagation.
-4. Secure token-media upload/projection after confirming an approved storage boundary.
-5. Lifecycle/metric presentation consolidation across Explore, Search, Token, Portfolio, and Creator.
-6. Responsive/accessibility/degraded-state regression fixes.
-7. One exact-head unified verification sweep.
-8. Mark software lanes complete only where exact-head evidence supports it.
-
-This order does not reopen already accepted behavior unless a regression or source conflict is demonstrated.
+A gap is not permission to design a new answer. It is a stop condition to be resolved through existing repository authority, an explicit source amendment, or an external dependency becoming available.
