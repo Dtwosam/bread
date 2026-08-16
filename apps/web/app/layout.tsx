@@ -13,6 +13,7 @@ import './globals.css';
 import './shell-v2.css';
 import './portfolio-creator.css';
 import './secondary.css';
+import './explore-search-v2.css';
 import './wallet.css';
 
 const inter = Inter({
