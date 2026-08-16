@@ -23,6 +23,8 @@ export type FeedAge = 'lt5m' | 'lt1h' | '1h-24h' | '1d-7d';
 export type FeedParams = Readonly<{
   view?: FeedView;
   age?: FeedAge;
+  holdersMin?: string;
+  holdersMax?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -183,6 +185,8 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       const params = new URLSearchParams();
       addOptional(params, 'view', input.view);
       addOptional(params, 'age', input.age);
+      addOptional(params, 'holdersMin', input.holdersMin);
+      addOptional(params, 'holdersMax', input.holdersMax);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);
