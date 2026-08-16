@@ -1,6 +1,6 @@
-schema_version: 1.84
+schema_version: 1.85
 project: Bread
-updated_at: 2026-08-16T14:18:00+01:00
+updated_at: 2026-08-16T15:01:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -10,10 +10,6 @@ source_pack:
     - 04B-visual-design-system-component-specification
     - 04C-page-by-page-responsive-specification
   remains_controlling:
-    - 04A-product-information-architecture-user-journeys
-    - 04D-ux-performance-accessibility-production-gates
-  ui_detail_authority: Bread-UI-UX-v2-complete-interface-specification-v2.2.docx
-  current_slice_sources_reread:
     - 00-bread-master-source-of-truth-v1.6
     - Bread-UI-UX-v2-complete-interface-specification-v2.2
     - 04A-product-information-architecture-user-journeys
@@ -26,6 +22,12 @@ source_pack:
     - 06I-high-traffic-bot-burst-launch-stampede-scalability
   per_slice_source_rule: "Before each new implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or the previous slice's source pass."
 
+history_preservation:
+  previous_living_yaml_schema: 1.84
+  previous_living_yaml_exact_snapshot: docs/handoffs/current-build-state-v1.84.yaml
+  previous_living_yaml_blob: 87d86386754fb9a395c17d5e3445ea2a18b44623
+  rule: "The exact v1.84 living handoff is archived unchanged. Detailed earlier RED/GREEN run history remains authoritative evidence in that snapshot, Git commits, PR #94 history and immutable handoff records; this compact current pointer does not revoke or rewrite any non-conflicting prior ratification, acceptance or blocker."
+
 legacy_ratifications:
   day4:
     pack: v1.4-day4-design
@@ -35,471 +37,131 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Token header canonical creator attribution ACCEPTED; next Token slice not started; Explore/Search Lane 3 remains open with recorded source/security blockers"
+active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Token header canonical creator attribution + primary indexed Holder stat ACCEPTED; next Token/Trade slice not started; Explore/Search Lane 3 remains OPEN with recorded source/security blockers"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_ui_gate: UI_UX_V2_2_TOKEN_TRADE_IMPLEMENTATION
 day9_started: true
 day9_rc_tag_created: false
+day10_started: false
 
-completed_checkpoints:
-  - "Days 1-8 integrated accepted baselines remain retained and closed except demonstrated regressions."
-  - "Project Source Pack v1.6 ratified; 04B/04C retired; 04A/04D remain controlling."
-  - "Day 9 LAN functional acceptance PASS — BREAD_LAN_ACCEPTANCE_READY."
-  - "UI/UX v2.2 Lane 1 — Foundations PASS at 0358b4d6b3e3d31baf23c18b92d743382e41b025."
-  - "Lane 2A primary navigation order + active-state contract: integrated GREEN 855c6c7; focused/root/truthfulness/browser/frontend-security PASS."
-  - "Lane 2B desktop header composition/geometry: RED a871a7a -> integrated safe GREEN c3f839d; 64px header, 1440px max inner width, centered flexible Search, watchlist shell slot and wallet proportions."
-  - "Lane 2 visual correction — canonical 20px nav icon character: RED feb76a7 -> GREEN 7c7d2a7."
-  - "Lane 2 visual correction — truthful live activity strip: RED 750affd -> GREEN 0829cf18c438ff7adcf31f41fddbf5a906bc9e50; no fabricated market metrics."
-  - "Lane 2 visual correction — Bread-specific brand mark: RED efd66d34fc83073b3da45fbef475a9192af69a44 -> GREEN 439ee0103b84d05aa5042942cc03ece9d50f1372."
-  - "Lane 2 Search-shell correction: RED 303f704b650d1596cd84c18026de9f091c2fcfa5 -> accepted GREEN 990dd5e9358cf23655cdc9ada45de650632002ae; Ctrl+K/Cmd+K + 16px search glyph, accessible Search name preserved."
-  - "Lane 2 mobile-shell correction: RED 577a8305106a63a5ae410e1080e4392f5310cdb9 proved the 390x844 live strip was hidden while 26 other browser journeys passed. Production GREEN 83220005d2ae93755ec380abf4566a6929feeeee restores 56px mobile top -> truthful 36px strip -> page, retains persistent bottom nav, and adds exact mobile screenshot evidence."
-  - "APPROVED_VISUAL_REFERENCE_RECONCILIATION PASS at accepted evidence head 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3. Evidence: docs/evidence/ui-v2-2-lane2-approved-visual-reference-reconciliation.md. Desktop 1586x992 artifact 9252919190; mobile 390x844 artifact 9252919323; exact-head root/browser/security/wallet/production/truthfulness regressions PASS."
-  - "Lane 3 Explore feed authority accepted: New uses backend launch order; Trending accepted at 8a1698f538be8b399e23bbcf461c089e572bb8fb; canonical Baked-progress projection repaired at cef4090679faa2ea59859d816e01fff13fbb12df; Almost Baked accepted at 723204b4be0eeaf759a2ca5c1c7e255a2f132ee3; Graduated accepted at e7171022979621935c142ba4e860453341c5da07. All four v2.2 tabs have backend-backed membership/order authority; no frontend ranking/classification is accepted."
-  - "Lane 3 Search interaction state accepted through keyboard result navigation, exact-contract labeling, compact contract identity, canonical creator attribution, focus containment/return, desktop shortcut and mobile full-height behavior. Search enrichment remains open where the indexed DTO does not project required market/holder/age/lifecycle/group/recent/trending data; missing values may not be fabricated."
-  - "Lane 3 Age filter accepted cross-layer: backend exact head 3e4330c6b1ced9678f2e90a5690ebb8b27193bcf; final UI/browser exact head 57d1636522790f11f810b5164f36c27431940fc8. Presets are <5m, <1h, 1–24h and 1–7d against committed indexed-head time; invalid values fail closed; feed URL context/chips/Reset are preserved without client membership filtering."
-  - "Lane 3 Holder filter accepted cross-layer at exact head 6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069. Inclusive indexed holder bounds apply across New/Trending/Almost Baked/Graduated; invalid/inverted values fail closed; Age/feed context and removable Holder + Age chips/Reset are preserved; no client-side holder filtering or raw-RPC fanout."
-  - "Lane 3 Baked Progress filter accepted cross-layer at exact code-bearing head f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9. The user-facing control is an inclusive 0–100% bonding-token range translated exactly to canonical graduation_progress_bps 0–10000; server-selected membership remains authoritative; view + Age + Holder context, removable chips and Reset are preserved; percentage is not used as lifecycle classification. Historical REDs, minimum GREEN, build-safe percent conversion, unique form identity and retained Age accessibility-selector regression were all resolved before one-head focused + adjacent + browser + 10k load + recovery + CI acceptance."
-  - "Lane 3 Creator wallet filter accepted cross-layer at exact code-bearing head 842f17b5c84c08d441e25c5d215188b884856b1a. Canonical creator identity is launches.deployer_address / LaunchCreated.deployer, explicitly distinct from creator_fee_recipient. The PostgreSQL RED fixture deliberately made one non-matching deployer pay creator fees to the target wallet so a fee-recipient implementation could not pass. Backend filtering applies before pagination/ranking in New, Trending, Almost Baked and Graduated; malformed addresses fail closed; creator is included in feed cache identity. The UI forwards the creator wallet, preserves feed + Age + Holder + Baked context, exposes a removable compact Creator chip + Reset, renders server-selected membership only, and performs no client-side creator filtering or raw-RPC fanout."
-  - "Lane 3 24h Volume filter accepted cross-layer at exact code-bearing head c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b. The public UI accepts human USDC and forwards exact canonical 6-decimal quote base-unit bounds as volumeMinQuote/volumeMaxQuote; backend membership uses timestamped trades in the trailing 24h window anchored to the committed indexed-through timestamp. A PostgreSQL fixture deliberately poisoned token_metrics.quote_volume_24h and placed a large trade one second outside the window so stale/cumulative metric authority could not pass. New, Trending, Almost Baked and Graduated apply inclusive bounds before pagination/ranking truncation. The UI preserves Age + Holder + Baked + Creator + feed context, chips/Reset, and performs no client-side volume filtering or raw-RPC fanout. A first UI GREEN exposed an unreachable Creator submit control after the added filter increased drawer height; the drawer was repaired with bounded viewport scrolling before final exact-head acceptance."
-  - "Lane 3 Search Age enrichment accepted cross-layer at exact code-bearing head d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec. Search age is derived server-side as max(0, committed indexedThroughBlockTimestamp - launchTimestamp) and exposed as ageSeconds; browser wall clock is never used. Future/skewed launch timestamps clamp to zero. The UI renders quiet compact age metadata (for example 125 seconds -> Age 2m) and explicitly does not infer New/Active/Almost Baked/Processing/Graduated lifecycle from age. The real PostgreSQL RED and desktop/mobile browser RED both failed only on the missing age contract before minimum GREEN; final exact-head API/type/build/browser/cross-browser/10k/recovery/rollback/release-matrix evidence is green."
-  - "Lane 3 Search Holder-count enrichment accepted cross-layer at exact code-bearing head ba5ad51202e2e4cecaea443151d2f864b47c48b7. Search LEFT JOINs canonical token_metrics.holder_count so missing metric rows remain searchable with holderCount=null; no result membership/ranking changes were introduced. The public Search DTO exposes holderCount and the UI renders it as quiet secondary metadata (for example 42 holders) while preserving accepted Search Age and zero raw-RPC fanout. The PostgreSQL RED explicitly proved both known=42 and unknown=null cases; desktop/mobile browser REDs failed only on the missing holder text while 51 retained journeys passed. Final exact-head API/type/build/browser/cross-browser/10k/recovery/rollback/release-matrix evidence is green."
-  - "Lane 3 Search canonical creator/wallet grouping accepted cross-layer at exact code-bearing head bfde729a031125884ef947b23225fbfdd0cd79fe. Address Search authority now matches canonical launches.deployer_address only; creator_fee_recipient remains metadata and is explicitly rejected as creator-search authority. Search presentation groups source-backed results into Exact match, Tokens and Creators / wallets without changing result membership, ranking, keyboard navigation or raw-RPC behavior. Recent searches and Trending searches remain intentionally absent because v2.2 names those groups but does not define persistence/ranking authority. PostgreSQL and desktop/mobile REDs failed only on fee-recipient leakage and missing group headings before minimum GREEN; final exact-head API/type/build/browser/cross-browser/10k/recovery/rollback/release-matrix evidence is green."
-  - "Lane 3 Search canonical graduation lifecycle subset accepted cross-layer at exact code-bearing head 31427500f71643124b59015765857eec2682e386. Search projects only states with source-backed graduation meaning: SWEPT -> PROCESSING -> UI 'Graduating'; failed ready-to-graduate NOT_GRADUATED with a recorded failure reason -> GRADUATION_PENDING -> UI 'Graduation pending'; POOL_CREATED -> GRADUATED -> UI 'Graduated'. Ordinary NOT_GRADUATED and RESCUED remain lifecycleState=null, so the implementation does not invent New/Active/Almost-Baked thresholds or a rescued marketing label. PostgreSQL and desktop/mobile REDs failed only on the absent lifecycle contract/label before minimum GREEN; final exact-head root/type/build/API/browser/cross-browser/10k/rollback/recovery/release-matrix evidence is green."
-  - "UI/UX v2.2 Token header canonical creator attribution accepted at exact head 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf. TokenIdentity now uses shared CreatorAttribution with token.deployerAddress / onchain creator wallet in the source-defined 13px token-header treatment and no longer presents creatorFeeRecipient as Creator. RED head f3473e432238fc7c4bea4ac5bb00dee4a831aab0 proved the old authority mismatch in both static owner and desktop/mobile browser tests. Initial GREEN c80e69ad1f7d3a3a308fc118ece183ccabf934c9 exposed only an over-specific whitespace assertion in the new browser test; production markup was left unchanged and the test was repaired to assert prefix/identity semantics separately. Final exact-head root/Token/trade/browser/cross-browser/10k/rollback/recovery/release-matrix evidence is green."
+accepted_state:
+  lane1_foundations: PASS_AT_0358b4d6b3e3d31baf23c18b92d743382e41b025
+  lane2_global_shell_navigation: PASS_WITH_FINAL_VISUAL_RECONCILIATION_AT_6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
+  lane3_status: OPEN_WITH_SOURCE_SECURITY_BLOCKERS
+  lane3_feed_authority:
+    new: BACKEND_LAUNCH_ORDER_ACCEPTED
+    trending: PASS_AT_8a1698f538be8b399e23bbcf461c089e572bb8fb
+    almost_baked: PASS_AT_723204b4be0eeaf759a2ca5c1c7e255a2f132ee3
+    graduated: PASS_AT_e7171022979621935c142ba4e860453341c5da07
+  lane3_filters:
+    age: PASS_FINAL_57d1636522790f11f810b5164f36c27431940fc8
+    holders: PASS_AT_6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069
+    baked_progress: PASS_AT_f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9_BONDING_ONLY
+    creator_wallet: PASS_AT_842f17b5c84c08d441e25c5d215188b884856b1a_CANONICAL_DEPLOYER
+    volume_24h: PASS_AT_c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b_COMMITTED_INDEXED_HEAD_TRAILING_WINDOW
+  lane3_search:
+    interactions: ACCEPTED
+    age: PASS_AT_d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec
+    holders: PASS_AT_ba5ad51202e2e4cecaea443151d2f864b47c48b7
+    exact_tokens_creator_wallet_groups: PASS_AT_bfde729a031125884ef947b23225fbfdd0cd79fe
+    canonical_graduation_lifecycle_subset: PASS_AT_31427500f71643124b59015765857eec2682e386
+  token_trade:
+    canonical_creator_attribution: PASS_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
+    primary_indexed_holder_stat: PASS_AT_5ca948568e7b5c24f652ef2fb5beaba979c1abbd
+    holder_stat_handoff: docs/handoffs/ui-v2-2-token-holder-count-5ca9485.md
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
   day9_branch: day9/synthra-arc-testnet-v3-candidate
-  active_pr: 93
-  active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
-  verified_code_bearing_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
-  source_hygiene_branch: docs/ui-v2-2-source-pack-hygiene
-  source_hygiene_lan_ratification_commit: bef5a114ff804e91eb5c2f5faf16497311a2fa77
-  ui_implementation_branch: agent/ui-ux-v2-2-implementation
-  ui_implementation_pr: 94
-  ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_lane2_accepted_implementation_evidence_head: 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
-  ui_lane2_last_production_shell_change: 83220005d2ae93755ec380abf4566a6929feeeee
-  ui_lane3_age_backend_head: 3e4330c6b1ced9678f2e90a5690ebb8b27193bcf
-  ui_lane3_age_final_head: 57d1636522790f11f810b5164f36c27431940fc8
-  ui_lane3_holder_accepted_head: 6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069
-  ui_lane3_baked_progress_projection_authority_head: cef4090679faa2ea59859d816e01fff13fbb12df
-  ui_lane3_baked_progress_initial_api_green_attempt: f4f42511dcb9ff1e46196754eeea75bd8177f692
-  ui_lane3_baked_progress_non_graduated_scope_repairs:
-    - b2e5109fd88e05dfe01842df696e11a390c29a75
-    - 4a18e532a5f431db5a280d148d02b902e1df5f1a
-  ui_lane3_baked_progress_browser_red_head: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  ui_lane3_baked_progress_ui_green_commits:
-    - 2a68403ea80c50bc15c7c553c58f11f8fbbf12ed
-    - 6cb6e115734505ade6827d95a6bdfac619b0a131
-    - d3e299730a68e8d067e43ea78071010972c5ec90
-  ui_lane3_baked_progress_build_compatibility_repair: 4d6072af8ba4133803d9f754103ac6c4cd057e93
-  ui_lane3_baked_progress_form_identity_repair: 7d12f5fee6bb277a3e0ade61f24253558e8049e9
-  ui_lane3_baked_progress_age_locator_repair: f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
-  ui_lane3_baked_progress_accepted_code_head: f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
-  ui_lane3_creator_backend_red_head: 8f3efcc527c338f1f8e2464b605fe0d7f1a52c58
-  ui_lane3_creator_backend_green_head: 9a5df8397a1da00aebd9f5edf0dddca4160f781a
-  ui_lane3_creator_browser_red_head: 8f6efbf27699dfe03f02d1e016ca366dd227fcdd
-  ui_lane3_creator_accepted_code_head: 842f17b5c84c08d441e25c5d215188b884856b1a
-  ui_lane3_volume_browser_red_head: c5e0c8c02518693b8f70082aa6781931e45119e9
-  ui_lane3_volume_backend_red_head: 037133ac60ef346b7038bc11a469acaf8599b73b
-  ui_lane3_volume_backend_green_head: c0807b117fa8f8dc25494161bcb5a0eda9c27e07
-  ui_lane3_volume_format_repair_head: 91e363b9ff47e89be076c72ba77f1b38996dcc94
-  ui_lane3_volume_initial_ui_green_head: 2a4e39848e0a9f6afab12f43def2866aa370ad33
-  ui_lane3_volume_final_drawer_repair_head: c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b
-  ui_lane3_volume_accepted_code_head: c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b
-  ui_lane3_search_age_test_head: 7a420a97f288039553b6118a8a8b974b9aae9995
-  ui_lane3_search_age_backend_green_head: 84d0bdc2480ff2d17847dbdcdcc44c84dcee9e73
-  ui_lane3_search_age_accepted_code_head: d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec
-  ui_lane3_search_holder_red_head: a5b8e834e21c2781b7083347053e25b6a6347ccb
-  ui_lane3_search_holder_accepted_code_head: ba5ad51202e2e4cecaea443151d2f864b47c48b7
-  ui_lane3_search_creator_grouping_red_head: 7bf1b6126d6a3aa90be80fc94de0bb37f127d88c
-  ui_lane3_search_creator_backend_green_head: 55d199c2cb7b6ba3c349e43703e8774e9ca23f35
-  ui_lane3_search_creator_grouping_accepted_code_head: bfde729a031125884ef947b23225fbfdd0cd79fe
-  ui_lane3_search_lifecycle_red_head: 25eb7650b98db184e7ba44d971df7674bac0dbe8
-  ui_lane3_search_lifecycle_backend_green_head: da8e26375937beb5fe4f51debd3e45f06d5cb387
-  ui_lane3_search_lifecycle_accepted_code_head: 31427500f71643124b59015765857eec2682e386
-  ui_token_creator_red_head: f3473e432238fc7c4bea4ac5bb00dee4a831aab0
-  ui_token_creator_initial_green_head: c80e69ad1f7d3a3a308fc118ece183ccabf934c9
-  ui_token_creator_accepted_head: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-  ui_current_code_bearing_head: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-  ui_current_code_state: "Token header canonical creator attribution ACCEPTED on exact code-bearing head. Token / Trade lane remains in progress; no subsequent Token implementation slice has started. Explore/Search Lane 3 remains open with recorded blockers."
-  ui_handoff_sync_parent_before_acceptance: 7c4bc9e3ea8e4448555d3712cfc912835563144c
-  ui_handoff_sync_parent_after_creator_acceptance: 842f17b5c84c08d441e25c5d215188b884856b1a
-  ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
-
-working_branches:
-  - day9/synthra-arc-testnet-v3-candidate
-  - docs/ui-v2-2-source-pack-hygiene
-  - agent/ui-ux-v2-2-implementation
-
-repository:
-  remote: https://github.com/Dtwosam/bread
-  default_branch: main
-  active_pr: 93
-  active_pr_state: OPEN_DRAFT_UNMERGED
-  active_pr_head: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_pr: 94
-  ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
-  ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
-  ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_code_head_at_reconciliation: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-  repository_status: REMOTE_GITHUB_VERIFIED_UI_BRANCH_ISOLATED_FROM_RUNNING_LAN_ENVIRONMENT
-  day9_complete: false
-  rc_tag_created: false
-  day10_started: false
-  ui_implementation_branch_created: true
-  local_ui_worktree_created: false
-
-verification:
-  retained_day9_root_ci: PASS_RUN_31894437375
-  retained_day9_final_rc_truthfulness: PASS_RUN_31894437405_PHYSICAL_BLOCKER_RETAINED
-  retained_day9_lan_provider_runtime: PASS_RUN_31894437319
-  retained_service_rollback: PASS_RUN_31847657797
-  retained_release_browser_matrix: PASS_RUN_31847657841
-  physical_android_auto_graduation_recovery: PASS_RETAINED_PARTIAL_DEVICE_EVIDENCE
-  bread_day9_rc1_tag_lookup: NOT_FOUND
-  day9_verdict: INCOMPLETE
-  lane1_foundations: PASS_AT_0358b4d6b3e3d31baf23c18b92d743382e41b025
-  lane2a_navigation_integrated_green: 855c6c7c0f08eb2bf03acb26e871f3ff9edf32f6
-  lane2b_header_integrated_green: c3f839d5f2b073e93fcf11981f107313813ed495
-  lane2_nav_icon_green: 7c7d2a7f3474fe1f5cb1d14ed981356320f1a7cd
-  lane2_live_strip_green: 0829cf18c438ff7adcf31f41fddbf5a906bc9e50
-  lane2_brand_green: 439ee0103b84d05aa5042942cc03ece9d50f1372
-  lane2_search_green: 990dd5e9358cf23655cdc9ada45de650632002ae
-  lane2_mobile_red: 577a8305106a63a5ae410e1080e4392f5310cdb9
-  lane2_mobile_green: 83220005d2ae93755ec380abf4566a6929feeeee
-  lane2_visual_reconciliation_evidence_head: 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
-  lane2_final_root_ci: PASS_RUN_31908014748
-  lane2_final_ui_foundation_shell: PASS_RUN_31908014633
-  lane2_final_explore_search: PASS_RUN_31908014663
-  lane2_final_wallet_network: PASS_RUN_31908014751
-  lane2_final_frontend_security: PASS_RUN_31908014708
-  lane2_final_production_gates: PASS_RUN_31908014701
-  lane2_final_primary_browser: PASS_RUN_31908014716
-  lane2_final_browser_matrix: PASS_RUN_31908014677
-  lane2_final_day9_truthfulness: PASS_RUN_31908014737
-  lane2_final_service_rollback: PASS_RUN_31908014637
-  lane2_final_recovery_drills: PASS_RUN_31908014646
-  lane2_desktop_viewport: 1586x992
-  lane2_desktop_artifact: 9252919190
-  lane2_desktop_artifact_digest: sha256:e98b4671c282d0a5f8627e9ef17567a9ce8b503d932ae71edaeb5c9da71a0f5f
-  lane2_desktop_png_sha256: c9197124221712c1409b0ff6c1a98571107ffc764253eb0798d4688dd76
-  lane2_mobile_viewport: 390x844
-  lane2_mobile_artifact: 9252919323
-  lane2_mobile_artifact_digest: sha256:e7f48c573b58f200f6d1ccd47fb58efe302d72576ad6a445f0e79598caaa306b
-  lane2_mobile_png_sha256: 5431247887d0570d3ce69a110d8cedc0128db605cd28dcbf8a04301dd8672688
-  lane3_feed_new: BACKEND_LAUNCH_ORDER_ACCEPTED
-  lane3_feed_trending: PASS_AT_8a1698f538be8b399e23bbcf461c089e572bb8fb
-  lane3_baked_progress_projection_authority: PASS_AT_cef4090679faa2ea59859d816e01fff13fbb12df_REAL_QUOTE_RESERVE_OVER_SNAPSHOTTED_THRESHOLD_EXACT_BPS_CLAMP_10000
-  lane3_feed_almost_baked: PASS_AT_723204b4be0eeaf759a2ca5c1c7e255a2f132ee3
-  lane3_feed_graduated: PASS_AT_e7171022979621935c142ba4e860453341c5da07
-  lane3_search_interactions: ACCEPTED_RECORDED_IN_PR94_HISTORY_ENRICHMENT_GAPS_REMAIN_OPEN
-  lane3_age_filter: PASS_BACKEND_3e4330c6b1ced9678f2e90a5690ebb8b27193bcf_UI_57d1636522790f11f810b5164f36c27431940fc8
-  lane3_holder_filter: PASS_AT_6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069
-  lane3_holder_root_ci: PASS_RUN_31936379347
-  lane3_holder_indexed_read_boundary: PASS_RUN_31936379250
-  lane3_holder_primary_browser: PASS_RUN_31936379233
-  lane3_holder_cross_browser_probe: PASS_RUN_31936379273
-  lane3_holder_hot_launch_capacity: PASS_RUN_31936379268
-  lane3_holder_day9_recovery: PASS_RUN_31936379275
-  lane3_holder_release_browser_matrix: PASS_RUN_31936379318
-  lane3_baked_progress_backend_initial_red: FAIL_EXPECTED_RUN_31936685449_MISSING_PREDICATE
-  lane3_baked_progress_first_api_green_attempt: FAIL_RUN_31936872188_AT_f4f42511dcb9ff1e46196754eeea75bd8177f692
-  lane3_baked_progress_scope_repair: "v2.2 says Baked progress is a 0–100% range for bonding tokens; b2e5109 + 4a18e53 keep the predicate scoped to non-graduated launches and do not turn percentage into lifecycle state."
-  lane3_baked_progress_backend_postgres_before_ui_green: PASS_RUN_31937084816_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  lane3_baked_progress_root_ci_before_ui_green: PASS_RUN_31937084774_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  lane3_baked_progress_hot_launch_before_ui_green: PASS_RUN_31937084807_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  lane3_baked_progress_browser_red: "EXPECTED_FAIL run 31937084805 job 95140600497 at a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913: desktop+mobile Chromium wait for missing accessible label 'Baked progress min'; Playwright summary 2 failed / 43 passed / 19 skipped."
-  lane3_baked_progress_minimum_ui_green: IMPLEMENTED_AT_d3e299730a68e8d067e43ea78071010972c5ec90
-  lane3_baked_progress_build_compatibility_red: "Root CI on d3e299730a68e8d067e43ea78071010972c5ec90 failed production build because frontend percentToBps used BigInt literals below the configured ES2020 target."
-  lane3_baked_progress_build_compatibility_repair: PASS_BUILD_SAFE_NUMBER_INTEGER_CONVERSION_AT_4d6072af8ba4133803d9f754103ac6c4cd057e93
-  lane3_baked_progress_adjacent_browser_red: "Primary/recovery browser harness on 7d12f5fee6bb277a3e0ade61f24253558e8049e9 proved the hardened exact getByLabel('Age') locator was invalid for the wrapping select label; Baked desktop/mobile tests themselves passed."
-  lane3_baked_progress_final_code_head: f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
-  lane3_baked_progress_final_root_ci: PASS_RUN_31938039759
-  lane3_baked_progress_final_postgres_api: PASS_RUN_31938039821
-  lane3_baked_progress_final_indexed_read_boundary: PASS_RUN_31938039860
-  lane3_baked_progress_final_explore_search: PASS_RUN_31938039927
-  lane3_baked_progress_final_production_gates: PASS_RUN_31938039903
-  lane3_baked_progress_final_frontend_security: PASS_RUN_31938039767
-  lane3_baked_progress_final_rebuild_reconcile: PASS_RUN_31938039749
-  lane3_baked_progress_final_primary_browser: PASS_RUN_31938039856
-  lane3_baked_progress_final_cross_browser_probe: PASS_RUN_31938039815
-  lane3_baked_progress_final_hot_launch_capacity: PASS_RUN_31938039816
-  lane3_baked_progress_final_service_rollback: PASS_RUN_31938039732
-  lane3_baked_progress_final_day9_recovery: PASS_RUN_31938039772
-  lane3_baked_progress_final_release_browser_matrix: PASS_RUN_31938039795
-  lane3_baked_progress_final_day9_truthfulness: PASS_RUN_31938039840_PHYSICAL_BLOCKER_RETAINED
-  lane3_baked_progress_acceptance: PASS_AT_f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9_FILTER_ONLY_LANE3_STILL_OPEN
-  lane3_creator_backend_red: "EXPECTED_FAIL run 31939212823 at 8f3efcc527c338f1f8e2464b605fe0d7f1a52c58: retained Holder/Baked assertions pass; creator predicate alone returns all four rows instead of canonical deployer matches. Fixture deliberately has activeLow.creator_fee_recipient == target creator while activeLow.deployer_address differs."
-  lane3_creator_backend_green: PASS_RUN_31939357659_AT_9a5df8397a1da00aebd9f5edf0dddca4160f781a
-  lane3_creator_backend_green_root_ci: PASS_RUN_31939357531_AT_9a5df8397a1da00aebd9f5edf0dddca4160f781a
-  lane3_creator_browser_red: "EXPECTED_FAIL run 31939544655 job 95146614921 at 8f6efbf27699dfe03f02d1e016ca366dd227fcdd: desktop+mobile wait only for missing accessible label 'Creator wallet'; 45 other browser journeys pass."
-  lane3_creator_final_code_head: 842f17b5c84c08d441e25c5d215188b884856b1a
-  lane3_creator_final_root_ci: PASS_RUN_31939874980
-  lane3_creator_final_postgres_api: PASS_RUN_31939874907
-  lane3_creator_final_indexed_read_boundary: PASS_RUN_31939875027
-  lane3_creator_final_explore_search: PASS_RUN_31939874993
-  lane3_creator_final_production_gates: PASS_RUN_31939874945
-  lane3_creator_final_frontend_security: PASS_RUN_31939875007
-  lane3_creator_final_rebuild_reconcile: PASS_RUN_31939874977
-  lane3_creator_final_primary_browser: PASS_RUN_31939875018
-  lane3_creator_final_cross_browser_probe: PASS_RUN_31939874987
-  lane3_creator_final_hot_launch_capacity: PASS_RUN_31939874937
-  lane3_creator_final_service_rollback: PASS_RUN_31939874975
-  lane3_creator_final_day9_recovery: PASS_RUN_31939875025
-  lane3_creator_final_release_browser_matrix: PASS_RUN_31939874989
-  lane3_creator_final_day9_truthfulness: PASS_RUN_31939874931_PHYSICAL_BLOCKER_RETAINED
-  lane3_creator_acceptance: PASS_AT_842f17b5c84c08d441e25c5d215188b884856b1a_FILTER_ONLY_LANE3_STILL_OPEN
-  lane3_volume_backend_red: "EXPECTED_FAIL run 31942660883 at 037133ac60ef346b7038bc11a469acaf8599b73b: infrastructure + retained Holder/Portfolio tests pass; new volume assertion returns all four launches instead of the committed-head 10–20 USDC membership. Fixture poisons token_metrics.quote_volume_24h and includes a 100-USDC trade one second outside the trailing window."
-  lane3_volume_browser_red: "EXPECTED_FAIL run 31941077958 at c5e0c8c02518693b8f70082aa6781931e45119e9: desktop+mobile wait for missing accessible label '24h volume min'; retained Explore/Search journeys continue."
-  lane3_volume_backend_green: PASS_RUN_31942914283_AT_c0807b117fa8f8dc25494161bcb5a0eda9c27e07_STALE_METRIC_TRAP_GREEN
-  lane3_volume_backend_root_formatting_regression: "Root CI 31942914240 at c0807b117fa8f8dc25494161bcb5a0eda9c27e07 passed validation/tests/Day6/type-schema before failing only because docs/current-build-state.yaml lacked a final newline."
-  lane3_volume_format_repair: PASS_ROOT_CI_31943042804_AT_91e363b9ff47e89be076c72ba77f1b38996dcc94_NO_SEMANTIC_CODE_CHANGE
-  lane3_volume_initial_ui_green: "2a4e39848e0a9f6afab12f43def2866aa370ad33 added exact USDC->6-decimal-base-unit forwarding, URL/query identity, chip/Reset/context preservation and no client-side membership filtering."
-  lane3_volume_adjacent_drawer_red: "Primary browser run 31943156690 at 2a4e39848e0a9f6afab12f43def2866aa370ad33: new Volume journey passed desktop/mobile, but retained desktop Creator journey failed because the expanded fixed filter drawer had no internal scroll boundary and the Creator submit button became unreachable outside the viewport."
-  lane3_volume_final_code_head: c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b
-  lane3_volume_final_root_ci: PASS_RUN_31943352714
-  lane3_volume_final_postgres_api: PASS_RUN_31943352616
-  lane3_volume_final_indexed_read_boundary: PASS_RUN_31943352605
-  lane3_volume_final_explore_search: PASS_RUN_31943352706
-  lane3_volume_final_production_gates: PASS_RUN_31943352640
-  lane3_volume_final_frontend_security: PASS_RUN_31943352702
-  lane3_volume_final_rebuild_reconcile: PASS_RUN_31943352723
-  lane3_volume_final_primary_browser: PASS_RUN_31943352737
-  lane3_volume_final_cross_browser_probe: PASS_RUN_31943352623
-  lane3_volume_final_hot_launch_capacity: PASS_RUN_31943352715
-  lane3_volume_final_service_rollback: PASS_RUN_31943352598
-  lane3_volume_final_day9_recovery: PASS_RUN_31943352579
-  lane3_volume_final_release_browser_matrix: PASS_RUN_31943352752
-  lane3_volume_final_day9_truthfulness: PASS_RUN_31943352719_PHYSICAL_BLOCKER_RETAINED
-  lane3_volume_acceptance: PASS_AT_c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b_FILTER_ONLY_VOLUME_SORT_STILL_OPEN_LANE3_STILL_OPEN
-  lane3_search_age_backend_red: "EXPECTED_FAIL run 31943931016 at 7a420a97f288039553b6118a8a8b974b9aae9995: PostgreSQL/Redis and 10 retained API/search/concurrency tests pass; Search Age alone fails because public Search lacks ageSeconds."
-  lane3_search_age_browser_red: "EXPECTED_FAIL run 31943931065 at 7a420a97f288039553b6118a8a8b974b9aae9995: desktop+mobile fail only on missing exact text 'Age 2m'; 49 retained journeys pass; test also forbids lifecycle label inference and raw RPC."
-  lane3_search_age_backend_green: PASS_RUN_31944095097_AT_84d0bdc2480ff2d17847dbdcdcc44c84dcee9e73
-  lane3_search_age_final_code_head: d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec
-  lane3_search_age_final_root_ci: PASS_RUN_31944234180
-  lane3_search_age_final_postgres_api: PASS_RUN_31944234403
-  lane3_search_age_final_shared_api_types: PASS_RUN_31944234047
-  lane3_search_age_final_indexed_read_boundary: PASS_RUN_31944234304
-  lane3_search_age_final_explore_search: PASS_RUN_31944234198
-  lane3_search_age_final_production_gates: PASS_RUN_31944234452
-  lane3_search_age_final_frontend_security: PASS_RUN_31944234172
-  lane3_search_age_final_rebuild_reconcile: PASS_RUN_31944234181
-  lane3_search_age_final_primary_browser: PASS_RUN_31944234098
-  lane3_search_age_final_cross_browser_probe: PASS_RUN_31944234179
-  lane3_search_age_final_hot_launch_capacity: PASS_RUN_31944234272
-  lane3_search_age_final_service_rollback: PASS_RUN_31944234317
-  lane3_search_age_final_day9_recovery: PASS_RUN_31944234370
-  lane3_search_age_final_release_browser_matrix: PASS_RUN_31944234187
-  lane3_search_age_final_day9_truthfulness: PASS_RUN_31944234284_PHYSICAL_BLOCKER_RETAINED
-  lane3_search_age_acceptance: PASS_AT_d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec_SEARCH_ENRICHMENT_ONLY_LANE3_STILL_OPEN
-  lane3_search_holder_backend_red: "EXPECTED_FAIL run 31944749472 at a5b8e834e21c2781b7083347053e25b6a6347ccb: PostgreSQL/Redis and all retained Search/API/concurrency tests pass; Search Holder alone fails because holderCount is absent. The fixture also requires a token with no token_metrics row to remain searchable with holderCount=null."
-  lane3_search_holder_browser_red: "EXPECTED_FAIL run 31944749493 at a5b8e834e21c2781b7083347053e25b6a6347ccb: desktop+mobile fail only on missing exact text '42 holders'; 51 retained journeys pass, including accepted Search Age; raw RPC remains forbidden."
-  lane3_search_holder_final_code_head: ba5ad51202e2e4cecaea443151d2f864b47c48b7
-  lane3_search_holder_final_root_ci: PASS_RUN_31945098889
-  lane3_search_holder_final_postgres_api: PASS_RUN_31945098886
-  lane3_search_holder_final_shared_api_types: PASS_RUN_31945098957
-  lane3_search_holder_final_indexed_read_boundary: PASS_RUN_31945098994
-  lane3_search_holder_final_explore_search: PASS_RUN_31945099009
-  lane3_search_holder_final_production_gates: PASS_RUN_31945099019
-  lane3_search_holder_final_frontend_security: PASS_RUN_31945098913
-  lane3_search_holder_final_rebuild_reconcile: PASS_RUN_31945098946
-  lane3_search_holder_final_primary_browser: PASS_RUN_31945098887
-  lane3_search_holder_final_cross_browser_probe: PASS_RUN_31945099022
-  lane3_search_holder_final_hot_launch_capacity: PASS_RUN_31945098859
-  lane3_search_holder_final_service_rollback: PASS_RUN_31945098954
-  lane3_search_holder_final_day9_recovery: PASS_RUN_31945098990
-  lane3_search_holder_final_release_browser_matrix: PASS_RUN_31945098997
-  lane3_search_holder_final_day9_truthfulness: PASS_RUN_31945098971_PHYSICAL_BLOCKER_RETAINED
-  lane3_search_holder_acceptance: PASS_AT_ba5ad51202e2e4cecaea443151d2f864b47c48b7_SEARCH_ENRICHMENT_ONLY_LANE3_STILL_OPEN
-  lane3_search_creator_grouping_backend_red: "EXPECTED_FAIL run 31946528179 at 7bf1b6126d6a3aa90be80fc94de0bb37f127d88c: PostgreSQL/Redis and 12 retained Search/API/concurrency tests pass; creator-authority assertion alone fails because a token whose creator_fee_recipient equals the query but whose deployer differs leaks into creator Search."
-  lane3_search_creator_grouping_browser_red: "EXPECTED_FAIL run 31946528076 at 7bf1b6126d6a3aa90be80fc94de0bb37f127d88c: desktop+mobile fail only on the missing 'Exact match' group heading; 53 retained journeys pass and 19 remain intentionally skipped."
-  lane3_search_creator_grouping_backend_green: PASS_RUN_31946692586_AT_55d199c2cb7b6ba3c349e43703e8774e9ca23f35_CANONICAL_DEPLOYER_ONLY
-  lane3_search_creator_grouping_final_code_head: bfde729a031125884ef947b23225fbfdd0cd79fe
-  lane3_search_creator_grouping_final_root_ci: PASS_RUN_31946801244
-  lane3_search_creator_grouping_final_postgres_api: PASS_RUN_31946801298
-  lane3_search_creator_grouping_final_shared_api_types: PASS_RUN_31946801306
-  lane3_search_creator_grouping_final_indexed_read_boundary: PASS_RUN_31946801313
-  lane3_search_creator_grouping_final_explore_search: PASS_RUN_31946801350
-  lane3_search_creator_grouping_final_production_gates: PASS_RUN_31946801272
-  lane3_search_creator_grouping_final_frontend_security: PASS_RUN_31946801257
-  lane3_search_creator_grouping_final_rebuild_reconcile: PASS_RUN_31946801277
-  lane3_search_creator_grouping_final_primary_browser: PASS_RUN_31946801339
-  lane3_search_creator_grouping_final_cross_browser_probe: PASS_RUN_31946801316
-  lane3_search_creator_grouping_final_hot_launch_capacity: PASS_RUN_31946801276
-  lane3_search_creator_grouping_final_service_rollback: PASS_RUN_31946801340
-  lane3_search_creator_grouping_final_day9_recovery: PASS_RUN_31946801344
-  lane3_search_creator_grouping_final_release_browser_matrix: PASS_RUN_31946801343
-  lane3_search_creator_grouping_final_day9_truthfulness: PASS_RUN_31946801253_PHYSICAL_BLOCKER_RETAINED
-  lane3_search_creator_grouping_acceptance: PASS_AT_bfde729a031125884ef947b23225fbfdd0cd79fe_SEARCH_GROUPING_ONLY_RECENT_TRENDING_UNDEFINED_LANE3_STILL_OPEN
-  lane3_search_lifecycle_backend_red: "EXPECTED_FAIL run 31947730562 at 25eb7650b98db184e7ba44d971df7674bac0dbe8: PostgreSQL/Redis and 13 retained Search/API/concurrency tests pass; lifecycle assertion alone fails because lifecycleState is absent (expected PROCESSING, received undefined)."
-  lane3_search_lifecycle_browser_red: "EXPECTED_FAIL run 31947730522 at 25eb7650b98db184e7ba44d971df7674bac0dbe8: 55 retained desktop/mobile journeys pass and only lifecycle desktop+mobile fail on missing exact text 'Graduation pending'; active-token anti-inference assertions remain green."
-  lane3_search_lifecycle_backend_green: PASS_RUN_31947950975_AT_da8e26375937beb5fe4f51debd3e45f06d5cb387
-  lane3_search_lifecycle_final_code_head: 31427500f71643124b59015765857eec2682e386
-  lane3_search_lifecycle_final_root_ci: PASS_RUN_31948117916
-  lane3_search_lifecycle_final_postgres_api: PASS_RUN_31948117968
-  lane3_search_lifecycle_final_shared_api_types: PASS_RUN_31948118053
-  lane3_search_lifecycle_final_indexed_read_boundary: PASS_RUN_31948117965
-  lane3_search_lifecycle_final_explore_search: PASS_RUN_31948117978
-  lane3_search_lifecycle_final_production_gates: PASS_RUN_31948117976
-  lane3_search_lifecycle_final_frontend_security: PASS_RUN_31948117966
-  lane3_search_lifecycle_final_rebuild_reconcile: PASS_RUN_31948117921
-  lane3_search_lifecycle_final_primary_browser: PASS_RUN_31948117903
-  lane3_search_lifecycle_final_cross_browser_probe: PASS_RUN_31948117953
-  lane3_search_lifecycle_final_hot_launch_capacity: PASS_RUN_31948117936
-  lane3_search_lifecycle_final_service_rollback: PASS_RUN_31948117958
-  lane3_search_lifecycle_final_day9_recovery: PASS_RUN_31948118012
-  lane3_search_lifecycle_final_release_browser_matrix: PASS_RUN_31948117995
-  lane3_search_lifecycle_final_day9_truthfulness: PASS_RUN_31948117906_PHYSICAL_BLOCKER_RETAINED
-  lane3_search_lifecycle_acceptance: PASS_AT_31427500f71643124b59015765857eec2682e386_CANONICAL_GRADUATION_SUBSET_ONLY_FULL_NEW_ACTIVE_ALMOST_BAKED_BLOCKED_LANE3_STILL_OPEN
-  token_creator_static_red: "EXPECTED_FAIL run 31948772826 at f3473e432238fc7c4bea4ac5bb00dee4a831aab0: 14 retained Token tests pass; only canonical creator owner assertion fails because TokenIdentity has no shared CreatorAttribution and still reads creatorFeeRecipient."
-  token_creator_browser_red: "EXPECTED_FAIL run 31948772924 at f3473e432238fc7c4bea4ac5bb00dee4a831aab0: 57 retained journeys pass; desktop+mobile Token creator tests alone fail because canonical deployer attribution is absent from the initial Token identity region."
-  token_creator_initial_green_head: c80e69ad1f7d3a3a308fc118ece183ccabf934c9
-  token_creator_initial_static_green: PASS_RUN_31948960510
-  token_creator_initial_browser_assertion_regression: "FAIL_RUN_31948960494_AT_c80e69ad1f7d3a3a308fc118ece183ccabf934c9: canonical deployer element is visible and title-correct, but the new test incorrectly expected literal textContent whitespace between two CSS-gapped spans ('by 0x...' vs DOM textContent 'by0x...'). Production CreatorAttribution markup/CSS was not changed; test repaired semantically."
-  token_creator_final_head: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-  token_creator_final_root_ci: PASS_RUN_31949194064
-  token_creator_final_token_page: PASS_RUN_31949194076
-  token_creator_final_primary_browser: PASS_RUN_31949194060
-  token_creator_final_cross_browser: PASS_RUN_31949194056
-  token_creator_final_hot_launch_capacity: PASS_RUN_31949194124
-  token_creator_final_trade_lifecycle: PASS_RUN_31949194106
-  token_creator_final_production_gates: PASS_RUN_31949194162
-  token_creator_final_frontend_security: PASS_RUN_31949194075
-  token_creator_final_indexed_read_boundary: PASS_RUN_31949194078
-  token_creator_final_explore_search: PASS_RUN_31949194071
-  token_creator_final_shared_api_types: PASS_RUN_31949194096
-  token_creator_final_wallet_network: PASS_RUN_31949194040
-  token_creator_final_rebuild_reconcile: PASS_RUN_31949194095
-  token_creator_final_service_rollback: PASS_RUN_31949194089
-  token_creator_final_day9_recovery: PASS_RUN_31949194065
-  token_creator_final_release_browser_matrix: PASS_RUN_31949194081
-  token_creator_final_day9_truthfulness: PASS_RUN_31949194042_PHYSICAL_BLOCKER_RETAINED
-  token_creator_acceptance: PASS_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf_TOKEN_HEADER_ONLY_TOKEN_TRADE_LANE_STILL_OPEN
-
-lan_acceptance:
-  status: PASS
-  evidence_owner: OPERATOR_PROVIDED_GENUINE_OUTPUT
-  indexer_caught_up_checkpoint: 57159822
-  indexer_caught_up_head: 57159822
-  catchup_cycles: 639
-  degraded_post_commit_cycles: 0
-  subsequent_progress_checkpoint: 57159858
-  production_next_build: PASS
-  readiness_marker: BREAD_LAN_ACCEPTANCE_READY
-  path: /tmp/bread-synthra-fork-proof
-  environment_still_external: true
-  ui_lane_must_not_touch_environment: true
-
-ui_ux_v2_2:
-  direction: USER_APPROVED
-  source_ratification: RATIFIED
-  lan_functional_acceptance: PASS
-  production_implementation: AUTHORIZED_IN_ISOLATED_UI_LANE
-  approved_visual_reference: FROZEN_CONTROLLING_CLARIFICATION_WHERE_COMPATIBLE_WITH_WRITTEN_V2_2
-  approved_visual_reference_reconciliation: PASS
-  lane2_global_shell_navigation: PASS
-  figma_required: true
-  figma_free_starter_compatible: true
-  figma_file_key: DsjM9F9yt0WZRhyKGHOvCl
-  figma_file_name: "Bread UI/UX v2.2 — Canonical Design System"
-  figma_reconciled_shell_node: "7:2"
-  figma_reconciled_header_node: "7:3"
-  figma_reconciled_live_strip_node: "7:28"
-  figma_mcp_status: STARTER_PLAN_CALL_LIMIT_REACHED_DURING_RECONCILIATION
-  figma_sync_debt: "Synchronize accepted brand/Search/mobile corrections and any later frozen visual corrections back into canonical Figma when writable MCP access returns; tool limit does not authorize redesign or lower the QA bar."
-  temporary_visual_conformance_path: "Written v2.2 + approved visual reference + established canonical Figma node 7:2 + exact-head Playwright rendered evidence."
-  vercel_preview_status: "CONNECTOR_TEAM_AVAILABLE_BUT_NO_BREAD_PROJECT_CONFIGURED; no preview evidence fabricated."
+  day9_pr: 93
+  day9_pr_head: 18952b20a56021350000c0f5d89552380c883be3
+  verified_day9_code_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Token / Trade — IN_PROGRESS_TOKEN_CREATOR_ATTRIBUTION_ACCEPTED; EXPLORE_SEARCH_LANE3_BLOCKERS_RETAINED"
-  accepted_foundation_behaviors:
-    - EXACT_V2_2_THEME_TOKEN_CONTRACT
-    - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
-    - EXACT_V2_2_RUNTIME_CSS_TOKEN_SURFACE
-    - FOCUS_VISIBLE_AND_MOTION_PRIMITIVES
-    - RESPONSIVE_PAGE_CONTAINER
-    - ICON_PRESENTATION_BOUNDARY
-  accepted_shell_behaviors:
-    - PRIMARY_NAVIGATION_ORDER_AND_ACTIVE_STATE
-    - DESKTOP_HEADER_COMPOSITION_AND_GEOMETRY
-    - DECORATIVE_CANONICAL_NAVIGATION_ICON_CHARACTER
-    - TRUTHFUL_LIVE_ACTIVITY_STRIP_DESKTOP_AND_MOBILE
-    - SHARED_BREAD_BRAND_MARK
-    - DESKTOP_SEARCH_SHORTCUT_AND_GLYPH
-    - MOBILE_56_TOP_36_LIVE_64_BOTTOM_COMPOSITION
-    - MOBILE_390_NO_HORIZONTAL_OVERFLOW_OR_CONTROL_LABEL_CLIPPING
-  accepted_lane3_behaviors:
-    - BACKEND_BACKED_NEW_FEED_AUTHORITY
-    - BACKEND_BACKED_TRENDING_FEED_AUTHORITY
-    - BACKEND_BACKED_ALMOST_BAKED_FEED_AUTHORITY
-    - BACKEND_BACKED_GRADUATED_FEED_AUTHORITY
-    - SEARCH_INTERACTIONS_ACCEPTED_WITH_INDEXED_ENRICHMENT_GAPS_EXPLICITLY_OPEN
-    - SEARCH_AGE_INDEXED_HEAD_BACKED_NO_LIFECYCLE_INFERENCE
-    - SEARCH_HOLDER_COUNT_CANONICAL_INDEXED_NULL_PRESERVING_NO_RPC
-    - SEARCH_EXACT_TOKEN_CANONICAL_CREATOR_WALLET_GROUPING_NO_FEE_RECIPIENT_AUTHORITY
-    - SEARCH_CANONICAL_GRADUATION_LIFECYCLE_SUBSET_NO_AGE_OR_PROGRESS_INFERENCE
-    - AGE_FILTER_BACKEND_BACKED_WITH_URL_CHIPS_RESET
-    - HOLDER_FILTER_BACKEND_BACKED_WITH_URL_CHIPS_RESET
-    - BAKED_PROGRESS_FILTER_BACKEND_BACKED_BONDING_ONLY_WITH_URL_CHIPS_RESET
-    - CREATOR_FILTER_BACKEND_BACKED_CANONICAL_DEPLOYER_WITH_URL_CHIPS_RESET
-    - VOLUME_24H_FILTER_BACKEND_BACKED_COMMITTED_HEAD_TRAILING_WINDOW_WITH_URL_CHIPS_RESET
-  accepted_token_trade_behaviors:
-    - TOKEN_HEADER_CANONICAL_ONCHAIN_CREATOR_ATTRIBUTION_NOT_FEE_RECIPIENT
-  search_enrichment:
-    age: ACCEPTED_AT_d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec
-    age_authority: "max(0, committed indexedThroughBlockTimestamp - launches.launch_timestamp); UI formats the returned ageSeconds only."
-    holders: ACCEPTED_AT_ba5ad51202e2e4cecaea443151d2f864b47c48b7
-    holder_authority: "token_metrics.holder_count maintained by the canonical holder Transfer projection; Search LEFT JOIN preserves unknown metrics as null."
-    market_cap: "BLOCKED — no source-backed populated market-cap projection; do not invent."
-    lifecycle: "PARTIALLY_ACCEPTED_AT_31427500f71643124b59015765857eec2682e386 — canonical graduation states only: SWEPT=PROCESSING/Graduating, failed ready NOT_GRADUATED with failure reason=GRADUATION_PENDING/Graduation pending, POOL_CREATED=GRADUATED/Graduated. Ordinary NOT_GRADUATED and RESCUED remain null. Full New/Active/Almost-Baked boundaries remain undefined and blocked; do not infer from age/progress."
-    creator_wallet_grouping: ACCEPTED_AT_bfde729a031125884ef947b23225fbfdd0cd79fe
-    creator_wallet_grouping_authority: "Address Search uses token address exact match or launches.deployer_address creator identity only; creator_fee_recipient is not creator-search authority. UI groups returned matches into Exact match, Tokens and Creators / wallets without changing backend membership or ranking."
-    recent_searches: "OPEN_UNDEFINED_AUTHORITY — v2.2 names the group but does not define persistence, scope, retention or ordering; do not invent."
-    trending_searches: "OPEN_UNDEFINED_AUTHORITY — v2.2 names the group but does not define a Search-specific ranking/window; do not reuse the Trending feed silently."
-    token_image: "BLOCKED_ON_IMAGE_PROXY_POLICY — v2.2 requires image in each Search token row and indexer metadata.logo is sanitized, but security/performance sources require creator-controlled token images to be proxied/cached/resized. No source-backed image-proxy/SSRF/IPFS policy owner exists in the repository; do not render arbitrary creator URLs directly."
-  token_trade:
-    creator_attribution: ACCEPTED_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-    creator_authority: "IndexedTokenDetail.deployerAddress / onchain launch deployer is the Creator identity. creatorFeeRecipient remains fee-routing metadata and must not be presented as Creator. Shared CreatorAttribution token-header size keeps it visually secondary."
-    next_source_backed_candidate: "Token stats holder count is a candidate only after a fresh source/interface pass confirms IndexedTokenDetail.holderCount is the correct existing authority and current TokenStats still renders Holders as unavailable."
-  baked_progress_contract:
-    user_facing_unit: PERCENT_0_TO_100
-    canonical_projection: graduation_progress_bps
-    canonical_projection_unit: BPS_0_TO_10000
-    applies_to: BONDING_NON_GRADUATED_TOKENS
-    lifecycle_independence: "Progress percentage is not lifecycle classification; do not infer New/Active/Almost Baked/Processing/Graduated thresholds from this filter."
-    ui_transport_rule: "UI converts user-entered percent to exact bps query bounds; server remains membership authority."
-    current_state: FILTER_ACCEPTED_AT_f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
-  volume_24h_contract:
-    user_facing_unit: USDC
-    canonical_transport_unit: QUOTE_BASE_UNITS_6_DECIMALS
-    canonical_query_params: volumeMinQuote_volumeMaxQuote
-    membership_authority: "SUM(trades.quote_amount) for matching chain/token/stack where block_timestamp is within [indexedThroughBlockTimestamp-86400, indexedThroughBlockTimestamp]."
-    zero_trade_behavior: ZERO_VOLUME
-    legacy_metric_caveat: "Explore filtering does not trust token_metrics.quote_volume_24h because that projector remains trade-triggered and can be stale/cumulative when indexed head time advances without a new trade. Any repair of that canonical metric for non-Explore consumers is a separate source-reviewed slice."
-    ui_rule: "Human USDC input is converted with exact string arithmetic to 6-decimal base units; server remains membership authority."
-    current_state: FILTER_ACCEPTED_AT_c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b
-  unresolved_filter_sort_gaps:
-    market_cap_filter_sort: "OPEN — token_metrics.market_cap exists but current trade projection writes NULL and no source-backed market-cap formula is confirmed; do not invent."
-    volume_24h_filter_sort: "FILTER ACCEPTED at c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b using committed-head timestamped trade evidence; VOLUME SORT remains OPEN. Generic v2.2 'volume' does not define a sort window/direction/default; do not silently choose between existing 1h Trending authority and 24h filter authority."
-    lifecycle_filter: "PARTIALLY_BLOCKED — canonical Processing/Graduated graduation states are now source-backed in Search, but v2.2 filter still names New / Active / Almost Baked / Processing / Graduated and no source-backed New cutoff or Active-vs-Almost-Baked threshold is confirmed; do not invent."
-    creator_filter: "ACCEPTED — exact code-bearing head 842f17b5c84c08d441e25c5d215188b884856b1a; canonical onchain deployer/original creator wallet only; creator fee-recipient identity is explicitly rejected."
-    baked_progress_filter: "ACCEPTED — exact code-bearing head f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9; bonding/non-graduated scope only."
-    baked_progress_sort: "OPEN_UNDEFINED_SEMANTICS — v2.2 names the sort but does not define direction/default; do not infer."
-    other_required_sorts: "OPEN_UNDEFINED_SEMANTICS — Newest, market cap, volume, holders are named but direction/default/window where applicable is not source-defined. Trending remains a feed/tab, not a hidden sort formula."
-  visual_findings_open: []
-  intentional_differences:
-    - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's earlier full-canvas x32 content origin at 1586px. Do not widen code to imitate conflicting concept geometry; sync Figma later."
-    - "Approved-reference sample live movers/trades/volume are not reproduced until reliable Bread indexed data supports them; current status-only strip is intentionally truthful rather than fabricated."
-    - "Explore card/feed body has advanced through accepted feed authority, Search interactions, Age, Holder, Baked Progress, Creator and 24h Volume filter slices; Search Age, Holder-count, canonical creator/wallet grouping and canonical graduation lifecycle subset are accepted while image proxy policy, Recent/Trending Search groups, full lifecycle categories and remaining filter/sort gaps stay explicit. Lane 3 remains open."
-    - "Token / Trade implementation has begun from the source-ordered v2.2 lane. Token header creator attribution now uses the canonical onchain deployer through the shared quiet CreatorAttribution primitive; remaining Token/Trade behavior is still in progress."
-    - "The Next.js development indicator visible at bottom-left in Playwright captures is a non-product test-harness overlay and is excluded from Bread UI comparison."
-  intentional_scope_boundary: "Explore/Search Lane 3 remains OPEN for its recorded blocked requirements while the independently source-backed Token / Trade lane proceeds. Day 9 remains incomplete until all mandatory UI/UX, performance/load and physical-device gates close."
+  ui_pr_state: OPEN_DRAFT_UNMERGED
+  ui_pr_base: day9/synthra-arc-testnet-v3-candidate
+  ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  ui_current_code_bearing_head: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
+  ui_current_code_state: "Token creator attribution and primary indexed Holder stat accepted; Token/Trade major lane remains in progress."
+  handoff_parent_after_holder_acceptance_record: 68654f8758b27e41464ee7e5fd0c680502d83148
+  lan_environment: /tmp/bread-synthra-fork-proof
+  lan_environment_rule: DO_NOT_TOUCH
+
+verification:
+  token_holder_red_head: 52febd26ba58e2d9e858ed0e59766164676bca33
+  token_holder_accepted_code_head: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
+  token_holder_root_ci: PASS_RUN_31951696034
+  token_holder_token_page: PASS_RUN_31951696011
+  token_holder_primary_browser: PASS_RUN_31951696072
+  token_holder_trade_lifecycle: PASS_RUN_31951696044
+  token_holder_wallet_network: PASS_RUN_31951696069
+  token_holder_explore_search: PASS_RUN_31951696051
+  token_holder_indexed_read: PASS_RUN_31951696077
+  token_holder_shared_types: PASS_RUN_31951696057
+  token_holder_production_gates: PASS_RUN_31951696012
+  token_holder_frontend_security: PASS_RUN_31951696070
+  token_holder_rebuild_reconcile: PASS_RUN_31951696043
+  token_holder_cross_browser: PASS_RUN_31951696038
+  token_holder_hot_launch_10k: PASS_RUN_31951696067
+  token_holder_service_rollback: PASS_RUN_31951696025
+  token_holder_day9_recovery: PASS_RUN_31951696015
+  token_holder_release_browser_matrix: PASS_RUN_31951696062
+  token_holder_day9_truthfulness: PASS_RUN_31951696019_PHYSICAL_BLOCKER_RETAINED
+  day9_verdict: INCOMPLETE
+
+unresolved_earlier_lane_blockers:
+  explore_search_lane3: OPEN
+  market_cap_authority: "OPEN — token_metrics.market_cap is not populated by a source-backed formula; do not invent market-cap filter/sort/Search values."
+  sort_semantics: "OPEN — v2.2 names Newest/market-cap/volume/holders/baked-progress sorts but does not freeze direction/default and volume window; do not infer."
+  lifecycle_full_categories: "OPEN — Processing/Graduated graduation subset is accepted, but New/Active/Almost-Baked boundaries are not source-backed; do not infer from age/progress."
+  search_images: "BLOCKED — token image URLs require source-backed proxy/cache/resize/SSRF/IPFS policy; do not render arbitrary creator URLs directly."
+  recent_searches: "OPEN_UNDEFINED_AUTHORITY — persistence/scope/retention/order not defined."
+  trending_searches: "OPEN_UNDEFINED_AUTHORITY — Search-specific ranking/window not defined; do not silently reuse Trending feed."
+  legacy_volume_metric: "OPEN_CAVEAT — token_metrics.quote_volume_24h remains a trade-triggered cumulative/stale-risk projector; accepted Explore 24h filtering uses timestamped trades at committed indexed head instead."
+
+major_lane_tracking:
+  lane1_foundations: COMPLETE
+  lane2_global_shell_navigation: COMPLETE
+  lane3_explore_search: OPEN_BLOCKED_ITEMS_RETAINED
+  lane4_token_trade: IN_PROGRESS
+  lane5_create_review_success: NOT_STARTED_AS_V2_2_MAJOR_LANE
+  lane6_portfolio_creator_dashboard_claims: NOT_STARTED_AS_V2_2_MAJOR_LANE
+  lane7_secondary_routes_states: NOT_STARTED_AS_V2_2_MAJOR_LANE
+
+lane4_token_trade_completion_tracking:
+  token_header_creator_attribution: COMPLETE
+  primary_holder_stat: COMPLETE
+  active_token_treatment: OPEN
+  graduation_pending_processing_variants: OPEN
+  graduated_token_treatment: OPEN
+  chart_surface: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
+  desktop_trade_panel_v2_2: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
+  mobile_trading: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
+  degraded_loading_error_recovery_states: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
+  wallet_network_states: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
+  responsive_closure: OPEN
+  accessibility_closure: OPEN
+  performance_closure: OPEN
+  final_visual_browser_evidence: OPEN
+
+final_day9_verification_release_gates:
+  unified_responsive_closure: OPEN
+  accessibility: OPEN
+  performance_04d: OPEN
+  degraded_loading_error_recovery: OPEN
+  wallet_network_matrix: OPEN
+  full_desktop_mobile_browser_matrix: OPEN_ON_FINAL_UNIFIED_CANDIDATE
+  affected_06i_10k_load: OPEN_ON_FINAL_UNIFIED_CANDIDATE
+  rollback_reconcile: MUST_REVERIFY_ON_FINAL_UNIFIED_CANDIDATE
+  physical_current_branded_devices: OPEN_EXTERNAL_EXECUTION_REQUIRED
+  one_exact_head_final_release_gate: OPEN
+  rc_freeze_tag: BLOCKED
+  day10: NOT_STARTED
 
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+  - EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
   - BREAD_PRODUCTION_ECONOMICS_CONFIG
@@ -508,7 +170,8 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token / Trade lane is now in progress with canonical Token creator attribution accepted. Explore/Search Lane 3 remains open with Search image-proxy policy, Recent/Trending Search data authority, full lifecycle categories, market-cap authority and sort semantics blocked/open exactly as recorded."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade is in progress; later major lanes and final responsive/accessibility/performance/browser evidence remain."
+  EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Lane 3 stays open until market-cap, sort, full lifecycle, Search image proxy policy and Recent/Trending Search semantics are implemented from authority or resolved through the proper source-decision process."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
@@ -517,26 +180,24 @@ blocker_scope:
 
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
-  figma: CANONICAL_STARTER_SHELL_ESTABLISHED_BUT_MCP_CALL_LIMIT_CURRENTLY_REACHED
+  figma: CANONICAL_STARTER_SHELL_ESTABLISHED_BUT_MCP_CALL_LIMIT_REACHED_DURING_RECONCILIATION
   vercel: CONNECTED_TEAM_PRESENT_NO_BREAD_PROJECT_CONFIGURED
-  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_DESKTOP_AND_MOBILE_SCREENSHOT_ARTIFACTS
+  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Do not begin another implementation slice from memory. Token header canonical creator attribution is accepted at 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf and must not be reopened without a demonstrated regression. Before the next Token / Trade slice, re-read the relevant ratified v2.2 Token/Trade sources, 04D/06D and owning interfaces. A likely source-backed candidate is Token stats holder count only if the fresh pass confirms IndexedTokenDetail.holderCount is the existing indexed authority and the current TokenStats still renders Holders as unavailable. Do not touch blocked image rendering without a proxy/cache/SSRF/IPFS policy; do not invent market cap, movement or trade-count windows; do not infer lifecycle categories from age/progress. Continue normal 06D RED -> verified expected failure -> minimum GREEN -> focused/adjacent/type/build -> 04D browser/accessibility/production -> affected 06I load -> exact-head CI, then update this handoff. Keep Explore/Search Lane 3 open and keep /tmp/bread-synthra-fork-proof untouched.
+  Do not begin another implementation slice from memory. First verify this handoff against the live PR #94 branch, then re-read the relevant ratified v2.2 Token/Trade section(s), 04A/04D, 06B/06D/06F/06H and 06I where performance/load may be affected, plus the exact owning interfaces. Select the next missing Token/Trade behavior only if its semantics and data authority are source-backed. Write and verify the expected RED before production code, implement the minimum GREEN, then run focused + adjacent + type/build + responsive/browser/accessibility/performance + affected 06I load and exact-head CI as required. Preserve explicit completion tracking for graduated-token treatment, mobile trading, degraded/loading/error/recovery, wallet/network, responsive, accessibility, performance and final visual/browser evidence. Keep Explore/Search Lane 3 open until its blockers are authoritatively resolved. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
-  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load or physical-device gates remain open."
-  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
-  - "Do not fabricate performance, physical-device, Vercel, contract/config, market or live-state evidence."
-  - "Do not reopen or weaken the accepted Baked Progress filter semantics without a demonstrated regression; percentage remains bonding-only and is not lifecycle classification."
-  - "Do not substitute creator fee-recipient metadata for the accepted canonical deployer/original creator-wallet identity anywhere token identity is represented."
+  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, final performance/load or physical-device gates remain open."
+  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in a UI slice without a separate source/impact review."
+  - "Do not fabricate market cap, movement, lifecycle, sort, image-security, Recent/Trending Search, performance, physical-device, Vercel, contract/config or live-state evidence."
+  - "Do not reopen accepted Lane 1/2, accepted Lane-3 sub-slices, Token creator attribution or Token Holder stat without a demonstrated regression."
+  - "Do not substitute creator fee-recipient metadata for canonical onchain creator/deployer identity."
   - "Do not substitute token_metrics.quote_volume_24h for the accepted committed-head trailing-trade Explore filter authority."
-  - "Do not derive Search age from browser wall-clock time or infer lifecycle labels from age/progress."
-  - "Do not compute Search holder count client-side or via per-result RPC; canonical indexed token_metrics.holder_count is the accepted authority and unknown remains null."
-  - "Do not infer Search New/Active/Almost-Baked or RESCUED presentation labels from age, progress or generic graduation readiness; only the accepted canonical graduation subset may be labeled."
-  - "Do not render creator-controlled token image URLs directly from the browser until a source-backed proxy/cache/SSRF/IPFS policy is frozen and implemented."
-  - "Do not invent Recent-search persistence/retention/order or Trending-search ranking/window semantics; v2.2 names the groups but does not define those data authorities."
+  - "Do not infer New/Active/Almost-Baked or other undefined lifecycle categories from age or baked progress."
+  - "Do not render creator-controlled token image URLs directly until proxy/cache/SSRF/IPFS policy is frozen."
   - "Do not invent Explore sort direction/default/window semantics from labels alone."
+  - "Do not describe remaining major lanes as equivalent to a remaining task count."
   - "Do not start a new implementation slice before a fresh relevant Project Source read."
