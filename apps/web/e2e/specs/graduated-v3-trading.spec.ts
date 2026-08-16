@@ -39,6 +39,8 @@ async function expectV3Review(trade: Locator) {
   await expect(review.getByText('Expected output', { exact: true })).toBeVisible();
   await expect(review.getByText('Minimum output', { exact: true })).toBeVisible();
   await expect(review.getByText('V3 venue fee', { exact: true })).toBeVisible();
+  await expect(review.getByText('Route', { exact: true })).toBeVisible();
+  await expect(review.getByText('Uniswap V3', { exact: true })).toBeVisible();
   await expect(review.getByText('Base fee', { exact: true })).toHaveCount(0);
   await expect(review.getByText('Creator tax', { exact: true })).toHaveCount(0);
   await expect(review.getByText('Opening buy tax', { exact: true })).toHaveCount(0);
@@ -56,13 +58,14 @@ test('graduated token buys and sells through Router02 without reopening its curv
   const trade = page.getByRole('complementary', { name: 'Trade' });
   await trade.getByRole('button', { name: 'Connect wallet' }).click();
   await expect(trade.getByRole('button', { name: 'Review buy' })).toBeVisible();
+  await expect(trade.getByText('Balance 1000 USDC', { exact: true })).toBeVisible();
 
   await setWalletTransactionHashes(page, [BUY_TX_HASH, SELL_TX_HASH]);
 
   await trade.getByLabel('Trade amount').fill('10');
   await trade.getByRole('button', { name: 'Review buy' }).click();
   await expectV3Review(trade);
-  await trade.getByRole('button', { name: 'Buy after reviewing current values' }).click();
+  await trade.getByRole('button', { name: 'Buy LOCK after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
 
   let wallet = await walletSnapshot(page);
@@ -70,10 +73,11 @@ test('graduated token buys and sells through Router02 without reopening its curv
   expectCanonicalV3Target(wallet.submittedTransactions[0]);
 
   await trade.getByRole('tab', { name: 'Sell' }).click();
+  await expect(trade.getByText('Balance 2500000 LOCK', { exact: true })).toBeVisible();
   await trade.getByLabel('Trade amount').fill('1');
   await trade.getByRole('button', { name: 'Review sell' }).click();
   await expectV3Review(trade);
-  await trade.getByRole('button', { name: 'Sell after reviewing current values' }).click();
+  await trade.getByRole('button', { name: 'Sell LOCK after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
 
   wallet = await walletSnapshot(page);
