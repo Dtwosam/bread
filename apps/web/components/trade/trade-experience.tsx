@@ -211,15 +211,19 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }
 
     try {
+      if (action === 'BUY') {
+        const { balance, maxInput } = await runtime.getBuyMaxBalance();
+        setSpendableBalance(balance);
+        setAmount(formatUnits(maxInput, runtime.context.quoteDecimals));
+        resetReview();
+        return;
+      }
+
       const balance = await runtime.getSpendableBalance(action, tokenAddress);
       setSpendableBalance(balance);
-      if (action === 'BUY') {
-        setAmount(formatUnits(balance, runtime.context.quoteDecimals));
-      } else {
-        const percent = preset === 'MAX' ? BigInt(100) : BigInt(Number.parseInt(preset, 10));
-        const selected = (balance * percent) / BigInt(100);
-        setAmount(formatUnits(selected, BREAD_LAUNCH_TOKEN_DECIMALS));
-      }
+      const percent = preset === 'MAX' ? BigInt(100) : BigInt(Number.parseInt(preset, 10));
+      const selected = (balance * percent) / BigInt(100);
+      setAmount(formatUnits(selected, BREAD_LAUNCH_TOKEN_DECIMALS));
       resetReview();
     } catch (error) {
       setReviewError(message(error));
