@@ -1,6 +1,6 @@
-schema_version: 1.76
+schema_version: 1.77
 project: Bread
-updated_at: 2026-08-16T09:45:00+01:00
+updated_at: 2026-08-16T09:50:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -35,7 +35,7 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Lane 3 — Explore / TokenCard / filters IN PROGRESS — Baked Progress browser RED"
+active_lane: "UI/UX v2.2 Lane 3 — Explore / TokenCard / filters IN PROGRESS — Baked Progress minimum GREEN implemented, verification pending"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_ui_gate: UI_UX_V2_2_LANE3_IMPLEMENTATION
 day9_started: true
@@ -70,8 +70,6 @@ integration_baseline:
   ui_implementation_branch: agent/ui-ux-v2-2-implementation
   ui_implementation_pr: 94
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_current_code_bearing_head_before_handoff_sync: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  ui_current_code_state: "Baked Progress backend predicate repairs present; focused desktop/mobile browser RED added and verified; UI GREEN not yet implemented."
   ui_lane2_accepted_implementation_evidence_head: 6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
   ui_lane2_last_production_shell_change: 83220005d2ae93755ec380abf4566a6929feeeee
   ui_lane3_age_backend_head: 3e4330c6b1ced9678f2e90a5690ebb8b27193bcf
@@ -83,6 +81,13 @@ integration_baseline:
     - b2e5109fd88e05dfe01842df696e11a390c29a75
     - 4a18e532a5f431db5a280d148d02b902e1df5f1a
   ui_lane3_baked_progress_browser_red_head: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  ui_lane3_baked_progress_ui_green_commits:
+    - 2a68403ea80c50bc15c7c553c58f11f8fbbf12ed
+    - 6cb6e115734505ade6827d95a6bdfac619b0a131
+    - d3e299730a68e8d067e43ea78071010972c5ec90
+  ui_current_code_bearing_head: d3e299730a68e8d067e43ea78071010972c5ec90
+  ui_current_code_state: "Minimum Baked Progress UI GREEN is implemented on top of the verified browser RED. Acceptance remains pending exact-head focused + adjacent + browser/load/CI evidence."
+  ui_handoff_sync_parent_after_green: 7233bc1f1f488cc3350bcba972cdabd767ab6a76
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -100,7 +105,7 @@ repository:
   ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
   ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_code_head_at_reconciliation: a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  ui_implementation_code_head_at_reconciliation: d3e299730a68e8d067e43ea78071010972c5ec90
   repository_status: REMOTE_GITHUB_VERIFIED_UI_BRANCH_ISOLATED_FROM_RUNNING_LAN_ENVIRONMENT
   day9_complete: false
   rc_tag_created: false
@@ -164,11 +169,12 @@ verification:
   lane3_baked_progress_backend_initial_red: FAIL_EXPECTED_RUN_31936685449_MISSING_PREDICATE
   lane3_baked_progress_first_api_green_attempt: FAIL_RUN_31936872188_AT_f4f42511dcb9ff1e46196754eeea75bd8177f692
   lane3_baked_progress_scope_repair: "v2.2 says Baked progress is a 0–100% range for bonding tokens; b2e5109 + 4a18e53 keep the predicate scoped to non-graduated launches and do not turn percentage into lifecycle state."
-  lane3_baked_progress_backend_current_postgres: PASS_RUN_31937084816_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  lane3_baked_progress_current_root_ci: PASS_RUN_31937084774_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
-  lane3_baked_progress_current_hot_launch_capacity: PASS_RUN_31937084807_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  lane3_baked_progress_backend_postgres_before_ui_green: PASS_RUN_31937084816_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  lane3_baked_progress_root_ci_before_ui_green: PASS_RUN_31937084774_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
+  lane3_baked_progress_hot_launch_before_ui_green: PASS_RUN_31937084807_AT_a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913
   lane3_baked_progress_browser_red: "EXPECTED_FAIL run 31937084805 job 95140600497 at a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913: desktop+mobile Chromium wait for missing accessible label 'Baked progress min'; Playwright summary 2 failed / 43 passed / 19 skipped."
-  lane3_baked_progress_acceptance: NOT_PASS_BROWSER_RED_ACTIVE
+  lane3_baked_progress_minimum_ui_green: IMPLEMENTED_AT_d3e299730a68e8d067e43ea78071010972c5ec90_EVIDENCE_PENDING
+  lane3_baked_progress_acceptance: NOT_PASS_GREEN_VERIFICATION_PENDING
 
 lan_acceptance:
   status: PASS
@@ -205,7 +211,7 @@ ui_ux_v2_2:
   vercel_preview_status: "CONNECTOR_TEAM_AVAILABLE_BUT_NO_BREAD_PROJECT_CONFIGURED; no preview evidence fabricated."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Lane 3 — Explore / TokenCard / filters IN_PROGRESS_BAKED_PROGRESS_BROWSER_RED"
+  current_lane: "Lane 3 — Explore / TokenCard / filters IN_PROGRESS_BAKED_PROGRESS_GREEN_VERIFICATION_PENDING"
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
@@ -237,13 +243,13 @@ ui_ux_v2_2:
     applies_to: BONDING_NON_GRADUATED_TOKENS
     lifecycle_independence: "Progress percentage is not lifecycle classification; do not infer New/Active/Almost Baked/Processing/Graduated thresholds from this filter."
     ui_transport_rule: "UI may convert user-entered percent to exact bps query bounds; server remains membership authority."
-    current_state: RED_VERIFIED_UI_CONTROL_MISSING
+    current_state: MINIMUM_UI_GREEN_IMPLEMENTED_VERIFICATION_PENDING
   unresolved_filter_sort_gaps:
     market_cap_filter_sort: "OPEN — token_metrics.market_cap exists but current trade projection writes NULL and no source-backed market-cap formula is confirmed; do not invent."
     volume_24h_filter_sort: "OPEN — existing 24h metric snapshots require indexed-head freshness repair before they can be treated as deterministic trailing-24h authority."
     lifecycle_filter: "PARTIALLY_BLOCKED — v2.2 names New / Active / Almost Baked / Processing / Graduated but no source-backed New cutoff or Active-vs-Almost-Baked threshold is confirmed; do not invent."
     creator_filter: "OPEN — must use canonical onchain creator wallet identity, not creator fee-recipient metadata."
-    baked_progress_filter: "IN_PROGRESS_RED — backend predicate/projection path is present and browser RED is verified; UI GREEN/evidence still required."
+    baked_progress_filter: "IN_PROGRESS_GREEN_VERIFICATION_PENDING — backend predicate/projection and minimum UI are present; exact-head acceptance evidence still required."
     baked_progress_sort: "OPEN — separate future slice after current filter acceptance and a fresh relevant Project Source read."
     other_required_sorts: "OPEN — Newest, market cap, volume, holders; Trending remains a feed/tab, not a hidden sort formula."
   visual_findings_open: []
@@ -265,7 +271,7 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 3 remains open. Accepted feeds/Search/Age/Holder are retained; Baked Progress is at verified browser RED; remaining filters/sorts and final affected evidence remain required."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 3 remains open. Accepted feeds/Search/Age/Holder are retained; Baked Progress minimum UI GREEN is implemented but not accepted; remaining filters/sorts and final affected evidence remain required."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
@@ -279,7 +285,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_DESKTOP_AND_MOBILE_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Continue the current Baked Progress filter RED -> GREEN from code-bearing head a0f5b95b1b1a5cd9a07ea98b0d0ac64ea0bec913 after this handoff-only synchronization commit. The verified browser RED is the missing accessible Baked progress min/max UI. Implement only the minimum v2.2 control needed to expose a user-facing 0–100% bonding-token range, translate exact percent bounds to the existing backend graduation_progress_bps query contract, preserve existing view + Age + Holder URL/filter context, expose removable active state and Reset, and render only server-selected membership. Do not derive lifecycle from percentage. Then run focused desktop/mobile browser GREEN, focused PostgreSQL/API proof, adjacent Explore/Search/indexed-read regressions, type/build/static checks, 04D-relevant browser/accessibility/production gates, affected 06I 10k hot-launch/load regression, recovery/browser matrix and exact-head root CI. Baked Progress remains NOT PASS until all required exact-head evidence is green. Before starting any subsequent slice such as Baked Progress sort, re-read its relevant Project Sources first. Keep /tmp/bread-synthra-fork-proof untouched.
+  Verify the current Baked Progress minimum GREEN on the exact PR #94 head descended from code-bearing head d3e299730a68e8d067e43ea78071010972c5ec90. Do not add another implementation change unless a failing verification demonstrates a defect. Required acceptance evidence: focused desktop/mobile Baked Progress browser GREEN; focused PostgreSQL/API proof; adjacent Explore/Search and indexed-read regressions; type/build/static checks; 04D-relevant browser/accessibility/production gates; affected 06I 10k hot-launch/load regression; Day-9 recovery and release browser matrix; exact-head root CI. Confirm percent 0–100 UI -> exact bps transport, view + Age + Holder context preservation, removable Baked/other chips + Reset, server-selected membership only, no raw-RPC fanout, and no progress-derived lifecycle classification. Baked Progress remains NOT PASS until all required exact-head evidence is green. Before starting any subsequent slice such as Baked Progress sort, re-read its relevant Project Sources first. Keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
@@ -287,5 +293,5 @@ do_not_do:
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load or physical-device gates remain open."
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
   - "Do not fabricate performance, physical-device, Vercel, contract/config, market or live-state evidence."
-  - "Do not mark Baked Progress PASS while the verified browser RED remains or before focused + adjacent + required browser/load/CI evidence is green on one exact head."
+  - "Do not mark Baked Progress PASS until the historical RED has a verified GREEN and focused + adjacent + required browser/load/CI evidence is green on one exact head."
   - "Do not use Baked progress percentage to invent lifecycle thresholds or classify graduated tokens; v2.2 defines this range for bonding tokens."
