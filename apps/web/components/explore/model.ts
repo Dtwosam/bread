@@ -9,7 +9,7 @@ export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
 export type IndexedFeedCardFields = Pick<
   IndexedFeedItem,
-  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'name' | 'symbol' | 'metrics' | 'progress'
+  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'launchTimestamp' | 'name' | 'symbol' | 'metrics' | 'progress'
 >;
 
 export type SearchIntent =
@@ -93,6 +93,29 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     priceChange24h: null,
     progress: progressModel(source.progress),
   };
+}
+
+export function formatIndexedAge(
+  launchTimestamp: string | null,
+  indexedThroughBlockTimestamp: string | null,
+): string {
+  if (
+    launchTimestamp === null ||
+    indexedThroughBlockTimestamp === null ||
+    !/^\d+$/.test(launchTimestamp) ||
+    !/^\d+$/.test(indexedThroughBlockTimestamp)
+  ) {
+    return '—';
+  }
+
+  const launched = BigInt(launchTimestamp);
+  const indexed = BigInt(indexedThroughBlockTimestamp);
+  const seconds = indexed > launched ? indexed - launched : BigInt(0);
+
+  if (seconds < BigInt(60)) return '<1m';
+  if (seconds < BigInt(3_600)) return `${(seconds / BigInt(60)).toString(10)}m`;
+  if (seconds < BigInt(86_400)) return `${(seconds / BigInt(3_600)).toString(10)}h`;
+  return `${(seconds / BigInt(86_400)).toString(10)}d`;
 }
 
 export function formatUsdcBaseUnits(value: string | null): string {
