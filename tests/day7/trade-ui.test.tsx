@@ -90,12 +90,13 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     expect(panel).toContain('aria-label="Trade amount"');
   });
 
-  it('warns whenever canonical opening buy tax is active without inventing a new threshold', () => {
+  it('warns whenever canonical opening buy tax is active and shows its estimated USDC cost', () => {
     const panel = read(paths.panel);
 
     expect(panel).toContain('review.openingTaxBps > 0');
     expect(panel).toContain('Opening buy tax is active');
-    expect(panel).toContain('review.openingTaxBps');
+    expect(panel).toContain('Estimated opening tax');
+    expect(panel).toMatch(/bread-trade-warning[\s\S]*formatAmount\(review\.openingTax, quoteDecimals\)[\s\S]*USDC/);
   });
 
   it('renders the frozen transaction statuses through an accessible live region with canonical explorer access', () => {
