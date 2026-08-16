@@ -50,6 +50,15 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(stats.match(/—/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
+  it('uses the canonical onchain deployer for the Token-header creator attribution', () => {
+    const identity = read(paths.identity);
+
+    expect(identity).toContain('CreatorAttribution');
+    expect(identity).toContain('creatorAddress={token.deployerAddress}');
+    expect(identity).toContain("size=\"token-header\"");
+    expect(identity).not.toContain('token.creatorFeeRecipient');
+  });
+
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
     const tabs = read(paths.tabs);
 
