@@ -106,6 +106,11 @@ export type IndexedFeedItem = Readonly<{
   progress: IndexedGraduationProgressSummary | null;
 }>;
 
+export type IndexedSearchLifecycleState =
+  | "PROCESSING"
+  | "GRADUATION_PENDING"
+  | "GRADUATED";
+
 export type IndexedSearchResult = Readonly<{
   tokenAddress: string;
   curveAddress: string;
@@ -116,6 +121,7 @@ export type IndexedSearchResult = Readonly<{
   matchKind: string;
   ageSeconds: string | null;
   holderCount: string | null;
+  lifecycleState: IndexedSearchLifecycleState | null;
 }>;
 
 export type IndexedCurveStateSummary = Readonly<{
