@@ -60,7 +60,7 @@ export function TradePanel({
   review: TradeReview | null;
   reviewRoute: CanonicalTradeRoute | null;
   spendableBalance: bigint | null;
-  tokenSymbol: string;
+  tokenSymbol: string | null;
   transactionState: TransactionState;
   connectionStatus: TradeConnectionStatus;
   busy: boolean;
@@ -77,7 +77,10 @@ export function TradePanel({
   const presets: readonly Preset[] = action === 'BUY' ? ['$25', '$50', '$100', 'MAX'] : ['25%', '50%', '75%', 'MAX'];
   const outputDecimals = action === 'BUY' ? BREAD_LAUNCH_TOKEN_DECIMALS : 6;
   const inputDecimals = action === 'BUY' ? 6 : BREAD_LAUNCH_TOKEN_DECIMALS;
-  const inputAsset = action === 'BUY' ? 'USDC' : tokenSymbol;
+  const normalizedTokenSymbol = tokenSymbol?.trim() || null;
+  const inputAsset = action === 'BUY' ? 'USDC' : normalizedTokenSymbol ?? 'token';
+  const actionLabel = action === 'BUY' ? 'Buy' : 'Sell';
+  const reviewedActionLabel = normalizedTokenSymbol ? `${actionLabel} ${normalizedTokenSymbol}` : `${actionLabel} token`;
   const quoteDecimals = 6;
   const walletReady = connectionStatus === 'READY';
   const routeUnavailable = routeUnavailableReason !== null;
@@ -94,8 +97,8 @@ export function TradePanel({
       : connectionStatus === 'WRONG_NETWORK'
         ? 'Switch to Arc'
         : review
-          ? `${action === 'BUY' ? 'Buy' : 'Sell'} ${tokenSymbol}`
-          : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
+          ? reviewedActionLabel
+          : `Review ${actionLabel}`;
   const primaryAriaLabel = routeUnavailable
     ? 'Trading unavailable while graduation completes'
     : connectionStatus === 'DISCONNECTED'
@@ -103,8 +106,8 @@ export function TradePanel({
       : connectionStatus === 'WRONG_NETWORK'
         ? 'Switch wallet to Arc Testnet'
         : review
-          ? `${action === 'BUY' ? 'Buy' : 'Sell'} ${tokenSymbol} after reviewing current values`
-          : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
+          ? `${reviewedActionLabel} after reviewing current values`
+          : `Review ${actionLabel.toLowerCase()}`;
 
   return (
     <div className="bread-trade-panel">
