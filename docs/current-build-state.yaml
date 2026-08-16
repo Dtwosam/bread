@@ -1,11 +1,12 @@
-schema_version: 1.86
+schema_version: 1.87
 project: Bread
-updated_at: 2026-08-16T14:42:18Z
+updated_at: 2026-08-16T15:36:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
   ratification: RATIFIED
   project_source_pack_ratified: v1.6-pre-rc-ui-ux-v2.2
+  living_project_source_handoff: CURRENT-BUILD-STATE-v1.8-reconciled
   retired_only:
     - 04B-visual-design-system-component-specification
     - 04C-page-by-page-responsive-specification
@@ -23,10 +24,11 @@ source_pack:
   per_slice_source_rule: "Before each new implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or the previous slice's source pass."
 
 history_preservation:
-  previous_living_yaml_schema: 1.84
-  previous_living_yaml_exact_snapshot: docs/handoffs/current-build-state-v1.84.yaml
-  previous_living_yaml_blob: 87d86386754fb9a395c17d5e3445ea2a18b44623
-  rule: "The exact v1.84 living handoff is archived unchanged. Detailed earlier RED/GREEN run history remains authoritative evidence in that snapshot, Git commits, PR #94 history and immutable handoff records; this compact current pointer does not revoke or rewrite any non-conflicting prior ratification, acceptance or blocker."
+  previous_living_yaml_schema: 1.86
+  previous_living_yaml_git_parent: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
+  previous_living_yaml_blob: 2be018923eb656301d458481b8c169339b407ac2
+  prior_detailed_snapshot: docs/handoffs/current-build-state-v1.84.yaml
+  rule: "Detailed earlier RED/GREEN history remains authoritative in the archived handoff, immutable slice handoffs, Git commits, PR #94 history and evidence. This current mirror updates workflow position only and does not revoke or rewrite non-conflicting prior ratification, acceptance or blockers."
 
 legacy_ratifications:
   day4:
@@ -37,7 +39,7 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Token creator attribution, primary indexed Holder stat, and active-token reserve-backed baked progress ACCEPTED; Processing/Pending/Graduated and other Token/Trade sub-surfaces remain; Explore/Search Lane 3 remains OPEN with recorded source/security blockers"
+active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — active-token reserve-backed baked progress ACCEPTED; Pending graduation RED VERIFIED; Processing/Graduated and other Token/Trade sub-surfaces remain; Explore/Search Lane 3 remains OPEN with recorded source/security blockers"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_ui_gate: UI_UX_V2_2_TOKEN_TRADE_IMPLEMENTATION
 day9_started: true
@@ -72,6 +74,15 @@ accepted_state:
     active_graduation_baked_progress: PASS_AT_01c6c10ac357453d77e942ff667ba026671dea1a_REAL_QUOTE_RESERVE_AUTHORITY
     active_graduation_handoff: docs/handoffs/ui-v2-2-token-active-graduation-01c6c10.md
 
+active_work_unit:
+  id: TOKEN_PENDING_GRADUATION_LABEL
+  status: RED_VERIFIED_PRODUCTION_NOT_IMPLEMENTED
+  red_head: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
+  accepted_parent_code_head: 01c6c10ac357453d77e942ff667ba026671dea1a
+  source_contract: "Pending after failed auto-graduation is labeled 'Graduation pending'; completed threshold-crossing trade remains confirmed; liquidity creation may be retried when permissionless/authorized; never present the whole trade as failed."
+  minimum_green_owner: apps/web/components/token/graduation-module.tsx
+  minimum_green_change: "Change only the public failure-state label from 'Pending' to 'Graduation pending'; preserve retry routing, transaction construction, recovery copy, active baked progress and graduated routing."
+
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
   day9_branch: day9/synthra-arc-testnet-v3-candidate
@@ -83,9 +94,9 @@ integration_baseline:
   ui_pr_state: OPEN_DRAFT_UNMERGED
   ui_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_current_code_bearing_head: 01c6c10ac357453d77e942ff667ba026671dea1a
-  ui_current_code_state: "Token creator attribution, primary indexed Holder stat, and active reserve-backed baked progress accepted; Token/Trade major lane remains in progress."
-  handoff_record_head_after_active_graduation: 0141f6ca793acd5ac59a6a8433923a7bbaa12bb8
+  ui_current_accepted_code_bearing_head: 01c6c10ac357453d77e942ff667ba026671dea1a
+  ui_live_branch_head_before_mirror_sync: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
+  ui_current_code_state: "Accepted Token/Trade code remains 01c6c10; d36c925e is test-only Pending RED."
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
@@ -103,7 +114,7 @@ repository:
   ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
   ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_code_head_at_reconciliation: 01c6c10ac357453d77e942ff667ba026671dea1a
+  ui_implementation_red_head_at_reconciliation: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
   day9_complete: false
   rc_tag_created: false
   day10_started: false
@@ -119,7 +130,6 @@ verification:
   token_holder_day9_recovery: PASS_RUN_31951696015
   token_holder_release_browser_matrix: PASS_RUN_31951696062
   active_graduation_red_head: 71c2ba3ce4731bfd761abda5a25daedba3cbaaec
-  active_graduation_static_red_parent: b8c5d7b62c2b8eb860b346c1d498c1d90d799b19
   active_graduation_accepted_code_head: 01c6c10ac357453d77e942ff667ba026671dea1a
   active_graduation_root_ci: PASS_RUN_31953224240
   active_graduation_token_page: PASS_RUN_31953224252
@@ -139,6 +149,10 @@ verification:
   active_graduation_day9_recovery: PASS_RUN_31953224198
   active_graduation_release_browser_matrix: PASS_RUN_31953224242
   active_graduation_day9_truthfulness: PASS_RUN_31953224221_PHYSICAL_BLOCKER_RETAINED
+  pending_graduation_red_head: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
+  pending_graduation_token_page_red: EXPECTED_FAILURE_RUN_31953667793_17_PASS_1_FAIL_MISSING_GRADUATION_PENDING_LABEL
+  pending_graduation_primary_browser_red: EXPECTED_FAILURE_RUN_31953667922_61_RETAINED_PASS_2_FAIL_DESKTOP_MOBILE_MISSING_GRADUATION_PENDING_LABEL
+  pending_graduation_already_green_semantics: COMPLETED_TRADE_CONFIRMATION_AND_RETRY_VISIBLE
   day9_verdict: INCOMPLETE
 
 unresolved_earlier_lane_blockers:
@@ -165,7 +179,8 @@ lane4_token_trade_completion_tracking:
   primary_holder_stat: COMPLETE
   active_token_treatment: IN_PROGRESS_PARTIAL
   active_token_graduation_baked_progress: COMPLETE
-  graduation_pending_processing_variants: OPEN
+  graduation_pending: RED_VERIFIED
+  processing_graduating: OPEN
   graduated_token_treatment: OPEN
   chart_surface: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
   desktop_trade_panel_v2_2: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
@@ -203,7 +218,7 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade is in progress; Processing/Pending/Graduated treatment, other Token/Trade sub-surfaces, later major lanes and final responsive/accessibility/performance/browser evidence remain."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade is in progress; Pending is at verified RED, while Processing/Graduated treatment, other Token/Trade sub-surfaces, later major lanes and final responsive/accessibility/performance/browser evidence remain."
   EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Lane 3 stays open until market-cap, sort, full lifecycle, Search image proxy policy and Recent/Trending Search semantics are implemented from authority or resolved through the proper source-decision process."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
@@ -218,13 +233,13 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Do not begin another implementation slice from memory. First verify this handoff against the live PR #94 branch, then perform a fresh read of the ratified v2.2 Token graduation-state variants, 04A/04D, 06B/06D/06F/06H and 06I where performance/load may be affected, plus the exact GraduationModule/Token DTO/browser fixtures. A likely next source-backed slice is Processing/Pending graduation treatment, but it must be bounded so accepted active baked progress, transaction recovery and graduated routing are not reopened. Write and verify the expected RED before production code, implement the minimum GREEN, then run focused + adjacent + type/build + responsive/browser/accessibility/performance + affected 06I load and exact-head CI as required. Preserve separate tracking for graduated-token treatment, mobile trading, degraded/loading/error/recovery, wallet/network, responsive, accessibility, performance and final visual/browser evidence. Keep Explore/Search Lane 3 open until its blockers are authoritatively resolved. Keep /tmp/bread-synthra-fork-proof untouched.
+  Resume only the already source-reviewed Pending graduation slice. Starting from the verified RED lineage, implement the minimum GREEN in apps/web/components/token/graduation-module.tsx: public failure-state label 'Graduation pending'. Preserve completed-trade confirmation, retry eligibility/routing, transaction construction, accepted active reserve-backed baked progress and graduated routing. Prove both original REDs GREEN on the exact production head, then run focused + adjacent Token/trade/recovery, type/build/static, primary responsive browser, cross-browser, production/security, affected 06I hot-launch, rollback/recovery and release-matrix evidence. Do not accept the slice until all required exact-head evidence is green. After acceptance, synchronize durable handoff before a fresh Project Source pass for the next slice.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
   - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, final performance/load or physical-device gates remain open."
-  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in a UI slice without a separate source/impact review."
+  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in this UI slice."
   - "Do not fabricate market cap, movement, lifecycle, sort, image-security, Recent/Trending Search, performance, physical-device, Vercel, contract/config or live-state evidence."
   - "Do not reopen accepted Lane 1/2, accepted Lane-3 sub-slices, Token creator attribution, Token Holder stat or active reserve-backed baked progress without a demonstrated regression."
   - "Do not substitute creator fee-recipient metadata for canonical onchain creator/deployer identity."
