@@ -28,6 +28,7 @@ export type FeedParams = Readonly<{
   holdersMax?: string;
   progressMinBps?: string;
   progressMaxBps?: string;
+  creator?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -100,6 +101,9 @@ function assertFeedParams(params: FeedParams): void {
   const progressMax = parseBps(params.progressMaxBps, 'progressMaxBps');
   if (progressMin !== undefined && progressMax !== undefined && progressMin > progressMax) {
     throw new RangeError('progressMinBps must not exceed progressMaxBps.');
+  }
+  if (params.creator !== undefined && !ADDRESS_SHAPE.test(params.creator)) {
+    throw new RangeError('creator must be a valid address.');
   }
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
@@ -209,6 +213,7 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       addOptional(params, 'holdersMax', input.holdersMax);
       addOptional(params, 'progressMinBps', input.progressMinBps);
       addOptional(params, 'progressMaxBps', input.progressMaxBps);
+      addOptional(params, 'creator', input.creator);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);
