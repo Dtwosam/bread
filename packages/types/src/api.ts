@@ -115,6 +115,7 @@ export type IndexedSearchResult = Readonly<{
   symbol: string | null;
   matchKind: string;
   ageSeconds: string | null;
+  holderCount: string | null;
 }>;
 
 export type IndexedCurveStateSummary = Readonly<{
