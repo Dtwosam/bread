@@ -114,6 +114,7 @@ export type IndexedSearchResult = Readonly<{
   name: string | null;
   symbol: string | null;
   matchKind: string;
+  ageSeconds: string | null;
 }>;
 
 export type IndexedCurveStateSummary = Readonly<{
