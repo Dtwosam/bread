@@ -39,9 +39,9 @@ function remainingQuote(
   return (target > reserve ? target - reserve : BigInt(0)).toString(10);
 }
 
-function displayState(token: IndexedTokenDetail): 'Active' | 'Processing' | 'Pending' | 'Graduated' {
+function displayState(token: IndexedTokenDetail): 'Active' | 'Processing' | 'Graduation pending' | 'Graduated' {
   if (token.curveState?.positionLocked === true) return 'Graduated';
-  if (token.curveState?.graduationFailureReasonHash) return 'Pending';
+  if (token.curveState?.graduationFailureReasonHash) return 'Graduation pending';
   const graduationPhase = token.curveState?.graduationPhase;
   if (
     token.curveState?.readyToGraduate ||
