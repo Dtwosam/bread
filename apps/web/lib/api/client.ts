@@ -14,6 +14,7 @@ const FEED_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
 const FEED_AGES = new Set(['lt5m', 'lt1h', '1h-24h', '1d-7d']);
 const ADDRESS_LIKE = /^0x/i;
 const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
+const DECIMAL_INTEGER = /^\d+$/;
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -25,6 +26,8 @@ export type FeedParams = Readonly<{
   age?: FeedAge;
   holdersMin?: string;
   holdersMax?: string;
+  progressMinBps?: string;
+  progressMaxBps?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -74,12 +77,29 @@ function assertCursor(cursor: string | undefined): void {
   }
 }
 
+function parseBps(value: string | undefined, label: string): number | undefined {
+  if (value === undefined) return undefined;
+  if (!DECIMAL_INTEGER.test(value)) {
+    throw new RangeError(`${label} must be an integer from 0 to 10000.`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 10_000) {
+    throw new RangeError(`${label} must be an integer from 0 to 10000.`);
+  }
+  return parsed;
+}
+
 function assertFeedParams(params: FeedParams): void {
   if (params.view !== undefined && !FEED_VIEWS.has(params.view)) {
     throw new RangeError('feed view is not supported.');
   }
   if (params.age !== undefined && !FEED_AGES.has(params.age)) {
     throw new RangeError('feed age is not supported.');
+  }
+  const progressMin = parseBps(params.progressMinBps, 'progressMinBps');
+  const progressMax = parseBps(params.progressMaxBps, 'progressMaxBps');
+  if (progressMin !== undefined && progressMax !== undefined && progressMin > progressMax) {
+    throw new RangeError('progressMinBps must not exceed progressMaxBps.');
   }
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
@@ -187,6 +207,8 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       addOptional(params, 'age', input.age);
       addOptional(params, 'holdersMin', input.holdersMin);
       addOptional(params, 'holdersMax', input.holdersMax);
+      addOptional(params, 'progressMinBps', input.progressMinBps);
+      addOptional(params, 'progressMaxBps', input.progressMaxBps);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);
