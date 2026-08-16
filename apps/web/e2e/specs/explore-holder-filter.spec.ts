@@ -13,7 +13,7 @@ test('Explore Holder range is backend-backed and preserves existing filter conte
   await installIndexedApiRoutes(page, state);
 
   await page.goto('/explore?view=trending&age=lt1h');
-  await page.getByRole('button', { name: 'Filters' }).click();
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
   await page.getByLabel('Holders min').fill('10');
   await page.getByLabel('Holders max').fill('20');
   await page.getByRole('button', { name: 'Apply holder filter' }).click();
