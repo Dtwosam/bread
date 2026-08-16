@@ -14,15 +14,16 @@ test('Search renders only canonical lifecycle states and does not infer ordinary
 
   const pending = dialog.locator(`a[href="/token/${PENDING_TOKEN}"]`);
   await expect(pending).toBeVisible();
-  await expect(pending.getByText('Graduation pending', { exact: true })).toBeVisible();
+  await expect(pending.getByText('Lifecycle Graduation pending', { exact: true })).toBeVisible();
 
   const active = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
   await expect(active).toBeVisible();
-  await expect(active.getByText('New', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Active', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Almost Baked', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Graduating', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Graduated', { exact: true })).toHaveCount(0);
+  await expect(active.getByText('Lifecycle —', { exact: true })).toBeVisible();
+  await expect(active.getByText('Lifecycle New', { exact: true })).toHaveCount(0);
+  await expect(active.getByText('Lifecycle Active', { exact: true })).toHaveCount(0);
+  await expect(active.getByText('Lifecycle Almost Baked', { exact: true })).toHaveCount(0);
+  await expect(active.getByText('Lifecycle Graduating', { exact: true })).toHaveCount(0);
+  await expect(active.getByText('Lifecycle Graduated', { exact: true })).toHaveCount(0);
 
   expect(rpcState.requests).toEqual([]);
 });
