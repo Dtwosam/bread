@@ -163,11 +163,8 @@ test('processing token is Graduating, preserves completed trades, and disables t
   await expect(page.getByText(/trade failed/i)).toHaveCount(0);
   await expect(graduation.getByRole('button', { name: /continue graduation/i })).toBeVisible();
 
-  const desktopTrade = page.getByLabel('Trade', { exact: true }).getByRole('button', {
-    name: 'Trading unavailable while graduation completes',
-  });
-  await expect(desktopTrade).toBeDisabled();
-  await expect(page.locator('.bread-token-tablet-trade-trigger button')).toBeDisabled();
+  await expect(page.locator('.bread-token-trade-slot button[aria-label="Trading unavailable while graduation completes"]')).toBeDisabled();
+  await expect(page.locator('.bread-token-tablet-trade-trigger button[aria-label="Trading unavailable while graduation completes"]')).toBeDisabled();
   await expect(page.locator('.bread-token-mobile-actions button').nth(0)).toBeDisabled();
   await expect(page.locator('.bread-token-mobile-actions button').nth(1)).toBeDisabled();
 });
