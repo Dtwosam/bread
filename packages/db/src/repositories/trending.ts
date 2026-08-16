@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
+import type { ExploreAgeBounds } from './explore-age.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type TrendingLaunchCursorKey = Readonly<{
@@ -60,6 +61,21 @@ function optionalBigInt(value: string | null): bigint | null {
   return value === null ? null : decimalIntegerToBigInt(value);
 }
 
+function launchAgeClauses(bounds: ExploreAgeBounds | undefined) {
+  if (!bounds) return { minClause: sql``, maxClause: sql`` } as const;
+  const min = bounds.minLaunchTimestamp;
+  const minClause =
+    min === undefined
+      ? sql``
+      : bounds.minInclusive
+        ? sql`AND launch_scope.launch_timestamp >= CAST(${min} AS numeric)`
+        : sql`AND launch_scope.launch_timestamp > CAST(${min} AS numeric)`;
+  const maxClause = bounds.maxInclusive
+    ? sql`AND launch_scope.launch_timestamp <= CAST(${bounds.maxLaunchTimestamp} AS numeric)`
+    : sql`AND launch_scope.launch_timestamp < CAST(${bounds.maxLaunchTimestamp} AS numeric)`;
+  return { minClause, maxClause } as const;
+}
+
 export class TrendingRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -70,11 +86,13 @@ export class TrendingRepository {
     indexedHeadTimestamp: string,
     limit: number,
     cursor?: TrendingLaunchCursorKey,
+    ageBounds?: ExploreAgeBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
     const cutoffTimestamp = headTimestamp > 3_600n ? headTimestamp - 3_600n : 0n;
     const canonicalFactory = factoryAddress.toLowerCase();
+    const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const cursorClause = cursor
       ? sql`AND (
           r.quote_volume_1h < CAST(${cursor.quoteVolume1h} AS numeric)
@@ -117,6 +135,9 @@ export class TrendingRepository {
           AND t.stack_version = ${stackVersion}
           AND launch_scope.stack_version = ${stackVersion}
           AND launch_scope.factory_address = ${canonicalFactory}
+          AND launch_scope.launch_timestamp IS NOT NULL
+          ${minClause}
+          ${maxClause}
           AND t.block_timestamp IS NOT NULL
           AND t.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
           AND t.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
