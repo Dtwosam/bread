@@ -11,6 +11,7 @@ export const breadQueryKeys = {
       'bread',
       'feed',
       input.view ?? 'new',
+      input.age ?? 'any',
       input.limit ?? 25,
       normalizeCursor(input.cursor),
     ] as const;
