@@ -4,6 +4,7 @@ import {
   isExploreAgeFilter,
   parseExploreHolderBounds,
   parseExploreProgressBounds,
+  parseExploreVolumeBounds,
   resolveExploreAgeBounds,
 } from "../../../../packages/db/src/index.js";
 import { canonicalizeProtocolAddress } from "../../../../packages/protocol-sdk/src/index.js";
@@ -48,6 +49,8 @@ export function registerFeedRoute(
       progressMinBps?: string;
       progressMaxBps?: string;
       creator?: string;
+      volumeMinQuote?: string;
+      volumeMaxQuote?: string;
       limit?: string;
       cursor?: string;
     };
@@ -94,6 +97,19 @@ export function registerFeedRoute(
         error: {
           code: "INVALID_PROGRESS_FILTER",
           message: "Baked progress filter is invalid.",
+          requestId: request.id,
+        },
+      });
+    }
+
+    let volumeBounds: ReturnType<typeof parseExploreVolumeBounds>;
+    try {
+      volumeBounds = parseExploreVolumeBounds(query.volumeMinQuote, query.volumeMaxQuote);
+    } catch {
+      return reply.code(400).send({
+        error: {
+          code: "INVALID_VOLUME_FILTER",
+          message: "24h volume filter is invalid.",
           requestId: request.id,
         },
       });
@@ -228,7 +244,10 @@ export function registerFeedRoute(
 
     const load = async () => {
       const feedMeta =
-        view === "trending" || view === "graduating" || ageFilter !== undefined
+        view === "trending" ||
+        view === "graduating" ||
+        ageFilter !== undefined ||
+        volumeBounds !== undefined
           ? await deps.freshness()
           : undefined;
       const ageBounds =
@@ -242,7 +261,8 @@ export function registerFeedRoute(
         ageBounds !== undefined ||
         holderBounds !== undefined ||
         progressBounds !== undefined ||
-        creatorAddress !== undefined;
+        creatorAddress !== undefined ||
+        volumeBounds !== undefined;
       const fetched =
         view === "graduated"
           ? hasProjectionFilters
@@ -256,6 +276,8 @@ export function registerFeedRoute(
                 holderBounds,
                 progressBounds,
                 creatorAddress,
+                volumeBounds,
+                feedMeta?.indexedThroughBlockTimestamp,
               )
             : await deps.repository.listGraduatedLaunches(
                 deps.context.chainId,
@@ -276,6 +298,7 @@ export function registerFeedRoute(
                 holderBounds,
                 progressBounds,
                 creatorAddress,
+                volumeBounds,
               )
             : view === "graduating"
               ? await deps.almostBakedRepository.listAlmostBakedLaunches(
@@ -289,6 +312,7 @@ export function registerFeedRoute(
                   holderBounds,
                   progressBounds,
                   creatorAddress,
+                  volumeBounds,
                 )
               : hasProjectionFilters
                 ? await deps.exploreAgeRepository.listNewLaunches(
@@ -301,6 +325,8 @@ export function registerFeedRoute(
                     holderBounds,
                     progressBounds,
                     creatorAddress,
+                    volumeBounds,
+                    feedMeta?.indexedThroughBlockTimestamp,
                   )
                 : await deps.repository.listNewLaunches(
                     deps.context.chainId,
@@ -432,7 +458,7 @@ export function registerFeedRoute(
       };
     };
 
-    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&progressMinBps=${progressBounds?.minBps ?? ""}&progressMaxBps=${progressBounds?.maxBps ?? ""}&creator=${creatorAddress ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
+    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&progressMinBps=${progressBounds?.minBps ?? ""}&progressMaxBps=${progressBounds?.maxBps ?? ""}&creator=${creatorAddress ?? ""}&volumeMinQuote=${volumeBounds?.minQuote ?? ""}&volumeMaxQuote=${volumeBounds?.maxQuote ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: stackFeedProjectionCacheChannel({
