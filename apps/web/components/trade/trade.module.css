@@ -63,6 +63,10 @@
   font: inherit;
 }
 
+:global(.bread-trade-amount-input) {
+  min-height: 56px;
+}
+
 :global(.bread-trade-presets) {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -194,6 +198,10 @@
 }
 
 @media (max-width: 767px) {
+  :global(.bread-trade-amount-input) {
+    min-height: 60px;
+  }
+
   :global(.bread-trade-sheet-backdrop) {
     position: fixed;
     inset: 0;
