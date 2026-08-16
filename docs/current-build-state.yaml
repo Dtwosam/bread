@@ -1,6 +1,6 @@
-schema_version: 1.83
+schema_version: 1.84
 project: Bread
-updated_at: 2026-08-16T14:56:32+02:00
+updated_at: 2026-08-16T14:18:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -35,9 +35,9 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Lane 3 — Explore / Search enrichment IN PROGRESS — Search canonical graduation lifecycle subset ACCEPTED; remaining New/Active/Almost-Baked classification blocked"
+active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Token header canonical creator attribution ACCEPTED; next Token slice not started; Explore/Search Lane 3 remains open with recorded source/security blockers"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-active_ui_gate: UI_UX_V2_2_LANE3_IMPLEMENTATION
+active_ui_gate: UI_UX_V2_2_TOKEN_TRADE_IMPLEMENTATION
 day9_started: true
 day9_rc_tag_created: false
 
@@ -65,6 +65,7 @@ completed_checkpoints:
   - "Lane 3 Search Holder-count enrichment accepted cross-layer at exact code-bearing head ba5ad51202e2e4cecaea443151d2f864b47c48b7. Search LEFT JOINs canonical token_metrics.holder_count so missing metric rows remain searchable with holderCount=null; no result membership/ranking changes were introduced. The public Search DTO exposes holderCount and the UI renders it as quiet secondary metadata (for example 42 holders) while preserving accepted Search Age and zero raw-RPC fanout. The PostgreSQL RED explicitly proved both known=42 and unknown=null cases; desktop/mobile browser REDs failed only on the missing holder text while 51 retained journeys passed. Final exact-head API/type/build/browser/cross-browser/10k/recovery/rollback/release-matrix evidence is green."
   - "Lane 3 Search canonical creator/wallet grouping accepted cross-layer at exact code-bearing head bfde729a031125884ef947b23225fbfdd0cd79fe. Address Search authority now matches canonical launches.deployer_address only; creator_fee_recipient remains metadata and is explicitly rejected as creator-search authority. Search presentation groups source-backed results into Exact match, Tokens and Creators / wallets without changing result membership, ranking, keyboard navigation or raw-RPC behavior. Recent searches and Trending searches remain intentionally absent because v2.2 names those groups but does not define persistence/ranking authority. PostgreSQL and desktop/mobile REDs failed only on fee-recipient leakage and missing group headings before minimum GREEN; final exact-head API/type/build/browser/cross-browser/10k/recovery/rollback/release-matrix evidence is green."
   - "Lane 3 Search canonical graduation lifecycle subset accepted cross-layer at exact code-bearing head 31427500f71643124b59015765857eec2682e386. Search projects only states with source-backed graduation meaning: SWEPT -> PROCESSING -> UI 'Graduating'; failed ready-to-graduate NOT_GRADUATED with a recorded failure reason -> GRADUATION_PENDING -> UI 'Graduation pending'; POOL_CREATED -> GRADUATED -> UI 'Graduated'. Ordinary NOT_GRADUATED and RESCUED remain lifecycleState=null, so the implementation does not invent New/Active/Almost-Baked thresholds or a rescued marketing label. PostgreSQL and desktop/mobile REDs failed only on the absent lifecycle contract/label before minimum GREEN; final exact-head root/type/build/API/browser/cross-browser/10k/rollback/recovery/release-matrix evidence is green."
+  - "UI/UX v2.2 Token header canonical creator attribution accepted at exact head 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf. TokenIdentity now uses shared CreatorAttribution with token.deployerAddress / onchain creator wallet in the source-defined 13px token-header treatment and no longer presents creatorFeeRecipient as Creator. RED head f3473e432238fc7c4bea4ac5bb00dee4a831aab0 proved the old authority mismatch in both static owner and desktop/mobile browser tests. Initial GREEN c80e69ad1f7d3a3a308fc118ece183ccabf934c9 exposed only an over-specific whitespace assertion in the new browser test; production markup was left unchanged and the test was repaired to assert prefix/identity semantics separately. Final exact-head root/Token/trade/browser/cross-browser/10k/rollback/recovery/release-matrix evidence is green."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -118,8 +119,11 @@ integration_baseline:
   ui_lane3_search_lifecycle_red_head: 25eb7650b98db184e7ba44d971df7674bac0dbe8
   ui_lane3_search_lifecycle_backend_green_head: da8e26375937beb5fe4f51debd3e45f06d5cb387
   ui_lane3_search_lifecycle_accepted_code_head: 31427500f71643124b59015765857eec2682e386
-  ui_current_code_bearing_head: 31427500f71643124b59015765857eec2682e386
-  ui_current_code_state: "Search canonical graduation lifecycle subset ACCEPTED on exact code-bearing head. Full New/Active/Almost-Baked classification and Lane 3 remain open; no subsequent implementation slice has started."
+  ui_token_creator_red_head: f3473e432238fc7c4bea4ac5bb00dee4a831aab0
+  ui_token_creator_initial_green_head: c80e69ad1f7d3a3a308fc118ece183ccabf934c9
+  ui_token_creator_accepted_head: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
+  ui_current_code_bearing_head: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
+  ui_current_code_state: "Token header canonical creator attribution ACCEPTED on exact code-bearing head. Token / Trade lane remains in progress; no subsequent Token implementation slice has started. Explore/Search Lane 3 remains open with recorded blockers."
   ui_handoff_sync_parent_before_acceptance: 7c4bc9e3ea8e4448555d3712cfc912835563144c
   ui_handoff_sync_parent_after_creator_acceptance: 842f17b5c84c08d441e25c5d215188b884856b1a
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
@@ -139,7 +143,7 @@ repository:
   ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
   ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_code_head_at_reconciliation: 31427500f71643124b59015765857eec2682e386
+  ui_implementation_code_head_at_reconciliation: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
   repository_status: REMOTE_GITHUB_VERIFIED_UI_BRANCH_ISOLATED_FROM_RUNNING_LAN_ENVIRONMENT
   day9_complete: false
   rc_tag_created: false
@@ -349,6 +353,30 @@ verification:
   lane3_search_lifecycle_final_release_browser_matrix: PASS_RUN_31948117995
   lane3_search_lifecycle_final_day9_truthfulness: PASS_RUN_31948117906_PHYSICAL_BLOCKER_RETAINED
   lane3_search_lifecycle_acceptance: PASS_AT_31427500f71643124b59015765857eec2682e386_CANONICAL_GRADUATION_SUBSET_ONLY_FULL_NEW_ACTIVE_ALMOST_BAKED_BLOCKED_LANE3_STILL_OPEN
+  token_creator_static_red: "EXPECTED_FAIL run 31948772826 at f3473e432238fc7c4bea4ac5bb00dee4a831aab0: 14 retained Token tests pass; only canonical creator owner assertion fails because TokenIdentity has no shared CreatorAttribution and still reads creatorFeeRecipient."
+  token_creator_browser_red: "EXPECTED_FAIL run 31948772924 at f3473e432238fc7c4bea4ac5bb00dee4a831aab0: 57 retained journeys pass; desktop+mobile Token creator tests alone fail because canonical deployer attribution is absent from the initial Token identity region."
+  token_creator_initial_green_head: c80e69ad1f7d3a3a308fc118ece183ccabf934c9
+  token_creator_initial_static_green: PASS_RUN_31948960510
+  token_creator_initial_browser_assertion_regression: "FAIL_RUN_31948960494_AT_c80e69ad1f7d3a3a308fc118ece183ccabf934c9: canonical deployer element is visible and title-correct, but the new test incorrectly expected literal textContent whitespace between two CSS-gapped spans ('by 0x...' vs DOM textContent 'by0x...'). Production CreatorAttribution markup/CSS was not changed; test repaired semantically."
+  token_creator_final_head: 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
+  token_creator_final_root_ci: PASS_RUN_31949194064
+  token_creator_final_token_page: PASS_RUN_31949194076
+  token_creator_final_primary_browser: PASS_RUN_31949194060
+  token_creator_final_cross_browser: PASS_RUN_31949194056
+  token_creator_final_hot_launch_capacity: PASS_RUN_31949194124
+  token_creator_final_trade_lifecycle: PASS_RUN_31949194106
+  token_creator_final_production_gates: PASS_RUN_31949194162
+  token_creator_final_frontend_security: PASS_RUN_31949194075
+  token_creator_final_indexed_read_boundary: PASS_RUN_31949194078
+  token_creator_final_explore_search: PASS_RUN_31949194071
+  token_creator_final_shared_api_types: PASS_RUN_31949194096
+  token_creator_final_wallet_network: PASS_RUN_31949194040
+  token_creator_final_rebuild_reconcile: PASS_RUN_31949194095
+  token_creator_final_service_rollback: PASS_RUN_31949194089
+  token_creator_final_day9_recovery: PASS_RUN_31949194065
+  token_creator_final_release_browser_matrix: PASS_RUN_31949194081
+  token_creator_final_day9_truthfulness: PASS_RUN_31949194042_PHYSICAL_BLOCKER_RETAINED
+  token_creator_acceptance: PASS_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf_TOKEN_HEADER_ONLY_TOKEN_TRADE_LANE_STILL_OPEN
 
 lan_acceptance:
   status: PASS
@@ -385,7 +413,7 @@ ui_ux_v2_2:
   vercel_preview_status: "CONNECTOR_TEAM_AVAILABLE_BUT_NO_BREAD_PROJECT_CONFIGURED; no preview evidence fabricated."
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  current_lane: "Lane 3 — Explore / Search enrichment IN_PROGRESS_SEARCH_CANONICAL_GRADUATION_LIFECYCLE_SUBSET_ACCEPTED"
+  current_lane: "Token / Trade — IN_PROGRESS_TOKEN_CREATOR_ATTRIBUTION_ACCEPTED; EXPLORE_SEARCH_LANE3_BLOCKERS_RETAINED"
   accepted_foundation_behaviors:
     - EXACT_V2_2_THEME_TOKEN_CONTRACT
     - SHARED_CREATOR_ATTRIBUTION_PRIMITIVE
@@ -417,6 +445,8 @@ ui_ux_v2_2:
     - BAKED_PROGRESS_FILTER_BACKEND_BACKED_BONDING_ONLY_WITH_URL_CHIPS_RESET
     - CREATOR_FILTER_BACKEND_BACKED_CANONICAL_DEPLOYER_WITH_URL_CHIPS_RESET
     - VOLUME_24H_FILTER_BACKEND_BACKED_COMMITTED_HEAD_TRAILING_WINDOW_WITH_URL_CHIPS_RESET
+  accepted_token_trade_behaviors:
+    - TOKEN_HEADER_CANONICAL_ONCHAIN_CREATOR_ATTRIBUTION_NOT_FEE_RECIPIENT
   search_enrichment:
     age: ACCEPTED_AT_d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec
     age_authority: "max(0, committed indexedThroughBlockTimestamp - launches.launch_timestamp); UI formats the returned ageSeconds only."
@@ -429,6 +459,10 @@ ui_ux_v2_2:
     recent_searches: "OPEN_UNDEFINED_AUTHORITY — v2.2 names the group but does not define persistence, scope, retention or ordering; do not invent."
     trending_searches: "OPEN_UNDEFINED_AUTHORITY — v2.2 names the group but does not define a Search-specific ranking/window; do not reuse the Trending feed silently."
     token_image: "BLOCKED_ON_IMAGE_PROXY_POLICY — v2.2 requires image in each Search token row and indexer metadata.logo is sanitized, but security/performance sources require creator-controlled token images to be proxied/cached/resized. No source-backed image-proxy/SSRF/IPFS policy owner exists in the repository; do not render arbitrary creator URLs directly."
+  token_trade:
+    creator_attribution: ACCEPTED_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
+    creator_authority: "IndexedTokenDetail.deployerAddress / onchain launch deployer is the Creator identity. creatorFeeRecipient remains fee-routing metadata and must not be presented as Creator. Shared CreatorAttribution token-header size keeps it visually secondary."
+    next_source_backed_candidate: "Token stats holder count is a candidate only after a fresh source/interface pass confirms IndexedTokenDetail.holderCount is the correct existing authority and current TokenStats still renders Holders as unavailable."
   baked_progress_contract:
     user_facing_unit: PERCENT_0_TO_100
     canonical_projection: graduation_progress_bps
@@ -459,8 +493,9 @@ ui_ux_v2_2:
     - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's earlier full-canvas x32 content origin at 1586px. Do not widen code to imitate conflicting concept geometry; sync Figma later."
     - "Approved-reference sample live movers/trades/volume are not reproduced until reliable Bread indexed data supports them; current status-only strip is intentionally truthful rather than fabricated."
     - "Explore card/feed body has advanced through accepted feed authority, Search interactions, Age, Holder, Baked Progress, Creator and 24h Volume filter slices; Search Age, Holder-count, canonical creator/wallet grouping and canonical graduation lifecycle subset are accepted while image proxy policy, Recent/Trending Search groups, full lifecycle categories and remaining filter/sort gaps stay explicit. Lane 3 remains open."
+    - "Token / Trade implementation has begun from the source-ordered v2.2 lane. Token header creator attribution now uses the canonical onchain deployer through the shared quiet CreatorAttribution primitive; remaining Token/Trade behavior is still in progress."
     - "The Next.js development indicator visible at bottom-left in Playwright captures is a non-product test-harness overlay and is excluded from Bread UI comparison."
-  intentional_scope_boundary: "Lane 3 remains OPEN until all required source-backed Explore filters/sorts and Search enrichment with integrated API/UI/browser evidence are accepted; blocked semantics remain explicit rather than fabricated."
+  intentional_scope_boundary: "Explore/Search Lane 3 remains OPEN for its recorded blocked requirements while the independently source-backed Token / Trade lane proceeds. Day 9 remains incomplete until all mandatory UI/UX, performance/load and physical-device gates close."
 
 blockers:
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
@@ -473,7 +508,7 @@ blockers:
 
 blocker_scope:
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 3 remains open. Accepted feeds/Search interactions/Search Age/Search Holder/Search canonical creator-wallet grouping/Search canonical graduation lifecycle subset/Age/Holder/Baked Progress/Creator/24h Volume filters are retained; Search image proxy policy, Recent/Trending Search data authority, full lifecycle categories, market-cap authority and sort semantics remain open/blocked."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token / Trade lane is now in progress with canonical Token creator attribution accepted. Explore/Search Lane 3 remains open with Search image-proxy policy, Recent/Trending Search data authority, full lifecycle categories, market-cap authority and sort semantics blocked/open exactly as recorded."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
@@ -487,7 +522,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_DESKTOP_AND_MOBILE_SCREENSHOT_ARTIFACTS
 
 next_action: >-
-  Do not begin another implementation slice from memory. Search Age, Search Holder-count, canonical creator/wallet grouping and the canonical graduation lifecycle subset are accepted at d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec, ba5ad51202e2e4cecaea443151d2f864b47c48b7, bfde729a031125884ef947b23225fbfdd0cd79fe and 31427500f71643124b59015765857eec2682e386 respectively and must not be reopened without a demonstrated regression. First re-read the relevant ratified Project Sources and owning interfaces for the next selected gap. Lane-3 remaining requirements now contain genuine source/security decision blockers: Recent searches and Trending searches lack persistence/ranking authority; Search token imagery requires a source-backed proxy/cache/SSRF/IPFS policy before rendering creator-controlled URLs; market cap lacks a populated canonical projection; full New/Active/Almost-Baked lifecycle boundaries are undefined; and required sort direction/default/window semantics are not frozen. Do not fabricate any of them. Continue autonomously only with a different fully source-backed independent UI/UX v2.2 slice after its own fresh source/impact review, preserving the current integrated head and keeping Lane 3 open. Apply 06D RED -> verified expected failure -> minimum GREEN -> focused/adjacent/type/build -> 04D browser/accessibility/production gates -> affected 06I load -> exact-head CI, then update this handoff again. Keep /tmp/bread-synthra-fork-proof untouched.
+  Do not begin another implementation slice from memory. Token header canonical creator attribution is accepted at 51cbcbabf0624f62d6a4c31ea84a332efa9e94bf and must not be reopened without a demonstrated regression. Before the next Token / Trade slice, re-read the relevant ratified v2.2 Token/Trade sources, 04D/06D and owning interfaces. A likely source-backed candidate is Token stats holder count only if the fresh pass confirms IndexedTokenDetail.holderCount is the existing indexed authority and the current TokenStats still renders Holders as unavailable. Do not touch blocked image rendering without a proxy/cache/SSRF/IPFS policy; do not invent market cap, movement or trade-count windows; do not infer lifecycle categories from age/progress. Continue normal 06D RED -> verified expected failure -> minimum GREEN -> focused/adjacent/type/build -> 04D browser/accessibility/production -> affected 06I load -> exact-head CI, then update this handoff. Keep Explore/Search Lane 3 open and keep /tmp/bread-synthra-fork-proof untouched.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
@@ -496,7 +531,7 @@ do_not_do:
   - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
   - "Do not fabricate performance, physical-device, Vercel, contract/config, market or live-state evidence."
   - "Do not reopen or weaken the accepted Baked Progress filter semantics without a demonstrated regression; percentage remains bonding-only and is not lifecycle classification."
-  - "Do not substitute creator fee-recipient metadata for the accepted canonical deployer/original creator-wallet identity."
+  - "Do not substitute creator fee-recipient metadata for the accepted canonical deployer/original creator-wallet identity anywhere token identity is represented."
   - "Do not substitute token_metrics.quote_volume_24h for the accepted committed-head trailing-trade Explore filter authority."
   - "Do not derive Search age from browser wall-clock time or infer lifecycle labels from age/progress."
   - "Do not compute Search holder count client-side or via per-result RPC; canonical indexed token_metrics.holder_count is the accepted authority and unknown remains null."
