@@ -28,6 +28,17 @@ function progressPercent(progressBps: string | null | undefined): number | null 
   return bps / 100;
 }
 
+function remainingQuote(
+  realQuoteReserve: string | null | undefined,
+  graduationThreshold: string | null | undefined,
+): string | null {
+  if (!realQuoteReserve || !graduationThreshold) return null;
+  if (!/^\d+$/.test(realQuoteReserve) || !/^\d+$/.test(graduationThreshold)) return null;
+  const reserve = BigInt(realQuoteReserve);
+  const target = BigInt(graduationThreshold);
+  return (target > reserve ? target - reserve : BigInt(0)).toString(10);
+}
+
 function displayState(token: IndexedTokenDetail): 'Active' | 'Processing' | 'Pending' | 'Graduated' {
   if (token.curveState?.positionLocked === true) return 'Graduated';
   if (token.curveState?.graduationFailureReasonHash) return 'Pending';
@@ -64,9 +75,12 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
   const runtime = useTradeRuntime();
   const progressBps = token.progress?.progressBps ?? null;
   const percent = progressPercent(progressBps);
+  const state = displayState(token);
   const graduationPhase = token.curveState?.graduationPhase ?? null;
   const poolId = token.curveState?.poolId ?? null;
   const positionLocked = token.curveState?.positionLocked ?? null;
+  const accumulatedQuote = token.curveState?.realQuoteReserve ?? null;
+  const remainingQuoteAmount = remainingQuote(accumulatedQuote, token.graduationThreshold);
   const tokenAddress = ADDRESS.test(token.tokenAddress) ? token.tokenAddress as Address : null;
   const eligible = tokenAddress !== null && recoveryEligible(token);
   const initialToken = tokenAddress ?? ('0x0000000000000000000000000000000000000000' as Address);
@@ -162,10 +176,16 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
         <div>
           <h2 id="bread-graduation-heading">Graduation</h2>
           <p>
-            {displayState(token)} · Indexed state {token.progress?.state ?? graduationPhase ?? '—'}
+            {state} · Indexed state {token.progress?.state ?? graduationPhase ?? '—'}
           </p>
         </div>
-        <strong>{progressBps === null ? '—' : `${progressBps} bps`}</strong>
+        <strong>
+          {state === 'Active' && percent !== null
+            ? `${percent.toFixed(1)}% baked`
+            : progressBps === null
+              ? '—'
+              : `${progressBps} bps`}
+        </strong>
       </div>
 
       <div className="bread-progress-track" aria-hidden="true">
@@ -173,14 +193,33 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
       </div>
 
       <dl className="bread-graduation__facts">
-        <div>
-          <dt>Tracked quote</dt>
-          <dd>{formatUsdcBaseUnits(token.curveState?.trackedQuote ?? null)}</dd>
-        </div>
-        <div>
-          <dt>Snapshotted target</dt>
-          <dd>{formatUsdcBaseUnits(token.graduationThreshold)}</dd>
-        </div>
+        {state === 'Active' ? (
+          <>
+            <div>
+              <dt>Accumulated</dt>
+              <dd>{formatUsdcBaseUnits(accumulatedQuote)}</dd>
+            </div>
+            <div>
+              <dt>Snapshotted target</dt>
+              <dd>{formatUsdcBaseUnits(token.graduationThreshold)}</dd>
+            </div>
+            <div>
+              <dt>Remaining</dt>
+              <dd>{formatUsdcBaseUnits(remainingQuoteAmount)}</dd>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <dt>Tracked quote</dt>
+              <dd>{formatUsdcBaseUnits(token.curveState?.trackedQuote ?? null)}</dd>
+            </div>
+            <div>
+              <dt>Snapshotted target</dt>
+              <dd>{formatUsdcBaseUnits(token.graduationThreshold)}</dd>
+            </div>
+          </>
+        )}
         <div>
           <dt>Phase</dt>
           <dd>{graduationPhase ?? '—'}</dd>
