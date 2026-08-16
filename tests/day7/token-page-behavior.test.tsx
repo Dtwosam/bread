@@ -100,6 +100,21 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(tradePanel).toContain('Trading unavailable');
   });
 
+  it('transforms the lifecycle module for canonical Graduated state without inventing a pool address', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('graduatedVenueKind');
+    expect(graduation).toContain('Uniswap V3');
+    expect(graduation).toContain('Pool ID');
+    expect(graduation).toContain('positionManager');
+    expect(graduation).toContain('Position manager');
+    expect(graduation).toContain('usdcUsed');
+    expect(graduation).toContain('Liquidity USDC');
+    expect(graduation).toContain('Permanent lock');
+    expect(graduation).toMatch(/not a safety guarantee/i);
+    expect(graduation).not.toMatch(/pool address.*poolId/i);
+  });
+
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
     const tabs = read(paths.tabs);
 
