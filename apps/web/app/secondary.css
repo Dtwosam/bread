@@ -1,0 +1,114 @@
+.bread-secondary-page {
+  display: grid;
+  gap: 24px;
+}
+
+.bread-secondary-page__heading {
+  display: grid;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.bread-secondary-page__heading h1,
+.bread-secondary-page__heading p,
+.bread-readable-route h1,
+.bread-readable-route h2,
+.bread-readable-route p {
+  margin-block: 0;
+}
+
+.bread-secondary-link {
+  min-height: 44px;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-surface-1);
+  color: var(--bread-text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bread-readable-route {
+  width: min(100%, 840px);
+  max-width: 840px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  margin-inline: auto;
+}
+
+.bread-readable-route--legal {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bread-readable-route__nav {
+  position: sticky;
+  top: calc(64px + 40px + 24px);
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-card);
+  background: var(--bread-surface-1);
+}
+
+.bread-readable-route__nav a {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  padding-inline: 10px;
+  border-radius: var(--bread-radius-control);
+  color: var(--bread-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bread-readable-route__nav a:hover,
+.bread-readable-route__nav a:focus-visible {
+  background: var(--bread-accent-soft);
+  color: var(--bread-text-primary);
+}
+
+.bread-readable-route__content {
+  min-width: 0;
+  display: grid;
+  gap: 28px;
+}
+
+.bread-readable-route__content > header,
+.bread-readable-route__content > section {
+  display: grid;
+  gap: 10px;
+}
+
+.bread-readable-route pre {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-surface-2);
+}
+
+@media (max-width: 767px) {
+  .bread-readable-route {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .bread-readable-route__nav {
+    position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bread-readable-route__nav a {
+    justify-content: center;
+  }
+}
