@@ -15,6 +15,8 @@ type Address = `0x${string}`;
 type TransactionHash = `0x${string}`;
 
 const TRANSACTION_HASH = /^0x[0-9a-fA-F]{64}$/;
+const ARC_NATIVE_USDC_DECIMALS = 18;
+const BUY_MAX_WALLET_TRANSACTION_UPPER_BOUND = BigInt(2);
 
 const ERC20_SPEND_ABI = parseAbi([
   'function allowance(address owner, address spender) view returns (uint256)',
@@ -29,6 +31,12 @@ export type TradeWalletAdapterInput = Readonly<{
   chainId: number;
   storage?: Storage;
   now?: () => Date;
+}>;
+
+export type ArcBuyMaxBalance = Readonly<{
+  balance: bigint;
+  gasReserve: bigint;
+  maxInput: bigint;
 }>;
 
 export class AllowanceConfirmationUnknownError extends Error {
@@ -54,6 +62,40 @@ function replacementHash(value: unknown): TransactionHash | null {
   if (!transaction || typeof transaction !== 'object') return null;
   const hash = (transaction as { hash?: unknown }).hash;
   return typeof hash === 'string' && TRANSACTION_HASH.test(hash) ? hash as TransactionHash : null;
+}
+
+async function readErc20Balance(
+  publicClient: PublicClient,
+  account: Address,
+  asset: Address,
+): Promise<bigint> {
+  return canonicalAmount(
+    await publicClient.readContract({
+      address: asset,
+      abi: ERC20_SPEND_ABI,
+      functionName: 'balanceOf',
+      args: [account],
+    }),
+    'ERC20 balance',
+  );
+}
+
+function currentFeePerGas(value: unknown): bigint {
+  if (!value || typeof value !== 'object') {
+    throw new Error('Current Arc gas fee estimate is unavailable.');
+  }
+  const estimate = value as { maxFeePerGas?: unknown; gasPrice?: unknown };
+  if (typeof estimate.maxFeePerGas === 'bigint') return estimate.maxFeePerGas;
+  if (typeof estimate.gasPrice === 'bigint') return estimate.gasPrice;
+  throw new Error('Current Arc gas fee estimate is unavailable.');
+}
+
+function ceilNativeGasToQuoteUnits(nativeAmount: bigint, quoteDecimals: number): bigint {
+  if (!Number.isInteger(quoteDecimals) || quoteDecimals < 0 || quoteDecimals > ARC_NATIVE_USDC_DECIMALS) {
+    throw new Error('Invalid Arc quote decimals for gas reserve calculation.');
+  }
+  const scale = BigInt(10) ** BigInt(ARC_NATIVE_USDC_DECIMALS - quoteDecimals);
+  return nativeAmount === BigInt(0) ? BigInt(0) : (nativeAmount + scale - BigInt(1)) / scale;
 }
 
 async function readAllowance(
@@ -242,13 +284,40 @@ export async function readSpendableTradeBalance({
   quoteAsset: Address;
 }>): Promise<bigint> {
   const asset = action === 'BUY' ? quoteAsset : tokenAddress;
-  return canonicalAmount(
-    await publicClient.readContract({
-      address: asset,
-      abi: ERC20_SPEND_ABI,
-      functionName: 'balanceOf',
-      args: [account],
-    }),
-    'ERC20 balance',
-  );
+  return readErc20Balance(publicClient, account, asset);
+}
+
+/**
+ * Arc native USDC and ERC-20 USDC share one underlying balance, so Buy MAX
+ * cannot spend the full ERC-20 balance. Exact trade gas may be unestimable
+ * before ERC-20 allowance exists; use the current block gas limit as a safe
+ * per-wallet-transaction upper bound and current fee estimation, covering the
+ * worst-case approval + trade pair. Conversion to 6-decimal quote units rounds
+ * up so the reserve never loses a native-USDC remainder.
+ */
+export async function readArcBuyMaxBalance({
+  publicClient,
+  account,
+  quoteAsset,
+  quoteDecimals,
+}: Readonly<{
+  publicClient: PublicClient;
+  account: Address;
+  quoteAsset: Address;
+  quoteDecimals: number;
+}>): Promise<ArcBuyMaxBalance> {
+  const [balance, latestBlock, feeEstimate] = await Promise.all([
+    readErc20Balance(publicClient, account, quoteAsset),
+    publicClient.getBlock({ blockTag: 'latest' }),
+    publicClient.estimateFeesPerGas(),
+  ]);
+  const gasLimit = canonicalAmount(latestBlock.gasLimit, 'Arc block gas limit');
+  const feePerGas = currentFeePerGas(feeEstimate);
+  const nativeGasReserve = gasLimit * feePerGas * BUY_MAX_WALLET_TRANSACTION_UPPER_BOUND;
+  const gasReserve = ceilNativeGasToQuoteUnits(nativeGasReserve, quoteDecimals);
+  return {
+    balance,
+    gasReserve,
+    maxInput: balance > gasReserve ? balance - gasReserve : BigInt(0),
+  };
 }
