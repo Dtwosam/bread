@@ -286,12 +286,13 @@ describe.skipIf(!RUN_DB)('Day 6 Task 5 trade projections and read API', () => {
     ]);
   });
 
-  it('projects baked progress from tracked quote over the snapshotted graduation threshold', async () => {
+  it('projects baked progress from real tracked quote reserve over the snapshotted graduation threshold', async () => {
     await applyFixture();
 
     const progress = await pool.query(`
       SELECT
         state.tracked_quote,
+        state.real_quote_reserve,
         launch.graduation_threshold,
         metrics.graduation_progress_bps,
         metrics.graduation_state
@@ -308,8 +309,9 @@ describe.skipIf(!RUN_DB)('Day 6 Task 5 trade projections and read API', () => {
     expect(progress.rows).toEqual([
       expect.objectContaining({
         tracked_quote: '600',
+        real_quote_reserve: '510',
         graduation_threshold: '900',
-        graduation_progress_bps: '6666',
+        graduation_progress_bps: '5666',
         graduation_state: 'CURVE_ACTIVE',
       }),
     ]);
