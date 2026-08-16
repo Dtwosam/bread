@@ -16,6 +16,7 @@ export type SearchLaunchRow = Readonly<{
   curveAddress: string;
   deployerAddress: string | null;
   creatorFeeRecipient: string | null;
+  launchTimestamp: string | null;
   name: string | null;
   symbol: string | null;
   launchBlockNumber: string;
@@ -43,6 +44,7 @@ export class SearchRepository {
           curve_address AS "curveAddress",
           deployer_address AS "deployerAddress",
           creator_fee_recipient AS "creatorFeeRecipient",
+          launch_timestamp::text AS "launchTimestamp",
           name,
           symbol,
           launch_block_number::text AS "launchBlockNumber",
@@ -77,6 +79,7 @@ export class SearchRepository {
         curve_address AS "curveAddress",
         deployer_address AS "deployerAddress",
         creator_fee_recipient AS "creatorFeeRecipient",
+        launch_timestamp::text AS "launchTimestamp",
         name,
         symbol,
         launch_block_number::text AS "launchBlockNumber",
