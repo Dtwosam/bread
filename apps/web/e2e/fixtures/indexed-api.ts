@@ -214,6 +214,12 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     matchKind,
     ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
     holderCount: item.holderCount,
+    lifecycleState:
+      item.tokenAddress === PENDING_TOKEN
+        ? 'GRADUATION_PENDING'
+        : item.tokenAddress === GRADUATED_TOKEN
+          ? 'GRADUATED'
+          : null,
   };
 }
 
