@@ -106,16 +106,21 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
 function progressClauses(bounds: ExploreProgressBounds | undefined) {
   if (!bounds) {
     return {
-      joinClause: sql``,
+      metricJoinClause: sql``,
+      stateJoinClause: sql``,
       knownClause: sql``,
       minClause: sql``,
       maxClause: sql``,
+      scopeClause: sql``,
     } as const;
   }
   return {
-    joinClause: sql`INNER JOIN token_metrics progress_metric
+    metricJoinClause: sql`INNER JOIN token_metrics progress_metric
       ON progress_metric.chain_id = launch_scope.chain_id
      AND progress_metric.token_address = launch_scope.token_address`,
+    stateJoinClause: sql`LEFT JOIN launch_state progress_state
+      ON progress_state.chain_id = launch_scope.chain_id
+     AND progress_state.token_address = launch_scope.token_address`,
     knownClause: sql`AND progress_metric.graduation_progress_bps IS NOT NULL`,
     minClause:
       bounds.minBps === undefined
@@ -125,6 +130,7 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
       bounds.maxBps === undefined
         ? sql``
         : sql`AND progress_metric.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
+    scopeClause: sql`AND COALESCE(progress_state.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'`,
   } as const;
 }
 
@@ -188,7 +194,8 @@ export class TrendingRepository {
           ON launch_scope.chain_id = t.chain_id
          AND launch_scope.token_address = t.token_address
         ${holder.joinClause}
-        ${progress.joinClause}
+        ${progress.metricJoinClause}
+        ${progress.stateJoinClause}
         WHERE t.chain_id = ${chainId}
           AND t.stack_version = ${stackVersion}
           AND launch_scope.stack_version = ${stackVersion}
@@ -202,6 +209,7 @@ export class TrendingRepository {
           ${progress.knownClause}
           ${progress.minClause}
           ${progress.maxClause}
+          ${progress.scopeClause}
           AND t.block_timestamp IS NOT NULL
           AND t.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
           AND t.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
