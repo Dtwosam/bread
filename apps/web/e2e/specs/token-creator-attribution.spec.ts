@@ -10,7 +10,8 @@ test('Token header attributes the canonical onchain creator and not the fee reci
   const creator = identity.locator(`[data-creator-address="${E2E_DEPLOYER}"]`);
   await expect(creator).toBeVisible();
   await expect(creator).toHaveAttribute('title', E2E_DEPLOYER);
-  await expect(creator).toContainText('by 0x1000…0002');
+  await expect(creator.locator('.bread-creator-attribution__prefix')).toHaveText('by');
+  await expect(creator.locator('.bread-creator-attribution__identity')).toHaveText('0x1000…0002');
 
   await expect(identity).not.toContainText(E2E_WALLET);
 });
