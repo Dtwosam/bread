@@ -38,6 +38,10 @@ export {
 
 export { ReadRepository, decimalIntegerToBigInt } from "./repositories/read.js";
 export {
+  AlmostBakedRepository,
+  type AlmostBakedLaunchCursorKey,
+} from "./repositories/almost-baked.js";
+export {
   TrendingRepository,
   type TrendingLaunchCursorKey,
 } from "./repositories/trending.js";
