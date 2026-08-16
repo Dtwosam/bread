@@ -14,6 +14,10 @@ const paths = {
   claimPanel: 'apps/web/components/creator/claim-panel.tsx',
   claimController: 'apps/web/lib/transactions/claim-controller.ts',
   responsive: 'apps/web/app/portfolio-creator.css',
+  types: 'packages/types/src/portfolio.ts',
+  portfolioApi: 'apps/api/src/routes/portfolio.ts',
+  readRepository: 'packages/db/src/repositories/read.ts',
+  creatorRepository: 'packages/db/src/repositories/creators.ts',
 } as const;
 
 describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
@@ -35,11 +39,37 @@ describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
     expect(portfolio).not.toMatch(/rawRpc|readContract|eth_call/i);
   });
 
-  it('does not expose PnL or average entry while the accepted Portfolio API has no trustworthy cost basis', () => {
+  it('keeps creator attribution in every Portfolio holding from the indexed launch identity', () => {
+    const types = read(paths.types);
+    const api = read(paths.portfolioApi);
+    const repository = read(paths.readRepository);
+    const position = read(paths.portfolioPosition);
+
+    expect(types).toContain('creatorAddress');
+    expect(repository).toContain('creator_fee_recipient AS "creatorAddress"');
+    expect(api).toContain('creatorAddress: row.creatorAddress');
+    expect(position).toContain('CreatorAttribution');
+    expect(position).toContain('holding.creatorAddress');
+  });
+
+  it('does not expose PnL, average entry or fake 24h movement while those values are unavailable', () => {
     expect(existsSync(resolve(root, paths.portfolioPosition))).toBe(true);
     const position = read(paths.portfolioPosition);
+    const route = read(paths.portfolioRoute);
     expect(position).not.toMatch(/\bPnL\b|average entry|avg\. entry/i);
+    expect(position).not.toContain('Movement');
+    expect(route).not.toContain('<th scope="col">Movement</th>');
     expect(position).toContain('/token/');
+    expect(position).toContain('Trade');
+  });
+
+  it('keeps Portfolio calm: at most three summary blocks, holdings primary, recent activity below, no invented watchlist', () => {
+    const portfolio = read(paths.portfolioRoute);
+    expect(portfolio).toContain('Wallet value');
+    expect(portfolio).toContain('Positions');
+    expect(portfolio).toContain('bread-portfolio-list');
+    expect(portfolio).toContain('Recent wallet activity');
+    expect(portfolio).not.toMatch(/watchlist/i);
   });
 
   it('reviews exact onchain FeeEscrow claimable USDC and recipient before direct wallet signing', () => {
@@ -58,6 +88,35 @@ describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
     expect(controller).not.toMatch(/\/v1\//);
   });
 
+  it('backs Creator launch identity, market cap and lifecycle with indexed data rather than placeholders', () => {
+    const types = read(paths.types);
+    const repository = read(paths.creatorRepository);
+    const creator = read(paths.creatorRoute);
+
+    for (const field of ['name', 'symbol', 'marketCap', 'lifecycleState']) {
+      expect(types).toContain(field);
+    }
+    expect(repository).toContain('LEFT JOIN token_metrics');
+    expect(repository).toContain('LEFT JOIN launch_state');
+    expect(repository).toContain('market_cap::text AS market_cap');
+    expect(repository).toContain('graduation_state');
+    expect(creator).toContain('CreatorAttribution');
+    expect(creator).toContain('isCurrentUser');
+    expect(creator).toContain('Market cap');
+    expect(creator).toContain('Lifecycle');
+    expect(creator).toContain('Revenue');
+    expect(creator).toContain('Claim status');
+  });
+
+  it('shows only source-backed Creator summary blocks and does not fabricate unavailable buyback balances', () => {
+    const creator = read(paths.creatorRoute);
+    expect(creator).toContain('Total earned');
+    expect(creator).toContain('Claimable USDC');
+    expect(creator).toContain('Active launches');
+    expect(creator).not.toContain('Locked buyback tokens');
+    expect(creator).not.toMatch(/creator score|trust badge|reputation/i);
+  });
+
   it('renders indexed current value and responsive desktop-to-mobile Portfolio and Creator layouts', () => {
     const position = read(paths.portfolioPosition);
     const value = read(paths.portfolioValue);
@@ -70,9 +129,6 @@ describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
     expect(value).toContain('formatUnits');
     expect(position).toContain('formatIndexedCurrentValueUsdc');
     expect(position).toContain('Current value');
-    expect(position).toContain('Movement');
-    expect(position).toContain('Activity');
-    expect(portfolio).toContain('Wallet value');
     expect(portfolio).toContain('bread-portfolio-list');
     expect(creator).toContain('bread-creator-summary');
     expect(creator).toContain('bread-creator-launch-list');
