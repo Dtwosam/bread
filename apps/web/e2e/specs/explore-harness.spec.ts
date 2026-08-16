@@ -109,7 +109,7 @@ test('Explore Age filter is backend-backed, preserves view context, and resets c
 
   await page.goto('/explore?view=trending');
   await page.getByRole('button', { name: 'Filters', exact: true }).click();
-  await page.getByLabel('Age', { exact: true }).selectOption('lt5m');
+  await page.getByRole('combobox', { name: 'Age', exact: true }).selectOption('lt5m');
 
   await expect(page).toHaveURL(/\/explore\?view=trending&age=lt5m$/);
   await expect(page.getByRole('button', { name: 'Age: <5m' })).toBeVisible();
