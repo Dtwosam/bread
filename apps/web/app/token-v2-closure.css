@@ -1,0 +1,24 @@
+.bread-token-identity__mark {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+}
+
+.bread-token-identity__title-row h1 {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .bread-token-identity__mark {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+  }
+
+  .bread-token-identity__title-row h1 {
+    font-size: 22px;
+    line-height: 28px;
+  }
+}
