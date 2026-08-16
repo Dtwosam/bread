@@ -12,7 +12,7 @@ export function TokenStats({ token }: Readonly<{ token: IndexedTokenDetail }>) {
     ['Market cap', '—'],
     ['24h volume', formatUsdcBaseUnits(token.metrics?.quoteVolume.h24 ?? null)],
     ['24h change', '—'],
-    ['Holders', '—'],
+    ['Holders', token.holderCount ?? '—'],
     ['Creator tax', token.creatorTaxBps === null ? '—' : `${token.creatorTaxBps} bps`],
   ] as const;
 
