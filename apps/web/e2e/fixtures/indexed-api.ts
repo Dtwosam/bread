@@ -213,6 +213,7 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     symbol: item.symbol,
     matchKind,
     ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
+    holderCount: item.holderCount,
   };
 }
 
