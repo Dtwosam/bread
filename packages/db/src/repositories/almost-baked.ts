@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
+import type { ExploreHolderBounds } from './explore-holders.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AlmostBakedLaunchCursorKey = Readonly<{
@@ -71,6 +72,21 @@ function launchAgeClauses(bounds: ExploreAgeBounds | undefined) {
   return { minClause, maxClause } as const;
 }
 
+function holderClauses(bounds: ExploreHolderBounds | undefined) {
+  if (!bounds) return { knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  return {
+    knownClause: sql`AND m.holder_count IS NOT NULL`,
+    minClause:
+      bounds.min === undefined
+        ? sql``
+        : sql`AND m.holder_count >= CAST(${bounds.min} AS numeric)`,
+    maxClause:
+      bounds.max === undefined
+        ? sql``
+        : sql`AND m.holder_count <= CAST(${bounds.max} AS numeric)`,
+  } as const;
+}
+
 export class AlmostBakedRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -82,12 +98,14 @@ export class AlmostBakedRepository {
     limit: number,
     cursor?: AlmostBakedLaunchCursorKey,
     ageBounds?: ExploreAgeBounds,
+    holderBounds?: ExploreHolderBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
     const cutoffTimestamp = headTimestamp > 3_600n ? headTimestamp - 3_600n : 0n;
     const canonicalFactory = factoryAddress.toLowerCase();
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
+    const holder = holderClauses(holderBounds);
     const cursorClause = cursor
       ? sql`AND (
           r.graduation_progress_bps < CAST(${cursor.graduationProgressBps} AS numeric)
@@ -142,6 +160,9 @@ export class AlmostBakedRepository {
           AND l.launch_timestamp IS NOT NULL
           ${minClause}
           ${maxClause}
+          ${holder.knownClause}
+          ${holder.minClause}
+          ${holder.maxClause}
           AND m.graduation_progress_bps IS NOT NULL
           AND COALESCE(s.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'
       )
