@@ -145,7 +145,7 @@ export function TradePanel({
           </span>
         </span>
         <input
-          className="bread-trade-input"
+          className="bread-trade-input bread-trade-amount-input"
           aria-label="Trade amount"
           inputMode="decimal"
           autoComplete="off"
