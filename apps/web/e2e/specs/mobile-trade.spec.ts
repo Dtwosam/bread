@@ -71,7 +71,7 @@ test('mobile trade sheet survives keyboard-sized viewport pressure and executes 
   await expect(review.getByText('Bonding curve', { exact: true })).toBeVisible();
 
   const submit = dialog.getByRole('button', { name: 'Buy TWIN after reviewing current values' });
-  await expect(submit).toHaveText('Buy TWIN');
+  await expect(submit.locator('.bread-button__label')).toHaveText('Buy TWIN');
   await submit.scrollIntoViewIfNeeded();
   await expect(submit).toBeVisible();
   const submitBox = await submit.boundingBox();
