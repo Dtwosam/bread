@@ -57,6 +57,22 @@ describe('Day 7 indexed browser read boundary', () => {
     );
   });
 
+  it('serializes supported Explore Age filters without frontend classification', async () => {
+    const expected: IndexedResponse<readonly { tokenAddress: string }[]> = {
+      data: [],
+      meta,
+      page: { hasMore: false },
+    };
+    const fetchImpl = vi.fn(async () => jsonResponse(expected));
+    const client = createBreadApiClient({ baseUrl: 'https://bread.test', fetchImpl });
+
+    await client.getFeed({ view: 'trending', age: 'lt5m', limit: 25 });
+
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe(
+      'https://bread.test/v1/feed?view=trending&age=lt5m&limit=25',
+    );
+  });
+
   it('rejects out-of-contract bounded query values before network work', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ data: [], meta }));
     const client = createBreadApiClient({ fetchImpl });
@@ -104,6 +120,15 @@ describe('Day 7 indexed browser read boundary', () => {
       'bread',
       'feed',
       'new',
+      'any',
+      25,
+      'abc',
+    ]);
+    expect(breadQueryKeys.feed({ view: 'new', age: 'lt5m', limit: 25, cursor: 'abc' })).toEqual([
+      'bread',
+      'feed',
+      'new',
+      'lt5m',
       25,
       'abc',
     ]);
