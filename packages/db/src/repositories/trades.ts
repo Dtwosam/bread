@@ -267,6 +267,23 @@ async function projectMetrics(
   trade: CanonicalTradeProjection,
   executionSource: TradeExecutionSource,
 ): Promise<void> {
+  if (trade.executionPriceDenominator <= 0n) {
+    throw new Error("trade execution price denominator must be positive");
+  }
+  const launchResult = await db.execute(sql`
+    SELECT initial_supply
+    FROM launches
+    WHERE chain_id = ${trade.id.chainId}
+      AND token_address = ${trade.token.toLowerCase()}
+    LIMIT 1
+  `);
+  const launch = rows<LaunchRow>(launchResult)[0];
+  if (!launch) throw new Error(`trade launch snapshot missing for ${trade.token}`);
+  const initialSupply = exact(launch.initial_supply, "launch initial supply");
+  const marketCap =
+    (trade.executionPriceNumerator * initialSupply) /
+    trade.executionPriceDenominator;
+
   const fiveMinutesAgo =
     trade.blockTimestamp > 300n ? trade.blockTimestamp - 300n : 0n;
   const oneHourAgo =
@@ -302,7 +319,7 @@ async function projectMetrics(
       last_activity_transaction_index, last_activity_log_index, updated_at
     ) VALUES (
       ${trade.id.chainId}, ${trade.token.toLowerCase()},
-      NULL, NULL, NULL,
+      NULL, ${decimal(marketCap)}, NULL,
       ${aggregate.total_trade_count}, ${aggregate.total_quote_volume}, ${decimal(trade.blockNumber)},
       ${decimal(trade.executionPriceNumerator)}, ${decimal(trade.executionPriceDenominator)}, ${executionSource},
       ${aggregate.quote_volume_5m}, ${aggregate.quote_volume_1h}, ${aggregate.quote_volume_24h},
@@ -310,6 +327,7 @@ async function projectMetrics(
       ${trade.transactionIndex}, ${trade.id.logIndex}, now()
     )
     ON CONFLICT (chain_id, token_address) DO UPDATE SET
+      market_cap = EXCLUDED.market_cap,
       trade_count = EXCLUDED.trade_count,
       quote_volume = EXCLUDED.quote_volume,
       latest_block_number = EXCLUDED.latest_block_number,
