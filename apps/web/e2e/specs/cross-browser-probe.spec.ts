@@ -22,7 +22,7 @@ test('alternate engine browse and wallet Buy smoke', async ({ page, rpcState }, 
   await expect(trade.locator('dl.bread-trade-review').getByText('Minimum output', { exact: true })).toBeVisible();
 
   await setWalletTransactionHashes(page, [BUY_TX_HASH]);
-  await trade.getByRole('button', { name: 'Buy BREAD after reviewing current values' }).click();
+  await trade.getByRole('button', { name: 'Buy TWIN after reviewing current values' }).click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
   expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(1);
   expect(rpcState.unknownCalls).toEqual([]);
