@@ -18,6 +18,7 @@ on:
       - 'tests/day7/wallet-network.test.tsx'
       - 'tests/day7/wallet-runtime.test.ts'
       - 'tests/day7/trade-ui.test.tsx'
+      - 'tests/day7/buy-max-gas-reserve.test.ts'
       - 'tests/day7/create-runtime.test.tsx'
       - 'tests/day7/creator-claim-ui.test.tsx'
       - 'docs/current-build-state.yaml'
@@ -48,6 +49,7 @@ jobs:
           tests/day7/wallet-network.test.tsx
           tests/day7/wallet-runtime.test.ts
           tests/day7/trade-ui.test.tsx
+          tests/day7/buy-max-gas-reserve.test.ts
           tests/day7/create-runtime.test.tsx
           tests/day7/creator-claim-ui.test.tsx
       - name: Run retained Day 7 Tasks 2-4 read-route regressions
