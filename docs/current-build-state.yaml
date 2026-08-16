@@ -1,6 +1,6 @@
 schema_version: 1.89
 project: Bread
-updated_at: 2026-08-16T20:42:00Z
+updated_at: 2026-08-16T20:45:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -43,7 +43,8 @@ legacy_ratifications:
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
 active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Processing/Graduating, Graduated treatment, canonical TradePanel context, stale-quote refresh and transaction explorer link recovered as implemented and exact-head green; additional Token/Trade closure remains"
-active_gate: HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED
+active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+active_continuity_gate: HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED
 active_ui_gate: UI_UX_V2_2_TOKEN_TRADE_IMPLEMENTATION
 day9_started: true
 day9_complete: false
@@ -67,6 +68,7 @@ integration_baseline:
   previous_handoff_sync_heads:
     - 5940f2d600ce0e18257ce02cfa7416c4f81c1ac0
     - ed1059aca563f8da984598c4f8d5051aacbf71fc
+    - 7cd84d3abc264596e29f96d652e185e69e4c9a88
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
@@ -129,7 +131,9 @@ verification:
   recovered_code_verdict: EXACT_HEAD_AUTOMATION_GREEN_BUT_DAY9_INCOMPLETE
   handoff_sync_first_attempt: FAIL_RUN_31970914123_MISSING_REQUIRED_VALIDATOR_KEYS
   handoff_sync_second_attempt: FAIL_RUN_31971041024_MISSING_LEGACY_DAY4_RATIFICATION_MARKER
-  handoff_sync_failure_disposition: "PROCESS/HANDOFF_FORMAT_FAILURES_ONLY — production code unchanged; validator contracts restored before continuation."
+  handoff_sync_third_attempt_root_ci: PASS_RUN_31971124449
+  handoff_sync_third_attempt_final_rc: FAIL_RUN_31971124463_PRIMARY_ACTIVE_GATE_FIELD_CHANGED
+  handoff_sync_failure_disposition: "PROCESS/HANDOFF_FORMAT_OR_GATE-LABEL_FAILURES_ONLY — production code unchanged; source validators and root CI passed at 7cd84d3; primary Day-9 physical-device gate restored while handoff replacement remains a separate continuation gate."
 
 fresh_source_gap:
   id: BUY_MAX_SHARED_USDC_GAS_RESERVE
@@ -199,7 +203,7 @@ blockers:
 
 blocker_scope:
   HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED: "Git/YAML have been reconciled to the recovered live branch, but the uploaded CURRENT-BUILD-STATE v1.8 Project Source is stale. Replace it with v1.9 and read it back before production implementation continues."
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Final redesigned candidate still needs genuine required iOS/Android/Edge physical/current-device evidence."
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Primary Day-9 release gate: final redesigned candidate still needs genuine required iOS/Android/Edge physical/current-device evidence."
   UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade and later major lanes/final closure remain incomplete."
   EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Recorded Lane-3 semantic/security blockers remain open and must not be invented."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
