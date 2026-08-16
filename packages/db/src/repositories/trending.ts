@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
+import type { ExploreHolderBounds } from './explore-holders.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type TrendingLaunchCursorKey = Readonly<{
@@ -76,6 +77,31 @@ function launchAgeClauses(bounds: ExploreAgeBounds | undefined) {
   return { minClause, maxClause } as const;
 }
 
+function holderClauses(bounds: ExploreHolderBounds | undefined) {
+  if (!bounds) {
+    return {
+      joinClause: sql``,
+      knownClause: sql``,
+      minClause: sql``,
+      maxClause: sql``,
+    } as const;
+  }
+  return {
+    joinClause: sql`INNER JOIN token_metrics holder_metric
+      ON holder_metric.chain_id = launch_scope.chain_id
+     AND holder_metric.token_address = launch_scope.token_address`,
+    knownClause: sql`AND holder_metric.holder_count IS NOT NULL`,
+    minClause:
+      bounds.min === undefined
+        ? sql``
+        : sql`AND holder_metric.holder_count >= CAST(${bounds.min} AS numeric)`,
+    maxClause:
+      bounds.max === undefined
+        ? sql``
+        : sql`AND holder_metric.holder_count <= CAST(${bounds.max} AS numeric)`,
+  } as const;
+}
+
 export class TrendingRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -87,12 +113,14 @@ export class TrendingRepository {
     limit: number,
     cursor?: TrendingLaunchCursorKey,
     ageBounds?: ExploreAgeBounds,
+    holderBounds?: ExploreHolderBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
     const cutoffTimestamp = headTimestamp > 3_600n ? headTimestamp - 3_600n : 0n;
     const canonicalFactory = factoryAddress.toLowerCase();
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
+    const holder = holderClauses(holderBounds);
     const cursorClause = cursor
       ? sql`AND (
           r.quote_volume_1h < CAST(${cursor.quoteVolume1h} AS numeric)
@@ -131,6 +159,7 @@ export class TrendingRepository {
         INNER JOIN launches launch_scope
           ON launch_scope.chain_id = t.chain_id
          AND launch_scope.token_address = t.token_address
+        ${holder.joinClause}
         WHERE t.chain_id = ${chainId}
           AND t.stack_version = ${stackVersion}
           AND launch_scope.stack_version = ${stackVersion}
@@ -138,6 +167,9 @@ export class TrendingRepository {
           AND launch_scope.launch_timestamp IS NOT NULL
           ${minClause}
           ${maxClause}
+          ${holder.knownClause}
+          ${holder.minClause}
+          ${holder.maxClause}
           AND t.block_timestamp IS NOT NULL
           AND t.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
           AND t.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
