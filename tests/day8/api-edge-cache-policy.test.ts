@@ -123,7 +123,7 @@ describe('Day 8 API edge-cache policy', () => {
     await app.close();
   });
 
-  it('keeps malformed, missing, and unsupported read responses out of shared caches', async () => {
+  it('keeps malformed, missing, and invalid read responses out of shared caches', async () => {
     vi.spyOn(ReadRepository.prototype, 'getCheckpoint').mockResolvedValue(checkpoint as never);
     vi.spyOn(ReadRepository.prototype, 'getLaunch').mockResolvedValue(null);
 
@@ -135,18 +135,18 @@ describe('Day 8 API edge-cache policy', () => {
       now: () => new Date('2026-08-10T18:00:00.000Z'),
     });
 
-    const [malformed, missing, unsupportedFeed] = await Promise.all([
+    const [malformed, missing, invalidFeed] = await Promise.all([
       app.inject({ method: 'GET', url: '/v1/tokens/not-an-address' }),
       app.inject({ method: 'GET', url: `/v1/tokens/${address(99)}` }),
-      app.inject({ method: 'GET', url: '/v1/feed?view=graduating&limit=1' }),
+      app.inject({ method: 'GET', url: '/v1/feed?view=not-a-feed&limit=1' }),
     ]);
 
     expect(malformed.statusCode).toBe(400);
     expect(missing.statusCode).toBe(404);
-    expect(unsupportedFeed.statusCode).toBe(503);
+    expect(invalidFeed.statusCode).toBe(400);
     expect(malformed.headers['cache-control']).toBe(NO_STORE_CACHE_CONTROL);
     expect(missing.headers['cache-control']).toBe(NO_STORE_CACHE_CONTROL);
-    expect(unsupportedFeed.headers['cache-control']).toBe(NO_STORE_CACHE_CONTROL);
+    expect(invalidFeed.headers['cache-control']).toBe(NO_STORE_CACHE_CONTROL);
 
     await app.close();
   });
