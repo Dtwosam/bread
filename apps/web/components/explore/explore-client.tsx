@@ -67,9 +67,9 @@ function percentToBps(value: string): string | undefined {
   if (trimmed.length === 0) return undefined;
   if (!PERCENT_INPUT.test(trimmed)) return undefined;
   const [whole = '0', fraction = ''] = trimmed.split('.');
-  const bps = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
-  if (bps < 0n || bps > 10_000n) return undefined;
-  return bps.toString(10);
+  const bps = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  if (!Number.isSafeInteger(bps) || bps < 0 || bps > 10_000) return undefined;
+  return String(bps);
 }
 
 function bpsToPercent(value: string | undefined): string {
