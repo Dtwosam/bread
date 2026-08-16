@@ -142,7 +142,7 @@ describe.skipIf(!RUN_DB)('Day 6 Explore indexed-head age filters', () => {
       [context.chainId, recentActive.toLowerCase(), oldActive.toLowerCase(), recentGraduated.toLowerCase(), oldGraduated.toLowerCase()],
     );
 
-    // Both active launches have current trailing-hour activity. Age, not activity freshness, must exclude oldActive.
+    // Both active launches have current trailing-hour activity. Age, not activity freshness, must classify oldActive.
     for (const [sequence, token, curve, quote] of [
       [701, recentActive, recentCurve, '200'],
       [702, oldActive, oldCurve, '500'],
@@ -167,7 +167,7 @@ describe.skipIf(!RUN_DB)('Day 6 Explore indexed-head age filters', () => {
     }
   });
 
-  it('applies the <5m age preset against the committed indexed head on every Explore view', async () => {
+  it('applies every fixed age preset against the committed indexed head on every Explore view', async () => {
     const dbModule = await import('../../packages/db/src/index.ts');
     const apiModule = await import('../../apps/api/src/server.ts');
     const db = dbModule.createBreadDb(pool);
@@ -179,21 +179,47 @@ describe.skipIf(!RUN_DB)('Day 6 Explore indexed-head age filters', () => {
       now: () => new Date('2030-01-01T00:00:00.000Z'),
     });
 
-    const cases = [
-      { view: 'new', expected: [recentGraduated, recentActive] },
-      { view: 'trending', expected: [recentActive] },
-      { view: 'graduating', expected: [recentActive] },
-      { view: 'graduated', expected: [recentGraduated] },
-    ] as const;
+    const expectedByAge = {
+      lt5m: {
+        new: [recentGraduated, recentActive],
+        trending: [recentActive],
+        graduating: [recentActive],
+        graduated: [recentGraduated],
+      },
+      lt1h: {
+        new: [recentGraduated, recentActive],
+        trending: [recentActive],
+        graduating: [recentActive],
+        graduated: [recentGraduated],
+      },
+      '1h-24h': {
+        new: [oldGraduated, oldActive],
+        trending: [oldActive],
+        graduating: [oldActive],
+        graduated: [oldGraduated],
+      },
+      '1d-7d': {
+        new: [],
+        trending: [],
+        graduating: [],
+        graduated: [],
+      },
+    } as const;
 
-    for (const testCase of cases) {
-      const response = await app.inject({
-        method: 'GET',
-        url: `/v1/feed?view=${testCase.view}&age=lt5m&limit=10`,
-      });
-      expect(response.statusCode).toBe(200);
-      expect(tokenAddresses(response.json())).toEqual(testCase.expected);
+    for (const [age, byView] of Object.entries(expectedByAge)) {
+      for (const [view, expected] of Object.entries(byView)) {
+        const response = await app.inject({
+          method: 'GET',
+          url: `/v1/feed?view=${view}&age=${age}&limit=10`,
+        });
+        expect(response.statusCode).toBe(200);
+        expect(tokenAddresses(response.json())).toEqual(expected);
+      }
     }
+
+    const invalid = await app.inject({ method: 'GET', url: '/v1/feed?view=new&age=ancient&limit=10' });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.json()).toMatchObject({ error: { code: 'INVALID_AGE_FILTER' } });
 
     await app.close();
   });
