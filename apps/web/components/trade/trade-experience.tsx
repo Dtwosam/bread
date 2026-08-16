@@ -53,6 +53,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   const [slippageBps, setSlippageBps] = useState(50);
   const [review, setReview] = useState<TradeReview | null>(null);
   const [reviewRoute, setReviewRoute] = useState<CanonicalTradeRoute | null>(null);
+  const [spendableBalance, setSpendableBalance] = useState<bigint | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -92,6 +93,29 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }, [recoveredTransactionState, transactionState.hash, transactionState.status]);
 
   useEffect(() => {
+    let cancelled = false;
+    if (!runtime || !walletReady || routeUnavailableReason !== null) {
+      setSpendableBalance(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setSpendableBalance(null);
+    void runtime.getSpendableBalance(action, tokenAddress)
+      .then((balance) => {
+        if (!cancelled) setSpendableBalance(balance);
+      })
+      .catch(() => {
+        if (!cancelled) setSpendableBalance(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [action, routeUnavailableReason, runtime, tokenAddress, walletReady]);
+
+  useEffect(() => {
     if (!sheetOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !busy) setSheetOpen(false);
@@ -106,6 +130,9 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       amount,
       slippageBps,
       review,
+      reviewRoute,
+      spendableBalance,
+      tokenSymbol: token.symbol,
       transactionState,
       connectionStatus,
       busy,
@@ -121,7 +148,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }),
     // Handler identities are intentionally recreated from the latest state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [action, amount, slippageBps, review, reviewRoute, transactionState, connectionStatus, runtime, busy, reviewError, routeUnavailableReason],
+    [action, amount, slippageBps, review, reviewRoute, spendableBalance, token.symbol, transactionState, connectionStatus, runtime, busy, reviewError, routeUnavailableReason],
   );
 
   function resetReview(nextAction: TradeAction = action) {
@@ -180,6 +207,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
 
     try {
       const balance = await runtime.getSpendableBalance(action, tokenAddress);
+      setSpendableBalance(balance);
       if (action === 'BUY') {
         setAmount(formatUnits(balance, runtime.context.quoteDecimals));
       } else {
@@ -281,6 +309,11 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       setReview(null);
       setReviewRoute(null);
       setAmount('');
+      try {
+        setSpendableBalance(await runtime.getSpendableBalance(action, tokenAddress));
+      } catch {
+        setSpendableBalance(null);
+      }
     }
   }
 
