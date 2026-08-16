@@ -1,12 +1,14 @@
-schema_version: 1.88
+schema_version: 1.89
 project: Bread
-updated_at: 2026-08-16T15:38:00Z
+updated_at: 2026-08-16T20:33:20Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
   ratification: RATIFIED
   project_source_pack_ratified: v1.6-pre-rc-ui-ux-v2.2
-  living_project_source_handoff: CURRENT-BUILD-STATE-v1.8-reconciled
+  current_uploaded_living_handoff: CURRENT-BUILD-STATE-v1.8-reconciled
+  proposed_living_handoff_replacement: CURRENT-BUILD-STATE-v1.9-recovered
+  continuation_state: BLOCKED_UNTIL_PROJECT_SOURCE_V1_9_REPLACED_AND_READ_BACK
   retired_only:
     - 04B-visual-design-system-component-specification
     - 04C-page-by-page-responsive-specification
@@ -21,73 +23,32 @@ source_pack:
     - 06F-nested-lane-checkpoint-continuity-integration-gates-v1.4
     - 06H-cross-chat-continuity-build-state-handoff-protocol-v1.4
     - 06I-high-traffic-bot-burst-launch-stampede-scalability
-  per_slice_source_rule: "Before each new implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or the previous slice's source pass."
+  per_slice_source_rule: "Before each implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or a prior slice's source pass."
 
 history_preservation:
-  previous_living_yaml_schema: 1.87
-  previous_living_yaml_git_parent: db8111cf0d873a46394e6afe467d5e53ae61950b
-  previous_living_yaml_blob: d45112540847d4b46844ef8119d670aea8c17067
-  prior_detailed_snapshot: docs/handoffs/current-build-state-v1.84.yaml
-  pending_graduation_immutable_handoff: docs/handoffs/ui-v2-2-token-pending-graduation-bc18035.md
-  rule: "Detailed earlier RED/GREEN history remains authoritative in archived and immutable handoffs, Git commits, PR #94 history and evidence. This current mirror advances workflow position only and does not revoke or rewrite non-conflicting prior ratification, acceptance or blockers."
-
-legacy_ratifications:
-  day4:
-    pack: v1.4-day4-design
-    day4_production_ratification: RATIFIED
-  day5:
-    pack: v1.5-day5-preflight-consolidated
-    status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
+  prior_living_yaml_schema: 1.88
+  prior_living_yaml_head: db8111cf0d873a46394e6afe467d5e53ae61950b
+  pending_graduation_handoff: docs/handoffs/ui-v2-2-token-pending-graduation-bc18035.md
+  recovered_token_trade_handoff: docs/handoffs/ui-v2-2-token-trade-recovered-a5ddf6f.md
+  recovered_handoff_commit: ee1321eef7f8a6add468a6811653f8d4b96a649b
+  rule: "Earlier RED/GREEN detail remains authoritative in immutable handoffs, Git history and exact-head evidence. This mirror records current workflow position and does not reopen accepted behavior."
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — active-token reserve-backed baked progress and Pending graduation treatment ACCEPTED; Processing/Graduated and other Token/Trade sub-surfaces remain; Explore/Search Lane 3 remains OPEN with recorded source/security blockers"
-active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Processing/Graduating, Graduated treatment, canonical TradePanel context, stale-quote refresh and transaction explorer link recovered as implemented and exact-head green; additional Token/Trade closure remains"
+active_gate: HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED
 active_ui_gate: UI_UX_V2_2_TOKEN_TRADE_IMPLEMENTATION
 day9_started: true
+day9_complete: false
 day9_rc_tag_created: false
 day10_started: false
 
-accepted_state:
-  lane1_foundations: PASS_AT_0358b4d6b3e3d31baf23c18b92d743382e41b025
-  lane2_global_shell_navigation: PASS_WITH_FINAL_VISUAL_RECONCILIATION_AT_6c0cee1a27f8c0adcf8b57fd44ff22693db006e3
-  lane3_status: OPEN_WITH_SOURCE_SECURITY_BLOCKERS
-  lane3_feed_authority:
-    new: BACKEND_LAUNCH_ORDER_ACCEPTED
-    trending: PASS_AT_8a1698f538be8b399e23bbcf461c089e572bb8fb
-    almost_baked: PASS_AT_723204b4be0eeaf759a2ca5c1c7e255a2f132ee3
-    graduated: PASS_AT_e7171022979621935c142ba4e860453341c5da07
-  lane3_filters:
-    age: PASS_FINAL_57d1636522790f11f810b5164f36c27431940fc8
-    holders: PASS_AT_6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069
-    baked_progress: PASS_AT_f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9_BONDING_ONLY
-    creator_wallet: PASS_AT_842f17b5c84c08d441e25c5d215188b884856b1a_CANONICAL_DEPLOYER
-    volume_24h: PASS_AT_c5bd4caf9dcec0926eddf00934cf5c4441a9fd2b_COMMITTED_INDEXED_HEAD_TRAILING_WINDOW
-  lane3_search:
-    interactions: ACCEPTED
-    age: PASS_AT_d2565bdcedfe9feb5a7f5474163b27b7aa2f74ec
-    holders: PASS_AT_ba5ad51202e2e4cecaea443151d2f864b47c48b7
-    exact_tokens_creator_wallet_groups: PASS_AT_bfde729a031125884ef947b23225fbfdd0cd79fe
-    canonical_graduation_lifecycle_subset: PASS_AT_31427500f71643124b59015765857eec2682e386
-  token_trade:
-    canonical_creator_attribution: PASS_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-    primary_indexed_holder_stat: PASS_AT_5ca948568e7b5c24f652ef2fb5beaba979c1abbd
-    holder_stat_handoff: docs/handoffs/ui-v2-2-token-holder-count-5ca9485.md
-    active_graduation_baked_progress: PASS_AT_01c6c10ac357453d77e942ff667ba026671dea1a_REAL_QUOTE_RESERVE_AUTHORITY
-    active_graduation_handoff: docs/handoffs/ui-v2-2-token-active-graduation-01c6c10.md
-    pending_graduation: PASS_AT_bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
-    pending_graduation_handoff: docs/handoffs/ui-v2-2-token-pending-graduation-bc18035.md
-
-last_accepted_work_unit:
-  id: TOKEN_PENDING_GRADUATION_LABEL
-  red_head: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
-  accepted_code_head: bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
-  source_contract: "Failed auto-graduation is labeled 'Graduation pending'; the threshold-crossing trade remains confirmed; retry remains available from fresh authoritative coordinator state; the whole trade is never presented as failed."
-  production_change: "GraduationModule display-state label only: Pending -> Graduation pending. Retry routing, transaction construction, recovery copy, active baked progress and graduated routing unchanged."
-
-integration_baseline:
+repository:
+  remote: https://github.com/Dtwosam/bread
+  default_branch: main
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
   day9_branch: day9/synthra-arc-testnet-v3-candidate
   day9_pr: 93
+  day9_pr_state: OPEN_DRAFT_UNMERGED
   day9_pr_head: 18952b20a56021350000c0f5d89552380c883be3
   verified_day9_code_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
   ui_branch: agent/ui-ux-v2-2-implementation
@@ -95,121 +56,94 @@ integration_baseline:
   ui_pr_state: OPEN_DRAFT_UNMERGED
   ui_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_current_accepted_code_bearing_head: bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
-  ui_handoff_head_after_pending_acceptance: db8111cf0d873a46394e6afe467d5e53ae61950b
-  ui_current_code_state: "Token creator attribution, Holder stat, active reserve-backed baked progress and failed-auto-graduation Pending label/recovery presentation accepted. Token/Trade major lane remains in progress."
+  stale_handoff_head: db8111cf0d873a46394e6afe467d5e53ae61950b
+  recovered_accepted_code_bearing_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
+  recovered_delta_from_stale_handoff: 36_COMMITS_AHEAD_0_BEHIND
+  recovered_handoff_commit: ee1321eef7f8a6add468a6811653f8d4b96a649b
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
-working_branches:
-  - day9/synthra-arc-testnet-v3-candidate
-  - docs/ui-v2-2-source-pack-hygiene
-  - agent/ui-ux-v2-2-implementation
-
-repository:
-  remote: https://github.com/Dtwosam/bread
-  default_branch: main
-  day9_pr: 93
-  day9_pr_state: OPEN_DRAFT_UNMERGED
-  ui_implementation_pr: 94
-  ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
-  ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
-  ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  ui_implementation_accepted_code_head: bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
-  day9_complete: false
-  rc_tag_created: false
-  day10_started: false
-
-verification:
-  token_holder_red_head: 52febd26ba58e2d9e858ed0e59766164676bca33
-  token_holder_accepted_code_head: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
-  token_holder_root_ci: PASS_RUN_31951696034
-  token_holder_token_page: PASS_RUN_31951696011
-  token_holder_primary_browser: PASS_RUN_31951696072
-  token_holder_cross_browser: PASS_RUN_31951696038
-  token_holder_hot_launch_10k: PASS_RUN_31951696067
-  token_holder_day9_recovery: PASS_RUN_31951696015
-  token_holder_release_browser_matrix: PASS_RUN_31951696062
-  active_graduation_red_head: 71c2ba3ce4731bfd761abda5a25daedba3cbaaec
-  active_graduation_accepted_code_head: 01c6c10ac357453d77e942ff667ba026671dea1a
-  active_graduation_root_ci: PASS_RUN_31953224240
-  active_graduation_token_page: PASS_RUN_31953224252
-  active_graduation_primary_browser: PASS_RUN_31953224253
-  active_graduation_trade_lifecycle: PASS_RUN_31953224223
-  active_graduation_wallet_network: PASS_RUN_31953224238
-  active_graduation_explore_search: PASS_RUN_31953224231
-  active_graduation_indexed_read: PASS_RUN_31953224236
-  active_graduation_shared_types: PASS_RUN_31953224235
-  active_graduation_production_gates: PASS_RUN_31953224257
-  active_graduation_frontend_security: PASS_RUN_31953224208
-  active_graduation_rebuild_reconcile: PASS_RUN_31953224215
-  active_graduation_cross_browser: PASS_RUN_31953224193
-  active_graduation_hot_launch_10k: PASS_RUN_31953224248
-  active_graduation_service_rollback: PASS_RUN_31953224226
-  active_graduation_failure_recovery: PASS_RUN_31953224195
-  active_graduation_day9_recovery: PASS_RUN_31953224198
-  active_graduation_release_browser_matrix: PASS_RUN_31953224242
-  active_graduation_day9_truthfulness: PASS_RUN_31953224221_PHYSICAL_BLOCKER_RETAINED
-  pending_graduation_red_head: d36c925ea47cbc440322b7ec0d4e0d369f7596bc
-  pending_graduation_token_page_red: EXPECTED_FAILURE_RUN_31953667793_17_PASS_1_FAIL_MISSING_GRADUATION_PENDING_LABEL
-  pending_graduation_primary_browser_red: EXPECTED_FAILURE_RUN_31953667922_61_RETAINED_PASS_2_FAIL_DESKTOP_MOBILE_MISSING_GRADUATION_PENDING_LABEL
-  pending_graduation_accepted_code_head: bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
-  pending_graduation_root_ci: PASS_RUN_31956520566
-  pending_graduation_token_page: PASS_RUN_31956520530
-  pending_graduation_primary_browser: PASS_RUN_31956520516
-  pending_graduation_trade_lifecycle: PASS_RUN_31956520560
-  pending_graduation_wallet_network: PASS_RUN_31956520484
-  pending_graduation_explore_search: PASS_RUN_31956520567
-  pending_graduation_indexed_read: PASS_RUN_31956520558
-  pending_graduation_shared_types: PASS_RUN_31956520532
-  pending_graduation_production_gates: PASS_RUN_31956520512
-  pending_graduation_frontend_security: PASS_RUN_31956520504
-  pending_graduation_rebuild_reconcile: PASS_RUN_31956520483
-  pending_graduation_cross_browser: PASS_RUN_31956520523
-  pending_graduation_hot_launch_10k: PASS_RUN_31956520497
-  pending_graduation_service_rollback: PASS_RUN_31956520493
-  pending_graduation_failure_recovery: PASS_RUN_31956520514
-  pending_graduation_day9_recovery: PASS_RUN_31956520482
-  pending_graduation_release_browser_matrix: PASS_RUN_31956520472
-  pending_graduation_day9_truthfulness: PASS_RUN_31956520486_PHYSICAL_BLOCKER_RETAINED
-  day9_verdict: INCOMPLETE
-
-unresolved_earlier_lane_blockers:
-  explore_search_lane3: OPEN
-  market_cap_authority: "OPEN — token_metrics.market_cap is not populated by a source-backed formula; do not invent market-cap filter/sort/Search values."
-  sort_semantics: "OPEN — v2.2 names Newest/market-cap/volume/holders/baked-progress sorts but does not freeze direction/default and volume window; do not infer."
-  lifecycle_full_categories: "OPEN — Processing/Graduated graduation subset is accepted, but New/Active/Almost-Baked boundaries are not source-backed; do not infer from age/progress."
-  search_images: "BLOCKED — token image URLs require source-backed proxy/cache/resize/SSRF/IPFS policy; do not render arbitrary creator URLs directly."
-  recent_searches: "OPEN_UNDEFINED_AUTHORITY — persistence/scope/retention/order not defined."
-  trending_searches: "OPEN_UNDEFINED_AUTHORITY — Search-specific ranking/window not defined; do not silently reuse Trending feed."
-  legacy_volume_metric: "OPEN_CAVEAT — token_metrics.quote_volume_24h remains a trade-triggered cumulative/stale-risk projector; accepted Explore 24h filtering uses timestamped trades at committed indexed head instead."
-
-major_lane_tracking:
+accepted_state:
   lane1_foundations: COMPLETE
   lane2_global_shell_navigation: COMPLETE
-  lane3_explore_search: OPEN_BLOCKED_ITEMS_RETAINED
-  lane4_token_trade: IN_PROGRESS
-  lane5_create_review_success: NOT_STARTED_AS_V2_2_MAJOR_LANE
-  lane6_portfolio_creator_dashboard_claims: NOT_STARTED_AS_V2_2_MAJOR_LANE
-  lane7_secondary_routes_states: NOT_STARTED_AS_V2_2_MAJOR_LANE
+  lane3_explore_search: OPEN_WITH_RECORDED_SOURCE_SECURITY_BLOCKERS
+  token_trade:
+    canonical_creator_attribution: COMPLETE_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
+    primary_indexed_holder_stat: COMPLETE_AT_5ca948568e7b5c24f652ef2fb5beaba979c1abbd
+    active_graduation_baked_progress: COMPLETE_AT_01c6c10ac357453d77e942ff667ba026671dea1a
+    graduation_pending: COMPLETE_AT_bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
+    processing_graduating: RECOVERED_IMPLEMENTED_EXACT_HEAD_GREEN
+    graduated_token_treatment: RECOVERED_IMPLEMENTED_EXACT_HEAD_GREEN
+    trade_panel_balance_route_ticker_cta: RECOVERED_IMPLEMENTED_EXACT_HEAD_GREEN
+    stale_quote_refresh_before_signing: RECOVERED_IMPLEMENTED_EXACT_HEAD_GREEN
+    transaction_explorer_link: RECOVERED_IMPLEMENTED_EXACT_HEAD_GREEN
+
+recovered_screenshot_trace:
+  screenshot_green_head: 3484d2665ca74ab85b3ea571eca33bb2cf93b355
+  screenshot_work_unit: "TradePanel balance + canonical route + ticker-aware Buy/Sell CTA"
+  immediate_followup_fix: dc886226e73b544094446c69b5e82f45a7a1acf9
+  current_recovered_code_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
+  conclusion: "Previous chat continued well past the screenshot. GitHub history, not the screenshot, is the implementation authority."
+
+verification_at_recovered_code_head:
+  head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
+  root_ci: PASS_RUN_31968847734
+  token_page: PASS_RUN_31968847726
+  trade_lifecycle: PASS_RUN_31968847697
+  wallet_network: PASS_RUN_31968847639
+  production_gates: PASS_RUN_31968847802
+  frontend_security: PASS_RUN_31968848020
+  rebuild_reconcile: PASS_RUN_31968847612
+  cross_browser: PASS_RUN_31968847626
+  hot_launch_10k: PASS_RUN_31968847781
+  service_rollback: PASS_RUN_31968847645
+  failure_recovery: PASS_RUN_31968847823
+  day9_recovery_drills: PASS_RUN_31968847700
+  release_browser_matrix: PASS_RUN_31968847608
+  day9_final_rc_gate_workflow: PASS_RUN_31968847834
+  verdict: "EXACT_HEAD_AUTOMATION_GREEN_BUT_DAY9_INCOMPLETE"
+  note: "A green final-RC workflow does not waive physical-device, remaining v2.2 or continuity gates."
+
+fresh_source_gap:
+  id: BUY_MAX_SHARED_USDC_GAS_RESERVE
+  authority:
+    - "04D: MAX purchase must reserve enough USDC for Arc gas based on current estimation rather than draining the shared underlying balance."
+    - "Arc reconciliation: native USDC and ERC-20 USDC share one underlying balance; native pays gas, ERC-20 6-decimal interface is Bread quote/accounting authority."
+  current_code_evidence:
+    - "readSpendableTradeBalance reads raw ERC-20 balanceOf and returns it unchanged."
+    - "TradeExperience Buy MAX copies that returned full balance into the amount field."
+  disposition: SOURCE_BACKED_MISSING_BEHAVIOR_CANDIDATE
+  implementation_authorization: BLOCKED_UNTIL_LIVING_PROJECT_SOURCE_V1_9_REPLACED_AND_READ_BACK
+  non_goal: "Do not invent a fixed gas buffer. Use current estimation and verified Arc/shared-USDC semantics."
 
 lane4_token_trade_completion_tracking:
   token_header_creator_attribution: COMPLETE
   primary_holder_stat: COMPLETE
-  active_token_treatment: IN_PROGRESS_PARTIAL
-  active_token_graduation_baked_progress: COMPLETE
+  active_graduation_baked_progress: COMPLETE
   graduation_pending: COMPLETE
-  processing_graduating: OPEN
-  graduated_token_treatment: OPEN
-  chart_surface: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
-  desktop_trade_panel_v2_2: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
-  mobile_trading: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
-  degraded_loading_error_recovery_states: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
-  wallet_network_states: OPEN_OR_PARTIAL_REQUIRES_SOURCE_REVIEW
+  processing_graduating: RECOVERED_COMPLETE_EXACT_HEAD_GREEN
+  graduated_token_treatment: RECOVERED_COMPLETE_EXACT_HEAD_GREEN
+  desktop_trade_panel_core_v2_2: RECOVERED_PARTIAL_COMPLETE_BALANCE_ROUTE_CTA_REVIEW
+  stale_quote_refresh: RECOVERED_COMPLETE_EXACT_HEAD_GREEN
+  transaction_explorer_link: RECOVERED_COMPLETE_EXACT_HEAD_GREEN
+  buy_max_gas_reserve: OPEN_SOURCE_BACKED_NEXT_CANDIDATE_AFTER_HANDOFF_SYNC
+  chart_surface: OPEN_OR_PARTIAL_REQUIRES_FRESH_SOURCE_REVIEW
+  mobile_trading_closure: OPEN_OR_PARTIAL_REQUIRES_FRESH_SOURCE_REVIEW
+  degraded_loading_error_recovery_states: OPEN_OR_PARTIAL_REQUIRES_FRESH_SOURCE_REVIEW
+  wallet_network_states: OPEN_OR_PARTIAL_REQUIRES_FRESH_SOURCE_REVIEW
   responsive_closure: OPEN
   accessibility_closure: OPEN
   performance_closure: OPEN
   final_visual_browser_evidence: OPEN
+
+unresolved_earlier_lane_blockers:
+  explore_search_lane3: OPEN
+  market_cap_authority: "OPEN — do not invent market-cap filter/sort/Search values."
+  sort_semantics: "OPEN — direction/default/window semantics are not frozen."
+  lifecycle_full_categories: "OPEN — do not infer undefined lifecycle categories from age/progress."
+  search_images: "BLOCKED — creator-controlled image proxy/cache/resize/SSRF/IPFS policy is not frozen."
+  recent_searches: OPEN_UNDEFINED_AUTHORITY
+  trending_searches: OPEN_UNDEFINED_AUTHORITY
 
 final_day9_verification_release_gates:
   unified_responsive_closure: OPEN
@@ -226,6 +160,7 @@ final_day9_verification_release_gates:
   day10: NOT_STARTED
 
 blockers:
+  - HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
   - EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS
@@ -236,35 +171,32 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade is in progress; Pending is accepted, while Processing/Graduated treatment, chart/trade/mobile/state closure, later major lanes and final responsive/accessibility/performance/browser evidence remain."
-  EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Lane 3 stays open until market-cap, sort, full lifecycle, Search image proxy policy and Recent/Trending Search semantics are implemented from authority or resolved through the proper source-decision process."
+  HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED: "Git/YAML have been reconciled to the recovered live branch, but the uploaded CURRENT-BUILD-STATE v1.8 Project Source is stale. Replace it with v1.9 and read it back before production implementation continues."
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Final redesigned candidate still needs genuine required iOS/Android/Edge physical/current-device evidence."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Token/Trade and later major lanes/final closure remain incomplete."
+  EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Recorded Lane-3 semantic/security blockers remain open and must not be invented."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
-  PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
+  PONS_V2_RUNTIME_REFERENCE: "Reference evidence only; do not guess numeric runtime state."
   BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
-  PONS_AUDIT_FINDINGS: "Continuing security watch; independent Bread review remains required."
+  PONS_AUDIT_FINDINGS: "Continuing security watch; Bread independent review remains mandatory."
   ARC_MAINNET_VALUES: "Official-publication mainnet deployment gate; do not invent values."
 
 tooling_status:
   github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
-  figma: CANONICAL_STARTER_SHELL_ESTABLISHED_BUT_MCP_CALL_LIMIT_REACHED_DURING_RECONCILIATION
-  vercel: CONNECTED_TEAM_PRESENT_NO_BREAD_PROJECT_CONFIGURED
+  figma: CANONICAL_STARTER_COMPATIBLE_SHELL_ESTABLISHED_PRIOR_LIMIT_RECORDED
+  vercel: CONNECTED_PREVIEW_EVIDENCE_EXISTS_PROVIDER_LIMITS_DO_NOT_REPLACE_GITHUB
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Do not begin Processing/Graduating or any other implementation slice from this accepted Pending context alone. First synchronize the living Project Source handoff to this accepted state, then perform a fresh read of v2.2 section 19, 04A, 04D, 05C INV-053/054 where relevant, 06B, 06D, 06F, 06H and 06I where affected, plus current GraduationModule/Token DTO/fixtures. If Processing/Graduating remains fully source-backed, write and verify a new RED before production code. Preserve accepted Pending recovery behavior and active reserve-backed baked progress. Keep Explore/Search Lane 3 open and retain separate completion tracking for graduated-token treatment, mobile trading, degraded/loading/error/recovery, wallet/network, responsive, accessibility, performance and final visual/browser evidence.
+  Replace the uploaded CURRENT-BUILD-STATE-v1.8 Project Source with CURRENT-BUILD-STATE-v1.9-recovered and read it back against this YAML plus PR #94. Only after the DOCX/YAML/Git mismatch is closed: re-read 04D, Arc/USDC reconciliation (02/07A), v2.2 sections 22-23, 06D and 06H, plus current TradeExperience, WalletTradeProvider and wallet-adapter. Then write a focused RED proving Buy MAX reserves current estimated Arc gas from the shared USDC balance without changing ordinary balance display, Sell MAX, protocol transaction construction, or financial semantics. Verify the RED fails for the intended missing reserve behavior before any production change.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
-  - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
+  - "Do not merge or close PR #94."
+  - "Do not create/push the Day-9 RC tag while Day 9 remains incomplete."
   - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, final performance/load or physical-device gates remain open."
-  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers without a separate source/impact review."
-  - "Do not fabricate market cap, movement, lifecycle, sort, image-security, Recent/Trending Search, performance, physical-device, Vercel, contract/config or live-state evidence."
-  - "Do not reopen accepted Lane 1/2, accepted Lane-3 sub-slices, Token creator attribution, Token Holder stat, active reserve-backed baked progress or Pending recovery presentation without a demonstrated regression."
-  - "Do not substitute creator fee-recipient metadata for canonical onchain creator/deployer identity."
-  - "Do not substitute token_metrics.quote_volume_24h for the accepted committed-head trailing-trade Explore filter authority."
-  - "Do not infer New/Active/Almost-Baked or other undefined lifecycle categories from age or baked progress."
-  - "Do not render creator-controlled token image URLs directly until proxy/cache/SSRF/IPFS policy is frozen."
-  - "Do not invent Explore sort direction/default/window semantics from labels alone."
-  - "Do not describe remaining major lanes as equivalent to a remaining task count."
-  - "Do not start a new implementation slice before a fresh relevant Project Source read."
+  - "Do not write the Buy MAX production fix before the living Project Source replacement is uploaded and read back."
+  - "Do not invent a fixed Arc gas reserve; current estimation is required."
+  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in this UI/runtime slice."
+  - "Do not fabricate unresolved Explore/Search semantics, performance evidence, physical-device evidence or live/runtime values."
+  - "Do not reopen accepted Token/Trade behavior without a demonstrated regression."
