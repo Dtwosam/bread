@@ -21,7 +21,7 @@ export async function projectCurveGraduationProgress(db: BreadDb, event: Canonic
   if (event.eventName !== 'CurveBuy' && event.eventName !== 'CurveSell') return;
 
   const launchRows = rows(await db.execute(sql`
-    SELECT token_address, initial_supply::text, reserved_tokens_baseline::text
+    SELECT token_address, graduation_threshold::text
     FROM launches
     WHERE chain_id = ${event.identity.chainId}
       AND curve_address = ${event.contractAddress.toLowerCase()}
@@ -30,25 +30,20 @@ export async function projectCurveGraduationProgress(db: BreadDb, event: Canonic
   if (launchRows.length !== 1) throw new Error(`curve progress attribution is not unique: ${event.contractAddress}`);
   const launch = launchRows[0]!;
   const token = String(launch.token_address).toLowerCase();
-  const initialSupply = exact(launch.initial_supply, 'launch initial supply');
-  const reservedTokens = exact(launch.reserved_tokens_baseline, 'launch reserved tokens');
-  if (reservedTokens > initialSupply) throw new Error('reserved tokens exceed initial supply');
-  const initialSellable = initialSupply - reservedTokens;
-  if (initialSellable === 0n) throw new Error('initial sellable token inventory is zero');
+  const graduationThreshold = exact(launch.graduation_threshold, 'launch graduation threshold');
+  if (graduationThreshold === 0n) throw new Error('launch graduation threshold is zero');
 
   const stateRows = rows(await db.execute(sql`
-    SELECT remaining_sellable_tokens::text
+    SELECT real_quote_reserve::text
     FROM launch_state
     WHERE chain_id = ${event.identity.chainId}
       AND token_address = ${token}
     LIMIT 1
   `));
   if (stateRows.length !== 1) throw new Error(`launch state missing for graduation progress: ${token}`);
-  const remaining = exact(stateRows[0]!.remaining_sellable_tokens, 'remaining sellable tokens');
-  if (remaining > initialSellable) throw new Error('remaining sellable tokens exceed initial sellable inventory');
+  const realQuoteReserve = exact(stateRows[0]!.real_quote_reserve, 'real quote reserve');
 
-  const sold = initialSellable - remaining;
-  const rawBps = (sold * 10_000n) / initialSellable;
+  const rawBps = (realQuoteReserve * 10_000n) / graduationThreshold;
   const progressBps = rawBps > 10_000n ? 10_000n : rawBps;
   const graduationState = progressBps >= 10_000n ? 'READY' : 'CURVE_ACTIVE';
 
