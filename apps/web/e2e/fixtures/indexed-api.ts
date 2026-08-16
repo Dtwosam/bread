@@ -262,6 +262,7 @@ function portfolio(): IndexedPortfolio {
         tokenAddress: ACTIVE_TOKEN,
         name: 'Bread Twin',
         symbol: 'TWIN',
+        creatorAddress: E2E_DEPLOYER,
         balance: '2500000000000000000000000',
         isProtocolAddress: false,
         graduationState: 'ACTIVE',
@@ -284,10 +285,19 @@ function portfolio(): IndexedPortfolio {
 }
 
 function creator(): IndexedCreatorOverview {
+  const activeLaunch = {
+    tokenAddress: ACTIVE_TOKEN,
+    curveAddress: ACTIVE_CURVE,
+    name: 'Bread Twin',
+    symbol: 'TWIN',
+    marketCap: null,
+    lifecycleState: 'ACTIVE',
+  } as const;
+
   return {
     address: E2E_WALLET,
-    createdLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
-    feeRecipientLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
+    createdLaunches: [activeLaunch],
+    feeRecipientLaunches: [activeLaunch],
     fees: {
       credited: '25000000',
       claimed: '15000000',
