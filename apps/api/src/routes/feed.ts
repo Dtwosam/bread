@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 
 import {
   isExploreAgeFilter,
+  parseExploreHolderBounds,
   resolveExploreAgeBounds,
 } from "../../../../packages/db/src/index.js";
 import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
@@ -40,6 +41,8 @@ export function registerFeedRoute(
     const query = request.query as {
       view?: string;
       age?: string;
+      holdersMin?: string;
+      holdersMax?: string;
       limit?: string;
       cursor?: string;
     };
@@ -64,6 +67,19 @@ export function registerFeedRoute(
       });
     }
     const ageFilter = query.age;
+
+    let holderBounds: ReturnType<typeof parseExploreHolderBounds>;
+    try {
+      holderBounds = parseExploreHolderBounds(query.holdersMin, query.holdersMax);
+    } catch {
+      return reply.code(400).send({
+        error: {
+          code: "INVALID_HOLDER_FILTER",
+          message: "Holder filter is invalid.",
+          requestId: request.id,
+        },
+      });
+    }
 
     const parsedLimit =
       query.limit === undefined ? DEFAULT_FEED_LIMIT : Number(query.limit);
@@ -189,9 +205,11 @@ export function registerFeedRoute(
               feedMeta!.indexedThroughBlockTimestamp,
               ageFilter,
             );
+      const hasProjectionFilters =
+        ageBounds !== undefined || holderBounds !== undefined;
       const fetched =
         view === "graduated"
-          ? ageBounds
+          ? hasProjectionFilters
             ? await deps.exploreAgeRepository.listGraduatedLaunches(
                 deps.context.chainId,
                 deps.context.stackVersion,
@@ -199,6 +217,7 @@ export function registerFeedRoute(
                 parsedLimit + 1,
                 graduatedCursor,
                 ageBounds,
+                holderBounds,
               )
             : await deps.repository.listGraduatedLaunches(
                 deps.context.chainId,
@@ -216,6 +235,7 @@ export function registerFeedRoute(
                 parsedLimit + 1,
                 trendingCursor,
                 ageBounds,
+                holderBounds,
               )
             : view === "graduating"
               ? await deps.almostBakedRepository.listAlmostBakedLaunches(
@@ -226,8 +246,9 @@ export function registerFeedRoute(
                   parsedLimit + 1,
                   almostBakedCursor,
                   ageBounds,
+                  holderBounds,
                 )
-              : ageBounds
+              : hasProjectionFilters
                 ? await deps.exploreAgeRepository.listNewLaunches(
                     deps.context.chainId,
                     deps.context.stackVersion,
@@ -235,6 +256,7 @@ export function registerFeedRoute(
                     parsedLimit + 1,
                     newCursor,
                     ageBounds,
+                    holderBounds,
                   )
                 : await deps.repository.listNewLaunches(
                     deps.context.chainId,
@@ -366,7 +388,7 @@ export function registerFeedRoute(
       };
     };
 
-    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
+    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: stackFeedProjectionCacheChannel({
