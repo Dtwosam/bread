@@ -300,7 +300,9 @@ function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknow
         ? [graduatedFeed]
         : view === 'trending'
           ? [activeFeed, pendingFeed]
-          : [activeFeed, pendingFeed, graduatedFeed];
+          : view === 'graduating'
+            ? [activeFeed, pendingFeed]
+            : [activeFeed, pendingFeed, graduatedFeed];
     return envelope(state, items);
   }
   if (url.pathname === '/v1/search') {
