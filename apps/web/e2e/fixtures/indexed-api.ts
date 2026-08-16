@@ -295,7 +295,8 @@ function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknow
   const url = new URL(requestUrl);
   if (url.pathname === '/v1/feed') {
     const view = url.searchParams.get('view') ?? 'new';
-    const items =
+    const age = url.searchParams.get('age');
+    const viewItems =
       view === 'graduated'
         ? [graduatedFeed]
         : view === 'trending'
@@ -303,6 +304,9 @@ function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknow
           : view === 'graduating'
             ? [activeFeed, pendingFeed]
             : [activeFeed, pendingFeed, graduatedFeed];
+    // The fixture models server-selected membership only. It deliberately does
+    // not reproduce or define the production age-classification algorithm.
+    const items = view === 'trending' && age === 'lt5m' ? [activeFeed] : viewItems;
     return envelope(state, items);
   }
   if (url.pathname === '/v1/search') {
