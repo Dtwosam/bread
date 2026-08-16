@@ -26,9 +26,10 @@ test('active pending and graduated tokens show distinct graduation truth', async
   await expect(page.getByText(/completed trade remains confirmed/i)).toHaveCount(0);
 
   await page.goto(`/token/${PENDING_TOKEN}`);
-  await expect(page.getByText(/Pending · Indexed state GRADUATION_PENDING/)).toBeVisible();
+  await expect(page.getByText(/Graduation pending · Indexed state GRADUATION_PENDING/)).toBeVisible();
   await expect(page.getByText('Indexed locked')).toHaveCount(0);
   await expect(page.getByText(/completed trade remains confirmed/i)).toBeVisible();
+  await expect(page.getByText(/trade failed/i)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /retry/i })).toBeVisible();
 
   await page.goto(`/token/${GRADUATED_TOKEN}`);
