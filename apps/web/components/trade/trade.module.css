@@ -37,6 +37,21 @@
   line-height: 17px;
 }
 
+:global(.bread-trade-field__header) {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+:global(.bread-trade-balance) {
+  min-width: 0;
+  color: var(--bread-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 :global(.bread-trade-input) {
   width: 100%;
   min-height: 44px;
