@@ -31,6 +31,12 @@ const AGE_OPTIONS: readonly Readonly<{ value: FeedAge; label: string }>[] = [
   { value: '1d-7d', label: '1–7d' },
 ];
 
+type ExploreFilters = Readonly<{
+  age?: FeedAge;
+  holdersMin?: string;
+  holdersMax?: string;
+}>;
+
 function resolveFeedAge(value: string | null): FeedAge | undefined {
   return AGE_OPTIONS.find((option) => option.value === value)?.value;
 }
@@ -39,10 +45,18 @@ function ageLabel(age: FeedAge): string {
   return AGE_OPTIONS.find((option) => option.value === age)?.label ?? age;
 }
 
-function exploreHref(view: ExploreView, age: FeedAge | undefined): string {
+function holderLabel(min: string | undefined, max: string | undefined): string {
+  if (min !== undefined && max !== undefined) return `${min}–${max}`;
+  if (min !== undefined) return `≥${min}`;
+  return `≤${max ?? ''}`;
+}
+
+function exploreHref(view: ExploreView, filters: ExploreFilters): string {
   const params = new URLSearchParams();
   if (view !== 'new') params.set('view', view);
-  if (age !== undefined) params.set('age', age);
+  if (filters.age !== undefined) params.set('age', filters.age);
+  if (filters.holdersMin !== undefined) params.set('holdersMin', filters.holdersMin);
+  if (filters.holdersMax !== undefined) params.set('holdersMax', filters.holdersMax);
   return params.size > 0 ? `/explore?${params.toString()}` : '/explore';
 }
 
@@ -51,16 +65,28 @@ export function ExploreClient() {
   const searchParams = useSearchParams();
   const view = resolveExploreView(searchParams.get('view'));
   const age = resolveFeedAge(searchParams.get('age'));
+  const holdersMin = searchParams.get('holdersMin') ?? undefined;
+  const holdersMax = searchParams.get('holdersMax') ?? undefined;
+  const hasHolderFilter = holdersMin !== undefined || holdersMax !== undefined;
+  const hasActiveFilters = age !== undefined || hasHolderFilter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const api = useMemo(() => createBreadApiClient(), []);
 
   const query = useInfiniteQuery({
-    queryKey: breadQueryKeys.feed({ view, age, limit: PAGE_SIZE }),
+    queryKey: breadQueryKeys.feed({
+      view,
+      age,
+      holdersMin,
+      holdersMax,
+      limit: PAGE_SIZE,
+    }),
     initialPageParam: '',
     queryFn: ({ pageParam }) =>
       api.getFeed<readonly IndexedFeedCardFields[]>({
         view,
         age,
+        holdersMin,
+        holdersMax,
         limit: PAGE_SIZE,
         cursor: pageParam || undefined,
       }),
@@ -72,8 +98,8 @@ export function ExploreClient() {
   const latestMeta = query.data?.pages.at(-1)?.meta;
   const errorPresentation = query.isError ? feedErrorPresentation(query.error) : null;
 
-  const navigateWithAge = (nextAge: FeedAge | undefined) => {
-    router.push(exploreHref(view, nextAge), { scroll: false });
+  const navigateWithFilters = (filters: ExploreFilters) => {
+    router.push(exploreHref(view, filters), { scroll: false });
   };
 
   return (
@@ -91,7 +117,7 @@ export function ExploreClient() {
             <a
               aria-current={item.value === view ? 'page' : undefined}
               className="bread-explore-tab"
-              href={exploreHref(item.value, age)}
+              href={exploreHref(item.value, { age, holdersMin, holdersMax })}
               key={item.value}
             >
               {item.label}
@@ -109,21 +135,34 @@ export function ExploreClient() {
         </button>
       </div>
 
-      {age !== undefined ? (
+      {hasActiveFilters ? (
         <div className={styles.activeFilters} aria-label="Active filters">
-          <button
-            aria-label={`Age: ${ageLabel(age)}`}
-            className={styles.chip}
-            onClick={() => navigateWithAge(undefined)}
-            type="button"
-          >
-            <span>Age: {ageLabel(age)}</span>
-            <span aria-hidden="true">×</span>
-          </button>
+          {age !== undefined ? (
+            <button
+              aria-label={`Age: ${ageLabel(age)}`}
+              className={styles.chip}
+              onClick={() => navigateWithFilters({ holdersMin, holdersMax })}
+              type="button"
+            >
+              <span>Age: {ageLabel(age)}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
+          {hasHolderFilter ? (
+            <button
+              aria-label={`Holders: ${holderLabel(holdersMin, holdersMax)}`}
+              className={styles.chip}
+              onClick={() => navigateWithFilters({ age })}
+              type="button"
+            >
+              <span>Holders: {holderLabel(holdersMin, holdersMax)}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
           <button
             aria-label="Reset filters"
             className={styles.reset}
-            onClick={() => navigateWithAge(undefined)}
+            onClick={() => navigateWithFilters({})}
             type="button"
           >
             Reset
@@ -156,7 +195,7 @@ export function ExploreClient() {
               id="bread-explore-age"
               onChange={(event) => {
                 const nextAge = resolveFeedAge(event.target.value);
-                navigateWithAge(nextAge);
+                navigateWithFilters({ age: nextAge, holdersMin, holdersMax });
                 setFiltersOpen(false);
               }}
               value={age ?? ''}
@@ -169,6 +208,51 @@ export function ExploreClient() {
               ))}
             </select>
           </label>
+
+          <form
+            className={styles.holderForm}
+            key={`${holdersMin ?? ''}:${holdersMax ?? ''}`}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const rawMin = String(form.get('holdersMin') ?? '').trim();
+              const rawMax = String(form.get('holdersMax') ?? '').trim();
+              navigateWithFilters({
+                age,
+                holdersMin: rawMin.length > 0 ? rawMin : undefined,
+                holdersMax: rawMax.length > 0 ? rawMax : undefined,
+              });
+              setFiltersOpen(false);
+            }}
+          >
+            <div className={styles.rangeFields}>
+              <label className={styles.field} htmlFor="bread-explore-holders-min">
+                <span>Holders min</span>
+                <input
+                  defaultValue={holdersMin ?? ''}
+                  id="bread-explore-holders-min"
+                  inputMode="numeric"
+                  name="holdersMin"
+                  pattern="[0-9]*"
+                  type="text"
+                />
+              </label>
+              <label className={styles.field} htmlFor="bread-explore-holders-max">
+                <span>Holders max</span>
+                <input
+                  defaultValue={holdersMax ?? ''}
+                  id="bread-explore-holders-max"
+                  inputMode="numeric"
+                  name="holdersMax"
+                  pattern="[0-9]*"
+                  type="text"
+                />
+              </label>
+            </div>
+            <button className={styles.apply} type="submit">
+              Apply holder filter
+            </button>
+          </form>
         </aside>
 
         <section className={styles.feed} aria-label="Explore results">
