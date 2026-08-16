@@ -672,7 +672,11 @@ export function ExploreClient() {
           {items.length > 0 ? (
             <div className="bread-token-grid">
               {items.map((item) => (
-                <TokenCard item={item} key={item.tokenAddress} />
+                <TokenCard
+                  item={item}
+                  indexedThroughBlockTimestamp={latestMeta?.indexedThroughBlockTimestamp ?? null}
+                  key={item.tokenAddress}
+                />
               ))}
             </div>
           ) : null}
