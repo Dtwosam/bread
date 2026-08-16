@@ -14,6 +14,16 @@ import {
   walletSnapshot,
 } from '../fixtures/browser';
 
+type RpcRequest = Readonly<{
+  id?: number | string | null;
+  method?: string;
+  params?: readonly unknown[];
+}>;
+
+function isRpcRequest(value: unknown): value is RpcRequest {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 test('changed final canonical trade review requires Refresh Quote before wallet signing', async ({
   page,
   rpcState,
@@ -30,12 +40,8 @@ test('changed final canonical trade review requires Refresh Quote before wallet 
   await expect(initialBuy).toBeVisible();
 
   await page.route(`${ARC_TESTNET_RPC}**`, async (route) => {
-    const payload = route.request().postDataJSON() as Readonly<{
-      id?: number | string | null;
-      method?: string;
-      params?: readonly unknown[];
-    }> | readonly unknown[] | null;
-    if (!payload || Array.isArray(payload) || payload.method !== 'eth_call') {
+    const payload: unknown = route.request().postDataJSON();
+    if (!isRpcRequest(payload) || payload.method !== 'eth_call') {
       await route.fallback();
       return;
     }
