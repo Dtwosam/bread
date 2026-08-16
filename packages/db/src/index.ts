@@ -54,6 +54,10 @@ export {
   type ExploreHolderBounds,
 } from "./repositories/explore-holders.js";
 export {
+  parseExploreProgressBounds,
+  type ExploreProgressBounds,
+} from "./repositories/explore-progress.js";
+export {
   AlmostBakedRepository,
   type AlmostBakedLaunchCursorKey,
 } from "./repositories/almost-baked.js";
