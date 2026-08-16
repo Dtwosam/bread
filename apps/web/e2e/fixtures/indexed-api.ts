@@ -295,7 +295,13 @@ function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknow
   const url = new URL(requestUrl);
   if (url.pathname === '/v1/feed') {
     const view = url.searchParams.get('view') ?? 'new';
-    return envelope(state, view === 'graduated' ? [graduatedFeed] : [activeFeed, pendingFeed, graduatedFeed]);
+    const items =
+      view === 'graduated'
+        ? [graduatedFeed]
+        : view === 'trending'
+          ? [activeFeed, pendingFeed]
+          : [activeFeed, pendingFeed, graduatedFeed];
+    return envelope(state, items);
   }
   if (url.pathname === '/v1/search') {
     const query = url.searchParams.get('q')?.toLowerCase();
