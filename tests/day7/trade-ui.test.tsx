@@ -98,11 +98,14 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     expect(panel).toContain('review.openingTaxBps');
   });
 
-  it('renders the frozen transaction statuses through an accessible live region', () => {
+  it('renders the frozen transaction statuses through an accessible live region with canonical explorer access', () => {
     const status = read(paths.status);
 
     expect(status).toContain('role="status"');
     expect(status).toContain('aria-live="polite"');
+    expect(status).toContain('arcTestnetManifest.explorer');
+    expect(status).toContain('View transaction on Arcscan');
+    expect(status).toMatch(/\/tx\/\$\{state\.hash\}/);
     for (const state of [
       'VALIDATING',
       'PREPARING',
