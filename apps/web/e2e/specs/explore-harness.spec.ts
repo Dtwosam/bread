@@ -97,3 +97,40 @@ test('Explore Graduated view renders only canonical graduated feed membership', 
   ).toBe(true);
   expect(rawRpcRequests).toEqual([]);
 });
+
+test('Explore Age filter is backend-backed, preserves view context, and resets cleanly', async ({ page }) => {
+  const state = createIndexedApiFixtureState();
+  const rawRpcRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().startsWith(ARC_TESTNET_RPC)) rawRpcRequests.push(request.url());
+  });
+  await installIndexedApiRoutes(page, state);
+
+  await page.goto('/explore?view=trending');
+  await page.getByRole('button', { name: 'Filters' }).click();
+  await page.getByLabel('Age').selectOption('lt5m');
+
+  await expect(page).toHaveURL(/\/explore\?view=trending&age=lt5m$/);
+  await expect(page.getByRole('button', { name: 'Age: <5m' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reset filters' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Graduated' })).toHaveAttribute(
+    'href',
+    '/explore?view=graduated&age=lt5m',
+  );
+  expect(
+    state.requests.some((request) => {
+      const url = new URL(request);
+      return (
+        url.pathname === '/v1/feed' &&
+        url.searchParams.get('view') === 'trending' &&
+        url.searchParams.get('age') === 'lt5m'
+      );
+    }),
+  ).toBe(true);
+  expect(rawRpcRequests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Reset filters' }).click();
+  await expect(page).toHaveURL('/explore?view=trending');
+  await expect(page.getByRole('button', { name: 'Age: <5m' })).toHaveCount(0);
+});
