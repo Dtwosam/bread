@@ -30,15 +30,26 @@ const AGE_OPTIONS: readonly Readonly<{ value: FeedAge; label: string }>[] = [
   { value: '1h-24h', label: '1–24h' },
   { value: '1d-7d', label: '1–7d' },
 ];
+const CANONICAL_BPS = /^\d{1,5}$/;
+const PERCENT_INPUT = /^\d{1,3}(?:\.\d{1,2})?$/;
 
 type ExploreFilters = Readonly<{
   age?: FeedAge;
   holdersMin?: string;
   holdersMax?: string;
+  progressMinBps?: string;
+  progressMaxBps?: string;
 }>;
 
 function resolveFeedAge(value: string | null): FeedAge | undefined {
   return AGE_OPTIONS.find((option) => option.value === value)?.value;
+}
+
+function resolveProgressBps(value: string | null): string | undefined {
+  if (value === null || !CANONICAL_BPS.test(value)) return undefined;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 10_000) return undefined;
+  return String(parsed);
 }
 
 function ageLabel(age: FeedAge): string {
@@ -51,12 +62,39 @@ function holderLabel(min: string | undefined, max: string | undefined): string {
   return `≤${max ?? ''}`;
 }
 
+function percentToBps(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  if (!PERCENT_INPUT.test(trimmed)) return undefined;
+  const [whole = '0', fraction = ''] = trimmed.split('.');
+  const bps = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+  if (bps < 0n || bps > 10_000n) return undefined;
+  return bps.toString(10);
+}
+
+function bpsToPercent(value: string | undefined): string {
+  if (value === undefined) return '';
+  const bps = Number(value);
+  const percent = (bps / 100).toFixed(2);
+  return percent.replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+}
+
+function progressLabel(minBps: string | undefined, maxBps: string | undefined): string {
+  const min = bpsToPercent(minBps);
+  const max = bpsToPercent(maxBps);
+  if (minBps !== undefined && maxBps !== undefined) return `${min}–${max}%`;
+  if (minBps !== undefined) return `≥${min}%`;
+  return `≤${max}%`;
+}
+
 function exploreHref(view: ExploreView, filters: ExploreFilters): string {
   const params = new URLSearchParams();
   if (view !== 'new') params.set('view', view);
   if (filters.age !== undefined) params.set('age', filters.age);
   if (filters.holdersMin !== undefined) params.set('holdersMin', filters.holdersMin);
   if (filters.holdersMax !== undefined) params.set('holdersMax', filters.holdersMax);
+  if (filters.progressMinBps !== undefined) params.set('progressMinBps', filters.progressMinBps);
+  if (filters.progressMaxBps !== undefined) params.set('progressMaxBps', filters.progressMaxBps);
   return params.size > 0 ? `/explore?${params.toString()}` : '/explore';
 }
 
@@ -67,8 +105,11 @@ export function ExploreClient() {
   const age = resolveFeedAge(searchParams.get('age'));
   const holdersMin = searchParams.get('holdersMin') ?? undefined;
   const holdersMax = searchParams.get('holdersMax') ?? undefined;
+  const progressMinBps = resolveProgressBps(searchParams.get('progressMinBps'));
+  const progressMaxBps = resolveProgressBps(searchParams.get('progressMaxBps'));
   const hasHolderFilter = holdersMin !== undefined || holdersMax !== undefined;
-  const hasActiveFilters = age !== undefined || hasHolderFilter;
+  const hasProgressFilter = progressMinBps !== undefined || progressMaxBps !== undefined;
+  const hasActiveFilters = age !== undefined || hasHolderFilter || hasProgressFilter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const api = useMemo(() => createBreadApiClient(), []);
 
@@ -78,6 +119,8 @@ export function ExploreClient() {
       age,
       holdersMin,
       holdersMax,
+      progressMinBps,
+      progressMaxBps,
       limit: PAGE_SIZE,
     }),
     initialPageParam: '',
@@ -87,6 +130,8 @@ export function ExploreClient() {
         age,
         holdersMin,
         holdersMax,
+        progressMinBps,
+        progressMaxBps,
         limit: PAGE_SIZE,
         cursor: pageParam || undefined,
       }),
@@ -117,7 +162,13 @@ export function ExploreClient() {
             <a
               aria-current={item.value === view ? 'page' : undefined}
               className="bread-explore-tab"
-              href={exploreHref(item.value, { age, holdersMin, holdersMax })}
+              href={exploreHref(item.value, {
+                age,
+                holdersMin,
+                holdersMax,
+                progressMinBps,
+                progressMaxBps,
+              })}
               key={item.value}
             >
               {item.label}
@@ -141,7 +192,12 @@ export function ExploreClient() {
             <button
               aria-label={`Age: ${ageLabel(age)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({ holdersMin, holdersMax })}
+              onClick={() => navigateWithFilters({
+                holdersMin,
+                holdersMax,
+                progressMinBps,
+                progressMaxBps,
+              })}
               type="button"
             >
               <span>Age: {ageLabel(age)}</span>
@@ -152,10 +208,21 @@ export function ExploreClient() {
             <button
               aria-label={`Holders: ${holderLabel(holdersMin, holdersMax)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({ age })}
+              onClick={() => navigateWithFilters({ age, progressMinBps, progressMaxBps })}
               type="button"
             >
               <span>Holders: {holderLabel(holdersMin, holdersMax)}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
+          {hasProgressFilter ? (
+            <button
+              aria-label={`Baked progress: ${progressLabel(progressMinBps, progressMaxBps)}`}
+              className={styles.chip}
+              onClick={() => navigateWithFilters({ age, holdersMin, holdersMax })}
+              type="button"
+            >
+              <span>Baked progress: {progressLabel(progressMinBps, progressMaxBps)}</span>
               <span aria-hidden="true">×</span>
             </button>
           ) : null}
@@ -195,7 +262,13 @@ export function ExploreClient() {
               id="bread-explore-age"
               onChange={(event) => {
                 const nextAge = resolveFeedAge(event.target.value);
-                navigateWithFilters({ age: nextAge, holdersMin, holdersMax });
+                navigateWithFilters({
+                  age: nextAge,
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                });
                 setFiltersOpen(false);
               }}
               value={age ?? ''}
@@ -221,6 +294,8 @@ export function ExploreClient() {
                 age,
                 holdersMin: rawMin.length > 0 ? rawMin : undefined,
                 holdersMax: rawMax.length > 0 ? rawMax : undefined,
+                progressMinBps,
+                progressMaxBps,
               });
               setFiltersOpen(false);
             }}
@@ -251,6 +326,69 @@ export function ExploreClient() {
             </div>
             <button className={styles.apply} type="submit">
               Apply holder filter
+            </button>
+          </form>
+
+          <form
+            className={styles.holderForm}
+            key={`${progressMinBps ?? ''}:${progressMaxBps ?? ''}`}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const rawMin = String(form.get('progressMin') ?? '').trim();
+              const rawMax = String(form.get('progressMax') ?? '').trim();
+              const nextMinBps = percentToBps(rawMin);
+              const nextMaxBps = percentToBps(rawMax);
+              if ((rawMin.length > 0 && nextMinBps === undefined) || (rawMax.length > 0 && nextMaxBps === undefined)) {
+                return;
+              }
+              if (
+                nextMinBps !== undefined &&
+                nextMaxBps !== undefined &&
+                Number(nextMinBps) > Number(nextMaxBps)
+              ) {
+                return;
+              }
+              navigateWithFilters({
+                age,
+                holdersMin,
+                holdersMax,
+                progressMinBps: nextMinBps,
+                progressMaxBps: nextMaxBps,
+              });
+              setFiltersOpen(false);
+            }}
+          >
+            <div className={styles.rangeFields}>
+              <label className={styles.field} htmlFor="bread-explore-progress-min">
+                <span>Baked progress min</span>
+                <input
+                  defaultValue={bpsToPercent(progressMinBps)}
+                  id="bread-explore-progress-min"
+                  inputMode="decimal"
+                  max="100"
+                  min="0"
+                  name="progressMin"
+                  step="0.01"
+                  type="number"
+                />
+              </label>
+              <label className={styles.field} htmlFor="bread-explore-progress-max">
+                <span>Baked progress max</span>
+                <input
+                  defaultValue={bpsToPercent(progressMaxBps)}
+                  id="bread-explore-progress-max"
+                  inputMode="decimal"
+                  max="100"
+                  min="0"
+                  name="progressMax"
+                  step="0.01"
+                  type="number"
+                />
+              </label>
+            </div>
+            <button className={styles.apply} type="submit">
+              Apply baked progress filter
             </button>
           </form>
         </aside>
