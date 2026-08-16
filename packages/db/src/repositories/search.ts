@@ -65,7 +65,6 @@ export class SearchRepository {
           AND (
             l.token_address = ${query}
             OR l.deployer_address = ${query}
-            OR l.creator_fee_recipient = ${query}
           )
         ORDER BY
           CASE WHEN l.token_address = ${query} THEN 0 ELSE 1 END ASC,
