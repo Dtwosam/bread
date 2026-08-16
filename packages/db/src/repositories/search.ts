@@ -11,6 +11,8 @@ export type SearchLaunchInput = Readonly<{
   limit: number;
 }>;
 
+export type SearchLifecycleState = 'PROCESSING' | 'GRADUATION_PENDING' | 'GRADUATED';
+
 export type SearchLaunchRow = Readonly<{
   tokenAddress: string;
   curveAddress: string;
@@ -18,6 +20,7 @@ export type SearchLaunchRow = Readonly<{
   creatorFeeRecipient: string | null;
   launchTimestamp: string | null;
   holderCount: string | null;
+  lifecycleState: SearchLifecycleState | null;
   name: string | null;
   symbol: string | null;
   launchBlockNumber: string;
@@ -47,6 +50,15 @@ export class SearchRepository {
           l.creator_fee_recipient AS "creatorFeeRecipient",
           l.launch_timestamp::text AS "launchTimestamp",
           m.holder_count::text AS "holderCount",
+          CASE
+            WHEN s.graduation_phase = 'POOL_CREATED' THEN 'GRADUATED'
+            WHEN s.graduation_phase = 'SWEPT' THEN 'PROCESSING'
+            WHEN s.graduation_phase = 'NOT_GRADUATED'
+              AND s.ready_to_graduate IS TRUE
+              AND s.graduation_failure_reason_hash IS NOT NULL
+              THEN 'GRADUATION_PENDING'
+            ELSE NULL
+          END AS "lifecycleState",
           l.name,
           l.symbol,
           l.launch_block_number::text AS "launchBlockNumber",
@@ -59,6 +71,9 @@ export class SearchRepository {
         LEFT JOIN token_metrics m
           ON m.chain_id = l.chain_id
          AND m.token_address = l.token_address
+        LEFT JOIN launch_state s
+          ON s.chain_id = l.chain_id
+         AND s.token_address = l.token_address
         WHERE l.chain_id = ${input.chainId}
           AND l.stack_version = ${input.stackVersion}
           AND l.factory_address = ${factory}
@@ -85,6 +100,15 @@ export class SearchRepository {
         l.creator_fee_recipient AS "creatorFeeRecipient",
         l.launch_timestamp::text AS "launchTimestamp",
         m.holder_count::text AS "holderCount",
+        CASE
+          WHEN s.graduation_phase = 'POOL_CREATED' THEN 'GRADUATED'
+          WHEN s.graduation_phase = 'SWEPT' THEN 'PROCESSING'
+          WHEN s.graduation_phase = 'NOT_GRADUATED'
+            AND s.ready_to_graduate IS TRUE
+            AND s.graduation_failure_reason_hash IS NOT NULL
+            THEN 'GRADUATION_PENDING'
+          ELSE NULL
+        END AS "lifecycleState",
         l.name,
         l.symbol,
         l.launch_block_number::text AS "launchBlockNumber",
@@ -98,6 +122,9 @@ export class SearchRepository {
       LEFT JOIN token_metrics m
         ON m.chain_id = l.chain_id
        AND m.token_address = l.token_address
+      LEFT JOIN launch_state s
+        ON s.chain_id = l.chain_id
+       AND s.token_address = l.token_address
       WHERE l.chain_id = ${input.chainId}
         AND l.stack_version = ${input.stackVersion}
         AND l.factory_address = ${factory}
