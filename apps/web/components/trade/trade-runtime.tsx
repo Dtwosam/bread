@@ -9,6 +9,7 @@ import type {
   TradeWalletAdapter,
 } from '../../lib/transactions/controller';
 import type { TradeAction, TransactionState } from '../../lib/transactions/state';
+import type { ArcBuyMaxBalance } from '../../lib/transactions/wallet-adapter';
 
 type Address = `0x${string}`;
 
@@ -30,6 +31,7 @@ export type TradeRuntime = Readonly<{
   connectWallet: (connectorId?: string) => Promise<void>;
   switchToTargetChain: () => Promise<void>;
   getSpendableBalance: (action: TradeAction, tokenAddress: Address) => Promise<bigint>;
+  getBuyMaxBalance: () => Promise<ArcBuyMaxBalance>;
   storage?: Storage;
 }>;
 
