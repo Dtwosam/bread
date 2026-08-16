@@ -15,7 +15,7 @@ test('Search shows backend-indexed holder count without raw RPC fanout', async (
 
   const result = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
   await expect(result).toBeVisible();
-  await expect(result.getByText('42 holders', { exact: true })).toBeVisible();
+  await expect(result.getByText('Holders 42', { exact: true })).toBeVisible();
   await expect(result.getByText('Age 2m', { exact: true })).toBeVisible();
 
   expect(
