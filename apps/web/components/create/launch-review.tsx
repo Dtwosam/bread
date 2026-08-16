@@ -10,6 +10,7 @@ export type LaunchReviewModel = Readonly<{
   graduationTarget: string;
   creatorRevenueWallet: `0x${string}`;
   permanentLiquidityLock: string;
+  economicsPin: string;
   launchAndBuy: boolean;
   initialBuyConsequences?: Readonly<{
     expectedOutput: string;
@@ -25,15 +26,19 @@ export type LaunchReviewModel = Readonly<{
 export function LaunchReview({
   review,
   disabled = false,
+  changedFields = [],
   onBack,
   onLaunch,
 }: Readonly<{
   review: LaunchReviewModel | null;
   disabled?: boolean;
+  changedFields?: readonly string[];
   onBack: () => void;
   onLaunch: () => void;
 }>) {
   const unavailable = 'Not prepared from the current protocol deployment';
+  const changed = new Set(changedFields);
+  const rowClass = (field: string) => changed.has(field) ? 'bread-launch-review__value--changed' : undefined;
 
   return (
     <section className="bread-launch-review" aria-labelledby="bread-launch-review-heading">
@@ -46,20 +51,30 @@ export function LaunchReview({
         </p>
       </header>
 
+      {changedFields.length > 0 ? (
+        <p className="bread-launch-review__changed-notice" role="status">
+          Canonical launch economics changed during the final reread. Updated values are highlighted; review them before continuing.
+        </p>
+      ) : null}
+
       <dl className="bread-launch-review__values">
-        <div><dt>Fixed supply</dt><dd>{review?.fixedSupply ?? unavailable}</dd></div>
-        <div><dt>Quote currency</dt><dd>{review?.quoteCurrency ?? unavailable}</dd></div>
-        <div><dt>Creator tax</dt><dd>{review?.creatorTax ?? unavailable}</dd></div>
-        <div><dt>Buyback</dt><dd>{review?.buyback ?? 'Off — unavailable in current Bread stack'}</dd></div>
-        <div><dt>Initial buy</dt><dd>{review?.initialBuy ?? unavailable}</dd></div>
-        <div><dt>Launch fee</dt><dd>{review?.launchFee ?? unavailable}</dd></div>
-        <div><dt>Graduation target</dt><dd>{review?.graduationTarget ?? unavailable}</dd></div>
-        <div><dt>Creator revenue wallet</dt><dd>{review?.creatorRevenueWallet ?? unavailable}</dd></div>
-        <div><dt>Permanent liquidity lock</dt><dd>{review?.permanentLiquidityLock ?? unavailable}</dd></div>
+        <div className={rowClass('fixedSupply')}><dt>Fixed supply</dt><dd>{review?.fixedSupply ?? unavailable}</dd></div>
+        <div className={rowClass('quoteCurrency')}><dt>Quote currency</dt><dd>{review?.quoteCurrency ?? unavailable}</dd></div>
+        <div className={rowClass('creatorTax')}><dt>Creator tax</dt><dd>{review?.creatorTax ?? unavailable}</dd></div>
+        <div className={rowClass('buyback')}><dt>Buyback</dt><dd>{review?.buyback ?? 'Off — unavailable in current Bread stack'}</dd></div>
+        <div className={rowClass('initialBuy')}><dt>Initial buy</dt><dd>{review?.initialBuy ?? unavailable}</dd></div>
+        <div className={rowClass('launchFee')}><dt>Launch fee</dt><dd>{review?.launchFee ?? unavailable}</dd></div>
+        <div className={rowClass('graduationTarget')}><dt>Graduation target</dt><dd>{review?.graduationTarget ?? unavailable}</dd></div>
+        <div className={rowClass('creatorRevenueWallet')}><dt>Creator revenue wallet</dt><dd className="bread-technical">{review?.creatorRevenueWallet ?? unavailable}</dd></div>
+        <div className={rowClass('permanentLiquidityLock')}><dt>Permanent liquidity lock</dt><dd>{review?.permanentLiquidityLock ?? unavailable}</dd></div>
+        <div className={rowClass('economicsPin')}><dt>Economics/config pin</dt><dd className="bread-technical">{review?.economicsPin ?? unavailable}</dd></div>
       </dl>
 
       {review?.initialBuyConsequences ? (
-        <section className="bread-launch-review__initial-buy" aria-labelledby="bread-launch-buy-review-heading">
+        <section
+          className={`bread-launch-review__initial-buy${changed.has('initialBuyConsequences') ? ' bread-launch-review__initial-buy--changed' : ''}`}
+          aria-labelledby="bread-launch-buy-review-heading"
+        >
           <h2 id="bread-launch-buy-review-heading">Launch &amp; Buy details</h2>
           <dl className="bread-launch-review__values">
             <div><dt>Expected output</dt><dd>{review.initialBuyConsequences.expectedOutput}</dd></div>
