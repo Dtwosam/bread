@@ -92,7 +92,14 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
 }
 
 function progressClauses(bounds: ExploreProgressBounds | undefined) {
-  if (!bounds) return { knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  if (!bounds) {
+    return {
+      knownClause: sql``,
+      minClause: sql``,
+      maxClause: sql``,
+      scopeClause: sql``,
+    } as const;
+  }
   return {
     knownClause: sql`AND m.graduation_progress_bps IS NOT NULL`,
     minClause:
@@ -103,6 +110,7 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
       bounds.maxBps === undefined
         ? sql``
         : sql`AND m.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
+    scopeClause: sql`AND COALESCE(progress_state.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'`,
   } as const;
 }
 
@@ -196,6 +204,9 @@ export class ExploreAgeReadRepository {
       LEFT JOIN token_metrics m
         ON m.chain_id = l.chain_id
        AND m.token_address = l.token_address
+      LEFT JOIN launch_state progress_state
+        ON progress_state.chain_id = l.chain_id
+       AND progress_state.token_address = l.token_address
       WHERE l.chain_id = ${chainId}
         AND l.stack_version = ${stackVersion}
         AND l.factory_address = ${canonicalFactory}
@@ -209,6 +220,7 @@ export class ExploreAgeReadRepository {
         ${baked.knownClause}
         ${baked.minClause}
         ${baked.maxClause}
+        ${baked.scopeClause}
         ${cursorClause}
       ORDER BY
         l.launch_block_number DESC,
@@ -230,11 +242,12 @@ export class ExploreAgeReadRepository {
     holders?: ExploreHolderBounds,
     progress?: ExploreProgressBounds,
   ) {
+    if (progress) return [];
+
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
-    const baked = progressClauses(progress);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
@@ -270,9 +283,6 @@ export class ExploreAgeReadRepository {
         ${holder.knownClause}
         ${holder.minClause}
         ${holder.maxClause}
-        ${baked.knownClause}
-        ${baked.minClause}
-        ${baked.maxClause}
         ${cursorClause}
       ORDER BY
         s.graduation_completed_block DESC,
