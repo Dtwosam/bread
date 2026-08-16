@@ -1,5 +1,9 @@
 import type { FastifyInstance } from "fastify";
 
+import {
+  isExploreAgeFilter,
+  resolveExploreAgeBounds,
+} from "../../../../packages/db/src/index.js";
 import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
 import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
 import {
@@ -35,6 +39,7 @@ export function registerFeedRoute(
     markNoStore(reply);
     const query = request.query as {
       view?: string;
+      age?: string;
       limit?: string;
       cursor?: string;
     };
@@ -48,6 +53,17 @@ export function registerFeedRoute(
         },
       });
     }
+
+    if (query.age !== undefined && !isExploreAgeFilter(query.age)) {
+      return reply.code(400).send({
+        error: {
+          code: "INVALID_AGE_FILTER",
+          message: "Age filter is not supported.",
+          requestId: request.id,
+        },
+      });
+    }
+    const ageFilter = query.age;
 
     const parsedLimit =
       query.limit === undefined ? DEFAULT_FEED_LIMIT : Number(query.limit);
@@ -163,18 +179,34 @@ export function registerFeedRoute(
 
     const load = async () => {
       const feedMeta =
-        view === "trending" || view === "graduating"
+        view === "trending" || view === "graduating" || ageFilter !== undefined
           ? await deps.freshness()
           : undefined;
+      const ageBounds =
+        ageFilter === undefined
+          ? undefined
+          : resolveExploreAgeBounds(
+              feedMeta!.indexedThroughBlockTimestamp,
+              ageFilter,
+            );
       const fetched =
         view === "graduated"
-          ? await deps.repository.listGraduatedLaunches(
-              deps.context.chainId,
-              deps.context.stackVersion,
-              deps.context.factoryAddress,
-              parsedLimit + 1,
-              graduatedCursor,
-            )
+          ? ageBounds
+            ? await deps.exploreAgeRepository.listGraduatedLaunches(
+                deps.context.chainId,
+                deps.context.stackVersion,
+                deps.context.factoryAddress,
+                parsedLimit + 1,
+                graduatedCursor,
+                ageBounds,
+              )
+            : await deps.repository.listGraduatedLaunches(
+                deps.context.chainId,
+                deps.context.stackVersion,
+                deps.context.factoryAddress,
+                parsedLimit + 1,
+                graduatedCursor,
+              )
           : view === "trending"
             ? await deps.trendingRepository.listTrendingLaunches(
                 deps.context.chainId,
@@ -183,6 +215,7 @@ export function registerFeedRoute(
                 feedMeta!.indexedThroughBlockTimestamp,
                 parsedLimit + 1,
                 trendingCursor,
+                ageBounds,
               )
             : view === "graduating"
               ? await deps.almostBakedRepository.listAlmostBakedLaunches(
@@ -192,14 +225,24 @@ export function registerFeedRoute(
                   feedMeta!.indexedThroughBlockTimestamp,
                   parsedLimit + 1,
                   almostBakedCursor,
+                  ageBounds,
                 )
-              : await deps.repository.listNewLaunches(
-                  deps.context.chainId,
-                  deps.context.stackVersion,
-                  deps.context.factoryAddress,
-                  parsedLimit + 1,
-                  newCursor,
-                );
+              : ageBounds
+                ? await deps.exploreAgeRepository.listNewLaunches(
+                    deps.context.chainId,
+                    deps.context.stackVersion,
+                    deps.context.factoryAddress,
+                    parsedLimit + 1,
+                    newCursor,
+                    ageBounds,
+                  )
+                : await deps.repository.listNewLaunches(
+                    deps.context.chainId,
+                    deps.context.stackVersion,
+                    deps.context.factoryAddress,
+                    parsedLimit + 1,
+                    newCursor,
+                  );
       const hasMore = fetched.length > parsedLimit;
       const launches = fetched.slice(0, parsedLimit);
       const last = launches.at(-1);
@@ -323,7 +366,7 @@ export function registerFeedRoute(
       };
     };
 
-    const cacheKey = `view=${view}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
+    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: stackFeedProjectionCacheChannel({
