@@ -53,7 +53,7 @@ test('pending Buy stays single-submit while confirmation remains unresolved', as
 
   rpcState.receiptMode = 'PENDING';
   await setWalletTransactionHashes(page, [BUY_TX_HASH]);
-  await trade.getByRole('button', { name: 'Buy after reviewing current values' }).click();
+  await trade.getByRole('button', { name: 'Buy TWIN after reviewing current values' }).click();
 
   await expect(trade.getByRole('status')).toContainText('CONFIRMING');
   await expect(trade.getByRole('status')).toContainText(BUY_TX_HASH);
