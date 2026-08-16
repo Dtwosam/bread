@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -7,11 +8,13 @@ import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/s
 import {
   prepareCanonicalLaunchReview,
   readLaunchReviewSnapshot,
+  type LaunchReviewSnapshot,
   type PreparedCanonicalLaunchReview,
 } from '../../../../packages/protocol-sdk/src/launch-review';
 import {
   EMPTY_CREATE_TOKEN_DRAFT,
   TokenForm,
+  type CreateEconomicsModel,
   type CreateTokenDraft,
 } from '../../components/create/token-form';
 import {
@@ -32,7 +35,8 @@ import {
   type TransactionState,
 } from '../../lib/transactions/state';
 
-type CreateStep = 'FORM' | 'REVIEW' | 'SUCCESS';
+type ActiveCreateStep = 'TOKEN' | 'ECONOMICS' | 'REVIEW';
+type CreateStep = ActiveCreateStep | 'SUCCESS';
 
 const DEFAULT_SLIPPAGE_BPS = 50;
 
@@ -64,6 +68,34 @@ function tokenAmount(value: bigint): string {
   return formatUnits(value, BREAD_LAUNCH_TOKEN_DECIMALS);
 }
 
+function shortAddress(address: `0x${string}`): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
+function safePreviewImage(value: string): string | null {
+  if (value.trim() === '') return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function mapEconomicsSnapshot(
+  snapshot: LaunchReviewSnapshot,
+  account: `0x${string}`,
+  quoteDecimals: number,
+): CreateEconomicsModel {
+  return {
+    quoteAsset: 'USDC',
+    launchFee: usdc(snapshot.launchFeeUsdc, quoteDecimals),
+    graduationTarget: usdc(snapshot.graduationThreshold, quoteDecimals),
+    creatorRevenueWallet: account,
+    maxCreatorTax: `${formatBps(snapshot.maxCreatorTaxBps)} max`,
+  };
+}
+
 function mapPreparedReview(prepared: PreparedCanonicalLaunchReview): LaunchReviewModel {
   const { review, initialBuyReview } = prepared;
   const initialBuyConsequences = initialBuyReview
@@ -90,19 +122,106 @@ function mapPreparedReview(prepared: PreparedCanonicalLaunchReview): LaunchRevie
     graduationTarget: usdc(review.graduationThreshold, review.quoteDecimals),
     creatorRevenueWallet: review.creatorRevenueWallet,
     permanentLiquidityLock: 'Liquidity is permanently locked after successful graduation.',
+    economicsPin: `config v${review.configVersion.toString()} · ${review.economicsDigest}`,
     launchAndBuy: review.initialBuyQuoteIn > BigInt(0),
     ...(initialBuyConsequences ? { initialBuyConsequences } : {}),
   };
+}
+
+function changedReviewFields(
+  before: LaunchReviewModel | null,
+  after: LaunchReviewModel,
+): string[] {
+  if (!before) return [];
+  const keys: readonly (keyof LaunchReviewModel)[] = [
+    'fixedSupply',
+    'quoteCurrency',
+    'creatorTax',
+    'buyback',
+    'initialBuy',
+    'launchFee',
+    'graduationTarget',
+    'creatorRevenueWallet',
+    'permanentLiquidityLock',
+    'economicsPin',
+    'launchAndBuy',
+    'initialBuyConsequences',
+  ];
+  return keys
+    .filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
+    .map(String);
+}
+
+function CreateStepper({ step }: Readonly<{ step: ActiveCreateStep }>) {
+  const current = step === 'TOKEN' ? 1 : step === 'ECONOMICS' ? 2 : 3;
+  return (
+    <ol className="bread-create-stepper" aria-label="Create token steps">
+      {(['Token', 'Economics', 'Review'] as const).map((label, index) => {
+        const number = index + 1;
+        return (
+          <li
+            key={label}
+            className={number === current ? 'bread-create-stepper__step--active' : number < current ? 'bread-create-stepper__step--complete' : undefined}
+            aria-current={number === current ? 'step' : undefined}
+          >
+            <span aria-hidden="true">{number}</span>
+            {label}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function CreatePreview({
+  draft,
+  creatorWallet,
+}: Readonly<{
+  draft: CreateTokenDraft;
+  creatorWallet: `0x${string}` | null;
+}>) {
+  const image = safePreviewImage(draft.image);
+  const name = draft.name.trim() || 'Your token';
+  const ticker = draft.ticker.trim().toUpperCase() || 'TICKER';
+  const creator = creatorWallet ? `by ${shortAddress(creatorWallet)}` : 'by you';
+
+  return (
+    <details className="bread-create-preview" open>
+      <summary>Live preview</summary>
+      <div className="bread-create-preview__body">
+        <p className="bread-create-eyebrow">Live preview</p>
+        <div className="bread-create-preview__identity">
+          {image ? (
+            <img src={image} alt="" width="56" height="56" />
+          ) : (
+            <span className="bread-create-preview__image" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+          )}
+          <div>
+            <h2>{name}</h2>
+            <p>${ticker}</p>
+            <p className="bread-create-preview__creator">{creator}</p>
+          </div>
+        </div>
+        {draft.description.trim() ? <p className="bread-create-preview__description">{draft.description.trim()}</p> : null}
+        <p className="bread-create-preview__note">
+          Market price, volume and holders appear only after launch data exists.
+        </p>
+      </div>
+    </details>
+  );
 }
 
 export default function CreatePage() {
   const runtime = useTradeRuntime();
   const launchIntentId = useRef(`create:${Date.now()}`);
   const recoveryStarted = useRef(false);
-  const [step, setStep] = useState<CreateStep>('FORM');
+  const [step, setStep] = useState<CreateStep>('TOKEN');
   const [draft, setDraft] = useState<CreateTokenDraft>(EMPTY_CREATE_TOKEN_DRAFT);
+  const [economics, setEconomics] = useState<CreateEconomicsModel | null>(null);
+  const [creatorWallet, setCreatorWallet] = useState<`0x${string}` | null>(null);
   const [prepared, setPrepared] = useState<PreparedCanonicalLaunchReview | null>(null);
   const [review, setReview] = useState<LaunchReviewModel | null>(null);
+  const [reviewChanges, setReviewChanges] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [successToken, setSuccessToken] = useState<`0x${string}` | null>(null);
@@ -146,10 +265,42 @@ export default function CreatePage() {
     });
   }, [runtime]);
 
+  useEffect(() => {
+    if (
+      step !== 'ECONOMICS' ||
+      economics ||
+      connectionStatus !== 'CONNECTED' ||
+      !runtime?.protocolContext ||
+      !runtime.wallet
+    ) return;
+
+    let cancelled = false;
+    setBusy(true);
+    void Promise.all([
+      runtime.wallet.getAccount(),
+      readLaunchReviewSnapshot(runtime.client, runtime.protocolContext),
+    ]).then(([account, snapshot]) => {
+      if (cancelled) return;
+      if (!account) throw new Error('Connect a wallet to confirm the creator revenue wallet.');
+      setCreatorWallet(account);
+      setEconomics(mapEconomicsSnapshot(snapshot, account, runtime.protocolContext!.quoteDecimals));
+      setError(null);
+    }).catch((economicsError) => {
+      if (!cancelled) setError(message(economicsError));
+    }).finally(() => {
+      if (!cancelled) setBusy(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [connectionStatus, economics, runtime, step]);
+
   function changeDraft(next: CreateTokenDraft) {
     setDraft(next);
     setPrepared(null);
     setReview(null);
+    setReviewChanges([]);
     setError(null);
     setSuccessToken(null);
     setCopyStatus(null);
@@ -170,6 +321,20 @@ export default function CreatePage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function continueToEconomics() {
+    if (draft.name.trim() === '') {
+      setError('Name is required.');
+      return;
+    }
+    if (draft.ticker.trim() === '') {
+      setError('Ticker is required.');
+      return;
+    }
+    setError(null);
+    setEconomics(null);
+    setStep('ECONOMICS');
   }
 
   async function prepareReview() {
@@ -227,8 +392,11 @@ export default function CreatePage() {
         slippageBps: DEFAULT_SLIPPAGE_BPS,
       });
 
+      setCreatorWallet(account);
+      setEconomics(mapEconomicsSnapshot(snapshot, account, runtime.protocolContext.quoteDecimals));
       setPrepared(nextPrepared);
       setReview(mapPreparedReview(nextPrepared));
+      setReviewChanges([]);
       setTransactionState(createLaunchTransactionState(
         nextPrepared.review.initialBuyQuoteIn > BigInt(0) ? 'LAUNCH_AND_BUY' : 'LAUNCH',
         launchIntentId.current,
@@ -237,6 +405,7 @@ export default function CreatePage() {
     } catch (reviewError) {
       setPrepared(null);
       setReview(null);
+      setReviewChanges([]);
       setError(message(reviewError));
     } finally {
       setBusy(false);
@@ -260,13 +429,16 @@ export default function CreatePage() {
 
       setTransactionState(result.state);
       if (result.reviewChanged && result.prepared) {
+        const nextReview = mapPreparedReview(result.prepared);
+        setReviewChanges(changedReviewFields(review, nextReview));
         setPrepared(result.prepared);
-        setReview(mapPreparedReview(result.prepared));
-        setError('Launch economics changed during the final canonical reread. Review the updated values before continuing.');
+        setReview(nextReview);
+        setError('Launch economics changed during the final canonical reread. Review the highlighted values before continuing.');
         return;
       }
       if (result.tokenAddress) {
         setSuccessToken(result.tokenAddress);
+        setReviewChanges([]);
         setStep('SUCCESS');
       }
     } catch (launchError) {
@@ -298,17 +470,34 @@ export default function CreatePage() {
     }
   }
 
+  const formStep = step === 'TOKEN' || step === 'ECONOMICS' ? step : null;
+  const successName = prepared?.params.name || draft.name.trim();
+  const successTicker = prepared?.params.symbol || draft.ticker.trim().toUpperCase();
+  const successCreator = prepared?.review.creatorRevenueWallet ?? creatorWallet;
+  const successImage = safePreviewImage(prepared?.params.logo ?? draft.image);
+
   return (
     <main className={`${styles.layout} bread-create-layout`}>
-      {step === 'FORM' ? (
+      {formStep ? (
         <div className={`${styles.formRegion} bread-create-form-region`}>
-          <TokenForm
-            draft={draft}
-            disabled={busy}
-            error={error}
-            onChange={changeDraft}
-            onReview={() => void prepareReview()}
-          />
+          <CreateStepper step={formStep} />
+          <div className={styles.createGrid}>
+            <TokenForm
+              stage={formStep}
+              draft={draft}
+              economics={economics}
+              disabled={busy}
+              error={error}
+              onChange={changeDraft}
+              onContinue={continueToEconomics}
+              onBack={() => {
+                setError(null);
+                setStep('TOKEN');
+              }}
+              onReview={() => void prepareReview()}
+            />
+            <CreatePreview draft={draft} creatorWallet={creatorWallet} />
+          </div>
 
           <div className="bread-create-runtime-status" role="status">
             {runtime?.protocolContext
@@ -329,10 +518,18 @@ export default function CreatePage() {
         </div>
       ) : step === 'REVIEW' ? (
         <div className={`${styles.reviewRegion} bread-launch-review-region`}>
+          <CreateStepper step="REVIEW" />
           <LaunchReview
             review={review}
+            changedFields={reviewChanges}
             disabled={disabled}
-            onBack={() => !disabled && setStep('FORM')}
+            onBack={() => {
+              if (!disabled) {
+                setError(null);
+                setReviewChanges([]);
+                setStep('ECONOMICS');
+              }
+            }}
             onLaunch={() => void launch()}
           />
           <TransactionStatus state={transactionState} />
@@ -341,11 +538,24 @@ export default function CreatePage() {
       ) : (
         <section className={`${styles.reviewRegion} bread-create-success`} aria-labelledby="bread-create-success-heading">
           <p className="bread-create-eyebrow">Confirmed</p>
-          <h1 id="bread-create-success-heading">Token launched</h1>
-          {successToken ? <code className="bread-technical">{successToken}</code> : null}
+          <div className="bread-create-success__identity">
+            {successImage ? (
+              <img src={successImage} alt="" width="56" height="56" />
+            ) : (
+              <span className="bread-create-preview__image" aria-hidden="true">{(successName || 'B').slice(0, 1).toUpperCase()}</span>
+            )}
+            <div>
+              <h1 id="bread-create-success-heading">{successName || 'Token launched'}</h1>
+              {successTicker ? <p>${successTicker}</p> : null}
+              <p className="bread-create-preview__creator">
+                {successCreator ? `by ${shortAddress(successCreator)}` : 'Creator unavailable in recovered state'}
+              </p>
+            </div>
+          </div>
+          {successToken ? <code className="bread-technical bread-create-success__contract">{successToken}</code> : null}
           <div className="bread-launch-review__actions">
             {successToken ? (
-              <a className="bread-create-primary-action" href={`/token/${successToken}`}>View token</a>
+              <a className="bread-create-primary-action" href={`/token/${successToken}`}>View Token</a>
             ) : null}
             <button type="button" className="bread-create-secondary-action" onClick={shareOnX}>Share on X</button>
             <button type="button" className="bread-create-secondary-action" onClick={() => void copyLink()}>Copy link</button>
@@ -355,7 +565,7 @@ export default function CreatePage() {
             <h2 id="bread-creator-economics-heading">Creator economics</h2>
             <p>Creator tax: {prepared ? formatBps(prepared.review.creatorTaxBps) : '—'}</p>
             <p>Buyback: Off — unavailable in current Bread stack.</p>
-            <p>Revenue wallet: {prepared?.review.creatorRevenueWallet ?? '—'}</p>
+            <p>Revenue wallet: {prepared?.review.creatorRevenueWallet ?? successCreator ?? '—'}</p>
           </section>
           <TransactionStatus state={transactionState} />
         </section>
