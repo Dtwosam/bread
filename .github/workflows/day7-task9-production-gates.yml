@@ -33,6 +33,7 @@ jobs:
         run: >-
           pnpm exec vitest run
           tests/day7/production-gates.test.ts
+          tests/day7/secondary-routes-v2.test.ts
           tests/day7/ui-foundation.test.ts
           tests/day7/read-client.test.ts
           tests/day7/read-provider.test.ts
