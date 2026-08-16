@@ -207,7 +207,9 @@ export function TradePanel({
       {review?.action === 'BUY' && review.openingTaxBps > 0 ? (
         <div className="bread-trade-warning" role="alert">
           <strong>Opening buy tax is active.</strong>
-          <span>The current canonical opening tax is {formatBps(review.openingTaxBps)}. This value is re-read before the wallet opens.</span>
+          <span>
+            Estimated opening tax: {formatAmount(review.openingTax, quoteDecimals)} USDC ({formatBps(review.openingTaxBps)}). This canonical value is re-read before the wallet opens.
+          </span>
         </div>
       ) : null}
 
