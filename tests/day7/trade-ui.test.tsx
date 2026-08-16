@@ -66,6 +66,20 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     expect(experience).not.toMatch(/getAmountOut|getAmountIn|quoteReserve\s*\*/);
   });
 
+  it('invalidates a changed final review behind the source-defined Refresh Quote state before signing', () => {
+    const experience = read(paths.experience);
+    const controller = read(paths.controller);
+    const panel = read(paths.panel);
+
+    expect(controller).toContain('reviewChanged: true');
+    expect(experience).toContain('quoteNeedsRefresh');
+    expect(experience).toContain('refreshQuote');
+    expect(experience).toMatch(/result\.reviewChanged[\s\S]*setReview\(null\)/);
+    expect(experience).toContain('onRefreshQuote');
+    expect(panel).toContain('quoteNeedsRefresh');
+    expect(panel).toContain('Refresh Quote');
+  });
+
   it('keeps the exact Buy/Sell quick actions and mobile-friendly numeric input', () => {
     const panel = read(paths.panel);
 
