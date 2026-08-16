@@ -90,6 +90,15 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     expect(panel).toContain('aria-label="Trade amount"');
   });
 
+  it('gives the transaction amount the exact 56px desktop and 60px mobile emphasis', () => {
+    const panel = read(paths.panel);
+    const css = read(paths.tradeCss);
+
+    expect(panel).toContain('className="bread-trade-input bread-trade-amount-input"');
+    expect(css).toMatch(/:global\(\.bread-trade-amount-input\)\s*\{[\s\S]*?min-height:\s*56px/);
+    expect(css).toMatch(/@media \(max-width: 767px\)[\s\S]*:global\(\.bread-trade-amount-input\)\s*\{[\s\S]*?min-height:\s*60px/);
+  });
+
   it('warns whenever canonical opening buy tax is active and shows its estimated USDC cost', () => {
     const panel = read(paths.panel);
 
