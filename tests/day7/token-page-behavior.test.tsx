@@ -75,6 +75,14 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(graduation).toContain('Remaining');
   });
 
+  it('uses the source-defined Graduation pending label without implying the completed trade failed', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('Graduation pending');
+    expect(graduation).toMatch(/completed trade remains confirmed/i);
+    expect(graduation).not.toMatch(/trade failed/i);
+  });
+
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
     const tabs = read(paths.tabs);
 
