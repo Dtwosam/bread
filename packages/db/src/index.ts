@@ -38,6 +38,13 @@ export {
 
 export { ReadRepository, decimalIntegerToBigInt } from "./repositories/read.js";
 export {
+  EXPLORE_AGE_FILTERS,
+  isExploreAgeFilter,
+  resolveExploreAgeBounds,
+  type ExploreAgeBounds,
+  type ExploreAgeFilter,
+} from "./repositories/explore-age.js";
+export {
   AlmostBakedRepository,
   type AlmostBakedLaunchCursorKey,
 } from "./repositories/almost-baked.js";
