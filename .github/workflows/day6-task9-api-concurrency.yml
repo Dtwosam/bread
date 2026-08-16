@@ -30,7 +30,7 @@ jobs:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
           BREAD_REDIS_URL: redis://127.0.0.1:6379
-        run: pnpm exec vitest run tests/day6/api-concurrency.test.ts tests/day6/api-concurrency-composition.test.ts tests/day6/api-validation-before-db.test.ts
+        run: pnpm exec vitest run tests/day6/api-concurrency.test.ts tests/day6/api-concurrency-composition.test.ts tests/day6/api-validation-before-db.test.ts tests/day6/search-age-db.test.ts
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
