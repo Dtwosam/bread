@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
+import type { ExploreProgressBounds } from './explore-progress.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AlmostBakedLaunchCursorKey = Readonly<{
@@ -87,6 +88,20 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
   } as const;
 }
 
+function progressClauses(bounds: ExploreProgressBounds | undefined) {
+  if (!bounds) return { minClause: sql``, maxClause: sql`` } as const;
+  return {
+    minClause:
+      bounds.minBps === undefined
+        ? sql``
+        : sql`AND m.graduation_progress_bps >= CAST(${bounds.minBps} AS numeric)`,
+    maxClause:
+      bounds.maxBps === undefined
+        ? sql``
+        : sql`AND m.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
+  } as const;
+}
+
 export class AlmostBakedRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -99,6 +114,7 @@ export class AlmostBakedRepository {
     cursor?: AlmostBakedLaunchCursorKey,
     ageBounds?: ExploreAgeBounds,
     holderBounds?: ExploreHolderBounds,
+    progressBounds?: ExploreProgressBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -106,6 +122,7 @@ export class AlmostBakedRepository {
     const canonicalFactory = factoryAddress.toLowerCase();
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const holder = holderClauses(holderBounds);
+    const progress = progressClauses(progressBounds);
     const cursorClause = cursor
       ? sql`AND (
           r.graduation_progress_bps < CAST(${cursor.graduationProgressBps} AS numeric)
@@ -164,6 +181,8 @@ export class AlmostBakedRepository {
           ${holder.minClause}
           ${holder.maxClause}
           AND m.graduation_progress_bps IS NOT NULL
+          ${progress.minClause}
+          ${progress.maxClause}
           AND COALESCE(s.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'
       )
       SELECT
