@@ -177,14 +177,15 @@ test('graduated lifecycle exposes canonical venue, pool identity, indexed liquid
   await page.goto(`/token/${GRADUATED_TOKEN}`);
 
   const graduation = page.locator('.bread-graduation');
+  const graduationFacts = graduation.locator('.bread-graduation__facts');
   await expect(graduation.getByText(/Graduated · Indexed state GRADUATED/)).toBeVisible();
-  await expect(graduation.getByText('Uniswap V3', { exact: true })).toBeVisible();
-  await expect(graduation.getByText('Pool ID', { exact: true })).toBeVisible();
-  await expect(graduation.getByText(GRADUATED_POOL_ID, { exact: true })).toBeVisible();
-  await expect(graduation.getByText('Liquidity USDC', { exact: true })).toBeVisible();
-  await expect(graduation.getByText('990 USDC', { exact: true })).toBeVisible();
-  await expect(graduation.getByText('Permanent lock', { exact: true })).toBeVisible();
-  await expect(graduation.getByText('Indexed locked', { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText('Uniswap V3', { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText('Pool ID', { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText(GRADUATED_POOL_ID, { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText('Liquidity USDC', { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText('990 USDC', { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText('Permanent lock', { exact: true })).toBeVisible();
+  await expect(graduationFacts.getByText('Indexed locked', { exact: true })).toBeVisible();
 
   const positionManager = graduation.getByRole('link', { name: 'Open position manager in Arcscan' });
   await expect(positionManager).toHaveAttribute(
