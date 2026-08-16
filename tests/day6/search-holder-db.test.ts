@@ -51,7 +51,7 @@ const Fastify = requireFromApi('fastify') as (options?: Record<string, unknown>)
   close: () => Promise<void>;
 };
 
-describe.skipIf(!RUN_DB)('Day 6 Search indexed holder-count projection', () => {
+describe.skipIf(!RUN_DB)('Day 6 Search indexed holder-count and market-cap projection', () => {
   const schemaName = `day6_search_holder_${process.pid}`;
   let adminPool: TestPool;
   let pool: TestPool;
@@ -107,8 +107,8 @@ describe.skipIf(!RUN_DB)('Day 6 Search indexed holder-count projection', () => {
       );
     }
     await pool.query(
-      `INSERT INTO token_metrics (chain_id, token_address, holder_count)
-       VALUES ($1,$2,'42')`,
+      `INSERT INTO token_metrics (chain_id, token_address, holder_count, market_cap)
+       VALUES ($1,$2,'42','8300')`,
       [context.chainId, tokenWithHolders.toLowerCase()],
     );
   });
@@ -139,7 +139,7 @@ describe.skipIf(!RUN_DB)('Day 6 Search indexed holder-count projection', () => {
     return app;
   }
 
-  it('returns canonical indexed holder count while preserving tokens with unknown metrics', async () => {
+  it('returns canonical indexed holder count and market cap while preserving unknown metrics', async () => {
     const app = await createSearchApp();
 
     const known = await app.inject({
@@ -152,6 +152,7 @@ describe.skipIf(!RUN_DB)('Day 6 Search indexed holder-count projection', () => {
         expect.objectContaining({
           tokenAddress: tokenWithHolders.toLowerCase(),
           holderCount: '42',
+          marketCap: '8300',
         }),
       ],
     });
@@ -166,6 +167,7 @@ describe.skipIf(!RUN_DB)('Day 6 Search indexed holder-count projection', () => {
         expect.objectContaining({
           tokenAddress: tokenWithoutMetric.toLowerCase(),
           holderCount: null,
+          marketCap: null,
         }),
       ],
     });
