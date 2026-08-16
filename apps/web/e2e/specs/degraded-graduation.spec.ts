@@ -18,6 +18,10 @@ import {
 } from '../fixtures/constants';
 import { expect, test } from '../fixtures/browser';
 
+const GRADUATED_POOL_ID = `0x${'88'.repeat(32)}`;
+const GRADUATED_POSITION_MANAGER = '0x6000000000000000000000000000000000000001';
+const ARCSCAN_TESTNET = 'https://testnet.arcscan.app';
+
 async function installProcessingTokenDetail(page: Page): Promise<void> {
   await page.route(`**/v1/tokens/${ACTIVE_TOKEN}`, async (route) => {
     await route.fulfill({
@@ -167,4 +171,25 @@ test('processing token is Graduating, preserves completed trades, and disables t
   await expect(page.locator('.bread-token-tablet-trade-trigger button[aria-label="Trading unavailable while graduation completes"]')).toBeDisabled();
   await expect(page.locator('.bread-token-mobile-actions button').nth(0)).toBeDisabled();
   await expect(page.locator('.bread-token-mobile-actions button').nth(1)).toBeDisabled();
+});
+
+test('graduated lifecycle exposes canonical venue, pool identity, indexed liquidity and permanent-lock evidence', async ({ page }) => {
+  await page.goto(`/token/${GRADUATED_TOKEN}`);
+
+  const graduation = page.locator('.bread-graduation');
+  await expect(graduation.getByText(/Graduated · Indexed state GRADUATED/)).toBeVisible();
+  await expect(graduation.getByText('Uniswap V3', { exact: true })).toBeVisible();
+  await expect(graduation.getByText('Pool ID', { exact: true })).toBeVisible();
+  await expect(graduation.getByText(GRADUATED_POOL_ID, { exact: true })).toBeVisible();
+  await expect(graduation.getByText('Liquidity USDC', { exact: true })).toBeVisible();
+  await expect(graduation.getByText('990 USDC', { exact: true })).toBeVisible();
+  await expect(graduation.getByText('Permanent lock', { exact: true })).toBeVisible();
+  await expect(graduation.getByText('Indexed locked', { exact: true })).toBeVisible();
+
+  const positionManager = graduation.getByRole('link', { name: 'Open position manager in Arcscan' });
+  await expect(positionManager).toHaveAttribute(
+    'href',
+    `${ARCSCAN_TESTNET}/address/${GRADUATED_POSITION_MANAGER}`,
+  );
+  await expect(graduation.getByText(/not a safety guarantee/i)).toBeVisible();
 });
