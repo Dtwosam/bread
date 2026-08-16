@@ -154,7 +154,7 @@ function InfoPanel({ token }: Readonly<{ token: IndexedTokenDetail }>) {
   const facts = [
     ['Contract', token.tokenAddress],
     ['Quote asset', token.quoteAsset ?? '—'],
-    ['Creator', token.creatorFeeRecipient ?? '—'],
+    ['Creator', token.deployerAddress ?? '—'],
     ['Creator tax', token.creatorTaxBps === null ? '—' : `${token.creatorTaxBps} bps`],
     ['Buyback', '—'],
     ['Protocol version', token.stackVersion],
