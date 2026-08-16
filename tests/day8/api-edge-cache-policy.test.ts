@@ -5,6 +5,10 @@ import type { ProtocolContext } from '../../packages/protocol-sdk/src/context.js
 import type { BreadDb } from '../../packages/db/src/client.js';
 import { ReadRepository } from '../../packages/db/src/repositories/read.js';
 import { SearchRepository } from '../../packages/db/src/repositories/search.js';
+import {
+  NO_STORE_CACHE_CONTROL,
+  PUBLIC_PROJECTION_CACHE_CONTROL,
+} from '../../apps/api/src/http-cache.js';
 
 const address = (value: number) => `0x${value.toString(16).padStart(40, '0')}` as Address;
 const factory = address(1);
@@ -79,9 +83,6 @@ const launch = {
   launchLogIndex: 1,
   createdAt: new Date('2026-08-10T18:00:00.000Z'),
 } as const;
-
-const PUBLIC_PROJECTION_CACHE_CONTROL = 'public, max-age=2, s-maxage=2, stale-while-revalidate=8';
-const NO_STORE_CACHE_CONTROL = 'no-store, max-age=0';
 
 afterEach(() => {
   vi.restoreAllMocks();
