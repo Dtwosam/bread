@@ -160,6 +160,17 @@
   overflow-wrap: anywhere;
 }
 
+:global(.bread-transaction-link) {
+  width: fit-content;
+  color: var(--bread-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+:global(.bread-transaction-link:hover) {
+  color: var(--bread-accent-hover);
+}
+
 :global(.bread-transaction-status--reverted),
 :global(.bread-transaction-status--rejected) {
   color: var(--bread-negative);
