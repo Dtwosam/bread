@@ -1,6 +1,6 @@
 schema_version: 1.89
 project: Bread
-updated_at: 2026-08-16T20:39:00Z
+updated_at: 2026-08-16T20:42:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -33,6 +33,14 @@ history_preservation:
   recovered_handoff_commit: ee1321eef7f8a6add468a6811653f8d4b96a649b
   rule: "Earlier RED/GREEN detail remains authoritative in immutable handoffs, Git history and exact-head evidence. This mirror records current workflow position and does not reopen accepted behavior."
 
+legacy_ratifications:
+  day4:
+    pack: v1.4-day4-design
+    day4_production_ratification: RATIFIED
+  day5:
+    pack: v1.5-day5-preflight-consolidated
+    status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
+
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
 active_lane: "UI/UX v2.2 Token / Trade lane IN PROGRESS — Processing/Graduating, Graduated treatment, canonical TradePanel context, stale-quote refresh and transaction explorer link recovered as implemented and exact-head green; additional Token/Trade closure remains"
 active_gate: HANDOFF_PROJECT_SOURCE_REPLACEMENT_REQUIRED
@@ -56,7 +64,9 @@ integration_baseline:
   recovered_accepted_code_bearing_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
   recovered_delta_from_stale_handoff: 36_COMMITS_AHEAD_0_BEHIND
   recovered_handoff_commit: ee1321eef7f8a6add468a6811653f8d4b96a649b
-  current_handoff_sync_head_before_validation_fix: 5940f2d600ce0e18257ce02cfa7416c4f81c1ac0
+  previous_handoff_sync_heads:
+    - 5940f2d600ce0e18257ce02cfa7416c4f81c1ac0
+    - ed1059aca563f8da984598c4f8d5051aacbf71fc
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
@@ -118,7 +128,8 @@ verification:
   day9_final_rc_gate_workflow: PASS_RUN_31968847834
   recovered_code_verdict: EXACT_HEAD_AUTOMATION_GREEN_BUT_DAY9_INCOMPLETE
   handoff_sync_first_attempt: FAIL_RUN_31970914123_MISSING_REQUIRED_VALIDATOR_KEYS
-  handoff_sync_first_attempt_disposition: "PROCESS/HANDOFF_FORMAT_FAILURE_ONLY — production code unchanged; fixed by restoring integration_baseline, working_branches and verification sections required by scripts/validation/validate-build-state.mjs."
+  handoff_sync_second_attempt: FAIL_RUN_31971041024_MISSING_LEGACY_DAY4_RATIFICATION_MARKER
+  handoff_sync_failure_disposition: "PROCESS/HANDOFF_FORMAT_FAILURES_ONLY — production code unchanged; validator contracts restored before continuation."
 
 fresh_source_gap:
   id: BUY_MAX_SHARED_USDC_GAS_RESERVE
