@@ -44,6 +44,10 @@ function searchLifecycleLabel(state: IndexedSearchResult['lifecycleState']): str
   return null;
 }
 
+function searchResultInitial(result: IndexedSearchResult): string {
+  return (result.symbol?.trim() || result.name?.trim() || '?').slice(0, 1).toUpperCase();
+}
+
 function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>) {
   const age = formatSearchAge(result.ageSeconds);
   const lifecycle = searchLifecycleLabel(result.lifecycleState);
@@ -53,15 +57,19 @@ function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>)
       href={`/token/${encodeURIComponent(result.tokenAddress)}`}
       key={result.tokenAddress}
     >
-      <span>
-        <strong>{result.name?.trim() || 'Unnamed token'}</strong>
-        <span>${result.symbol?.trim() || '—'}</span>
-        <CreatorAttribution creatorAddress={result.deployerAddress} />
-        {age === null ? null : <span>Age {age}</span>}
-        {result.holderCount === null ? null : <span>{result.holderCount} holders</span>}
-        {lifecycle === null ? null : <span>{lifecycle}</span>}
+      <span className="bread-search-result__identity">
+        <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(result)}</span>
+        <span className="bread-search-result__copy">
+          <strong>{result.name?.trim() || 'Unnamed token'}</strong>
+          <span>${result.symbol?.trim() || '—'}</span>
+          <CreatorAttribution creatorAddress={result.deployerAddress} />
+        </span>
       </span>
-      <span>
+      <span className="bread-search-result__details">
+        <span>Market cap —</span>
+        <span>Age {age ?? '—'}</span>
+        <span>Holders {result.holderCount ?? '—'}</span>
+        <span>Lifecycle {lifecycle ?? '—'}</span>
         {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
         <code className="bread-technical" title={result.tokenAddress}>
           {shortAddress(result.tokenAddress)}
