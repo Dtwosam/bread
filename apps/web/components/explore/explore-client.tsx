@@ -34,6 +34,8 @@ const AGE_OPTIONS: readonly Readonly<{ value: FeedAge; label: string }>[] = [
 const CANONICAL_BPS = /^\d{1,5}$/;
 const PERCENT_INPUT = /^\d{1,3}(?:\.\d{1,2})?$/;
 const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
+const QUOTE_BASE_UNITS = /^\d{1,78}$/;
+const USDC_INPUT = /^\d+(?:\.\d{1,6})?$/;
 
 type ExploreFilters = Readonly<{
   age?: FeedAge;
@@ -42,6 +44,8 @@ type ExploreFilters = Readonly<{
   progressMinBps?: string;
   progressMaxBps?: string;
   creator?: string;
+  volumeMinQuote?: string;
+  volumeMaxQuote?: string;
 }>;
 
 function resolveFeedAge(value: string | null): FeedAge | undefined {
@@ -53,6 +57,42 @@ function resolveProgressBps(value: string | null): string | undefined {
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 10_000) return undefined;
   return String(parsed);
+}
+
+function canonicalInteger(value: string): string {
+  return value.replace(/^0+(?=\d)/, '');
+}
+
+function resolveQuoteBaseUnits(value: string | null): string | undefined {
+  if (value === null || !QUOTE_BASE_UNITS.test(value)) return undefined;
+  return canonicalInteger(value);
+}
+
+function compareCanonicalIntegers(left: string, right: string): number {
+  const a = canonicalInteger(left);
+  const b = canonicalInteger(right);
+  if (a.length !== b.length) return a.length < b.length ? -1 : 1;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function usdcToQuoteBaseUnits(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  if (!USDC_INPUT.test(trimmed)) return undefined;
+  const [whole = '0', fraction = ''] = trimmed.split('.');
+  const baseUnits = canonicalInteger(`${canonicalInteger(whole)}${fraction.padEnd(6, '0')}`);
+  if (!QUOTE_BASE_UNITS.test(baseUnits)) return undefined;
+  return baseUnits;
+}
+
+function quoteBaseUnitsToUsdc(value: string | undefined): string {
+  if (value === undefined) return '';
+  const canonical = canonicalInteger(value);
+  const padded = canonical.padStart(7, '0');
+  const whole = canonicalInteger(padded.slice(0, -6));
+  const fraction = padded.slice(-6).replace(/0+$/, '');
+  return fraction.length > 0 ? `${whole}.${fraction}` : whole;
 }
 
 function ageLabel(age: FeedAge): string {
@@ -90,6 +130,14 @@ function progressLabel(minBps: string | undefined, maxBps: string | undefined): 
   return `≤${max}%`;
 }
 
+function volumeLabel(minQuote: string | undefined, maxQuote: string | undefined): string {
+  const min = quoteBaseUnitsToUsdc(minQuote);
+  const max = quoteBaseUnitsToUsdc(maxQuote);
+  if (minQuote !== undefined && maxQuote !== undefined) return `${min}–${max} USDC`;
+  if (minQuote !== undefined) return `≥${min} USDC`;
+  return `≤${max} USDC`;
+}
+
 function exploreHref(view: ExploreView, filters: ExploreFilters): string {
   const params = new URLSearchParams();
   if (view !== 'new') params.set('view', view);
@@ -99,6 +147,8 @@ function exploreHref(view: ExploreView, filters: ExploreFilters): string {
   if (filters.progressMinBps !== undefined) params.set('progressMinBps', filters.progressMinBps);
   if (filters.progressMaxBps !== undefined) params.set('progressMaxBps', filters.progressMaxBps);
   if (filters.creator !== undefined) params.set('creator', filters.creator);
+  if (filters.volumeMinQuote !== undefined) params.set('volumeMinQuote', filters.volumeMinQuote);
+  if (filters.volumeMaxQuote !== undefined) params.set('volumeMaxQuote', filters.volumeMaxQuote);
   return params.size > 0 ? `/explore?${params.toString()}` : '/explore';
 }
 
@@ -113,11 +163,18 @@ export function ExploreClient() {
   const progressMaxBps = resolveProgressBps(searchParams.get('progressMaxBps'));
   const creatorParam = searchParams.get('creator');
   const creator = creatorParam === null ? undefined : creatorParam.toLowerCase();
+  const volumeMinQuote = resolveQuoteBaseUnits(searchParams.get('volumeMinQuote'));
+  const volumeMaxQuote = resolveQuoteBaseUnits(searchParams.get('volumeMaxQuote'));
   const hasHolderFilter = holdersMin !== undefined || holdersMax !== undefined;
   const hasProgressFilter = progressMinBps !== undefined || progressMaxBps !== undefined;
   const hasCreatorFilter = creator !== undefined;
+  const hasVolumeFilter = volumeMinQuote !== undefined || volumeMaxQuote !== undefined;
   const hasActiveFilters =
-    age !== undefined || hasHolderFilter || hasProgressFilter || hasCreatorFilter;
+    age !== undefined ||
+    hasHolderFilter ||
+    hasProgressFilter ||
+    hasCreatorFilter ||
+    hasVolumeFilter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const api = useMemo(() => createBreadApiClient(), []);
 
@@ -130,6 +187,8 @@ export function ExploreClient() {
       progressMinBps,
       progressMaxBps,
       creator,
+      volumeMinQuote,
+      volumeMaxQuote,
       limit: PAGE_SIZE,
     }),
     initialPageParam: '',
@@ -142,6 +201,8 @@ export function ExploreClient() {
         progressMinBps,
         progressMaxBps,
         creator,
+        volumeMinQuote,
+        volumeMaxQuote,
         limit: PAGE_SIZE,
         cursor: pageParam || undefined,
       }),
@@ -181,6 +242,8 @@ export function ExploreClient() {
                 progressMinBps,
                 progressMaxBps,
                 creator,
+                volumeMinQuote,
+                volumeMaxQuote,
               })}
               key={item.value}
             >
@@ -212,6 +275,8 @@ export function ExploreClient() {
                   progressMinBps,
                   progressMaxBps,
                   creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
                 })
               }
               type="button"
@@ -225,7 +290,14 @@ export function ExploreClient() {
               aria-label={`Holders: ${holderLabel(holdersMin, holdersMax)}`}
               className={styles.chip}
               onClick={() =>
-                navigateWithFilters({ age, progressMinBps, progressMaxBps, creator })
+                navigateWithFilters({
+                  age,
+                  progressMinBps,
+                  progressMaxBps,
+                  creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
+                })
               }
               type="button"
             >
@@ -237,7 +309,16 @@ export function ExploreClient() {
             <button
               aria-label={`Baked progress: ${progressLabel(progressMinBps, progressMaxBps)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({ age, holdersMin, holdersMax, creator })}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  holdersMin,
+                  holdersMax,
+                  creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
+                })
+              }
               type="button"
             >
               <span>Baked progress: {progressLabel(progressMinBps, progressMaxBps)}</span>
@@ -255,11 +336,33 @@ export function ExploreClient() {
                   holdersMax,
                   progressMinBps,
                   progressMaxBps,
+                  volumeMinQuote,
+                  volumeMaxQuote,
                 })
               }
               type="button"
             >
               <span>Creator: {shortAddress(creator)}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
+          {hasVolumeFilter ? (
+            <button
+              aria-label={`24h Volume: ${volumeLabel(volumeMinQuote, volumeMaxQuote)}`}
+              className={styles.chip}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                  creator,
+                })
+              }
+              type="button"
+            >
+              <span>24h Volume: {volumeLabel(volumeMinQuote, volumeMaxQuote)}</span>
               <span aria-hidden="true">×</span>
             </button>
           ) : null}
@@ -306,6 +409,8 @@ export function ExploreClient() {
                   progressMinBps,
                   progressMaxBps,
                   creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
                 });
                 setFiltersOpen(false);
               }}
@@ -322,6 +427,69 @@ export function ExploreClient() {
 
           <form
             className={styles.holderForm}
+            key={`volume:${volumeMinQuote ?? ''}:${volumeMaxQuote ?? ''}`}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const rawMin = String(form.get('volumeMin') ?? '').trim();
+              const rawMax = String(form.get('volumeMax') ?? '').trim();
+              const nextMinQuote = usdcToQuoteBaseUnits(rawMin);
+              const nextMaxQuote = usdcToQuoteBaseUnits(rawMax);
+              if (
+                (rawMin.length > 0 && nextMinQuote === undefined) ||
+                (rawMax.length > 0 && nextMaxQuote === undefined)
+              ) {
+                return;
+              }
+              if (
+                nextMinQuote !== undefined &&
+                nextMaxQuote !== undefined &&
+                compareCanonicalIntegers(nextMinQuote, nextMaxQuote) > 0
+              ) {
+                return;
+              }
+              navigateWithFilters({
+                age,
+                holdersMin,
+                holdersMax,
+                progressMinBps,
+                progressMaxBps,
+                creator,
+                volumeMinQuote: nextMinQuote,
+                volumeMaxQuote: nextMaxQuote,
+              });
+              setFiltersOpen(false);
+            }}
+          >
+            <div className={styles.rangeFields}>
+              <label className={styles.field} htmlFor="bread-explore-volume-min">
+                <span>24h volume min</span>
+                <input
+                  defaultValue={quoteBaseUnitsToUsdc(volumeMinQuote)}
+                  id="bread-explore-volume-min"
+                  inputMode="decimal"
+                  name="volumeMin"
+                  type="text"
+                />
+              </label>
+              <label className={styles.field} htmlFor="bread-explore-volume-max">
+                <span>24h volume max</span>
+                <input
+                  defaultValue={quoteBaseUnitsToUsdc(volumeMaxQuote)}
+                  id="bread-explore-volume-max"
+                  inputMode="decimal"
+                  name="volumeMax"
+                  type="text"
+                />
+              </label>
+            </div>
+            <button className={styles.apply} type="submit">
+              Apply 24h volume filter
+            </button>
+          </form>
+
+          <form
+            className={styles.holderForm}
             key={`holders:${holdersMin ?? ''}:${holdersMax ?? ''}`}
             onSubmit={(event) => {
               event.preventDefault();
@@ -335,6 +503,8 @@ export function ExploreClient() {
                 progressMinBps,
                 progressMaxBps,
                 creator,
+                volumeMinQuote,
+                volumeMaxQuote,
               });
               setFiltersOpen(false);
             }}
@@ -398,6 +568,8 @@ export function ExploreClient() {
                 progressMinBps: nextMinBps,
                 progressMaxBps: nextMaxBps,
                 creator,
+                volumeMinQuote,
+                volumeMaxQuote,
               });
               setFiltersOpen(false);
             }}
@@ -450,6 +622,8 @@ export function ExploreClient() {
                 progressMinBps,
                 progressMaxBps,
                 creator: rawCreator.length > 0 ? rawCreator.toLowerCase() : undefined,
+                volumeMinQuote,
+                volumeMaxQuote,
               });
               setFiltersOpen(false);
             }}
