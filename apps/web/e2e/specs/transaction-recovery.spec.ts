@@ -1,3 +1,4 @@
+import arcTestnetManifest from '../../../../config/networks/arc-testnet.json';
 import {
   ACTIVE_TOKEN,
   ARC_TESTNET_CHAIN_ID,
@@ -11,6 +12,7 @@ import {
 } from '../fixtures/browser';
 
 const STORAGE_KEY = 'bread:submitted-transactions:v1';
+const BUY_TX_URL = `${arcTestnetManifest.explorer.replace(/\/+$/, '')}/tx/${BUY_TX_HASH}`;
 
 async function seedRecoverableBuy(page: import('@playwright/test').Page, status: 'SUBMITTED' | 'CONFIRMING' | 'UNKNOWN' = 'CONFIRMING') {
   await page.evaluate(
@@ -55,8 +57,10 @@ test('pending Buy stays single-submit while confirmation remains unresolved', as
   await setWalletTransactionHashes(page, [BUY_TX_HASH]);
   await trade.getByRole('button', { name: 'Buy TWIN after reviewing current values' }).click();
 
-  await expect(trade.getByRole('status')).toContainText('CONFIRMING');
-  await expect(trade.getByRole('status')).toContainText(BUY_TX_HASH);
+  const status = trade.getByRole('status');
+  await expect(status).toContainText('CONFIRMING');
+  await expect(status).toContainText(BUY_TX_HASH);
+  await expect(status.getByRole('link', { name: 'View transaction on Arcscan' })).toHaveAttribute('href', BUY_TX_URL);
   await expect(trade.getByLabel('Trade amount')).toBeDisabled();
   await expect(trade.getByRole('tab', { name: 'Buy' })).toBeDisabled();
   await expect(trade.getByRole('tab', { name: 'Sell' })).toBeDisabled();
@@ -75,8 +79,10 @@ test('refresh restores a pending Buy and a later recovery pass confirms it witho
 
   await page.reload();
   let trade = page.getByRole('complementary', { name: 'Trade' });
-  await expect(trade.getByRole('status')).toContainText('CONFIRMING');
-  await expect(trade.getByRole('status')).toContainText(BUY_TX_HASH);
+  let status = trade.getByRole('status');
+  await expect(status).toContainText('CONFIRMING');
+  await expect(status).toContainText(BUY_TX_HASH);
+  await expect(status.getByRole('link', { name: 'View transaction on Arcscan' })).toHaveAttribute('href', BUY_TX_URL);
   await expect(trade.getByLabel('Trade amount')).toBeDisabled();
   await expect(trade.getByRole('button', { name: 'Connect wallet' })).toBeDisabled();
   await expect(trade.getByRole('tab', { name: 'Buy' })).toBeDisabled();
@@ -93,8 +99,10 @@ test('refresh restores a pending Buy and a later recovery pass confirms it witho
   rpcState.receiptMode = 'SUCCESS';
   await page.waitForLoadState('domcontentloaded');
   trade = page.getByRole('complementary', { name: 'Trade' });
-  await expect(trade.getByRole('status')).toContainText('CONFIRMED', { timeout: 15_000 });
-  await expect(trade.getByRole('status')).toContainText(BUY_TX_HASH);
+  status = trade.getByRole('status');
+  await expect(status).toContainText('CONFIRMED', { timeout: 15_000 });
+  await expect(status).toContainText(BUY_TX_HASH);
+  await expect(status.getByRole('link', { name: 'View transaction on Arcscan' })).toHaveAttribute('href', BUY_TX_URL);
   expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(0);
 });
 
@@ -114,6 +122,7 @@ test('receipt transport failure surfaces Unknown and preserves the saved hash fo
   await expect(status).toContainText('UNKNOWN', { timeout: 15_000 });
   await expect(status).toContainText('Confirmation is unknown. The transaction hash is saved for recovery.');
   await expect(status).toContainText(BUY_TX_HASH);
+  await expect(status.getByRole('link', { name: 'View transaction on Arcscan' })).toHaveAttribute('href', BUY_TX_URL);
   await expect(trade.getByLabel('Trade amount')).toBeDisabled();
   expect((await walletSnapshot(page)).submittedTransactions).toHaveLength(0);
   expect(rpcState.unknownCalls.some((entry) => entry.includes('Deterministic receipt transport failure.'))).toBe(true);
