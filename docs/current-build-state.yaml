@@ -1,6 +1,6 @@
 schema_version: 1.78
 project: Bread
-updated_at: 2026-08-16T10:50:00+01:00
+updated_at: 2026-08-16T10:30:00+01:00
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -59,7 +59,7 @@ completed_checkpoints:
   - "Lane 3 Age filter accepted cross-layer: backend exact head 3e4330c6b1ced9678f2e90a5690ebb8b27193bcf; final UI/browser exact head 57d1636522790f11f810b5164f36c27431940fc8. Presets are <5m, <1h, 1–24h and 1–7d against committed indexed-head time; invalid values fail closed; feed URL context/chips/Reset are preserved without client membership filtering."
   - "Lane 3 Holder filter accepted cross-layer at exact head 6fec3eb6f39eeecbf9bfd4a9202b7079c8e5a069. Inclusive indexed holder bounds apply across New/Trending/Almost Baked/Graduated; invalid/inverted values fail closed; Age/feed context and removable Holder + Age chips/Reset are preserved; no client-side holder filtering or raw-RPC fanout."
   - "Lane 3 Baked Progress filter accepted cross-layer at exact code-bearing head f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9. The user-facing control is an inclusive 0–100% bonding-token range translated exactly to canonical graduation_progress_bps 0–10000; server-selected membership remains authoritative; view + Age + Holder context, removable chips and Reset are preserved; percentage is not used as lifecycle classification. Historical REDs, minimum GREEN, build-safe percent conversion, unique form identity and retained Age accessibility-selector regression were all resolved before one-head focused + adjacent + browser + 10k load + recovery + CI acceptance."
-  - "Lane 3 Creator wallet filter accepted cross-layer at exact code-bearing head 842f17b5c84c08d441e25c5d215188b884856b1a. Canonical creator identity is launches.deployer_address / LaunchCreated.deployer, explicitly distinct from creator_fee_recipient. The real PostgreSQL RED fixture deliberately made one non-matching deployer pay creator fees to the target wallet so a fee-recipient implementation could not pass. Backend filtering is applied before pagination/ranking in New, Trending, Almost Baked and Graduated; malformed addresses fail closed; creator is part of feed cache identity. The UI forwards the canonical creator wallet, preserves Age + Holder + Baked + feed context, exposes a compact removable Creator chip + Reset, renders server-selected membership only, and performs no raw-RPC or client-side creator filtering."
+  - "Lane 3 Creator wallet filter accepted cross-layer at exact code-bearing head 842f17b5c84c08d441e25c5d215188b884856b1a. Canonical creator identity is launches.deployer_address / LaunchCreated.deployer, explicitly distinct from creator_fee_recipient. The PostgreSQL RED fixture deliberately made one non-matching deployer pay creator fees to the target wallet so a fee-recipient implementation could not pass. Backend filtering applies before pagination/ranking in New, Trending, Almost Baked and Graduated; malformed addresses fail closed; creator is included in feed cache identity. The UI forwards the creator wallet, preserves feed + Age + Holder + Baked context, exposes a removable compact Creator chip + Reset, renders server-selected membership only, and performs no client-side creator filtering or raw-RPC fanout."
 
 integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
@@ -89,14 +89,16 @@ integration_baseline:
     - d3e299730a68e8d067e43ea78071010972c5ec90
   ui_lane3_baked_progress_build_compatibility_repair: 4d6072af8ba4133803d9f754103ac6c4cd057e93
   ui_lane3_baked_progress_form_identity_repair: 7d12f5fee6bb277a3e0ade61f24253558e8049e9
-  ui_lane3_baked_progress_final_code_head: f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
+  ui_lane3_baked_progress_age_locator_repair: f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
+  ui_lane3_baked_progress_accepted_code_head: f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
   ui_lane3_creator_backend_red_head: 8f3efcc527c338f1f8e2464b605fe0d7f1a52c58
   ui_lane3_creator_backend_green_head: 9a5df8397a1da00aebd9f5edf0dddca4160f781a
   ui_lane3_creator_browser_red_head: 8f6efbf27699dfe03f02d1e016ca366dd227fcdd
-  ui_lane3_creator_final_code_head: 842f17b5c84c08d441e25c5d215188b884856b1a
+  ui_lane3_creator_accepted_code_head: 842f17b5c84c08d441e25c5d215188b884856b1a
   ui_current_code_bearing_head: 842f17b5c84c08d441e25c5d215188b884856b1a
-  ui_current_code_state: "Creator wallet filter ACCEPTED cross-layer. Explore/Lane 3 remains open; the next implementation slice must begin with a fresh relevant Project Source + owning-interface read."
-  ui_handoff_sync_parent_after_green: 842f17b5c84c08d441e25c5d215188b884856b1a
+  ui_current_code_state: "Creator wallet filter ACCEPTED on exact code-bearing head. Lane 3 remains open; no subsequent filter/sort slice has started."
+  ui_handoff_sync_parent_before_acceptance: 7c4bc9e3ea8e4448555d3712cfc912835563144c
+  ui_handoff_sync_parent_after_creator_acceptance: 842f17b5c84c08d441e25c5d215188b884856b1a
   ui_baseline_rule: "Source-hygiene descendant of verified Day-9 head; never use /tmp/bread-synthra-fork-proof."
 
 working_branches:
@@ -280,43 +282,68 @@ ui_ux_v2_2:
     - BACKEND_BACKED_TRENDING_FEED_AUTHORITY
     - BACKEND_BACKED_ALMOST_BAKED_FEED_AUTHORITY
     - BACKEND_BACKED_GRADUATED_FEED_AUTHORITY
-    - SEARCH_INTERACTION_STATE_ACCEPTED_WITH_ENRICHMENT_GAPS_OPEN
-    - BACKEND_BACKED_AGE_FILTER
-    - BACKEND_BACKED_HOLDER_FILTER
-    - BACKEND_BACKED_BAKED_PROGRESS_FILTER
-    - BACKEND_BACKED_CANONICAL_CREATOR_WALLET_FILTER
-  current_lane3_unresolved:
-    filters:
-      - MARKET_CAP_MIN_MAX_BLOCKED_PENDING_SOURCE_BACKED_MARKET_CAP_AUTHORITY
-      - VOLUME_24H_MIN_MAX_REQUIRES_INDEXED_HEAD_FRESHNESS_PROJECTION
-      - LIFECYCLE_PARTIALLY_BLOCKED_PENDING_SOURCE_BACKED_NEW_ACTIVE_ALMOST_BAKED_BOUNDARIES
-    sorts:
-      - NEWEST
-      - MARKET_CAP_BLOCKED_PENDING_SOURCE_BACKED_MARKET_CAP_AUTHORITY
-      - VOLUME_REQUIRES_INDEXED_HEAD_FRESHNESS_REVIEW
-      - HOLDERS
-      - BAKED_PROGRESS_DIRECTION_NOT_DEFINED_IN_RATIFIED_SOURCES
-    search_enrichment:
-      - MARKET_CAP_NOT_PROJECTED_TRUTHFULLY
-      - HOLDERS_NOT_PROJECTED_IN_SEARCH_DTO
-      - AGE_LIFECYCLE_NOT_PROJECTED_IN_SEARCH_DTO
-      - CREATOR_GROUP_RECENT_TRENDING_SEARCH_DATA_NOT_PROJECTED
-  next_safe_action: "Re-read the relevant ratified Project Sources and owning interfaces for the next unresolved Lane-3 predicate/sort. Do not infer sort direction/defaults or blocked formulas from prior slices. Choose only a fully source-backed semantic, write a real RED first, then continue under 06D/06F/06H."
+    - SEARCH_INTERACTIONS_ACCEPTED_WITH_INDEXED_ENRICHMENT_GAPS_EXPLICITLY_OPEN
+    - AGE_FILTER_BACKEND_BACKED_WITH_URL_CHIPS_RESET
+    - HOLDER_FILTER_BACKEND_BACKED_WITH_URL_CHIPS_RESET
+    - BAKED_PROGRESS_FILTER_BACKEND_BACKED_BONDING_ONLY_WITH_URL_CHIPS_RESET
+    - CREATOR_FILTER_BACKEND_BACKED_CANONICAL_DEPLOYER_WITH_URL_CHIPS_RESET
+  baked_progress_contract:
+    user_facing_unit: PERCENT_0_TO_100
+    canonical_projection: graduation_progress_bps
+    canonical_projection_unit: BPS_0_TO_10000
+    applies_to: BONDING_NON_GRADUATED_TOKENS
+    lifecycle_independence: "Progress percentage is not lifecycle classification; do not infer New/Active/Almost Baked/Processing/Graduated thresholds from this filter."
+    ui_transport_rule: "UI converts user-entered percent to exact bps query bounds; server remains membership authority."
+    current_state: FILTER_ACCEPTED_AT_f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9
+  unresolved_filter_sort_gaps:
+    market_cap_filter_sort: "OPEN — token_metrics.market_cap exists but current trade projection writes NULL and no source-backed market-cap formula is confirmed; do not invent."
+    volume_24h_filter_sort: "OPEN — existing 24h metric snapshots require indexed-head freshness repair before they can be treated as deterministic trailing-24h authority."
+    lifecycle_filter: "PARTIALLY_BLOCKED — v2.2 names New / Active / Almost Baked / Processing / Graduated but no source-backed New cutoff or Active-vs-Almost-Baked threshold is confirmed; do not invent."
+    creator_filter: "ACCEPTED — exact code-bearing head 842f17b5c84c08d441e25c5d215188b884856b1a; canonical onchain deployer/original creator wallet only; creator fee-recipient identity is explicitly rejected."
+    baked_progress_filter: "ACCEPTED — exact code-bearing head f11aad7c37704519cdf7fdbf9d2055f5df5d0fa9; bonding/non-graduated scope only."
+    baked_progress_sort: "OPEN — separate future slice; must begin with a fresh relevant Project Source read."
+    other_required_sorts: "OPEN — Newest, market cap, volume, holders; Trending remains a feed/tab, not a hidden sort formula."
+  visual_findings_open: []
+  intentional_differences:
+    - "Written v2.2 1440px standard max width + 32px desktop gutters control over the approved concept/Figma shell's earlier full-canvas x32 content origin at 1586px. Do not widen code to imitate conflicting concept geometry; sync Figma later."
+    - "Approved-reference sample live movers/trades/volume are not reproduced until reliable Bread indexed data supports them; current status-only strip is intentionally truthful rather than fabricated."
+    - "Explore card/feed body has advanced through accepted feed authority, Search, Age, Holder, Baked Progress and Creator filter slices; remaining filter/sort gaps stay explicit and Lane 3 remains open."
+    - "The Next.js development indicator visible at bottom-left in Playwright captures is a non-product test-harness overlay and is excluded from Bread UI comparison."
+  intentional_scope_boundary: "Lane 3 remains OPEN until all required source-backed Explore filters/sorts and integrated API/UI/browser evidence are accepted; blocked semantics remain explicit rather than fabricated."
 
 blockers:
-  retained:
-    - "Physical-device/external wallet-browser evidence remains required before Day-9/RC completion."
-    - "No final RC tag has been created."
-    - "Figma MCP writable synchronization remains blocked by Starter-plan call limit; accepted implementation evidence remains written v2.2 + approved visual reference + rendered browser artifacts."
-    - "Market-cap filter/sort/search enrichment remains blocked until a source-backed market-cap authority/formula is confirmed."
-    - "24h volume filter/sort remains blocked from using stale trade-triggered snapshots; a deterministic indexed-head projection is required."
-    - "Lifecycle filtering remains partially blocked until source-backed New/Active/Almost-Baked boundary semantics are located or explicitly approved."
-    - "Baked Progress sort direction/default remains undefined in ratified sources and must not be invented."
-  forbidden_shortcuts:
-    - FRONTEND_ONLY_FILTERING_OR_RANKING
-    - PER_CARD_RAW_RPC_READS
-    - CREATOR_FEE_RECIPIENT_AS_CREATOR_IDENTITY
-    - FABRICATED_MARKET_CAP_OR_VOLUME
-    - INVENTED_LIFECYCLE_THRESHOLDS
-    - INVENTED_SORT_DIRECTION_OR_DEFAULT
-    - MERGING_OR_CLOSING_PR94_BEFORE_LANE3_AND_REQUIRED_GATES_COMPLETE
+  - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+  - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+  - CURRENT_PONS_FACTORY_SOURCE_PARITY
+  - PONS_V2_RUNTIME_REFERENCE
+  - BREAD_PRODUCTION_ECONOMICS_CONFIG
+  - PONS_AUDIT_FINDINGS
+  - ARC_MAINNET_VALUES
+
+blocker_scope:
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Physical iOS Safari, remaining representative Android Chrome checklist rows and current branded Edge require genuine execution/evidence on the final redesigned candidate."
+  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Lane 3 remains open. Accepted feeds/Search/Age/Holder/Baked Progress/Creator filters are retained; remaining filters/sorts and final affected evidence remain required."
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
+  PONS_V2_RUNTIME_REFERENCE: "Numeric runtime observation remains reference evidence; do not guess."
+  BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
+  PONS_AUDIT_FINDINGS: "Continuing security watch; independent Bread review remains required."
+  ARC_MAINNET_VALUES: "Official-publication mainnet deployment gate; do not invent values."
+
+tooling_status:
+  github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
+  figma: CANONICAL_STARTER_SHELL_ESTABLISHED_BUT_MCP_CALL_LIMIT_CURRENTLY_REACHED
+  vercel: CONNECTED_TEAM_PRESENT_NO_BREAD_PROJECT_CONFIGURED
+  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD_DESKTOP_AND_MOBILE_SCREENSHOT_ARTIFACTS
+
+next_action: >-
+  Do not begin another implementation slice from memory. First re-read the relevant ratified Project Sources and owning interfaces for the next selected Lane-3 gap. Baked Progress and Creator filtering are accepted and must not be reopened without evidence of a regression. Market-cap, stale 24h-volume and lifecycle-threshold gaps remain blocked/conditional exactly as recorded above; sort direction/defaults must not be inferred where the sources do not define them. For whichever fully source-backed slice is selected, apply 06D RED -> verified expected failure -> minimum GREEN -> focused/adjacent/type/build -> 04D browser/accessibility/production gates -> affected 06I load -> exact-head CI, then update this handoff again. Keep /tmp/bread-synthra-fork-proof untouched.
+
+do_not_do:
+  - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
+  - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
+  - "Do not begin Day 10 or claim Day-9 PASS while UI/UX v2.2, performance/load or physical-device gates remain open."
+  - "Do not change Solidity, protocol economics, custody, admin authority, canonical USDC, DEX semantics, transaction construction or financial ledgers in the UI lane."
+  - "Do not fabricate performance, physical-device, Vercel, contract/config, market or live-state evidence."
+  - "Do not reopen or weaken the accepted Baked Progress filter semantics without a demonstrated regression; percentage remains bonding-only and is not lifecycle classification."
+  - "Do not substitute creator fee-recipient metadata for the accepted canonical deployer/original creator-wallet identity."
+  - "Do not start a new Lane-3 filter/sort implementation before a fresh relevant Project Source read."
