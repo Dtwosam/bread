@@ -114,6 +114,10 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
   } as const;
 }
 
+function creatorClause(creatorAddress: string | undefined) {
+  return creatorAddress === undefined ? sql`` : sql`AND l.deployer_address = ${creatorAddress}`;
+}
+
 function normalizeLaunch(row: LaunchRawRow) {
   return {
     ...row,
@@ -177,12 +181,14 @@ export class ExploreAgeReadRepository {
     bounds?: ExploreAgeBounds,
     holders?: ExploreHolderBounds,
     progress?: ExploreProgressBounds,
+    creatorAddress?: string,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
     const baked = progressClauses(progress);
+    const creator = creatorClause(creatorAddress);
     const cursorClause = cursor
       ? sql`AND (
           l.launch_block_number < CAST(${cursor.launchBlockNumber} AS numeric)
@@ -221,6 +227,7 @@ export class ExploreAgeReadRepository {
         ${baked.minClause}
         ${baked.maxClause}
         ${baked.scopeClause}
+        ${creator}
         ${cursorClause}
       ORDER BY
         l.launch_block_number DESC,
@@ -241,6 +248,7 @@ export class ExploreAgeReadRepository {
     bounds?: ExploreAgeBounds,
     holders?: ExploreHolderBounds,
     progress?: ExploreProgressBounds,
+    creatorAddress?: string,
   ) {
     if (progress) return [];
 
@@ -248,6 +256,7 @@ export class ExploreAgeReadRepository {
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
+    const creator = creatorClause(creatorAddress);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
@@ -283,6 +292,7 @@ export class ExploreAgeReadRepository {
         ${holder.knownClause}
         ${holder.minClause}
         ${holder.maxClause}
+        ${creator}
         ${cursorClause}
       ORDER BY
         s.graduation_completed_block DESC,
