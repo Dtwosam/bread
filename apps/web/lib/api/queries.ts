@@ -13,6 +13,20 @@ export const breadQueryKeys = {
       input.view ?? 'new',
       input.age ?? 'any',
     ] as const;
+    if (input.volumeMinQuote !== undefined || input.volumeMaxQuote !== undefined) {
+      return [
+        ...prefix,
+        input.holdersMin ?? '',
+        input.holdersMax ?? '',
+        input.progressMinBps ?? '',
+        input.progressMaxBps ?? '',
+        input.creator === undefined ? '' : normalizeAddress(input.creator),
+        input.volumeMinQuote ?? '',
+        input.volumeMaxQuote ?? '',
+        input.limit ?? 25,
+        normalizeCursor(input.cursor),
+      ] as const;
+    }
     if (input.creator !== undefined) {
       return [
         ...prefix,
