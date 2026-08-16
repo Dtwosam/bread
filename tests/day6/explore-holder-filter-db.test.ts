@@ -16,6 +16,8 @@ const activeHighCurve = addr('1b');
 const graduatedMidCurve = addr('1c');
 const graduatedHighCurve = addr('1d');
 const trader = addr('21');
+const primaryCreator = addr('41');
+const otherCreator = addr('42');
 
 const context: ProtocolContext = {
   network: 'arc-testnet',
@@ -87,26 +89,30 @@ describe.skipIf(!RUN_DB)('Day 6 Explore holder-count filters', () => {
     );
 
     const launches = [
-      [activeHigh, activeHighCurve, '1786269400', '490', 1, 'Active High'],
-      [graduatedMid, graduatedMidCurve, '1786269300', '480', 2, 'Graduated Mid'],
-      [activeLow, activeLowCurve, '1786269200', '470', 3, 'Active Low'],
-      [graduatedHigh, graduatedHighCurve, '1786269100', '460', 4, 'Graduated High'],
+      [activeHigh, activeHighCurve, '1786269400', '490', 1, 'Active High', primaryCreator, addr('51')],
+      [graduatedMid, graduatedMidCurve, '1786269300', '480', 2, 'Graduated Mid', primaryCreator, addr('52')],
+      // This launch deliberately pays creator fees to primaryCreator while its
+      // canonical onchain creator/deployer is different. A creator filter must
+      // not accidentally match creator_fee_recipient.
+      [activeLow, activeLowCurve, '1786269200', '470', 3, 'Active Low', otherCreator, primaryCreator],
+      [graduatedHigh, graduatedHighCurve, '1786269100', '460', 4, 'Graduated High', otherCreator, addr('54')],
     ] as const;
-    for (const [token, curve, launchTimestamp, block, logIndex, name] of launches) {
+    for (const [token, curve, launchTimestamp, block, logIndex, name, deployer, feeRecipient] of launches) {
       await pool.query(
         `INSERT INTO launches (
           chain_id, token_address, curve_address, stack_version, factory_address,
-          deployer_address, launch_timestamp, initial_supply, phantom_quote,
+          deployer_address, creator_fee_recipient, launch_timestamp, initial_supply, phantom_quote,
           graduation_threshold, reserved_tokens_baseline, launch_block_number,
           launch_transaction_hash, launch_log_index, name, symbol
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,'1000','100','900','200',$8,$9,$10,$11,$12)`,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'1000','100','900','200',$9,$10,$11,$12,$13)`,
         [
           context.chainId,
           token.toLowerCase(),
           curve.toLowerCase(),
           context.stackVersion,
           factory.toLowerCase(),
-          addr('41').toLowerCase(),
+          deployer.toLowerCase(),
+          feeRecipient.toLowerCase(),
           launchTimestamp,
           block,
           `0x${String(logIndex).padStart(64, '0')}`,
@@ -272,6 +278,44 @@ describe.skipIf(!RUN_DB)('Day 6 Explore holder-count filters', () => {
       const response = await app.inject({ method: 'GET', url });
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({ error: { code: 'INVALID_PROGRESS_FILTER' } });
+    }
+
+    await app.close();
+  });
+
+  it('filters every Explore view by canonical creator wallet, never creator fee recipient', async () => {
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const apiModule = await import('../../apps/api/src/server.ts');
+    const app = apiModule.createBreadApi({
+      db: dbModule.createBreadDb(pool),
+      context,
+      observedHeadBlock: async () => 500n,
+      now: () => new Date('2030-01-01T00:00:00.000Z'),
+    });
+
+    const expectedByView = {
+      new: [activeHigh, graduatedMid],
+      trending: [activeHigh],
+      graduating: [activeHigh],
+      graduated: [graduatedMid],
+    } as const;
+
+    for (const [view, expected] of Object.entries(expectedByView)) {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/feed?view=${view}&creator=${primaryCreator.toLowerCase()}&limit=10`,
+      });
+      expect(response.statusCode).toBe(200);
+      expect(tokenAddresses(response.json())).toEqual(expected);
+    }
+
+    for (const creator of ['not-an-address', '0x1234']) {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/feed?view=new&creator=${creator}`,
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'INVALID_CREATOR_FILTER' } });
     }
 
     await app.close();
