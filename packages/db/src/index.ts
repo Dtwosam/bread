@@ -45,6 +45,11 @@ export {
   type ExploreAgeFilter,
 } from "./repositories/explore-age.js";
 export {
+  ExploreAgeReadRepository,
+  type AgeFilteredGraduatedCursorKey,
+  type AgeFilteredNewCursorKey,
+} from "./repositories/explore-age-read.js";
+export {
   AlmostBakedRepository,
   type AlmostBakedLaunchCursorKey,
 } from "./repositories/almost-baked.js";
