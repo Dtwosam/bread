@@ -65,6 +65,16 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(stats).toContain("['Holders', token.holderCount ?? '—']");
   });
 
+  it('presents active baked progress from the canonical real quote reserve and snapshotted target', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('realQuoteReserve');
+    expect(graduation).toContain('graduationThreshold');
+    expect(graduation).toContain('% baked');
+    expect(graduation).toContain('Accumulated');
+    expect(graduation).toContain('Remaining');
+  });
+
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
     const tabs = read(paths.tabs);
 
