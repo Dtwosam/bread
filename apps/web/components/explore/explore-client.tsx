@@ -9,6 +9,7 @@ import { FreshnessBanner } from '../freshness-banner';
 import { TokenCard } from '../token-card';
 import { createBreadApiClient, type FeedAge } from '../../lib/api/client';
 import { breadQueryKeys } from '../../lib/api/queries';
+import styles from './explore-filters.module.css';
 import {
   feedErrorPresentation,
   resolveExploreView,
@@ -84,7 +85,7 @@ export function ExploreClient() {
         </div>
       </div>
 
-      <div className="bread-explore-toolbar">
+      <div className={styles.toolbar}>
         <nav className="bread-explore-tabs" aria-label="Explore feed">
           {VIEWS.map((item) => (
             <a
@@ -100,7 +101,7 @@ export function ExploreClient() {
         <button
           aria-controls="bread-explore-filters"
           aria-expanded={filtersOpen}
-          className="bread-explore-filter-trigger"
+          className={styles.trigger}
           onClick={() => setFiltersOpen((open) => !open)}
           type="button"
         >
@@ -109,10 +110,10 @@ export function ExploreClient() {
       </div>
 
       {age !== undefined ? (
-        <div className="bread-explore-active-filters" aria-label="Active filters">
+        <div className={styles.activeFilters} aria-label="Active filters">
           <button
             aria-label={`Age: ${ageLabel(age)}`}
-            className="bread-explore-filter-chip"
+            className={styles.chip}
             onClick={() => navigateWithAge(undefined)}
             type="button"
           >
@@ -121,7 +122,7 @@ export function ExploreClient() {
           </button>
           <button
             aria-label="Reset filters"
-            className="bread-explore-reset"
+            className={styles.reset}
             onClick={() => navigateWithAge(undefined)}
             type="button"
           >
@@ -130,26 +131,26 @@ export function ExploreClient() {
         </div>
       ) : null}
 
-      <div className="bread-explore-layout">
+      <div className={styles.layout}>
         <aside
-          className={`bread-explore-filters${filtersOpen ? ' bread-explore-filters--open' : ''}`}
+          className={`${styles.panel}${filtersOpen ? ` ${styles.panelOpen}` : ''}`}
           id="bread-explore-filters"
         >
-          <div className="bread-explore-filters__heading">
+          <div className={styles.panelHeading}>
             <div>
               <h2>Filters</h2>
               <p>Refine the indexed feed.</p>
             </div>
             <button
               aria-label="Close filters"
-              className="bread-explore-filter-close"
+              className={styles.close}
               onClick={() => setFiltersOpen(false)}
               type="button"
             >
               ×
             </button>
           </div>
-          <label className="bread-explore-filter-field" htmlFor="bread-explore-age">
+          <label className={styles.field} htmlFor="bread-explore-age">
             <span>Age</span>
             <select
               id="bread-explore-age"
@@ -170,7 +171,7 @@ export function ExploreClient() {
           </label>
         </aside>
 
-        <section className="bread-explore-feed" aria-label="Explore results">
+        <section className={styles.feed} aria-label="Explore results">
           {latestMeta ? <FreshnessBanner meta={latestMeta} /> : null}
 
           {query.isPending ? (
