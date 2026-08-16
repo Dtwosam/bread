@@ -41,6 +41,7 @@ export function TradePanel({
   connectionStatus,
   busy,
   reviewError,
+  routeUnavailableReason,
   onActionChange,
   onAmountChange,
   onSlippageChange,
@@ -57,6 +58,7 @@ export function TradePanel({
   connectionStatus: TradeConnectionStatus;
   busy: boolean;
   reviewError: string | null;
+  routeUnavailableReason: string | null;
   onActionChange: (action: TradeAction) => void;
   onAmountChange: (amount: string) => void;
   onSlippageChange: (slippageBps: number) => void;
@@ -69,21 +71,26 @@ export function TradePanel({
   const outputDecimals = action === 'BUY' ? BREAD_LAUNCH_TOKEN_DECIMALS : 6;
   const quoteDecimals = 6;
   const walletReady = connectionStatus === 'READY';
+  const routeUnavailable = routeUnavailableReason !== null;
   const v3Review = review !== null && 'route' in review && review.route === 'V3_POOL';
-  const primaryLabel = connectionStatus === 'DISCONNECTED'
-    ? 'Connect wallet'
-    : connectionStatus === 'WRONG_NETWORK'
-      ? 'Switch to Arc'
-      : review
-        ? action === 'BUY' ? 'Buy' : 'Sell'
-        : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
-  const primaryAriaLabel = connectionStatus === 'DISCONNECTED'
-    ? 'Connect wallet'
-    : connectionStatus === 'WRONG_NETWORK'
-      ? 'Switch wallet to Arc Testnet'
-      : review
-        ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
-        : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
+  const primaryLabel = routeUnavailable
+    ? 'Trading unavailable'
+    : connectionStatus === 'DISCONNECTED'
+      ? 'Connect wallet'
+      : connectionStatus === 'WRONG_NETWORK'
+        ? 'Switch to Arc'
+        : review
+          ? action === 'BUY' ? 'Buy' : 'Sell'
+          : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
+  const primaryAriaLabel = routeUnavailable
+    ? 'Trading unavailable while graduation completes'
+    : connectionStatus === 'DISCONNECTED'
+      ? 'Connect wallet'
+      : connectionStatus === 'WRONG_NETWORK'
+        ? 'Switch wallet to Arc Testnet'
+        : review
+          ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
+          : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
 
   return (
     <div className="bread-trade-panel">
@@ -95,7 +102,7 @@ export function TradePanel({
             role="tab"
             aria-selected={action === side}
             key={side}
-            disabled={busy}
+            disabled={busy || routeUnavailable}
             onClick={() => onActionChange(side)}
           >
             {side === 'BUY' ? 'Buy' : 'Sell'}
@@ -111,7 +118,7 @@ export function TradePanel({
           inputMode="decimal"
           autoComplete="off"
           value={amount}
-          disabled={busy}
+          disabled={busy || routeUnavailable}
           onChange={(event) => onAmountChange(event.target.value)}
           placeholder="0.00"
         />
@@ -123,7 +130,7 @@ export function TradePanel({
             className="bread-trade-preset"
             type="button"
             key={preset}
-            disabled={busy || !walletReady}
+            disabled={busy || routeUnavailable || !walletReady}
             onClick={() => onPreset(preset)}
           >
             {preset}
@@ -137,7 +144,7 @@ export function TradePanel({
           className="bread-trade-input"
           aria-label="Slippage tolerance"
           value={slippageBps}
-          disabled={busy}
+          disabled={busy || routeUnavailable}
           onChange={(event) => onSlippageChange(Number(event.target.value))}
         >
           <option value={25}>0.25%</option>
@@ -171,11 +178,12 @@ export function TradePanel({
         </div>
       ) : null}
 
+      {routeUnavailableReason ? <p className="bread-token-note">{routeUnavailableReason}</p> : null}
       {reviewError ? <p className="bread-inline-error">{reviewError}</p> : null}
 
       <Button
         variant={action === 'BUY' ? 'buy' : 'sell'}
-        disabled={busy || (walletReady && amount.trim() === '')}
+        disabled={busy || routeUnavailable || (walletReady && amount.trim() === '')}
         ariaLabel={primaryAriaLabel}
         onClick={walletReady ? (review ? onSubmit : onReview) : onConnectionAction}
       >
