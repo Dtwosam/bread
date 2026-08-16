@@ -269,7 +269,7 @@ export default function CreatePage() {
     if (
       step !== 'ECONOMICS' ||
       economics ||
-      connectionStatus !== 'CONNECTED' ||
+      connectionStatus !== 'READY' ||
       !runtime?.protocolContext ||
       !runtime.wallet
     ) return;
