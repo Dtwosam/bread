@@ -121,6 +121,7 @@ export type IndexedSearchResult = Readonly<{
   matchKind: string;
   ageSeconds: string | null;
   holderCount: string | null;
+  marketCap: string | null;
   lifecycleState: IndexedSearchLifecycleState | null;
 }>;
 
