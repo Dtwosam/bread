@@ -27,6 +27,16 @@ function SearchGlyph() {
   );
 }
 
+function formatSearchAge(ageSeconds: string | null): string | null {
+  if (ageSeconds === null || !/^\d+$/.test(ageSeconds)) return null;
+  const seconds = Number(ageSeconds);
+  if (!Number.isSafeInteger(seconds) || seconds < 0) return null;
+  if (seconds < 60) return '<1m';
+  if (seconds < 3_600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86_400) return `${Math.floor(seconds / 3_600)}h`;
+  return `${Math.floor(seconds / 86_400)}d`;
+}
+
 export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -202,25 +212,29 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
               {query.isError ? <p className="bread-inline-error">Search is unavailable right now.</p> : null}
               {query.data?.data.length === 0 ? <p className="bread-search-hint">No indexed tokens found.</p> : null}
 
-              {query.data?.data.map((result) => (
-                <a
-                  className="bread-search-result"
-                  href={`/token/${encodeURIComponent(result.tokenAddress)}`}
-                  key={result.tokenAddress}
-                >
-                  <span>
-                    <strong>{result.name?.trim() || 'Unnamed token'}</strong>
-                    <span>${result.symbol?.trim() || '—'}</span>
-                    <CreatorAttribution creatorAddress={result.deployerAddress} />
-                  </span>
-                  <span>
-                    {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
-                    <code className="bread-technical" title={result.tokenAddress}>
-                      {shortAddress(result.tokenAddress)}
-                    </code>
-                  </span>
-                </a>
-              ))}
+              {query.data?.data.map((result) => {
+                const age = formatSearchAge(result.ageSeconds);
+                return (
+                  <a
+                    className="bread-search-result"
+                    href={`/token/${encodeURIComponent(result.tokenAddress)}`}
+                    key={result.tokenAddress}
+                  >
+                    <span>
+                      <strong>{result.name?.trim() || 'Unnamed token'}</strong>
+                      <span>${result.symbol?.trim() || '—'}</span>
+                      <CreatorAttribution creatorAddress={result.deployerAddress} />
+                      {age === null ? null : <span>Age {age}</span>}
+                    </span>
+                    <span>
+                      {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
+                      <code className="bread-technical" title={result.tokenAddress}>
+                        {shortAddress(result.tokenAddress)}
+                      </code>
+                    </span>
+                  </a>
+                );
+              })}
             </div>
           </section>
         </div>
