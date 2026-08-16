@@ -37,6 +37,31 @@ function formatSearchAge(ageSeconds: string | null): string | null {
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
+function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>) {
+  const age = formatSearchAge(result.ageSeconds);
+  return (
+    <a
+      className="bread-search-result"
+      href={`/token/${encodeURIComponent(result.tokenAddress)}`}
+      key={result.tokenAddress}
+    >
+      <span>
+        <strong>{result.name?.trim() || 'Unnamed token'}</strong>
+        <span>${result.symbol?.trim() || '—'}</span>
+        <CreatorAttribution creatorAddress={result.deployerAddress} />
+        {age === null ? null : <span>Age {age}</span>}
+        {result.holderCount === null ? null : <span>{result.holderCount} holders</span>}
+      </span>
+      <span>
+        {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
+        <code className="bread-technical" title={result.tokenAddress}>
+          {shortAddress(result.tokenAddress)}
+        </code>
+      </span>
+    </a>
+  );
+}
+
 export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -57,6 +82,24 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     },
     enabled: open && intent.kind === 'search',
   });
+
+  const searchGroups = useMemo(() => {
+    const results = query.data?.data ?? [];
+    const addressSearch = intent.kind === 'search' && /^0x[0-9a-f]{40}$/i.test(intent.query);
+    const exact = results.filter((result) => result.matchKind === 'CONTRACT');
+    const creators = results.filter(
+      (result) => result.matchKind === 'CREATOR' || (addressSearch && result.matchKind !== 'CONTRACT'),
+    );
+    const tokens = addressSearch
+      ? []
+      : results.filter((result) => result.matchKind !== 'CONTRACT' && result.matchKind !== 'CREATOR');
+
+    return [
+      { label: 'Exact match', results: exact },
+      { label: 'Tokens', results: tokens },
+      { label: 'Creators / wallets', results: creators },
+    ].filter((group) => group.results.length > 0);
+  }, [intent, query.data?.data]);
 
   function openSearch(event: MouseEvent<HTMLButtonElement>) {
     returnFocusRef.current = event.currentTarget;
@@ -212,30 +255,14 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
               {query.isError ? <p className="bread-inline-error">Search is unavailable right now.</p> : null}
               {query.data?.data.length === 0 ? <p className="bread-search-hint">No indexed tokens found.</p> : null}
 
-              {query.data?.data.map((result) => {
-                const age = formatSearchAge(result.ageSeconds);
-                return (
-                  <a
-                    className="bread-search-result"
-                    href={`/token/${encodeURIComponent(result.tokenAddress)}`}
-                    key={result.tokenAddress}
-                  >
-                    <span>
-                      <strong>{result.name?.trim() || 'Unnamed token'}</strong>
-                      <span>${result.symbol?.trim() || '—'}</span>
-                      <CreatorAttribution creatorAddress={result.deployerAddress} />
-                      {age === null ? null : <span>Age {age}</span>}
-                      {result.holderCount === null ? null : <span>{result.holderCount} holders</span>}
-                    </span>
-                    <span>
-                      {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
-                      <code className="bread-technical" title={result.tokenAddress}>
-                        {shortAddress(result.tokenAddress)}
-                      </code>
-                    </span>
-                  </a>
-                );
-              })}
+              {searchGroups.map((group) => (
+                <section key={group.label}>
+                  <h3 className="bread-search-hint">{group.label}</h3>
+                  {group.results.map((result) => (
+                    <SearchResultLink result={result} key={result.tokenAddress} />
+                  ))}
+                </section>
+              ))}
             </div>
           </section>
         </div>
