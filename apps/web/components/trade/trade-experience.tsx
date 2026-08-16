@@ -30,11 +30,23 @@ function message(error: unknown): string {
   return error instanceof Error ? error.message : 'Trade preparation failed.';
 }
 
+function processingRouteUnavailableReason(token: IndexedTokenDetail): string | null {
+  if (token.curveState?.positionLocked === true) return null;
+  if (token.curveState?.graduationFailureReasonHash) return null;
+  const graduationPhase = token.curveState?.graduationPhase;
+  const graduationInProgress = token.curveState?.readyToGraduate === true
+    || (graduationPhase !== null && graduationPhase !== undefined && graduationPhase !== 'NOT_GRADUATED');
+  return graduationInProgress
+    ? 'Trading is unavailable while graduation completes. The bonding curve is complete and liquidity creation is in progress.'
+    : null;
+}
+
 export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail }>) {
   const runtime = useTradeRuntime();
   const queryClient = useQueryClient();
   const tokenAddress = token.tokenAddress as `0x${string}`;
   const curveAddress = token.curveAddress as `0x${string}`;
+  const routeUnavailableReason = processingRouteUnavailableReason(token);
   const adoptedRecoveryHash = useRef<`0x${string}` | null>(null);
   const [action, setAction] = useState<TradeAction>('BUY');
   const [amount, setAmount] = useState('');
@@ -98,6 +110,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       connectionStatus,
       busy,
       reviewError,
+      routeUnavailableReason,
       onActionChange: changeAction,
       onAmountChange: changeAmount,
       onSlippageChange: changeSlippage,
@@ -108,7 +121,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }),
     // Handler identities are intentionally recreated from the latest state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [action, amount, slippageBps, review, reviewRoute, transactionState, connectionStatus, runtime, busy, reviewError],
+    [action, amount, slippageBps, review, reviewRoute, transactionState, connectionStatus, runtime, busy, reviewError, routeUnavailableReason],
   );
 
   function resetReview(nextAction: TradeAction = action) {
@@ -119,27 +132,27 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   function changeAction(nextAction: TradeAction) {
-    if (busy || nextAction === action) return;
+    if (busy || routeUnavailableReason !== null || nextAction === action) return;
     setAction(nextAction);
     setAmount('');
     resetReview(nextAction);
   }
 
   function changeAmount(nextAmount: string) {
-    if (busy) return;
+    if (busy || routeUnavailableReason !== null) return;
     if (!/^\d*(?:\.\d*)?$/.test(nextAmount)) return;
     setAmount(nextAmount);
     resetReview();
   }
 
   function changeSlippage(nextSlippageBps: number) {
-    if (busy) return;
+    if (busy || routeUnavailableReason !== null) return;
     setSlippageBps(nextSlippageBps);
     resetReview();
   }
 
   async function handleConnectionAction() {
-    if (!runtime || busy) return;
+    if (!runtime || busy || routeUnavailableReason !== null) return;
     setReviewError(null);
     setReviewBusy(true);
     try {
@@ -156,7 +169,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function applyPreset(preset: Preset) {
-    if (!runtime || !walletReady || busy) return;
+    if (!runtime || !walletReady || busy || routeUnavailableReason !== null) return;
     setReviewError(null);
 
     if (action === 'BUY' && preset !== 'MAX') {
@@ -190,7 +203,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function reviewTrade() {
-    if (!runtime || !runtime.wallet || !walletReady || busy) return;
+    if (!runtime || !runtime.wallet || !walletReady || busy || routeUnavailableReason !== null) return;
     setReviewBusy(true);
     setReviewError(null);
     try {
@@ -225,7 +238,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function submitTrade() {
-    if (!runtime || !runtime.wallet || !walletReady || !review || busy) return;
+    if (!runtime || !runtime.wallet || !walletReady || !review || busy || routeUnavailableReason !== null) return;
     setReviewError(null);
 
     const protocolContext = runtime.protocolContext;
@@ -272,10 +285,12 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   function openSheet(nextAction: TradeAction = action) {
-    if (busy) return;
+    if (busy || routeUnavailableReason !== null) return;
     if (nextAction !== action) changeAction(nextAction);
     setSheetOpen(true);
   }
+
+  const tradeSurfaceDisabled = busy || routeUnavailableReason !== null;
 
   return (
     <>
@@ -286,7 +301,12 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       </aside>
 
       <div className="bread-token-tablet-trade-trigger">
-        <Button variant="secondary" onClick={() => openSheet()} ariaLabel="Open trade panel">
+        <Button
+          variant="secondary"
+          disabled={tradeSurfaceDisabled}
+          onClick={() => openSheet()}
+          ariaLabel={routeUnavailableReason === null ? 'Open trade panel' : 'Trading unavailable while graduation completes'}
+        >
           Trade
         </Button>
       </div>
@@ -312,8 +332,8 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       ) : null}
 
       <div className="bread-token-mobile-actions" aria-label="Token trade actions">
-        <Button variant="buy" disabled={busy} onClick={() => openSheet('BUY')} ariaLabel="Open buy panel">Buy</Button>
-        <Button variant="sell" disabled={busy} onClick={() => openSheet('SELL')} ariaLabel="Open sell panel">Sell</Button>
+        <Button variant="buy" disabled={tradeSurfaceDisabled} onClick={() => openSheet('BUY')} ariaLabel="Open buy panel">Buy</Button>
+        <Button variant="sell" disabled={tradeSurfaceDisabled} onClick={() => openSheet('SELL')} ariaLabel="Open sell panel">Sell</Button>
       </div>
     </>
   );
