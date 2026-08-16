@@ -1,5 +1,118 @@
-import { ACTIVE_TOKEN, GRADUATED_TOKEN, PENDING_TOKEN } from '../fixtures/constants';
+import type { Page } from '@playwright/test';
+
+import {
+  ACTIVE_CURVE,
+  ACTIVE_TOKEN,
+  ARC_TESTNET_CHAIN_ID,
+  BLOCK_HASH,
+  E2E_COORDINATOR,
+  E2E_DEPLOYER,
+  E2E_FACTORY,
+  E2E_FEE_ESCROW,
+  E2E_GRADUATION_ADAPTER,
+  E2E_WALLET,
+  FIXTURE_TIMESTAMP,
+  GRADUATED_TOKEN,
+  LAUNCH_TX_HASH,
+  PENDING_TOKEN,
+} from '../fixtures/constants';
 import { expect, test } from '../fixtures/browser';
+
+async function installProcessingTokenDetail(page: Page): Promise<void> {
+  await page.route(`**/v1/tokens/${ACTIVE_TOKEN}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          tokenAddress: ACTIVE_TOKEN,
+          curveAddress: ACTIVE_CURVE,
+          stackVersion: 'e2e-test-only',
+          factoryAddress: E2E_FACTORY,
+          deployerAddress: E2E_DEPLOYER,
+          creatorFeeRecipient: E2E_WALLET,
+          creatorTaxBps: '125',
+          economicsDigest: `0x${'66'.repeat(32)}`,
+          configVersion: '1',
+          launchTimestamp: '1723302000',
+          name: 'Bread Twin',
+          symbol: 'TWIN',
+          metadata: { description: 'Processing-state deterministic Playwright metadata' },
+          quoteAsset: '0x3600000000000000000000000000000000000000',
+          initialSupply: '1000000000000000000000000000',
+          phantomQuote: '100000000',
+          graduationThreshold: '1000000000',
+          protocolFeeRecipient: E2E_FEE_ESCROW,
+          tradeFeeBps: '100',
+          protocolFeeShareBps: '5000',
+          maxCreatorTaxBps: '500',
+          graduationCoordinator: E2E_COORDINATOR,
+          graduationAdapter: E2E_GRADUATION_ADAPTER,
+          graduationAdapterFamily: null,
+          graduationConfigHash: `0x${'77'.repeat(32)}`,
+          reservedTokensBaseline: '100000000000000000000000000',
+          launchBlockNumber: '900',
+          launchTransactionHash: LAUNCH_TX_HASH,
+          launchLogIndex: 0,
+          holderCount: '42',
+          graduatedVenueKind: null,
+          metrics: {
+            lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
+            quoteVolume: { m5: '12000000', h1: '75000000', h24: '450000000' },
+            tradeCount: { h1: '24', h24: '140' },
+            uniqueTraders: { h1: '17', h24: '86' },
+          },
+          progress: { progressBps: '10000', state: 'PROCESSING' },
+          curveState: {
+            mode: 'ACTIVE',
+            trackedQuote: '1000000000',
+            trackedTokens: '100000000000000000000000000',
+            quoteFeeBalance: '2500000',
+            creatorTaxBalance: '1250000',
+            realQuoteReserve: '900000000',
+            virtualQuoteReserve: '100000000',
+            remainingSellableTokens: '0',
+            trackedSoldInventory: '900000000000000000000000000',
+            readyToGraduate: true,
+            graduationPhase: 'SWEPT',
+            poolId: null,
+            graduationAdapter: E2E_GRADUATION_ADAPTER,
+            sweptUsdcAmount: '1000000000',
+            sweptTokenAmount: '100000000000000000000000000',
+            graduationFailureReasonHash: null,
+            positionManager: null,
+            positionId: null,
+            usdcUsed: null,
+            tokenUsed: null,
+            tokenLocked: null,
+            usdcDust: null,
+            positionLocked: null,
+            tokenSupplyLocked: null,
+            graduationCompletedBlock: null,
+            graduationCompletedLogIndex: null,
+            latestBlockNumber: '1000',
+            latestTransactionHash: LAUNCH_TX_HASH,
+            latestLogIndex: 3,
+          },
+        },
+        meta: {
+          chainId: ARC_TESTNET_CHAIN_ID,
+          schemaVersion: 'day6-v1',
+          indexedThroughBlock: '1000',
+          indexedThroughBlockHash: BLOCK_HASH,
+          indexedThroughBlockTimestamp: FIXTURE_TIMESTAMP,
+          servedAt: '2026-08-10T15:00:01.000Z',
+          source: 'bread-indexer',
+          status: 'FRESH',
+          observedHeadBlock: '1000',
+          lagBlocks: '0',
+          cache: 'HIT',
+          stackVersion: 'e2e-test-only',
+        },
+      }),
+    });
+  });
+}
 
 test('degraded and failed indexed reads stay truthful without raw RPC fallback', async ({
   page,
@@ -36,4 +149,21 @@ test('active pending and graduated tokens show distinct graduation truth', async
   await expect(page.getByText(/Graduated · Indexed state GRADUATED/)).toBeVisible();
   await expect(page.getByText('Indexed locked')).toBeVisible();
   await expect(page.getByRole('button', { name: /retry/i })).toHaveCount(0);
+});
+
+test('processing token is Graduating, preserves completed trades, and disables the invalid curve route', async ({ page }) => {
+  await installProcessingTokenDetail(page);
+  await page.goto(`/token/${ACTIVE_TOKEN}`);
+
+  await expect(page.getByText(/Graduating · Indexed state PROCESSING/)).toBeVisible();
+  await expect(page.getByText(/bonding curve is complete/i)).toBeVisible();
+  await expect(page.getByText(/liquidity creation is in progress/i)).toBeVisible();
+  await expect(page.getByText(/completed trades remain confirmed/i)).toBeVisible();
+  await expect(page.getByText(/trade failed/i)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /continue graduation/i })).toBeVisible();
+
+  const blockedTrade = page.locator('button[aria-label="Trading unavailable while graduation completes"]');
+  await expect(blockedTrade).toBeDisabled();
+  await expect(page.locator('.bread-token-mobile-actions button').nth(0)).toBeDisabled();
+  await expect(page.locator('.bread-token-mobile-actions button').nth(1)).toBeDisabled();
 });
