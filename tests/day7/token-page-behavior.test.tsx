@@ -59,6 +59,12 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(identity).not.toContain('token.creatorFeeRecipient');
   });
 
+  it('renders canonical primary-detail holder count in Token market stats', () => {
+    const stats = read(paths.stats);
+
+    expect(stats).toContain("['Holders', token.holderCount ?? '—']");
+  });
+
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
     const tabs = read(paths.tabs);
 
