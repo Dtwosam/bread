@@ -1,4 +1,8 @@
-import type { ReadRepository, TrendingRepository } from '../../../../packages/db/src/index.js';
+import type {
+  AlmostBakedRepository,
+  ReadRepository,
+  TrendingRepository,
+} from '../../../../packages/db/src/index.js';
 import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/index.js';
 import type { FreshnessMeta } from '../../../../packages/types/src/index.js';
 
@@ -15,5 +19,6 @@ export type BreadReadRouteDeps = Readonly<{
 }>;
 
 export type BreadFeedRouteDeps = BreadReadRouteDeps & Readonly<{
+  almostBakedRepository: AlmostBakedRepository;
   trendingRepository: TrendingRepository;
 }>;
