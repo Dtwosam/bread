@@ -1,6 +1,6 @@
 schema_version: 1.89
 project: Bread
-updated_at: 2026-08-16T20:33:20Z
+updated_at: 2026-08-16T20:39:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -42,26 +42,41 @@ day9_complete: false
 day9_rc_tag_created: false
 day10_started: false
 
-repository:
-  remote: https://github.com/Dtwosam/bread
-  default_branch: main
+integration_baseline:
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
   day9_branch: day9/synthra-arc-testnet-v3-candidate
   day9_pr: 93
-  day9_pr_state: OPEN_DRAFT_UNMERGED
   day9_pr_head: 18952b20a56021350000c0f5d89552380c883be3
   verified_day9_code_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
   ui_branch: agent/ui-ux-v2-2-implementation
   ui_pr: 94
-  ui_pr_state: OPEN_DRAFT_UNMERGED
   ui_pr_base: day9/synthra-arc-testnet-v3-candidate
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
   stale_handoff_head: db8111cf0d873a46394e6afe467d5e53ae61950b
   recovered_accepted_code_bearing_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
   recovered_delta_from_stale_handoff: 36_COMMITS_AHEAD_0_BEHIND
   recovered_handoff_commit: ee1321eef7f8a6add468a6811653f8d4b96a649b
+  current_handoff_sync_head_before_validation_fix: 5940f2d600ce0e18257ce02cfa7416c4f81c1ac0
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
+
+working_branches:
+  - day9/synthra-arc-testnet-v3-candidate
+  - docs/ui-v2-2-source-pack-hygiene
+  - agent/ui-ux-v2-2-implementation
+
+repository:
+  remote: https://github.com/Dtwosam/bread
+  default_branch: main
+  day9_pr: 93
+  day9_pr_state: OPEN_DRAFT_UNMERGED
+  ui_pr: 94
+  ui_pr_state: OPEN_DRAFT_UNMERGED
+  ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  recovered_code_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
+  day9_complete: false
+  rc_tag_created: false
+  day10_started: false
 
 accepted_state:
   lane1_foundations: COMPLETE
@@ -85,8 +100,8 @@ recovered_screenshot_trace:
   current_recovered_code_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
   conclusion: "Previous chat continued well past the screenshot. GitHub history, not the screenshot, is the implementation authority."
 
-verification_at_recovered_code_head:
-  head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
+verification:
+  recovered_code_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
   root_ci: PASS_RUN_31968847734
   token_page: PASS_RUN_31968847726
   trade_lifecycle: PASS_RUN_31968847697
@@ -101,8 +116,9 @@ verification_at_recovered_code_head:
   day9_recovery_drills: PASS_RUN_31968847700
   release_browser_matrix: PASS_RUN_31968847608
   day9_final_rc_gate_workflow: PASS_RUN_31968847834
-  verdict: "EXACT_HEAD_AUTOMATION_GREEN_BUT_DAY9_INCOMPLETE"
-  note: "A green final-RC workflow does not waive physical-device, remaining v2.2 or continuity gates."
+  recovered_code_verdict: EXACT_HEAD_AUTOMATION_GREEN_BUT_DAY9_INCOMPLETE
+  handoff_sync_first_attempt: FAIL_RUN_31970914123_MISSING_REQUIRED_VALIDATOR_KEYS
+  handoff_sync_first_attempt_disposition: "PROCESS/HANDOFF_FORMAT_FAILURE_ONLY — production code unchanged; fixed by restoring integration_baseline, working_branches and verification sections required by scripts/validation/validate-build-state.mjs."
 
 fresh_source_gap:
   id: BUY_MAX_SHARED_USDC_GAS_RESERVE
