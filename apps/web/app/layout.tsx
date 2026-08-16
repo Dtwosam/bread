@@ -14,6 +14,7 @@ import './shell-v2.css';
 import './portfolio-creator.css';
 import './secondary.css';
 import './explore-search-v2.css';
+import './token-v2-closure.css';
 import './wallet.css';
 
 const inter = Inter({
