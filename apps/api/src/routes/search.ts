@@ -13,6 +13,16 @@ const ADDRESS_LIKE = /^0x/i;
 
 export type SearchRateLimitResult = 'ALLOWED' | 'LIMITED' | 'UNAVAILABLE';
 
+function ageSecondsAtIndexedHead(
+  launchTimestamp: string | null,
+  indexedThroughBlockTimestamp: string,
+): string | null {
+  if (launchTimestamp === null) return null;
+  const launch = BigInt(launchTimestamp);
+  const indexedHead = BigInt(indexedThroughBlockTimestamp);
+  return indexedHead > launch ? (indexedHead - launch).toString(10) : '0';
+}
+
 export function registerSearchRoute(app: FastifyInstance, deps: Readonly<{
   repository: SearchRepository;
   context: ProtocolContext;
@@ -95,6 +105,7 @@ export function registerSearchRoute(app: FastifyInstance, deps: Readonly<{
         name: row.name,
         symbol: row.symbol,
         matchKind: row.matchKind,
+        ageSeconds: ageSecondsAtIndexedHead(row.launchTimestamp, meta.indexedThroughBlockTimestamp),
       })),
       meta,
     };
