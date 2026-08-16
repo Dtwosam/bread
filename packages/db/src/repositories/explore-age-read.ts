@@ -4,6 +4,7 @@ import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
+import type { ExploreVolumeBounds } from './explore-volume.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AgeFilteredNewCursorKey = Readonly<{
@@ -118,6 +119,40 @@ function creatorClause(creatorAddress: string | undefined) {
   return creatorAddress === undefined ? sql`` : sql`AND l.deployer_address = ${creatorAddress}`;
 }
 
+function volumeClauses(
+  bounds: ExploreVolumeBounds | undefined,
+  indexedHeadTimestamp: string | undefined,
+) {
+  if (!bounds) {
+    return { joinClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  }
+  if (indexedHeadTimestamp === undefined) {
+    throw new Error('Explore 24h volume filter requires committed indexed-head time');
+  }
+  const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
+  const cutoffTimestamp = headTimestamp > 86_400n ? headTimestamp - 86_400n : 0n;
+  return {
+    joinClause: sql`LEFT JOIN LATERAL (
+      SELECT COALESCE(SUM(volume_trade.quote_amount), 0) AS quote_volume_24h
+      FROM trades volume_trade
+      WHERE volume_trade.chain_id = l.chain_id
+        AND volume_trade.token_address = l.token_address
+        AND volume_trade.stack_version = l.stack_version
+        AND volume_trade.block_timestamp IS NOT NULL
+        AND volume_trade.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
+        AND volume_trade.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
+    ) volume24 ON TRUE`,
+    minClause:
+      bounds.minQuote === undefined
+        ? sql``
+        : sql`AND COALESCE(volume24.quote_volume_24h, 0) >= CAST(${bounds.minQuote} AS numeric)`,
+    maxClause:
+      bounds.maxQuote === undefined
+        ? sql``
+        : sql`AND COALESCE(volume24.quote_volume_24h, 0) <= CAST(${bounds.maxQuote} AS numeric)`,
+  } as const;
+}
+
 function normalizeLaunch(row: LaunchRawRow) {
   return {
     ...row,
@@ -182,6 +217,8 @@ export class ExploreAgeReadRepository {
     holders?: ExploreHolderBounds,
     progress?: ExploreProgressBounds,
     creatorAddress?: string,
+    volume?: ExploreVolumeBounds,
+    indexedHeadTimestamp?: string,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
@@ -189,6 +226,7 @@ export class ExploreAgeReadRepository {
     const holder = holderClauses(holders);
     const baked = progressClauses(progress);
     const creator = creatorClause(creatorAddress);
+    const volume24 = volumeClauses(volume, indexedHeadTimestamp);
     const cursorClause = cursor
       ? sql`AND (
           l.launch_block_number < CAST(${cursor.launchBlockNumber} AS numeric)
@@ -213,6 +251,7 @@ export class ExploreAgeReadRepository {
       LEFT JOIN launch_state progress_state
         ON progress_state.chain_id = l.chain_id
        AND progress_state.token_address = l.token_address
+      ${volume24.joinClause}
       WHERE l.chain_id = ${chainId}
         AND l.stack_version = ${stackVersion}
         AND l.factory_address = ${canonicalFactory}
@@ -228,6 +267,8 @@ export class ExploreAgeReadRepository {
         ${baked.maxClause}
         ${baked.scopeClause}
         ${creator}
+        ${volume24.minClause}
+        ${volume24.maxClause}
         ${cursorClause}
       ORDER BY
         l.launch_block_number DESC,
@@ -249,6 +290,8 @@ export class ExploreAgeReadRepository {
     holders?: ExploreHolderBounds,
     progress?: ExploreProgressBounds,
     creatorAddress?: string,
+    volume?: ExploreVolumeBounds,
+    indexedHeadTimestamp?: string,
   ) {
     if (progress) return [];
 
@@ -257,6 +300,7 @@ export class ExploreAgeReadRepository {
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
     const creator = creatorClause(creatorAddress);
+    const volume24 = volumeClauses(volume, indexedHeadTimestamp);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
@@ -280,6 +324,7 @@ export class ExploreAgeReadRepository {
       LEFT JOIN token_metrics m
         ON m.chain_id = l.chain_id
        AND m.token_address = l.token_address
+      ${volume24.joinClause}
       WHERE s.chain_id = ${chainId}
         AND s.graduation_phase = 'POOL_CREATED'
         AND s.graduation_completed_block IS NOT NULL
@@ -293,6 +338,8 @@ export class ExploreAgeReadRepository {
         ${holder.minClause}
         ${holder.maxClause}
         ${creator}
+        ${volume24.minClause}
+        ${volume24.maxClause}
         ${cursorClause}
       ORDER BY
         s.graduation_completed_block DESC,
