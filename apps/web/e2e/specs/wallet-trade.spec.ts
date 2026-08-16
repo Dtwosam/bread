@@ -34,6 +34,7 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
   const trade = page.getByRole('complementary', { name: 'Trade' });
   await trade.getByRole('button', { name: 'Connect wallet' }).click();
   await expect(trade.getByRole('button', { name: 'Review buy' })).toBeVisible();
+  await expect(trade.getByText('Balance 1000 USDC', { exact: true })).toBeVisible();
   expect((await walletSnapshot(page)).connected).toBe(true);
 
   await setWalletChainId(page, '0x1');
@@ -57,22 +58,30 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
     'Opening buy tax',
     'Price impact',
     'Slippage',
+    'Route',
   ]) {
     await expect(buyReview.getByText(label, { exact: true })).toBeVisible();
   }
-  await trade.getByRole('button', { name: 'Buy after reviewing current values' }).click();
+  await expect(buyReview.getByText('Bonding curve', { exact: true })).toBeVisible();
+  const buySubmit = trade.getByRole('button', { name: 'Buy TWIN after reviewing current values' });
+  await expect(buySubmit).toHaveText('Buy TWIN');
+  await buySubmit.click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
   const afterBuy = await walletSnapshot(page);
   expect(afterBuy.submittedTransactions).toHaveLength(1);
   expectCanonicalCurveTarget(afterBuy.submittedTransactions[0]);
 
   await trade.getByRole('tab', { name: 'Sell' }).click();
+  await expect(trade.getByText('Balance 2500000 TWIN', { exact: true })).toBeVisible();
   await setWalletTransactionHashes(page, [SELL_TX_HASH]);
   await trade.getByLabel('Trade amount').fill('1');
   await trade.getByRole('button', { name: 'Review sell' }).click();
   const sellReview = trade.locator('dl.bread-trade-review');
   await expect(sellReview.getByText('0.00% (sell unaffected)')).toBeVisible();
-  await trade.getByRole('button', { name: 'Sell after reviewing current values' }).click();
+  await expect(sellReview.getByText('Bonding curve', { exact: true })).toBeVisible();
+  const sellSubmit = trade.getByRole('button', { name: 'Sell TWIN after reviewing current values' });
+  await expect(sellSubmit).toHaveText('Sell TWIN');
+  await sellSubmit.click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
 
   const snapshot = await walletSnapshot(page);
