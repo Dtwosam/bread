@@ -7,13 +7,23 @@ export const breadQueryKeys = {
   all: ['bread'] as const,
 
   feed(input: FeedParams = {}) {
-    return [
+    const prefix = [
       'bread',
       'feed',
       input.view ?? 'new',
       input.age ?? 'any',
-      input.holdersMin ?? '',
-      input.holdersMax ?? '',
+    ] as const;
+    if (input.holdersMin !== undefined || input.holdersMax !== undefined) {
+      return [
+        ...prefix,
+        input.holdersMin ?? '',
+        input.holdersMax ?? '',
+        input.limit ?? 25,
+        normalizeCursor(input.cursor),
+      ] as const;
+    }
+    return [
+      ...prefix,
       input.limit ?? 25,
       normalizeCursor(input.cursor),
     ] as const;
