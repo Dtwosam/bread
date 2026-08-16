@@ -53,6 +53,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   const [slippageBps, setSlippageBps] = useState(50);
   const [review, setReview] = useState<TradeReview | null>(null);
   const [reviewRoute, setReviewRoute] = useState<CanonicalTradeRoute | null>(null);
+  const [quoteNeedsRefresh, setQuoteNeedsRefresh] = useState(false);
   const [spendableBalance, setSpendableBalance] = useState<bigint | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
@@ -88,6 +89,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     setAction(recoveredTransactionState.action as TradeAction);
     setReview(null);
     setReviewRoute(null);
+    setQuoteNeedsRefresh(false);
     setReviewError(null);
     setTransactionState(recoveredTransactionState);
   }, [recoveredTransactionState, transactionState.hash, transactionState.status]);
@@ -131,6 +133,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       slippageBps,
       review,
       reviewRoute,
+      quoteNeedsRefresh,
       spendableBalance,
       tokenSymbol: token.symbol,
       transactionState,
@@ -144,16 +147,18 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       onPreset: applyPreset,
       onConnectionAction: handleConnectionAction,
       onReview: reviewTrade,
+      onRefreshQuote: refreshQuote,
       onSubmit: submitTrade,
     }),
     // Handler identities are intentionally recreated from the latest state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [action, amount, slippageBps, review, reviewRoute, spendableBalance, token.symbol, transactionState, connectionStatus, runtime, busy, reviewError, routeUnavailableReason],
+    [action, amount, slippageBps, review, reviewRoute, quoteNeedsRefresh, spendableBalance, token.symbol, transactionState, connectionStatus, runtime, busy, reviewError, routeUnavailableReason],
   );
 
   function resetReview(nextAction: TradeAction = action) {
     setReview(null);
     setReviewRoute(null);
+    setQuoteNeedsRefresh(false);
     setReviewError(null);
     setTransactionState(createTransactionState(nextAction, tokenAddress));
   }
@@ -255,6 +260,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       });
       setReview(result.review);
       setReviewRoute(result.route);
+      setQuoteNeedsRefresh(false);
       setTransactionState(createTransactionState(action, tokenAddress));
     } catch (error) {
       setReview(null);
@@ -265,8 +271,12 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }
   }
 
+  async function refreshQuote() {
+    await reviewTrade();
+  }
+
   async function submitTrade() {
-    if (!runtime || !runtime.wallet || !walletReady || !review || busy || routeUnavailableReason !== null) return;
+    if (!runtime || !runtime.wallet || !walletReady || !review || busy || quoteNeedsRefresh || routeUnavailableReason !== null) return;
     setReviewError(null);
 
     const protocolContext = runtime.protocolContext;
@@ -300,14 +310,16 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
 
     setTransactionState(result.state);
     if (result.reviewChanged && result.prepared) {
-      setReview(result.prepared.review);
+      setReview(null);
       setReviewRoute(null);
-      setReviewError('Trade values changed during the final canonical reread. Review the updated values before opening your wallet.');
+      setQuoteNeedsRefresh(true);
+      setReviewError('Trade values changed during the final canonical reread. Refresh quote before signing.');
       return;
     }
     if (result.state.status === 'CONFIRMED') {
       setReview(null);
       setReviewRoute(null);
+      setQuoteNeedsRefresh(false);
       setAmount('');
       try {
         setSpendableBalance(await runtime.getSpendableBalance(action, tokenAddress));
