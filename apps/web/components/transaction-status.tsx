@@ -27,7 +27,7 @@ export function TransactionStatus({ state }: Readonly<{ state: TransactionState 
           <code className="bread-technical">{state.hash}</code>
           <a
             className="bread-transaction-link"
-            href={`${arcTestnetManifest.explorer.replace(/\/+$/, '')}/tx/${state.hash}`}
+            href={`${EXPLORER_URL}/tx/${state.hash}`}
             target="_blank"
             rel="noreferrer"
             aria-label="View transaction on Arcscan"
