@@ -6,6 +6,7 @@ import {
   parseExploreProgressBounds,
   resolveExploreAgeBounds,
 } from "../../../../packages/db/src/index.js";
+import { canonicalizeProtocolAddress } from "../../../../packages/protocol-sdk/src/index.js";
 import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
 import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
 import {
@@ -46,6 +47,7 @@ export function registerFeedRoute(
       holdersMax?: string;
       progressMinBps?: string;
       progressMaxBps?: string;
+      creator?: string;
       limit?: string;
       cursor?: string;
     };
@@ -95,6 +97,21 @@ export function registerFeedRoute(
           requestId: request.id,
         },
       });
+    }
+
+    let creatorAddress: string | undefined;
+    if (query.creator !== undefined) {
+      try {
+        creatorAddress = canonicalizeProtocolAddress(query.creator);
+      } catch {
+        return reply.code(400).send({
+          error: {
+            code: "INVALID_CREATOR_FILTER",
+            message: "Creator wallet filter is invalid.",
+            requestId: request.id,
+          },
+        });
+      }
     }
 
     const parsedLimit =
@@ -222,7 +239,10 @@ export function registerFeedRoute(
               ageFilter,
             );
       const hasProjectionFilters =
-        ageBounds !== undefined || holderBounds !== undefined || progressBounds !== undefined;
+        ageBounds !== undefined ||
+        holderBounds !== undefined ||
+        progressBounds !== undefined ||
+        creatorAddress !== undefined;
       const fetched =
         view === "graduated"
           ? hasProjectionFilters
@@ -235,6 +255,7 @@ export function registerFeedRoute(
                 ageBounds,
                 holderBounds,
                 progressBounds,
+                creatorAddress,
               )
             : await deps.repository.listGraduatedLaunches(
                 deps.context.chainId,
@@ -254,6 +275,7 @@ export function registerFeedRoute(
                 ageBounds,
                 holderBounds,
                 progressBounds,
+                creatorAddress,
               )
             : view === "graduating"
               ? await deps.almostBakedRepository.listAlmostBakedLaunches(
@@ -266,6 +288,7 @@ export function registerFeedRoute(
                   ageBounds,
                   holderBounds,
                   progressBounds,
+                  creatorAddress,
                 )
               : hasProjectionFilters
                 ? await deps.exploreAgeRepository.listNewLaunches(
@@ -277,6 +300,7 @@ export function registerFeedRoute(
                     ageBounds,
                     holderBounds,
                     progressBounds,
+                    creatorAddress,
                   )
                 : await deps.repository.listNewLaunches(
                     deps.context.chainId,
@@ -408,7 +432,7 @@ export function registerFeedRoute(
       };
     };
 
-    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&progressMinBps=${progressBounds?.minBps ?? ""}&progressMaxBps=${progressBounds?.maxBps ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
+    const cacheKey = `view=${view}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&progressMinBps=${progressBounds?.minBps ?? ""}&progressMaxBps=${progressBounds?.maxBps ?? ""}&creator=${creatorAddress ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: stackFeedProjectionCacheChannel({
