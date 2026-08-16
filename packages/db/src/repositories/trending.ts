@@ -134,6 +134,12 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
   } as const;
 }
 
+function creatorClause(creatorAddress: string | undefined) {
+  return creatorAddress === undefined
+    ? sql``
+    : sql`AND launch_scope.deployer_address = ${creatorAddress}`;
+}
+
 export class TrendingRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -147,6 +153,7 @@ export class TrendingRepository {
     ageBounds?: ExploreAgeBounds,
     holderBounds?: ExploreHolderBounds,
     progressBounds?: ExploreProgressBounds,
+    creatorAddress?: string,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -155,6 +162,7 @@ export class TrendingRepository {
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const holder = holderClauses(holderBounds);
     const progress = progressClauses(progressBounds);
+    const creator = creatorClause(creatorAddress);
     const cursorClause = cursor
       ? sql`AND (
           r.quote_volume_1h < CAST(${cursor.quoteVolume1h} AS numeric)
@@ -210,6 +218,7 @@ export class TrendingRepository {
           ${progress.minClause}
           ${progress.maxClause}
           ${progress.scopeClause}
+          ${creator}
           AND t.block_timestamp IS NOT NULL
           AND t.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
           AND t.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
