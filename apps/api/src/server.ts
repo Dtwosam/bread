@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 
 import {
+  AlmostBakedRepository,
   CreatorRepository,
   ReadRepository,
   SearchRepository,
@@ -76,6 +77,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
   const redis = input.redis ?? unavailableRedis();
   const gate = new BoundedReadGate(input.capacity ?? DEFAULT_CAPACITY);
   const repository = boundRepository(new ReadRepository(input.db), gate);
+  const almostBakedRepository = boundRepository(
+    new AlmostBakedRepository(input.db),
+    gate,
+  );
   const trendingRepository = boundRepository(
     new TrendingRepository(input.db),
     gate,
@@ -116,6 +121,7 @@ export function createBreadApi(input: CreateBreadApiInput) {
 
   const deps = {
     repository,
+    almostBakedRepository,
     trendingRepository,
     context: input.context,
     freshness,
