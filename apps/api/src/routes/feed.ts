@@ -3,10 +3,13 @@ import type { FastifyInstance } from "fastify";
 import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
 import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
 import {
+  ALMOST_BAKED_FEED_CURSOR_VERSION,
+  decodeAlmostBakedFeedCursor,
   decodeGraduatedFeedCursor,
   decodeNewFeedCursor,
   decodeTrendingFeedCursor,
   DEFAULT_FEED_LIMIT,
+  encodeAlmostBakedFeedCursor,
   encodeGraduatedFeedCursor,
   encodeNewFeedCursor,
   encodeTrendingFeedCursor,
@@ -41,15 +44,6 @@ export function registerFeedRoute(
         error: {
           code: "INVALID_FEED_VIEW",
           message: "Feed view is not supported.",
-          requestId: request.id,
-        },
-      });
-    }
-    if (view === "graduating") {
-      return reply.code(503).send({
-        error: {
-          code: "FEED_VIEW_NOT_READY",
-          message: "This deterministic feed projection is not available yet.",
           requestId: request.id,
         },
       });
@@ -89,6 +83,14 @@ export function registerFeedRoute(
           tokenAddress: string;
         }>
       | undefined;
+    let almostBakedCursor:
+      | Readonly<{
+          graduationProgressBps: string;
+          quoteVolume1h: string;
+          launchTimestamp: string;
+          tokenAddress: string;
+        }>
+      | undefined;
     let graduatedCursor:
       | Readonly<{
           graduationCompletedBlock: string;
@@ -113,6 +115,14 @@ export function registerFeedRoute(
             tradeCount1h: decoded.tradeCount1h,
             latestActivityBlockNumber: decoded.latestActivityBlockNumber,
             latestActivityLogIndex: decoded.latestActivityLogIndex,
+            tokenAddress: decoded.tokenAddress,
+          };
+        } else if (view === "graduating") {
+          const decoded = decodeAlmostBakedFeedCursor(query.cursor);
+          almostBakedCursor = {
+            graduationProgressBps: decoded.graduationProgressBps,
+            quoteVolume1h: decoded.quoteVolume1h,
+            launchTimestamp: decoded.launchTimestamp,
             tokenAddress: decoded.tokenAddress,
           };
         } else {
@@ -152,7 +162,10 @@ export function registerFeedRoute(
     }
 
     const load = async () => {
-      const trendingMeta = view === "trending" ? await deps.freshness() : undefined;
+      const feedMeta =
+        view === "trending" || view === "graduating"
+          ? await deps.freshness()
+          : undefined;
       const fetched =
         view === "graduated"
           ? await deps.repository.listGraduatedLaunches(
@@ -167,17 +180,26 @@ export function registerFeedRoute(
                 deps.context.chainId,
                 deps.context.stackVersion,
                 deps.context.factoryAddress,
-                trendingMeta!.indexedThroughBlockTimestamp,
+                feedMeta!.indexedThroughBlockTimestamp,
                 parsedLimit + 1,
                 trendingCursor,
               )
-            : await deps.repository.listNewLaunches(
-                deps.context.chainId,
-                deps.context.stackVersion,
-                deps.context.factoryAddress,
-                parsedLimit + 1,
-                newCursor,
-              );
+            : view === "graduating"
+              ? await deps.almostBakedRepository.listAlmostBakedLaunches(
+                  deps.context.chainId,
+                  deps.context.stackVersion,
+                  deps.context.factoryAddress,
+                  feedMeta!.indexedThroughBlockTimestamp,
+                  parsedLimit + 1,
+                  almostBakedCursor,
+                )
+              : await deps.repository.listNewLaunches(
+                  deps.context.chainId,
+                  deps.context.stackVersion,
+                  deps.context.factoryAddress,
+                  parsedLimit + 1,
+                  newCursor,
+                );
       const hasMore = fetched.length > parsedLimit;
       const launches = fetched.slice(0, parsedLimit);
       const last = launches.at(-1);
@@ -231,6 +253,30 @@ export function registerFeedRoute(
             latestActivityLogIndex,
             tokenAddress: last.tokenAddress,
           });
+        } else if (view === "graduating") {
+          if (
+            !("graduationProgressBps" in last) ||
+            !("quoteVolume1h" in last) ||
+            last.launchTimestamp === null
+          ) {
+            throw new Error("Almost-Baked-feed row is missing ranking cursor state");
+          }
+          const graduationProgressBps = last.graduationProgressBps;
+          const quoteVolume1h = last.quoteVolume1h;
+          if (
+            typeof graduationProgressBps !== "bigint" ||
+            typeof quoteVolume1h !== "bigint" ||
+            typeof last.launchTimestamp !== "bigint"
+          ) {
+            throw new Error("Almost-Baked-feed row has invalid ranking cursor state");
+          }
+          nextCursor = encodeAlmostBakedFeedCursor({
+            version: ALMOST_BAKED_FEED_CURSOR_VERSION,
+            graduationProgressBps: graduationProgressBps.toString(10),
+            quoteVolume1h: quoteVolume1h.toString(10),
+            launchTimestamp: last.launchTimestamp.toString(10),
+            tokenAddress: last.tokenAddress,
+          });
         } else {
           if (last.launchTimestamp === null)
             throw new Error("New-feed row is missing launch timestamp");
@@ -255,7 +301,7 @@ export function registerFeedRoute(
       const statesByToken = new Map(
         stateRows.map((row) => [row.tokenAddress.toLowerCase(), row]),
       );
-      const meta = trendingMeta ?? await deps.freshness();
+      const meta = feedMeta ?? await deps.freshness();
       return {
         data: launches.map((launch) => {
           const tokenKey = launch.tokenAddress.toLowerCase();
