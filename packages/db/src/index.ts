@@ -50,6 +50,10 @@ export {
   type AgeFilteredNewCursorKey,
 } from "./repositories/explore-age-read.js";
 export {
+  parseExploreHolderBounds,
+  type ExploreHolderBounds,
+} from "./repositories/explore-holders.js";
+export {
   AlmostBakedRepository,
   type AlmostBakedLaunchCursorKey,
 } from "./repositories/almost-baked.js";
