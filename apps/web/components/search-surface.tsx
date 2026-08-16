@@ -225,6 +225,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
                       <span>${result.symbol?.trim() || '—'}</span>
                       <CreatorAttribution creatorAddress={result.deployerAddress} />
                       {age === null ? null : <span>Age {age}</span>}
+                      {result.holderCount === null ? null : <span>{result.holderCount} holders</span>}
                     </span>
                     <span>
                       {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
