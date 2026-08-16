@@ -38,15 +38,16 @@ describe('Day 7 Task 7 Portfolio, Creator dashboard and USDC claims', () => {
     expect(portfolio).not.toMatch(/rawRpc|readContract|eth_call/i);
   });
 
-  it('keeps creator attribution in every Portfolio holding from canonical indexed launch identity', () => {
+  it('keeps creator attribution in every Portfolio holding from canonical indexed deployer identity', () => {
     const types = read(paths.types);
     const api = read(paths.portfolioApi);
     const position = read(paths.portfolioPosition);
 
     expect(types).toContain('creatorAddress');
     expect(api).toContain('getLaunch');
-    expect(api).toContain('creatorFeeRecipient');
+    expect(api).toContain('deployerAddress');
     expect(api).toContain('creatorAddress');
+    expect(api).not.toMatch(/creatorAddress:\s*launch\?\.creatorFeeRecipient/);
     expect(position).toContain('CreatorAttribution');
     expect(position).toContain('holding.creatorAddress');
   });
