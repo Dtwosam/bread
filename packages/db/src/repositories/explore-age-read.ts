@@ -65,7 +65,7 @@ function optionalBigInt(value: string | null): bigint | null {
   return value === null ? null : decimalIntegerToBigInt(value);
 }
 
-function ageClauses(bounds: ExploreAgeBounds, alias: 'l') {
+function ageClauses(bounds: ExploreAgeBounds) {
   const min = bounds.minLaunchTimestamp;
   const minClause =
     min === undefined
@@ -143,7 +143,7 @@ export class ExploreAgeReadRepository {
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
-    const { minClause, maxClause } = ageClauses(bounds, 'l');
+    const { minClause, maxClause } = ageClauses(bounds);
     const cursorClause = cursor
       ? sql`AND (
           l.launch_block_number < CAST(${cursor.launchBlockNumber} AS numeric)
@@ -190,7 +190,7 @@ export class ExploreAgeReadRepository {
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
-    const { minClause, maxClause } = ageClauses(bounds, 'l');
+    const { minClause, maxClause } = ageClauses(bounds);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
