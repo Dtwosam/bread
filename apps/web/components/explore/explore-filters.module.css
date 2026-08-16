@@ -79,6 +79,9 @@
   right: 24px;
   z-index: 60;
   width: 232px;
+  max-height: calc(100dvh - 112px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: grid;
 }
 
@@ -189,6 +192,7 @@
     bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     left: 16px;
     width: auto;
+    max-height: calc(100dvh - 96px);
     border-radius: var(--bread-radius-modal);
   }
 }
@@ -209,6 +213,8 @@
   .panelOpen {
     position: static;
     width: auto;
+    max-height: none;
+    overflow: visible;
     display: grid;
   }
 
