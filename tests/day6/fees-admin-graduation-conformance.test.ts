@@ -122,15 +122,16 @@ describe.skipIf(!RUN_DB)('Day 6 Task 6 contextual attribution and progress', () 
     await pool.query(
       `INSERT INTO launches (
         chain_id, token_address, curve_address, stack_version, factory_address,
-        creator_fee_recipient, initial_supply, reserved_tokens_baseline,
+        creator_fee_recipient, initial_supply, reserved_tokens_baseline, graduation_threshold,
         launch_block_number, launch_transaction_hash, launch_log_index
-      ) VALUES ($1,$2,$3,$4,$5,$6,'1000','200','100',$7,4)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,'1000','200','900','100',$7,4)`,
       [context.chainId, token, curve, context.stackVersion, factory, creator, hash('1')],
     );
     await pool.query(
       `INSERT INTO launch_state (
-        chain_id, token_address, remaining_sellable_tokens, tracked_sold_inventory, updated_at
-      ) VALUES ($1,$2,'400','400',now())`,
+        chain_id, token_address, remaining_sellable_tokens, tracked_sold_inventory,
+        real_quote_reserve, updated_at
+      ) VALUES ($1,$2,'400','400','450',now())`,
       [context.chainId, token],
     );
     await pool.query(
@@ -177,7 +178,7 @@ describe.skipIf(!RUN_DB)('Day 6 Task 6 contextual attribution and progress', () 
     ]);
   });
 
-  it('derives graduation progress in bps from projected sellable inventory without floats', async () => {
+  it('derives graduation progress in bps from real quote reserve over the snapshotted threshold without floats', async () => {
     const dbModule = await import('../../packages/db/src/index.ts');
     const reducers = await import('../../apps/indexer/src/reducers.ts');
     const db = dbModule.createBreadDb(pool);
