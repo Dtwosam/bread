@@ -64,7 +64,7 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
   }
   await expect(buyReview.getByText('Bonding curve', { exact: true })).toBeVisible();
   const buySubmit = trade.getByRole('button', { name: 'Buy TWIN after reviewing current values' });
-  await expect(buySubmit).toHaveText('Buy TWIN');
+  await expect(buySubmit.locator('.bread-button__label')).toHaveText('Buy TWIN');
   await buySubmit.click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
   const afterBuy = await walletSnapshot(page);
@@ -80,7 +80,7 @@ test('wallet connect, wrong-network recovery, Buy and Sell use the canonical bro
   await expect(sellReview.getByText('0.00% (sell unaffected)')).toBeVisible();
   await expect(sellReview.getByText('Bonding curve', { exact: true })).toBeVisible();
   const sellSubmit = trade.getByRole('button', { name: 'Sell TWIN after reviewing current values' });
-  await expect(sellSubmit).toHaveText('Sell TWIN');
+  await expect(sellSubmit.locator('.bread-button__label')).toHaveText('Sell TWIN');
   await sellSubmit.click();
   await expect(trade.getByRole('status')).toContainText('CONFIRMED');
 
