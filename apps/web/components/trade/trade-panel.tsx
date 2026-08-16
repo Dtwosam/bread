@@ -6,6 +6,7 @@ import { Button } from '@bread/ui';
 import { formatUnits } from 'viem';
 
 import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/src/constants';
+import type { CanonicalTradeRoute } from '../../../../packages/protocol-sdk/src/trade-route';
 import type {
   BuyTradeReview,
   SellTradeReview,
@@ -37,6 +38,9 @@ export function TradePanel({
   amount,
   slippageBps,
   review,
+  reviewRoute,
+  spendableBalance,
+  tokenSymbol,
   transactionState,
   connectionStatus,
   busy,
@@ -54,6 +58,9 @@ export function TradePanel({
   amount: string;
   slippageBps: number;
   review: TradeReview | null;
+  reviewRoute: CanonicalTradeRoute | null;
+  spendableBalance: bigint | null;
+  tokenSymbol: string;
   transactionState: TransactionState;
   connectionStatus: TradeConnectionStatus;
   busy: boolean;
@@ -69,10 +76,17 @@ export function TradePanel({
 }>) {
   const presets: readonly Preset[] = action === 'BUY' ? ['$25', '$50', '$100', 'MAX'] : ['25%', '50%', '75%', 'MAX'];
   const outputDecimals = action === 'BUY' ? BREAD_LAUNCH_TOKEN_DECIMALS : 6;
+  const inputDecimals = action === 'BUY' ? 6 : BREAD_LAUNCH_TOKEN_DECIMALS;
+  const inputAsset = action === 'BUY' ? 'USDC' : tokenSymbol;
   const quoteDecimals = 6;
   const walletReady = connectionStatus === 'READY';
   const routeUnavailable = routeUnavailableReason !== null;
   const v3Review = review !== null && 'route' in review && review.route === 'V3_POOL';
+  const routeLabel = reviewRoute?.kind === 'CURVE'
+    ? 'Bonding curve'
+    : reviewRoute?.kind === 'V3_POOL'
+      ? 'Uniswap V3'
+      : null;
   const primaryLabel = routeUnavailable
     ? 'Trading unavailable'
     : connectionStatus === 'DISCONNECTED'
@@ -80,7 +94,7 @@ export function TradePanel({
       : connectionStatus === 'WRONG_NETWORK'
         ? 'Switch to Arc'
         : review
-          ? action === 'BUY' ? 'Buy' : 'Sell'
+          ? `${action === 'BUY' ? 'Buy' : 'Sell'} ${tokenSymbol}`
           : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
   const primaryAriaLabel = routeUnavailable
     ? 'Trading unavailable while graduation completes'
@@ -89,7 +103,7 @@ export function TradePanel({
       : connectionStatus === 'WRONG_NETWORK'
         ? 'Switch wallet to Arc Testnet'
         : review
-          ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
+          ? `${action === 'BUY' ? 'Buy' : 'Sell'} ${tokenSymbol} after reviewing current values`
           : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
 
   return (
@@ -111,7 +125,14 @@ export function TradePanel({
       </div>
 
       <label className="bread-trade-field">
-        <span>{action === 'BUY' ? 'USDC amount' : 'Token amount'}</span>
+        <span className="bread-trade-field__header">
+          <span>{action === 'BUY' ? 'USDC amount' : 'Token amount'}</span>
+          <span className="bread-trade-balance">
+            {spendableBalance === null
+              ? 'Balance —'
+              : `Balance ${formatAmount(spendableBalance, inputDecimals)} ${inputAsset}`}
+          </span>
+        </span>
         <input
           className="bread-trade-input"
           aria-label="Trade amount"
@@ -157,6 +178,7 @@ export function TradePanel({
         <dl className="bread-trade-review">
           <div><dt>Expected output</dt><dd>{formatAmount(review.expectedOutput, outputDecimals)}</dd></div>
           <div><dt>Minimum output</dt><dd>{formatAmount(review.minimumOutput, outputDecimals)}</dd></div>
+          {routeLabel ? <div><dt>Route</dt><dd>{routeLabel}</dd></div> : null}
           {v3Review ? (
             <div><dt>V3 venue fee</dt><dd>{formatV3Fee(review.venueFee)}</dd></div>
           ) : (
