@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
+import type { ExploreProgressBounds } from './explore-progress.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AgeFilteredNewCursorKey = Readonly<{
@@ -90,6 +91,21 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
   } as const;
 }
 
+function progressClauses(bounds: ExploreProgressBounds | undefined) {
+  if (!bounds) return { knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  return {
+    knownClause: sql`AND m.graduation_progress_bps IS NOT NULL`,
+    minClause:
+      bounds.minBps === undefined
+        ? sql``
+        : sql`AND m.graduation_progress_bps >= CAST(${bounds.minBps} AS numeric)`,
+    maxClause:
+      bounds.maxBps === undefined
+        ? sql``
+        : sql`AND m.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
+  } as const;
+}
+
 function normalizeLaunch(row: LaunchRawRow) {
   return {
     ...row,
@@ -152,11 +168,13 @@ export class ExploreAgeReadRepository {
     cursor: AgeFilteredNewCursorKey | undefined,
     bounds?: ExploreAgeBounds,
     holders?: ExploreHolderBounds,
+    progress?: ExploreProgressBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
+    const baked = progressClauses(progress);
     const cursorClause = cursor
       ? sql`AND (
           l.launch_block_number < CAST(${cursor.launchBlockNumber} AS numeric)
@@ -188,6 +206,9 @@ export class ExploreAgeReadRepository {
         ${holder.knownClause}
         ${holder.minClause}
         ${holder.maxClause}
+        ${baked.knownClause}
+        ${baked.minClause}
+        ${baked.maxClause}
         ${cursorClause}
       ORDER BY
         l.launch_block_number DESC,
@@ -207,11 +228,13 @@ export class ExploreAgeReadRepository {
     cursor: AgeFilteredGraduatedCursorKey | undefined,
     bounds?: ExploreAgeBounds,
     holders?: ExploreHolderBounds,
+    progress?: ExploreProgressBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
+    const baked = progressClauses(progress);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
@@ -247,6 +270,9 @@ export class ExploreAgeReadRepository {
         ${holder.knownClause}
         ${holder.minClause}
         ${holder.maxClause}
+        ${baked.knownClause}
+        ${baked.minClause}
+        ${baked.maxClause}
         ${cursorClause}
       ORDER BY
         s.graduation_completed_block DESC,
