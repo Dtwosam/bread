@@ -218,4 +218,60 @@ describe.skipIf(!RUN_DB)('Day 6 Explore holder-count filters', () => {
 
     await app.close();
   });
+
+  it('applies inclusive canonical graduation-progress bps bounds before pagination on every Explore view', async () => {
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const apiModule = await import('../../apps/api/src/server.ts');
+    const app = apiModule.createBreadApi({
+      db: dbModule.createBreadDb(pool),
+      context,
+      observedHeadBlock: async () => 500n,
+      now: () => new Date('2030-01-01T00:00:00.000Z'),
+    });
+
+    const expectedByQuery = {
+      'progressMinBps=8500&progressMaxBps=9500': {
+        new: [activeHigh],
+        trending: [activeHigh],
+        graduating: [activeHigh],
+        graduated: [],
+      },
+      'progressMaxBps=8000': {
+        new: [activeLow],
+        trending: [activeLow],
+        graduating: [activeLow],
+        graduated: [],
+      },
+      'progressMinBps=10000': {
+        new: [graduatedMid, graduatedHigh],
+        trending: [],
+        graduating: [],
+        graduated: [graduatedHigh, graduatedMid],
+      },
+    } as const;
+
+    for (const [progressQuery, byView] of Object.entries(expectedByQuery)) {
+      for (const [view, expected] of Object.entries(byView)) {
+        const response = await app.inject({
+          method: 'GET',
+          url: `/v1/feed?view=${view}&${progressQuery}&limit=10`,
+        });
+        expect(response.statusCode).toBe(200);
+        expect(tokenAddresses(response.json())).toEqual(expected);
+      }
+    }
+
+    for (const url of [
+      '/v1/feed?view=new&progressMinBps=abc',
+      '/v1/feed?view=new&progressMaxBps=-1',
+      '/v1/feed?view=new&progressMaxBps=10001',
+      '/v1/feed?view=new&progressMinBps=9000&progressMaxBps=8000',
+    ]) {
+      const response = await app.inject({ method: 'GET', url });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'INVALID_PROGRESS_FILTER' } });
+    }
+
+    await app.close();
+  });
 });
