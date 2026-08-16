@@ -13,6 +13,7 @@ import styles from './explore-filters.module.css';
 import {
   feedErrorPresentation,
   resolveExploreView,
+  shortAddress,
   type ExploreView,
   type IndexedFeedCardFields,
 } from './model';
@@ -32,6 +33,7 @@ const AGE_OPTIONS: readonly Readonly<{ value: FeedAge; label: string }>[] = [
 ];
 const CANONICAL_BPS = /^\d{1,5}$/;
 const PERCENT_INPUT = /^\d{1,3}(?:\.\d{1,2})?$/;
+const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
 
 type ExploreFilters = Readonly<{
   age?: FeedAge;
@@ -39,6 +41,7 @@ type ExploreFilters = Readonly<{
   holdersMax?: string;
   progressMinBps?: string;
   progressMaxBps?: string;
+  creator?: string;
 }>;
 
 function resolveFeedAge(value: string | null): FeedAge | undefined {
@@ -95,6 +98,7 @@ function exploreHref(view: ExploreView, filters: ExploreFilters): string {
   if (filters.holdersMax !== undefined) params.set('holdersMax', filters.holdersMax);
   if (filters.progressMinBps !== undefined) params.set('progressMinBps', filters.progressMinBps);
   if (filters.progressMaxBps !== undefined) params.set('progressMaxBps', filters.progressMaxBps);
+  if (filters.creator !== undefined) params.set('creator', filters.creator);
   return params.size > 0 ? `/explore?${params.toString()}` : '/explore';
 }
 
@@ -107,9 +111,13 @@ export function ExploreClient() {
   const holdersMax = searchParams.get('holdersMax') ?? undefined;
   const progressMinBps = resolveProgressBps(searchParams.get('progressMinBps'));
   const progressMaxBps = resolveProgressBps(searchParams.get('progressMaxBps'));
+  const creatorParam = searchParams.get('creator');
+  const creator = creatorParam === null ? undefined : creatorParam.toLowerCase();
   const hasHolderFilter = holdersMin !== undefined || holdersMax !== undefined;
   const hasProgressFilter = progressMinBps !== undefined || progressMaxBps !== undefined;
-  const hasActiveFilters = age !== undefined || hasHolderFilter || hasProgressFilter;
+  const hasCreatorFilter = creator !== undefined;
+  const hasActiveFilters =
+    age !== undefined || hasHolderFilter || hasProgressFilter || hasCreatorFilter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const api = useMemo(() => createBreadApiClient(), []);
 
@@ -121,6 +129,7 @@ export function ExploreClient() {
       holdersMax,
       progressMinBps,
       progressMaxBps,
+      creator,
       limit: PAGE_SIZE,
     }),
     initialPageParam: '',
@@ -132,6 +141,7 @@ export function ExploreClient() {
         holdersMax,
         progressMinBps,
         progressMaxBps,
+        creator,
         limit: PAGE_SIZE,
         cursor: pageParam || undefined,
       }),
@@ -152,7 +162,9 @@ export function ExploreClient() {
       <div className="bread-explore-heading">
         <div>
           <h1 className="bread-page__heading">Explore</h1>
-          <p className="bread-page__supporting">Browse indexed Bread launches without per-card chain queries.</p>
+          <p className="bread-page__supporting">
+            Browse indexed Bread launches without per-card chain queries.
+          </p>
         </div>
       </div>
 
@@ -168,6 +180,7 @@ export function ExploreClient() {
                 holdersMax,
                 progressMinBps,
                 progressMaxBps,
+                creator,
               })}
               key={item.value}
             >
@@ -192,12 +205,15 @@ export function ExploreClient() {
             <button
               aria-label={`Age: ${ageLabel(age)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({
-                holdersMin,
-                holdersMax,
-                progressMinBps,
-                progressMaxBps,
-              })}
+              onClick={() =>
+                navigateWithFilters({
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                  creator,
+                })
+              }
               type="button"
             >
               <span>Age: {ageLabel(age)}</span>
@@ -208,7 +224,9 @@ export function ExploreClient() {
             <button
               aria-label={`Holders: ${holderLabel(holdersMin, holdersMax)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({ age, progressMinBps, progressMaxBps })}
+              onClick={() =>
+                navigateWithFilters({ age, progressMinBps, progressMaxBps, creator })
+              }
               type="button"
             >
               <span>Holders: {holderLabel(holdersMin, holdersMax)}</span>
@@ -219,10 +237,29 @@ export function ExploreClient() {
             <button
               aria-label={`Baked progress: ${progressLabel(progressMinBps, progressMaxBps)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({ age, holdersMin, holdersMax })}
+              onClick={() => navigateWithFilters({ age, holdersMin, holdersMax, creator })}
               type="button"
             >
               <span>Baked progress: {progressLabel(progressMinBps, progressMaxBps)}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
+          {hasCreatorFilter ? (
+            <button
+              aria-label={`Creator: ${creator}`}
+              className={styles.chip}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                })
+              }
+              type="button"
+            >
+              <span>Creator: {shortAddress(creator)}</span>
               <span aria-hidden="true">×</span>
             </button>
           ) : null}
@@ -268,6 +305,7 @@ export function ExploreClient() {
                   holdersMax,
                   progressMinBps,
                   progressMaxBps,
+                  creator,
                 });
                 setFiltersOpen(false);
               }}
@@ -296,6 +334,7 @@ export function ExploreClient() {
                 holdersMax: rawMax.length > 0 ? rawMax : undefined,
                 progressMinBps,
                 progressMaxBps,
+                creator,
               });
               setFiltersOpen(false);
             }}
@@ -339,7 +378,10 @@ export function ExploreClient() {
               const rawMax = String(form.get('progressMax') ?? '').trim();
               const nextMinBps = percentToBps(rawMin);
               const nextMaxBps = percentToBps(rawMax);
-              if ((rawMin.length > 0 && nextMinBps === undefined) || (rawMax.length > 0 && nextMaxBps === undefined)) {
+              if (
+                (rawMin.length > 0 && nextMinBps === undefined) ||
+                (rawMax.length > 0 && nextMaxBps === undefined)
+              ) {
                 return;
               }
               if (
@@ -355,6 +397,7 @@ export function ExploreClient() {
                 holdersMax,
                 progressMinBps: nextMinBps,
                 progressMaxBps: nextMaxBps,
+                creator,
               });
               setFiltersOpen(false);
             }}
@@ -391,6 +434,43 @@ export function ExploreClient() {
               Apply baked progress filter
             </button>
           </form>
+
+          <form
+            className={styles.holderForm}
+            key={`creator:${creator ?? ''}`}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const rawCreator = String(form.get('creator') ?? '').trim();
+              if (rawCreator.length > 0 && !ADDRESS_SHAPE.test(rawCreator)) return;
+              navigateWithFilters({
+                age,
+                holdersMin,
+                holdersMax,
+                progressMinBps,
+                progressMaxBps,
+                creator: rawCreator.length > 0 ? rawCreator.toLowerCase() : undefined,
+              });
+              setFiltersOpen(false);
+            }}
+          >
+            <label className={styles.field} htmlFor="bread-explore-creator">
+              <span>Creator wallet</span>
+              <input
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={creator ?? ''}
+                id="bread-explore-creator"
+                name="creator"
+                pattern="0x[0-9a-fA-F]{40}"
+                spellCheck={false}
+                type="text"
+              />
+            </label>
+            <button className={styles.apply} type="submit">
+              Apply creator filter
+            </button>
+          </form>
         </aside>
 
         <section className={styles.feed} aria-label="Explore results">
@@ -409,7 +489,10 @@ export function ExploreClient() {
           ) : null}
 
           {!query.isPending && !query.isError && items.length === 0 ? (
-            <EmptyState title="No indexed launches yet" detail="New Bread launches will appear here after they are indexed." />
+            <EmptyState
+              title="No indexed launches yet"
+              detail="New Bread launches will appear here after they are indexed."
+            />
           ) : null}
 
           {items.length > 0 ? (
