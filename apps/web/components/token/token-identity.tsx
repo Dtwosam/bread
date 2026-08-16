@@ -1,4 +1,5 @@
 import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
+import { CreatorAttribution } from '@bread/ui';
 
 function launchTime(timestamp: string | null): string {
   if (timestamp === null || !/^\d+$/.test(timestamp)) return '—';
@@ -28,11 +29,7 @@ export function TokenIdentity({ token }: Readonly<{ token: IndexedTokenDetail }>
           <div>
             <dt>Creator</dt>
             <dd>
-              {token.creatorFeeRecipient ? (
-                <code className="bread-technical">{token.creatorFeeRecipient}</code>
-              ) : (
-                '—'
-              )}
+              <CreatorAttribution creatorAddress={token.deployerAddress} size="token-header" />
             </dd>
           </div>
           <div>
