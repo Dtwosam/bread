@@ -31,11 +31,12 @@ test('Explore Creator wallet filter is backend-backed and preserves existing fil
   await expect(page.getByRole('button', { name: 'Baked progress: 85–95%' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reset filters' })).toBeVisible();
 
-  // This deterministic browser fixture deliberately does not reproduce the
-  // production creator-membership algorithm. Rendering both returned rows
-  // proves the UI forwards the predicate and does not duplicate it client-side;
-  // the real PostgreSQL/API test owns membership correctness.
-  await expect(page.getByText('Bread Twin')).toHaveCount(2);
+  // The deterministic browser fixture already returns one server-selected row
+  // for the retained Holder+Baked context and deliberately does not reproduce
+  // creator membership. Rendering that row unchanged proves the UI forwards
+  // creator rather than applying a second client-side creator predicate; the
+  // real PostgreSQL/API test owns creator-membership correctness.
+  await expect(page.getByText('Bread Twin')).toHaveCount(1);
   await expect(page.getByRole('link', { name: 'Graduated' })).toHaveAttribute(
     'href',
     `/explore?view=graduated&age=lt1h&holdersMin=10&holdersMax=20&progressMinBps=8500&progressMaxBps=9500&creator=${E2E_DEPLOYER.toLowerCase()}`,
