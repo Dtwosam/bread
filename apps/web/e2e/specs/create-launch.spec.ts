@@ -17,8 +17,10 @@ async function connectAndFillCreateForm(page: import('@playwright/test').Page, i
   await main.getByLabel('Ticker').fill(initialBuy ? 'ATOM' : 'PLAIN');
   await main.getByLabel('Description').fill('Deterministic Task 10 Playwright launch.');
   await main.getByLabel('Website').fill('https://example.com/bread');
-  await main.getByLabel('Creator tax').fill('1.25');
   if (initialBuy) await main.getByLabel('Initial buy').fill(initialBuy);
+  await main.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(main.getByRole('heading', { name: 'Economics' })).toBeVisible();
+  await main.getByLabel('Creator tax').fill('1.25');
   await main.getByRole('button', { name: 'Review' }).click();
   await expect(main.getByRole('heading', { name: 'Review launch' })).toBeVisible();
   return main;
