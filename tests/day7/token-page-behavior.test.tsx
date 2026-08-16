@@ -10,6 +10,7 @@ const paths = {
   page: 'apps/web/app/token/[address]/page.tsx',
   client: 'apps/web/components/token/token-client.tsx',
   trade: 'apps/web/components/trade/trade-experience.tsx',
+  tradePanel: 'apps/web/components/trade/trade-panel.tsx',
   identity: 'apps/web/components/token/token-identity.tsx',
   stats: 'apps/web/components/token/token-stats.tsx',
   chart: 'apps/web/components/token/token-chart.tsx',
@@ -81,6 +82,22 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(graduation).toContain('Graduation pending');
     expect(graduation).toMatch(/completed trade remains confirmed/i);
     expect(graduation).not.toMatch(/trade failed/i);
+  });
+
+  it('presents Processing as Graduating and disables the invalid trade route while preserving completed trades', () => {
+    const graduation = read(paths.graduation);
+    const trade = read(paths.trade);
+    const tradePanel = read(paths.tradePanel);
+
+    expect(graduation).toContain("'Graduating'");
+    expect(graduation).toMatch(/bonding curve is complete/i);
+    expect(graduation).toMatch(/liquidity creation is in progress/i);
+    expect(graduation).toMatch(/completed trades remain confirmed/i);
+    expect(graduation).toContain("state === 'Graduating'");
+    expect(graduation).toContain('Continue graduation');
+    expect(trade).toContain('routeUnavailableReason');
+    expect(tradePanel).toContain('routeUnavailableReason');
+    expect(tradePanel).toContain('Trading unavailable');
   });
 
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
