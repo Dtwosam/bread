@@ -284,7 +284,7 @@ export function ExploreClient() {
 
           <form
             className={styles.holderForm}
-            key={`${holdersMin ?? ''}:${holdersMax ?? ''}`}
+            key={`holders:${holdersMin ?? ''}:${holdersMax ?? ''}`}
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
@@ -331,7 +331,7 @@ export function ExploreClient() {
 
           <form
             className={styles.holderForm}
-            key={`${progressMinBps ?? ''}:${progressMaxBps ?? ''}`}
+            key={`progress:${progressMinBps ?? ''}:${progressMaxBps ?? ''}`}
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
