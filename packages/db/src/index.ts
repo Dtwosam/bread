@@ -58,6 +58,10 @@ export {
   type ExploreProgressBounds,
 } from "./repositories/explore-progress.js";
 export {
+  parseExploreVolumeBounds,
+  type ExploreVolumeBounds,
+} from "./repositories/explore-volume.js";
+export {
   AlmostBakedRepository,
   type AlmostBakedLaunchCursorKey,
 } from "./repositories/almost-baked.js";
