@@ -155,12 +155,13 @@ test('processing token is Graduating, preserves completed trades, and disables t
   await installProcessingTokenDetail(page);
   await page.goto(`/token/${ACTIVE_TOKEN}`);
 
-  await expect(page.getByText(/Graduating · Indexed state PROCESSING/)).toBeVisible();
-  await expect(page.getByText(/bonding curve is complete/i)).toBeVisible();
-  await expect(page.getByText(/liquidity creation is in progress/i)).toBeVisible();
-  await expect(page.getByText(/completed trades remain confirmed/i)).toBeVisible();
+  const graduation = page.locator('.bread-graduation');
+  await expect(graduation.getByText(/Graduating · Indexed state PROCESSING/)).toBeVisible();
+  await expect(graduation.getByText(/bonding curve is complete/i)).toBeVisible();
+  await expect(graduation.getByText(/liquidity creation is in progress/i)).toBeVisible();
+  await expect(graduation.getByText(/completed trades remain confirmed/i)).toBeVisible();
   await expect(page.getByText(/trade failed/i)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /continue graduation/i })).toBeVisible();
+  await expect(graduation.getByRole('button', { name: /continue graduation/i })).toBeVisible();
 
   const blockedTrade = page.locator('button[aria-label="Trading unavailable while graduation completes"]');
   await expect(blockedTrade).toBeDisabled();
