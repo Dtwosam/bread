@@ -102,6 +102,10 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
   } as const;
 }
 
+function creatorClause(creatorAddress: string | undefined) {
+  return creatorAddress === undefined ? sql`` : sql`AND l.deployer_address = ${creatorAddress}`;
+}
+
 export class AlmostBakedRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -115,6 +119,7 @@ export class AlmostBakedRepository {
     ageBounds?: ExploreAgeBounds,
     holderBounds?: ExploreHolderBounds,
     progressBounds?: ExploreProgressBounds,
+    creatorAddress?: string,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -123,6 +128,7 @@ export class AlmostBakedRepository {
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const holder = holderClauses(holderBounds);
     const progress = progressClauses(progressBounds);
+    const creator = creatorClause(creatorAddress);
     const cursorClause = cursor
       ? sql`AND (
           r.graduation_progress_bps < CAST(${cursor.graduationProgressBps} AS numeric)
@@ -183,6 +189,7 @@ export class AlmostBakedRepository {
           AND m.graduation_progress_bps IS NOT NULL
           ${progress.minClause}
           ${progress.maxClause}
+          ${creator}
           AND COALESCE(s.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'
       )
       SELECT
