@@ -115,6 +115,22 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(graduation).not.toMatch(/pool address.*poolId/i);
   });
 
+  it('exposes source-defined TradePanel balance, reviewed route context and ticker-aware final CTA inputs', () => {
+    const trade = read(paths.trade);
+    const tradePanel = read(paths.tradePanel);
+
+    expect(trade).toContain('spendableBalance');
+    expect(trade).toContain('getSpendableBalance');
+    expect(trade).toContain('reviewRoute');
+    expect(trade).toContain('tokenSymbol: token.symbol');
+    expect(tradePanel).toContain('spendableBalance');
+    expect(tradePanel).toContain('reviewRoute');
+    expect(tradePanel).toContain('tokenSymbol');
+    expect(tradePanel).toContain('Balance');
+    expect(tradePanel).toContain('Bonding curve');
+    expect(tradePanel).toContain('Uniswap V3');
+  });
+
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {
     const tabs = read(paths.tabs);
 
