@@ -87,6 +87,25 @@ integration_baseline:
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
+working_branches:
+  - day9/synthra-arc-testnet-v3-candidate
+  - docs/ui-v2-2-source-pack-hygiene
+  - agent/ui-ux-v2-2-implementation
+
+repository:
+  remote: https://github.com/Dtwosam/bread
+  default_branch: main
+  day9_pr: 93
+  day9_pr_state: OPEN_DRAFT_UNMERGED
+  ui_implementation_pr: 94
+  ui_implementation_pr_state: OPEN_DRAFT_UNMERGED
+  ui_implementation_pr_base: day9/synthra-arc-testnet-v3-candidate
+  ui_implementation_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  ui_implementation_code_head_at_reconciliation: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
+  day9_complete: false
+  rc_tag_created: false
+  day10_started: false
+
 verification:
   token_holder_red_head: 52febd26ba58e2d9e858ed0e59766164676bca33
   token_holder_accepted_code_head: 5ca948568e7b5c24f652ef2fb5beaba979c1abbd
