@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
+import type { ExploreHolderBounds } from './explore-holders.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AgeFilteredNewCursorKey = Readonly<{
@@ -65,7 +66,8 @@ function optionalBigInt(value: string | null): bigint | null {
   return value === null ? null : decimalIntegerToBigInt(value);
 }
 
-function ageClauses(bounds: ExploreAgeBounds) {
+function ageClauses(bounds: ExploreAgeBounds | undefined) {
+  if (!bounds) return { minClause: sql``, maxClause: sql`` } as const;
   const min = bounds.minLaunchTimestamp;
   const minClause =
     min === undefined
@@ -77,6 +79,15 @@ function ageClauses(bounds: ExploreAgeBounds) {
     ? sql`AND l.launch_timestamp <= CAST(${bounds.maxLaunchTimestamp} AS numeric)`
     : sql`AND l.launch_timestamp < CAST(${bounds.maxLaunchTimestamp} AS numeric)`;
   return { minClause, maxClause } as const;
+}
+
+function holderClauses(bounds: ExploreHolderBounds | undefined) {
+  if (!bounds) return { knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  return {
+    knownClause: sql`AND m.holder_count IS NOT NULL`,
+    minClause: bounds.min === undefined ? sql`` : sql`AND m.holder_count >= CAST(${bounds.min} AS numeric)`,
+    maxClause: bounds.max === undefined ? sql`` : sql`AND m.holder_count <= CAST(${bounds.max} AS numeric)`,
+  } as const;
 }
 
 function normalizeLaunch(row: LaunchRawRow) {
@@ -139,11 +150,13 @@ export class ExploreAgeReadRepository {
     factoryAddress: string,
     limit: number,
     cursor: AgeFilteredNewCursorKey | undefined,
-    bounds: ExploreAgeBounds,
+    bounds?: ExploreAgeBounds,
+    holders?: ExploreHolderBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
-    const { minClause, maxClause } = ageClauses(bounds);
+    const age = ageClauses(bounds);
+    const holder = holderClauses(holders);
     const cursorClause = cursor
       ? sql`AND (
           l.launch_block_number < CAST(${cursor.launchBlockNumber} AS numeric)
@@ -162,13 +175,19 @@ export class ExploreAgeReadRepository {
     const result = await this.db.execute(sql`
       SELECT ${launchSelect}
       FROM launches l
+      LEFT JOIN token_metrics m
+        ON m.chain_id = l.chain_id
+       AND m.token_address = l.token_address
       WHERE l.chain_id = ${chainId}
         AND l.stack_version = ${stackVersion}
         AND l.factory_address = ${canonicalFactory}
         AND l.launch_timestamp IS NOT NULL
         AND l.initial_supply IS NOT NULL
-        ${minClause}
-        ${maxClause}
+        ${age.minClause}
+        ${age.maxClause}
+        ${holder.knownClause}
+        ${holder.minClause}
+        ${holder.maxClause}
         ${cursorClause}
       ORDER BY
         l.launch_block_number DESC,
@@ -186,11 +205,13 @@ export class ExploreAgeReadRepository {
     factoryAddress: string,
     limit: number,
     cursor: AgeFilteredGraduatedCursorKey | undefined,
-    bounds: ExploreAgeBounds,
+    bounds?: ExploreAgeBounds,
+    holders?: ExploreHolderBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
-    const { minClause, maxClause } = ageClauses(bounds);
+    const age = ageClauses(bounds);
+    const holder = holderClauses(holders);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
@@ -211,6 +232,9 @@ export class ExploreAgeReadRepository {
       INNER JOIN launches l
         ON l.chain_id = s.chain_id
        AND l.token_address = s.token_address
+      LEFT JOIN token_metrics m
+        ON m.chain_id = l.chain_id
+       AND m.token_address = l.token_address
       WHERE s.chain_id = ${chainId}
         AND s.graduation_phase = 'POOL_CREATED'
         AND s.graduation_completed_block IS NOT NULL
@@ -218,8 +242,11 @@ export class ExploreAgeReadRepository {
         AND l.stack_version = ${stackVersion}
         AND l.factory_address = ${canonicalFactory}
         AND l.launch_timestamp IS NOT NULL
-        ${minClause}
-        ${maxClause}
+        ${age.minClause}
+        ${age.maxClause}
+        ${holder.knownClause}
+        ${holder.minClause}
+        ${holder.maxClause}
         ${cursorClause}
       ORDER BY
         s.graduation_completed_block DESC,
