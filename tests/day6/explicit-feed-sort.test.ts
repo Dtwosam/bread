@@ -199,4 +199,16 @@ describe.skipIf(!RUN_DB)('v1.6.1 deterministic explicit Explore sorts', () => {
     expect(body.data.map((row) => row.tokenAddress)).toEqual([tokens.b, tokens.c, tokens.e]);
     await app.close();
   });
+
+  it('filters market cap without changing the selected feed canonical default order', async () => {
+    const app = await createApp();
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/feed?view=new&marketCapMinQuote=700&marketCapMaxQuote=1000&limit=10',
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as { data: Array<{ tokenAddress: string }> };
+    expect(body.data.map((row) => row.tokenAddress)).toEqual([tokens.b, tokens.c, tokens.e]);
+    await app.close();
+  });
 });

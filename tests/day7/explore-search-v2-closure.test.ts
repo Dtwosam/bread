@@ -44,6 +44,26 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(`${card}\n${search}\n${model}`).not.toMatch(/marketCap\s*=.*(?:price|supply)|(?:price|supply).*\*.*(?:supply|price)/i);
   });
 
+  it('wires ratified explicit sorts and indexed market-cap filters without inventing a Trending sort', () => {
+    const explore = read('../../apps/web/components/explore/explore-client.tsx');
+    const apiClient = read('../../apps/web/lib/api/client.ts');
+
+    expect(apiClient).toContain("export type FeedSort = 'newest' | 'market-cap' | 'volume-24h' | 'holders' | 'baked-progress';");
+    expect(apiClient).toContain('sort?: FeedSort;');
+    expect(apiClient).toContain('marketCapMinQuote?: string;');
+    expect(apiClient).toContain('marketCapMaxQuote?: string;');
+    expect(explore).toContain("{ value: 'newest', label: 'Newest ↓' }");
+    expect(explore).toContain("{ value: 'market-cap', label: 'Market Cap ↓' }");
+    expect(explore).toContain("{ value: 'volume-24h', label: '24h Volume ↓' }");
+    expect(explore).toContain("{ value: 'holders', label: 'Holders ↓' }");
+    expect(explore).toContain("{ value: 'baked-progress', label: 'Baked Progress ↓' }");
+    expect(explore).not.toContain("{ value: 'trending', label: 'Trending ↓' }");
+    expect(explore).toContain('Market cap min');
+    expect(explore).toContain('Market cap max');
+    expect(explore).toContain('marketCapMinQuote');
+    expect(explore).toContain('marketCapMaxQuote');
+  });
+
   it('shows every currently source-backed Search token-row field with safe fallbacks', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
