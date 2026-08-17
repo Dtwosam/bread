@@ -149,14 +149,18 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(search).not.toMatch(/<img[^>]+src=\{result\.(?:metadata|image|logo)/);
   });
 
-  it('does not invent Recent or Trending Search persistence/ranking semantics that the ratified source leaves undefined', () => {
+  it('implements v1.6.1 Recent and Trending Search only through their ratified authorities', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
+    const recent = read('../../apps/web/lib/search/recent-targets.ts');
 
-    expect(search).not.toContain('RECENT_SEARCH_STORAGE_KEY');
-    expect(search).not.toContain('MAX_RECENT_SEARCHES');
-    expect(search).not.toContain('window.localStorage');
-    expect(search).not.toContain("breadQueryKeys.feed({ view: 'trending'");
-    expect(search).not.toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
+    expect(recent).toContain('MAX_RECENT_SEARCH_TARGETS = 8');
+    expect(recent).toContain('window.localStorage');
+    expect(recent).not.toMatch(/fetch\s*\(|wallet|account|searchCount|queryCount|termCount/i);
+    expect(search).toContain('recordRecentTarget');
+    expect(search).toContain("breadQueryKeys.feed({ view: 'trending', limit: TRENDING_SEARCH_LIMIT })");
+    expect(search).toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending', limit: TRENDING_SEARCH_LIMIT })");
+    expect(search).toContain('const TRENDING_SEARCH_LIMIT = 5;');
+    expect(search).not.toMatch(/searchCount|queryCount|termCount|paidPlacement|sponsor/i);
   });
 
   it('projects market cap centrally from exact indexed execution price and snapshotted fixed supply', () => {
