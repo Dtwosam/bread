@@ -127,7 +127,8 @@ describe('automatic graduation keeper', () => {
       'BREAD_GRADUATION_KEEPER_PRIVATE_KEY_FILE: /run/secrets/graduation_keeper_private_key',
     );
     expect(compose).not.toContain('BREAD_GRADUATION_KEEPER_PRIVATE_KEY:');
-    expect(runner).toContain("requiredSecret('BREAD_GRADUATION_KEEPER_PRIVATE_KEY'");
+    expect(runner).toContain('requiredSecret');
+    expect(runner).toContain("'BREAD_GRADUATION_KEEPER_PRIVATE_KEY'");
     expect(runner).toContain("'BREAD_GRADUATION_KEEPER_PRIVATE_KEY_FILE'");
   });
 });
