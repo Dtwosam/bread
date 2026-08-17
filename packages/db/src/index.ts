@@ -71,6 +71,13 @@ export {
   type ExploreMarketCapBounds,
 } from "./repositories/explore-market-cap.js";
 export {
+  indexedLifecycleStateSql,
+  resolveIndexedLifecycleState,
+  type IndexedLifecycleInput,
+  type IndexedLifecycleSqlFields,
+  type IndexedLifecycleState,
+} from "./repositories/lifecycle.js";
+export {
   EXPLICIT_FEED_SORTS,
   ExplicitSortRepository,
   isExplicitFeedSort,

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
+import { resolveIndexedLifecycleState } from '../../../../packages/db/src/index.js';
 import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/src/index.js';
 
 import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
@@ -86,6 +87,22 @@ export function serializeGraduationProgress(
   } as const;
 }
 
+export function serializeLifecycleState(
+  launch: NonNullable<LaunchRow>,
+  state: NonNullable<LaunchStateRow> | undefined,
+  metrics: NonNullable<TokenMetricRow> | undefined,
+) {
+  return resolveIndexedLifecycleState({
+    graduationPhase: state?.graduationPhase,
+    readyToGraduate: state?.readyToGraduate,
+    graduationFailureReasonHash: state?.graduationFailureReasonHash,
+    mode: state?.mode,
+    graduationProgressBps: metrics?.graduationProgressBps,
+    launchTimestamp: launch.launchTimestamp,
+    initialSupply: launch.initialSupply,
+  });
+}
+
 export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined) {
   if (!row) return null;
   return {
@@ -149,6 +166,7 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
           ...serializeLaunch(launch),
           holderCount: metrics?.holderCount?.toString(10) ?? null,
           graduatedVenueKind: state?.graduatedVenueKind ?? null,
+          lifecycleState: serializeLifecycleState(launch, state, metrics),
           curveState: serializeCurveState(state),
           metrics: serializeTradeMetrics(metrics),
           progress: serializeGraduationProgress(metrics),

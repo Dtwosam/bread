@@ -31,7 +31,7 @@ import {
   NEW_FEED_CURSOR_VERSION,
   TRENDING_FEED_CURSOR_VERSION,
 } from "../pagination.js";
-import { serializeGraduationProgress, serializeLaunch, serializeTradeMetrics } from "./token.js";
+import { serializeGraduationProgress, serializeLaunch, serializeLifecycleState, serializeTradeMetrics } from "./token.js";
 import type { BreadFeedRouteDeps } from "./types.js";
 
 const SOURCE_VIEWS = new Set<ExplicitFeedView>(["new", "trending", "graduating", "graduated"]);
@@ -235,6 +235,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
             ...serializeLaunch(launch),
             holderCount: metricRow?.holderCount?.toString(10) ?? null,
             graduatedVenueKind: stateRow?.graduatedVenueKind ?? null,
+            lifecycleState: serializeLifecycleState(launch, stateRow, metricRow),
             metrics: serializeTradeMetrics(metricRow),
             progress: serializeGraduationProgress(metricRow),
           };

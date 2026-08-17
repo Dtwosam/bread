@@ -1,6 +1,10 @@
 import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
+import {
+  indexedLifecycleStateSql,
+  type IndexedLifecycleState,
+} from './lifecycle.js';
 
 export type SearchLaunchInput = Readonly<{
   chainId: number;
@@ -11,7 +15,7 @@ export type SearchLaunchInput = Readonly<{
   limit: number;
 }>;
 
-export type SearchLifecycleState = 'PROCESSING' | 'GRADUATION_PENDING' | 'GRADUATED';
+export type SearchLifecycleState = IndexedLifecycleState;
 
 export type SearchLaunchRow = Readonly<{
   tokenAddress: string;
@@ -34,6 +38,18 @@ function resultRows<T>(result: unknown): T[] {
   return Array.isArray(candidate?.rows) ? candidate.rows : [];
 }
 
+function searchLifecycleStateSql() {
+  return indexedLifecycleStateSql({
+    graduationPhase: sql`s.graduation_phase`,
+    readyToGraduate: sql`s.ready_to_graduate`,
+    graduationFailureReasonHash: sql`s.graduation_failure_reason_hash`,
+    mode: sql`s.mode`,
+    graduationProgressBps: sql`m.graduation_progress_bps`,
+    launchTimestamp: sql`l.launch_timestamp`,
+    initialSupply: sql`l.initial_supply`,
+  });
+}
+
 export class SearchRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -41,6 +57,7 @@ export class SearchRepository {
     const limit = Math.max(1, Math.min(50, Math.trunc(input.limit)));
     const factory = input.factoryAddress.toLowerCase();
     const query = input.query.toLowerCase();
+    const lifecycleState = searchLifecycleStateSql();
 
     if (input.kind === 'ADDRESS') {
       const result = await this.db.execute(sql`
@@ -52,15 +69,7 @@ export class SearchRepository {
           l.launch_timestamp::text AS "launchTimestamp",
           m.market_cap::text AS "marketCap",
           m.holder_count::text AS "holderCount",
-          CASE
-            WHEN s.graduation_phase = 'POOL_CREATED' THEN 'GRADUATED'
-            WHEN s.graduation_phase = 'SWEPT' THEN 'PROCESSING'
-            WHEN s.graduation_phase = 'NOT_GRADUATED'
-              AND s.ready_to_graduate IS TRUE
-              AND s.graduation_failure_reason_hash IS NOT NULL
-              THEN 'GRADUATION_PENDING'
-            ELSE NULL
-          END AS "lifecycleState",
+          ${lifecycleState} AS "lifecycleState",
           l.name,
           l.symbol,
           l.launch_block_number::text AS "launchBlockNumber",
@@ -103,15 +112,7 @@ export class SearchRepository {
         l.launch_timestamp::text AS "launchTimestamp",
         m.market_cap::text AS "marketCap",
         m.holder_count::text AS "holderCount",
-        CASE
-          WHEN s.graduation_phase = 'POOL_CREATED' THEN 'GRADUATED'
-          WHEN s.graduation_phase = 'SWEPT' THEN 'PROCESSING'
-          WHEN s.graduation_phase = 'NOT_GRADUATED'
-            AND s.ready_to_graduate IS TRUE
-            AND s.graduation_failure_reason_hash IS NOT NULL
-            THEN 'GRADUATION_PENDING'
-          ELSE NULL
-        END AS "lifecycleState",
+        ${lifecycleState} AS "lifecycleState",
         l.name,
         l.symbol,
         l.launch_block_number::text AS "launchBlockNumber",

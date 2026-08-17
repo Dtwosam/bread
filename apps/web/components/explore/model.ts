@@ -1,6 +1,7 @@
 import type {
   IndexedFeedItem,
   IndexedGraduationProgressSummary,
+  IndexedLifecycleState,
   IndexedPriceSummary,
 } from '../../../../packages/types/src/index';
 import { BreadApiRequestError } from '../../lib/api/client';
@@ -9,7 +10,7 @@ export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
 export type IndexedFeedCardFields = Pick<
   IndexedFeedItem,
-  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'launchTimestamp' | 'name' | 'symbol' | 'metrics' | 'progress'
+  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'lifecycleState' | 'launchTimestamp' | 'name' | 'symbol' | 'metrics' | 'progress'
 >;
 
 export type SearchIntent =
@@ -27,6 +28,7 @@ export type TokenCardModel = Readonly<{
   volume24h: string | null;
   holderCount: string | null;
   graduatedVenueKind: string | null;
+  lifecycleState: IndexedLifecycleState | null;
   priceChange24h: null;
   progress: Readonly<{
     bps: number;
@@ -51,6 +53,16 @@ export function searchIntent(rawValue: string): SearchIntent {
   }
   if (value.length < 2) return { kind: 'idle' };
   return { kind: 'search', query: value };
+}
+
+export function lifecycleLabel(state: IndexedLifecycleState | null): string | null {
+  if (state === 'GRADUATED') return 'Graduated';
+  if (state === 'GRADUATION_PENDING') return 'Graduation pending';
+  if (state === 'PROCESSING') return 'Graduating';
+  if (state === 'ALMOST_BAKED') return 'Almost Baked';
+  if (state === 'NEW') return 'New';
+  if (state === 'ACTIVE') return 'Active';
+  return null;
 }
 
 export function feedErrorPresentation(error: unknown) {
@@ -92,6 +104,7 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     volume24h: source.metrics?.quoteVolume.h24 ?? null,
     holderCount: source.holderCount,
     graduatedVenueKind: source.graduatedVenueKind,
+    lifecycleState: source.lifecycleState,
     priceChange24h: null,
     progress: progressModel(source.progress),
   };

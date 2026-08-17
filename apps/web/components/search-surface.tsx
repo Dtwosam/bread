@@ -7,7 +7,7 @@ import type { IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button, CreatorAttribution, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
-import { formatUsdcBaseUnits, searchIntent, shortAddress } from './explore/model';
+import { formatUsdcBaseUnits, lifecycleLabel, searchIntent, shortAddress } from './explore/model';
 import { FreshnessBanner } from './freshness-banner';
 
 function SearchGlyph() {
@@ -37,20 +37,13 @@ function formatSearchAge(ageSeconds: string | null): string | null {
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
-function searchLifecycleLabel(state: IndexedSearchResult['lifecycleState']): string | null {
-  if (state === 'PROCESSING') return 'Graduating';
-  if (state === 'GRADUATION_PENDING') return 'Graduation pending';
-  if (state === 'GRADUATED') return 'Graduated';
-  return null;
-}
-
 function searchResultInitial(result: IndexedSearchResult): string {
   return (result.symbol?.trim() || result.name?.trim() || '?').slice(0, 1).toUpperCase();
 }
 
 function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>) {
   const age = formatSearchAge(result.ageSeconds);
-  const lifecycle = searchLifecycleLabel(result.lifecycleState);
+  const lifecycle = lifecycleLabel(result.lifecycleState);
   return (
     <a
       className="bread-search-result"

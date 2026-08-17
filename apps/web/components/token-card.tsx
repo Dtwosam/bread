@@ -3,6 +3,7 @@ import { CreatorAttribution } from '@bread/ui';
 import {
   formatIndexedAge,
   formatUsdcBaseUnits,
+  lifecycleLabel,
   shortAddress,
   toTokenCardModel,
   type IndexedFeedCardFields,
@@ -21,6 +22,7 @@ export function TokenCard({
 }>) {
   const model = toTokenCardModel(item);
   const age = formatIndexedAge(item.launchTimestamp, indexedThroughBlockTimestamp);
+  const lifecycle = lifecycleLabel(model.lifecycleState);
   const progressWidth = model.progress ? `${model.progress.percent}%` : '0%';
   const graduatedVenueLabel = model.graduatedVenueKind
     ? GRADUATED_VENUE_LABELS[model.graduatedVenueKind]
@@ -33,7 +35,7 @@ export function TokenCard({
         <span className="bread-token-card__image" aria-hidden="true">{tokenInitial || '?'}</span>
         <div className="bread-token-card__identity-copy">
           <strong>{model.name}</strong>
-          <span>${model.symbol} · {age}</span>
+          <span>${model.symbol} · {age}{lifecycle ? ` · ${lifecycle}` : ''}</span>
           <code className="bread-technical" title={model.tokenAddress}>
             {shortAddress(model.tokenAddress)}
           </code>
@@ -64,7 +66,7 @@ export function TokenCard({
         </div>
       </dl>
 
-      {model.progress?.state === 'GRADUATED' ? (
+      {model.lifecycleState === 'GRADUATED' ? (
         <div
           className="bread-token-card__graduated bread-token-card__progress-line"
           aria-label="Graduated trading venue"

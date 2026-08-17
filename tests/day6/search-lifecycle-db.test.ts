@@ -160,7 +160,7 @@ describe.skipIf(!RUN_DB)('Day 6 Search canonical lifecycle projection', () => {
     return app;
   }
 
-  it('exposes only source-backed canonical lifecycle states and leaves ambiguous bonding/rescue states unknown', async () => {
+  it('applies ratified lifecycle precedence while preserving unknown recovery phases', async () => {
     const app = await createSearchApp();
     const response = await app.inject({ method: 'GET', url: '/v1/search?q=Bread%20Life&limit=10' });
 
@@ -171,7 +171,7 @@ describe.skipIf(!RUN_DB)('Day 6 Search canonical lifecycle projection', () => {
     expect(states.get(tokenProcessing.toLowerCase())).toBe('PROCESSING');
     expect(states.get(tokenPending.toLowerCase())).toBe('GRADUATION_PENDING');
     expect(states.get(tokenGraduated.toLowerCase())).toBe('GRADUATED');
-    expect(states.get(tokenBonding.toLowerCase())).toBeNull();
+    expect(states.get(tokenBonding.toLowerCase())).toBe('NEW');
     expect(states.get(tokenRescued.toLowerCase())).toBeNull();
 
     await app.close();

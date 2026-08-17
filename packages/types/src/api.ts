@@ -71,6 +71,14 @@ export type IndexedGraduationProgressSummary = Readonly<{
   state: string | null;
 }>;
 
+export type IndexedLifecycleState =
+  | "GRADUATED"
+  | "GRADUATION_PENDING"
+  | "PROCESSING"
+  | "ALMOST_BAKED"
+  | "NEW"
+  | "ACTIVE";
+
 export type IndexedFeedItem = Readonly<{
   tokenAddress: string;
   curveAddress: string;
@@ -103,14 +111,12 @@ export type IndexedFeedItem = Readonly<{
   launchLogIndex: number;
   holderCount: string | null;
   graduatedVenueKind: string | null;
+  lifecycleState: IndexedLifecycleState | null;
   metrics: IndexedTradeMetricsSummary | null;
   progress: IndexedGraduationProgressSummary | null;
 }>;
 
-export type IndexedSearchLifecycleState =
-  | "PROCESSING"
-  | "GRADUATION_PENDING"
-  | "GRADUATED";
+export type IndexedSearchLifecycleState = IndexedLifecycleState;
 
 export type IndexedSearchResult = Readonly<{
   tokenAddress: string;

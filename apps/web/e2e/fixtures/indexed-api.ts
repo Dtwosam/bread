@@ -78,6 +78,13 @@ function feedItem(input: {
   progressBps: string;
   progressState: string;
 }): IndexedFeedItem {
+  const lifecycleState: IndexedFeedItem['lifecycleState'] =
+    input.progressState === 'GRADUATED'
+      ? 'GRADUATED'
+      : input.progressState === 'GRADUATION_PENDING'
+        ? 'GRADUATION_PENDING'
+        : 'ALMOST_BAKED';
+
   return {
     tokenAddress: input.tokenAddress,
     curveAddress: input.curveAddress,
@@ -113,6 +120,7 @@ function feedItem(input: {
     launchLogIndex: 0,
     holderCount: '42',
     graduatedVenueKind: input.progressState === 'GRADUATED' ? 'UNISWAP_V3' : null,
+    lifecycleState,
     metrics: {
       marketCap: '2500000000',
       lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
@@ -216,12 +224,7 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
     marketCap: item.metrics?.marketCap ?? null,
     holderCount: item.holderCount,
-    lifecycleState:
-      item.tokenAddress === PENDING_TOKEN
-        ? 'GRADUATION_PENDING'
-        : item.tokenAddress === GRADUATED_TOKEN
-          ? 'GRADUATED'
-          : null,
+    lifecycleState: item.lifecycleState,
   };
 }
 

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+import { resolveIndexedLifecycleState } from '../../packages/db/src/repositories/lifecycle';
 import { formatIndexedAge } from '../../apps/web/components/explore/model';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -64,13 +65,14 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(explore).toContain('marketCapMaxQuote');
   });
 
-  it('requires one canonical indexed lifecycle authority with exact precedence and source-backed Explore filtering', () => {
+  it('uses one canonical indexed lifecycle authority with exact precedence across Feed, Search and Token', () => {
     const apiTypes = read('../../packages/types/src/api.ts');
     const dbIndex = read('../../packages/db/src/index.ts');
     const searchRepository = read('../../packages/db/src/repositories/search.ts');
     const feedRoute = read('../../apps/api/src/routes/feed.ts');
-    const apiClient = read('../../apps/web/lib/api/client.ts');
-    const explore = read('../../apps/web/components/explore/explore-client.tsx');
+    const tokenRoute = read('../../apps/api/src/routes/token.ts');
+    const model = read('../../apps/web/components/explore/model.ts');
+    const card = read('../../apps/web/components/token-card.tsx');
     const search = read('../../apps/web/components/search-surface.tsx');
 
     expect(apiTypes).toContain('export type IndexedLifecycleState =');
@@ -79,13 +81,27 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     }
     expect(dbIndex).toContain('indexedLifecycleStateSql');
     expect(searchRepository).toContain('indexedLifecycleStateSql');
-    expect(searchRepository.match(/CASE\s+/g) ?? []).toHaveLength(2);
-    expect(feedRoute).toContain('lifecycle?: string;');
-    expect(feedRoute).toContain('lifecycleState:');
-    expect(apiClient).toContain('lifecycle?: FeedLifecycle;');
-    expect(explore).toContain('Lifecycle');
-    expect(explore).toContain("{ value: 'processing', label: 'Processing' }");
-    expect(`${explore}\n${search}`).not.toMatch(/(?:age|progress|percent)[^\n]{0,100}(?:>=|>)[^\n]{0,100}(?:ALMOST_BAKED|NEW)/i);
+    expect(searchRepository).not.toContain("WHEN s.graduation_phase = 'POOL_CREATED'");
+    expect(feedRoute).toContain('lifecycleState: serializeLifecycleState(launch, stateRow, metricRow)');
+    expect(tokenRoute).toContain('lifecycleState: serializeLifecycleState(launch, state, metrics)');
+    expect(model).toContain("if (state === 'PROCESSING') return 'Graduating';");
+    expect(`${card}\n${search}`).not.toMatch(/(?:age|progress|percent)[^\n]{0,100}(?:>=|>)[^\n]{0,100}(?:ALMOST_BAKED|NEW)/i);
+
+    const overlap = {
+      graduationPhase: 'POOL_CREATED',
+      readyToGraduate: true,
+      graduationFailureReasonHash: 'retry',
+      mode: 'ACTIVE',
+      graduationProgressBps: '9999',
+      launchTimestamp: '100',
+      initialSupply: '1000',
+    } as const;
+    expect(resolveIndexedLifecycleState(overlap)).toBe('GRADUATED');
+    expect(resolveIndexedLifecycleState({ ...overlap, graduationPhase: 'NOT_GRADUATED' })).toBe('GRADUATION_PENDING');
+    expect(resolveIndexedLifecycleState({ ...overlap, graduationPhase: 'SWEPT', graduationFailureReasonHash: null })).toBe('PROCESSING');
+    expect(resolveIndexedLifecycleState({ ...overlap, graduationPhase: 'NOT_GRADUATED', readyToGraduate: false, graduationFailureReasonHash: null })).toBe('ALMOST_BAKED');
+    expect(resolveIndexedLifecycleState({ ...overlap, graduationPhase: 'NOT_GRADUATED', readyToGraduate: false, graduationFailureReasonHash: null, graduationProgressBps: null })).toBe('NEW');
+    expect(resolveIndexedLifecycleState({ ...overlap, graduationPhase: null, readyToGraduate: false, graduationFailureReasonHash: null, graduationProgressBps: null, launchTimestamp: null, initialSupply: null })).toBe('ACTIVE');
   });
 
   it('shows every currently source-backed Search token-row field with safe fallbacks', () => {

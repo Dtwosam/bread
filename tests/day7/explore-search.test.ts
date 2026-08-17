@@ -71,6 +71,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
         deployerAddress: CREATOR_ADDRESS,
         holderCount: '42',
         graduatedVenueKind: null,
+        lifecycleState: 'ALMOST_BAKED',
         name: 'Bread',
         symbol: 'BRD',
         metrics: {
@@ -92,6 +93,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
       volume24h: '5000000',
       holderCount: '42',
       graduatedVenueKind: null,
+      lifecycleState: 'ALMOST_BAKED',
       priceChange24h: null,
       progress: { bps: 6250, percent: 62.5, state: 'CURVE_ACTIVE' },
     });
@@ -103,6 +105,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
       deployerAddress: CREATOR_ADDRESS,
       holderCount: '1',
       graduatedVenueKind: null,
+      lifecycleState: 'NEW',
       name: 'Fresh Bread',
       symbol: 'FRESH',
       metrics: null,
@@ -112,6 +115,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(model.holderCount).toBe('1');
     expect(model.price).toBeNull();
     expect(model.marketCap).toBeNull();
+    expect(model.lifecycleState).toBe('NEW');
   });
 
   it('wires canonical holder count independently from trade metrics through feed and token DTOs', () => {
@@ -159,9 +163,9 @@ describe('Day 7 Explore/Search interaction contract', () => {
     expect(source).not.toContain('Indexed price ratio');
   });
 
-  it('replaces the baked bar with canonical venue state for graduated cards', () => {
+  it('replaces the baked bar with canonical lifecycle/venue state for graduated cards', () => {
     const source = readFileSync(new URL('../../apps/web/components/token-card.tsx', import.meta.url), 'utf8');
-    expect(source).toContain("model.progress?.state === 'GRADUATED'");
+    expect(source).toContain("model.lifecycleState === 'GRADUATED'");
     expect(source).toContain('Graduated');
     expect(source).toContain("UNISWAP_V3: 'Uniswap V3'");
     expect(source).toContain('bread-token-card__graduated');

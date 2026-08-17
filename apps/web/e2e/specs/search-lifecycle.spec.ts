@@ -1,7 +1,7 @@
 import { ACTIVE_TOKEN, PENDING_TOKEN } from '../fixtures/constants';
 import { expect, test } from '../fixtures/browser';
 
-test('Search renders only canonical lifecycle states and does not infer ordinary bonding labels', async ({
+test('Search renders exact canonical lifecycle classification without frontend thresholds', async ({
   page,
   rpcState,
 }) => {
@@ -16,14 +16,13 @@ test('Search renders only canonical lifecycle states and does not infer ordinary
   await expect(pending).toBeVisible();
   await expect(pending.getByText('Lifecycle Graduation pending', { exact: true })).toBeVisible();
 
-  const active = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
-  await expect(active).toBeVisible();
-  await expect(active.getByText('Lifecycle —', { exact: true })).toBeVisible();
-  await expect(active.getByText('Lifecycle New', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Lifecycle Active', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Lifecycle Almost Baked', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Lifecycle Graduating', { exact: true })).toHaveCount(0);
-  await expect(active.getByText('Lifecycle Graduated', { exact: true })).toHaveCount(0);
+  const almostBaked = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
+  await expect(almostBaked).toBeVisible();
+  await expect(almostBaked.getByText('Lifecycle Almost Baked', { exact: true })).toBeVisible();
+  await expect(almostBaked.getByText('Lifecycle New', { exact: true })).toHaveCount(0);
+  await expect(almostBaked.getByText('Lifecycle Active', { exact: true })).toHaveCount(0);
+  await expect(almostBaked.getByText('Lifecycle Graduating', { exact: true })).toHaveCount(0);
+  await expect(almostBaked.getByText('Lifecycle Graduated', { exact: true })).toHaveCount(0);
 
   expect(rpcState.requests).toEqual([]);
 });
