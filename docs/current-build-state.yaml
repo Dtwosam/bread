@@ -1,6 +1,6 @@
 schema_version: 1.91
 project: Bread
-updated_at: 2026-08-17T01:16:00Z
+updated_at: 2026-08-17T01:20:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -24,6 +24,14 @@ source_pack:
     - 06H-cross-chat-continuity-build-state-handoff-protocol-v1.4
     - 06I-high-traffic-bot-burst-launch-stampede-scalability
   per_slice_source_rule: "Before each implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or a prior slice's source pass."
+
+legacy_ratifications:
+  day4:
+    pack: v1.4-day4-design
+    day4_production_ratification: RATIFIED
+  day5:
+    pack: v1.5-day5-preflight-consolidated
+    status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
 active_lane: "UI/UX v2.2 automated software closure complete; external/source release gates remain"
