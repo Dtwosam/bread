@@ -237,9 +237,6 @@ export function registerFeedRoute(
           },
         });
       }
-      // Cached feed is intentionally broadly serviceable. If Redis-backed
-      // limiting is unavailable, the bounded DB gate + cache BYPASS path still
-      // protects origin work instead of turning cache loss into a 500 storm.
     }
 
     const load = async () => {
@@ -445,6 +442,7 @@ export function registerFeedRoute(
           return {
             ...serializeLaunch(launch),
             holderCount: metricRow?.holderCount?.toString(10) ?? null,
+            marketCap: metricRow?.marketCap?.toString(10) ?? null,
             graduatedVenueKind: stateRow?.graduatedVenueKind ?? null,
             metrics: serializeTradeMetrics(metricRow),
             progress: serializeGraduationProgress(metricRow),
