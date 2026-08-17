@@ -7,54 +7,24 @@ export const breadQueryKeys = {
   all: ['bread'] as const,
 
   feed(input: FeedParams = {}) {
-    const prefix = ['bread', 'feed', input.view ?? 'new', input.age ?? 'any'] as const;
-    if (input.volumeMinQuote !== undefined || input.volumeMaxQuote !== undefined) {
-      return [
-        ...prefix,
-        input.holdersMin ?? '',
-        input.holdersMax ?? '',
-        input.progressMinBps ?? '',
-        input.progressMaxBps ?? '',
-        input.creator === undefined ? '' : normalizeAddress(input.creator),
-        input.volumeMinQuote ?? '',
-        input.volumeMaxQuote ?? '',
-        input.limit ?? 25,
-        normalizeCursor(input.cursor),
-      ] as const;
-    }
-    if (input.creator !== undefined) {
-      return [
-        ...prefix,
-        input.holdersMin ?? '',
-        input.holdersMax ?? '',
-        input.progressMinBps ?? '',
-        input.progressMaxBps ?? '',
-        normalizeAddress(input.creator),
-        input.limit ?? 25,
-        normalizeCursor(input.cursor),
-      ] as const;
-    }
-    if (input.progressMinBps !== undefined || input.progressMaxBps !== undefined) {
-      return [
-        ...prefix,
-        input.holdersMin ?? '',
-        input.holdersMax ?? '',
-        input.progressMinBps ?? '',
-        input.progressMaxBps ?? '',
-        input.limit ?? 25,
-        normalizeCursor(input.cursor),
-      ] as const;
-    }
-    if (input.holdersMin !== undefined || input.holdersMax !== undefined) {
-      return [
-        ...prefix,
-        input.holdersMin ?? '',
-        input.holdersMax ?? '',
-        input.limit ?? 25,
-        normalizeCursor(input.cursor),
-      ] as const;
-    }
-    return [...prefix, input.limit ?? 25, normalizeCursor(input.cursor)] as const;
+    return [
+      'bread',
+      'feed',
+      input.view ?? 'new',
+      input.sort ?? 'default',
+      input.age ?? 'any',
+      input.holdersMin ?? '',
+      input.holdersMax ?? '',
+      input.progressMinBps ?? '',
+      input.progressMaxBps ?? '',
+      input.creator === undefined ? '' : normalizeAddress(input.creator),
+      input.volumeMinQuote ?? '',
+      input.volumeMaxQuote ?? '',
+      input.marketCapMinQuote ?? '',
+      input.marketCapMaxQuote ?? '',
+      input.limit ?? 25,
+      normalizeCursor(input.cursor),
+    ] as const;
   },
 
   search(input: SearchParams) {

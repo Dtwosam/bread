@@ -90,16 +90,6 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
     try { marketCapBounds = parseExploreMarketCapBounds(query.marketCapMinQuote, query.marketCapMaxQuote); }
     catch { return reply.code(400).send({ error: { code: "INVALID_MARKET_CAP_FILTER", message: "Market-cap filter is invalid.", requestId: request.id } }); }
 
-    if (marketCapBounds !== undefined && sort === undefined) {
-      return reply.code(400).send({
-        error: {
-          code: "MARKET_CAP_FILTER_REQUIRES_INDEXED_SORT_PATH",
-          message: "Market-cap filtering is not available on canonical feed order yet.",
-          requestId: request.id,
-        },
-      });
-    }
-
     let creatorAddress: string | undefined;
     if (query.creator !== undefined) {
       try { creatorAddress = canonicalizeProtocolAddress(query.creator); }
@@ -153,7 +143,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
           ? await deps.freshness()
           : undefined;
       const ageBounds = ageFilter === undefined ? undefined : resolveExploreAgeBounds(feedMeta!.indexedThroughBlockTimestamp, ageFilter);
-      const hasProjectionFilters = ageBounds !== undefined || holderBounds !== undefined || progressBounds !== undefined || creatorAddress !== undefined || volumeBounds !== undefined;
+      const hasProjectionFilters = ageBounds !== undefined || holderBounds !== undefined || progressBounds !== undefined || creatorAddress !== undefined || volumeBounds !== undefined || marketCapBounds !== undefined;
 
       const fetched = sort !== undefined
         ? await deps.explicitSortRepository.listExplicitSortedLaunches({
@@ -174,14 +164,14 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
           })
         : view === "graduated"
           ? hasProjectionFilters
-            ? await deps.exploreAgeRepository.listGraduatedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, graduatedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp)
+            ? await deps.exploreAgeRepository.listGraduatedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, graduatedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp, marketCapBounds)
             : await deps.repository.listGraduatedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, graduatedCursor)
           : view === "trending"
-            ? await deps.trendingRepository.listTrendingLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, trendingCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds)
+            ? await deps.trendingRepository.listTrendingLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, trendingCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, marketCapBounds)
             : view === "graduating"
-              ? await deps.almostBakedRepository.listAlmostBakedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, almostBakedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds)
+              ? await deps.almostBakedRepository.listAlmostBakedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, almostBakedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, marketCapBounds)
               : hasProjectionFilters
-                ? await deps.exploreAgeRepository.listNewLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, newCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp)
+                ? await deps.exploreAgeRepository.listNewLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, newCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp, marketCapBounds)
                 : await deps.repository.listNewLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, newCursor);
 
       const hasMore = fetched.length > parsedLimit;

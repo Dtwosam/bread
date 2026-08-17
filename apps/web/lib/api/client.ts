@@ -12,6 +12,7 @@ const MAX_CURSOR_LENGTH = 512;
 const MAX_SEARCH_TERM_LENGTH = 256;
 const FEED_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
 const FEED_AGES = new Set(['lt5m', 'lt1h', '1h-24h', '1d-7d']);
+const FEED_SORTS = new Set(['newest', 'market-cap', 'volume-24h', 'holders', 'baked-progress']);
 const ADDRESS_LIKE = /^0x/i;
 const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
 const DECIMAL_INTEGER = /^\d+$/;
@@ -21,9 +22,11 @@ type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Respo
 
 export type FeedView = 'new' | 'trending' | 'graduating' | 'graduated';
 export type FeedAge = 'lt5m' | 'lt1h' | '1h-24h' | '1d-7d';
+export type FeedSort = 'newest' | 'market-cap' | 'volume-24h' | 'holders' | 'baked-progress';
 
 export type FeedParams = Readonly<{
   view?: FeedView;
+  sort?: FeedSort;
   age?: FeedAge;
   holdersMin?: string;
   holdersMax?: string;
@@ -32,6 +35,8 @@ export type FeedParams = Readonly<{
   creator?: string;
   volumeMinQuote?: string;
   volumeMaxQuote?: string;
+  marketCapMinQuote?: string;
+  marketCapMaxQuote?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -126,6 +131,9 @@ function assertFeedParams(params: FeedParams): void {
   if (params.view !== undefined && !FEED_VIEWS.has(params.view)) {
     throw new RangeError('feed view is not supported.');
   }
+  if (params.sort !== undefined && !FEED_SORTS.has(params.sort)) {
+    throw new RangeError('feed sort is not supported.');
+  }
   if (params.age !== undefined && !FEED_AGES.has(params.age)) {
     throw new RangeError('feed age is not supported.');
   }
@@ -138,6 +146,7 @@ function assertFeedParams(params: FeedParams): void {
     throw new RangeError('creator must be a valid address.');
   }
   assertExactQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote, 'volumeMinQuote', 'volumeMaxQuote');
+  assertExactQuoteBounds(params.marketCapMinQuote, params.marketCapMaxQuote, 'marketCapMinQuote', 'marketCapMaxQuote');
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
 }
@@ -233,6 +242,7 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       assertFeedParams(input);
       const params = new URLSearchParams();
       addOptional(params, 'view', input.view);
+      addOptional(params, 'sort', input.sort);
       addOptional(params, 'age', input.age);
       addOptional(params, 'holdersMin', input.holdersMin);
       addOptional(params, 'holdersMax', input.holdersMax);
@@ -241,6 +251,8 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       addOptional(params, 'creator', input.creator);
       addOptional(params, 'volumeMinQuote', input.volumeMinQuote);
       addOptional(params, 'volumeMaxQuote', input.volumeMaxQuote);
+      addOptional(params, 'marketCapMinQuote', input.marketCapMinQuote);
+      addOptional(params, 'marketCapMaxQuote', input.marketCapMaxQuote);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);

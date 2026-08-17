@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
+import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
 import { decimalIntegerToBigInt } from './read.js';
@@ -81,26 +82,29 @@ function launchAgeClauses(bounds: ExploreAgeBounds | undefined) {
 
 function holderClauses(bounds: ExploreHolderBounds | undefined) {
   if (!bounds) {
-    return {
-      joinClause: sql``,
-      knownClause: sql``,
-      minClause: sql``,
-      maxClause: sql``,
-    } as const;
+    return { joinClause: sql``, knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
   }
   return {
     joinClause: sql`INNER JOIN token_metrics holder_metric
       ON holder_metric.chain_id = launch_scope.chain_id
      AND holder_metric.token_address = launch_scope.token_address`,
     knownClause: sql`AND holder_metric.holder_count IS NOT NULL`,
-    minClause:
-      bounds.min === undefined
-        ? sql``
-        : sql`AND holder_metric.holder_count >= CAST(${bounds.min} AS numeric)`,
-    maxClause:
-      bounds.max === undefined
-        ? sql``
-        : sql`AND holder_metric.holder_count <= CAST(${bounds.max} AS numeric)`,
+    minClause: bounds.min === undefined ? sql`` : sql`AND holder_metric.holder_count >= CAST(${bounds.min} AS numeric)`,
+    maxClause: bounds.max === undefined ? sql`` : sql`AND holder_metric.holder_count <= CAST(${bounds.max} AS numeric)`,
+  } as const;
+}
+
+function marketCapClauses(bounds: ExploreMarketCapBounds | undefined) {
+  if (!bounds) {
+    return { joinClause: sql``, knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
+  }
+  return {
+    joinClause: sql`INNER JOIN token_metrics market_cap_metric
+      ON market_cap_metric.chain_id = launch_scope.chain_id
+     AND market_cap_metric.token_address = launch_scope.token_address`,
+    knownClause: sql`AND market_cap_metric.market_cap IS NOT NULL`,
+    minClause: bounds.minQuote === undefined ? sql`` : sql`AND market_cap_metric.market_cap >= CAST(${bounds.minQuote} AS numeric)`,
+    maxClause: bounds.maxQuote === undefined ? sql`` : sql`AND market_cap_metric.market_cap <= CAST(${bounds.maxQuote} AS numeric)`,
   } as const;
 }
 
@@ -123,28 +127,18 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
       ON progress_state.chain_id = launch_scope.chain_id
      AND progress_state.token_address = launch_scope.token_address`,
     knownClause: sql`AND progress_metric.graduation_progress_bps IS NOT NULL`,
-    minClause:
-      bounds.minBps === undefined
-        ? sql``
-        : sql`AND progress_metric.graduation_progress_bps >= CAST(${bounds.minBps} AS numeric)`,
-    maxClause:
-      bounds.maxBps === undefined
-        ? sql``
-        : sql`AND progress_metric.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
+    minClause: bounds.minBps === undefined ? sql`` : sql`AND progress_metric.graduation_progress_bps >= CAST(${bounds.minBps} AS numeric)`,
+    maxClause: bounds.maxBps === undefined ? sql`` : sql`AND progress_metric.graduation_progress_bps <= CAST(${bounds.maxBps} AS numeric)`,
     scopeClause: sql`AND COALESCE(progress_state.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'`,
   } as const;
 }
 
 function creatorClause(creatorAddress: string | undefined) {
-  return creatorAddress === undefined
-    ? sql``
-    : sql`AND launch_scope.deployer_address = ${creatorAddress}`;
+  return creatorAddress === undefined ? sql`` : sql`AND launch_scope.deployer_address = ${creatorAddress}`;
 }
 
 function volumeClauses(bounds: ExploreVolumeBounds | undefined, headTimestamp: bigint) {
-  if (!bounds) {
-    return { joinClause: sql``, minClause: sql``, maxClause: sql`` } as const;
-  }
+  if (!bounds) return { joinClause: sql``, minClause: sql``, maxClause: sql`` } as const;
   const cutoffTimestamp = headTimestamp > 86_400n ? headTimestamp - 86_400n : 0n;
   return {
     joinClause: sql`LEFT JOIN LATERAL (
@@ -157,14 +151,8 @@ function volumeClauses(bounds: ExploreVolumeBounds | undefined, headTimestamp: b
         AND volume_trade.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)
         AND volume_trade.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
     ) volume24 ON TRUE`,
-    minClause:
-      bounds.minQuote === undefined
-        ? sql``
-        : sql`AND COALESCE(volume24.quote_volume_24h, 0) >= CAST(${bounds.minQuote} AS numeric)`,
-    maxClause:
-      bounds.maxQuote === undefined
-        ? sql``
-        : sql`AND COALESCE(volume24.quote_volume_24h, 0) <= CAST(${bounds.maxQuote} AS numeric)`,
+    minClause: bounds.minQuote === undefined ? sql`` : sql`AND COALESCE(volume24.quote_volume_24h, 0) >= CAST(${bounds.minQuote} AS numeric)`,
+    maxClause: bounds.maxQuote === undefined ? sql`` : sql`AND COALESCE(volume24.quote_volume_24h, 0) <= CAST(${bounds.maxQuote} AS numeric)`,
   } as const;
 }
 
@@ -183,6 +171,7 @@ export class TrendingRepository {
     progressBounds?: ExploreProgressBounds,
     creatorAddress?: string,
     volumeBounds?: ExploreVolumeBounds,
+    marketCapBounds?: ExploreMarketCapBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -190,6 +179,7 @@ export class TrendingRepository {
     const canonicalFactory = factoryAddress.toLowerCase();
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const holder = holderClauses(holderBounds);
+    const marketCap = marketCapClauses(marketCapBounds);
     const progress = progressClauses(progressBounds);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volumeBounds, headTimestamp);
@@ -221,17 +211,13 @@ export class TrendingRepository {
 
     const result = await this.db.execute(sql`
       WITH eligible AS (
-        SELECT
-          t.token_address,
-          t.quote_amount,
-          t.trader_address,
-          t.block_number,
-          t.log_index
+        SELECT t.token_address, t.quote_amount, t.trader_address, t.block_number, t.log_index
         FROM trades t
         INNER JOIN launches launch_scope
           ON launch_scope.chain_id = t.chain_id
          AND launch_scope.token_address = t.token_address
         ${holder.joinClause}
+        ${marketCap.joinClause}
         ${progress.metricJoinClause}
         ${progress.stateJoinClause}
         WHERE t.chain_id = ${chainId}
@@ -244,6 +230,9 @@ export class TrendingRepository {
           ${holder.knownClause}
           ${holder.minClause}
           ${holder.maxClause}
+          ${marketCap.knownClause}
+          ${marketCap.minClause}
+          ${marketCap.maxClause}
           ${progress.knownClause}
           ${progress.minClause}
           ${progress.maxClause}
@@ -254,69 +243,43 @@ export class TrendingRepository {
           AND t.block_timestamp <= CAST(${headTimestamp.toString(10)} AS numeric)
       ),
       metrics AS (
-        SELECT
-          token_address,
-          SUM(quote_amount) AS quote_volume_1h,
+        SELECT token_address, SUM(quote_amount) AS quote_volume_1h,
           COUNT(DISTINCT trader_address) AS unique_traders_1h,
           COUNT(*) AS trade_count_1h
         FROM eligible
         GROUP BY token_address
       ),
       latest AS (
-        SELECT DISTINCT ON (token_address)
-          token_address,
+        SELECT DISTINCT ON (token_address) token_address,
           block_number AS latest_activity_block_number,
           log_index AS latest_activity_log_index
         FROM eligible
         ORDER BY token_address, block_number DESC, log_index DESC
       ),
       ranked AS (
-        SELECT
-          metrics.token_address,
-          metrics.quote_volume_1h,
-          metrics.unique_traders_1h,
-          metrics.trade_count_1h,
-          latest.latest_activity_block_number,
-          latest.latest_activity_log_index
+        SELECT metrics.token_address, metrics.quote_volume_1h,
+          metrics.unique_traders_1h, metrics.trade_count_1h,
+          latest.latest_activity_block_number, latest.latest_activity_log_index
         FROM metrics
         INNER JOIN latest USING (token_address)
       )
       SELECT
-        l.chain_id AS "chainId",
-        l.token_address AS "tokenAddress",
-        l.curve_address AS "curveAddress",
-        l.stack_version AS "stackVersion",
-        l.factory_address AS "factoryAddress",
-        l.deployer_address AS "deployerAddress",
-        l.creator_fee_recipient AS "creatorFeeRecipient",
-        l.creator_tax_bps::text AS "creatorTaxBps",
-        l.economics_digest AS "economicsDigest",
-        l.config_version::text AS "configVersion",
-        l.launch_timestamp::text AS "launchTimestamp",
-        l.name,
-        l.symbol,
-        l.metadata,
-        l.quote_asset AS "quoteAsset",
-        l.initial_supply::text AS "initialSupply",
-        l.phantom_quote::text AS "phantomQuote",
-        l.graduation_threshold::text AS "graduationThreshold",
-        l.protocol_fee_recipient AS "protocolFeeRecipient",
-        l.trade_fee_bps::text AS "tradeFeeBps",
-        l.protocol_fee_share_bps::text AS "protocolFeeShareBps",
-        l.max_creator_tax_bps::text AS "maxCreatorTaxBps",
-        l.graduation_coordinator AS "graduationCoordinator",
-        l.graduation_adapter AS "graduationAdapter",
-        l.graduation_adapter_family AS "graduationAdapterFamily",
-        l.graduation_config_hash AS "graduationConfigHash",
-        l.reserved_tokens_baseline::text AS "reservedTokensBaseline",
-        l.launch_block_number::text AS "launchBlockNumber",
-        l.launch_transaction_hash AS "launchTransactionHash",
-        l.launch_log_index AS "launchLogIndex",
-        l.created_at AS "createdAt",
-        r.quote_volume_1h::text AS "quoteVolume1h",
-        r.unique_traders_1h::text AS "uniqueTraders1h",
-        r.trade_count_1h::text AS "tradeCount1h",
-        r.latest_activity_block_number::text AS "latestActivityBlockNumber",
+        l.chain_id AS "chainId", l.token_address AS "tokenAddress", l.curve_address AS "curveAddress",
+        l.stack_version AS "stackVersion", l.factory_address AS "factoryAddress",
+        l.deployer_address AS "deployerAddress", l.creator_fee_recipient AS "creatorFeeRecipient",
+        l.creator_tax_bps::text AS "creatorTaxBps", l.economics_digest AS "economicsDigest",
+        l.config_version::text AS "configVersion", l.launch_timestamp::text AS "launchTimestamp",
+        l.name, l.symbol, l.metadata, l.quote_asset AS "quoteAsset",
+        l.initial_supply::text AS "initialSupply", l.phantom_quote::text AS "phantomQuote",
+        l.graduation_threshold::text AS "graduationThreshold", l.protocol_fee_recipient AS "protocolFeeRecipient",
+        l.trade_fee_bps::text AS "tradeFeeBps", l.protocol_fee_share_bps::text AS "protocolFeeShareBps",
+        l.max_creator_tax_bps::text AS "maxCreatorTaxBps", l.graduation_coordinator AS "graduationCoordinator",
+        l.graduation_adapter AS "graduationAdapter", l.graduation_adapter_family AS "graduationAdapterFamily",
+        l.graduation_config_hash AS "graduationConfigHash", l.reserved_tokens_baseline::text AS "reservedTokensBaseline",
+        l.launch_block_number::text AS "launchBlockNumber", l.launch_transaction_hash AS "launchTransactionHash",
+        l.launch_log_index AS "launchLogIndex", l.created_at AS "createdAt",
+        r.quote_volume_1h::text AS "quoteVolume1h", r.unique_traders_1h::text AS "uniqueTraders1h",
+        r.trade_count_1h::text AS "tradeCount1h", r.latest_activity_block_number::text AS "latestActivityBlockNumber",
         r.latest_activity_log_index AS "latestActivityLogIndex"
       FROM ranked r
       INNER JOIN launches l
@@ -329,13 +292,8 @@ export class TrendingRepository {
         ${volume24.minClause}
         ${volume24.maxClause}
         ${cursorClause}
-      ORDER BY
-        r.quote_volume_1h DESC,
-        r.unique_traders_1h DESC,
-        r.trade_count_1h DESC,
-        r.latest_activity_block_number DESC,
-        r.latest_activity_log_index DESC,
-        r.token_address ASC
+      ORDER BY r.quote_volume_1h DESC, r.unique_traders_1h DESC, r.trade_count_1h DESC,
+        r.latest_activity_block_number DESC, r.latest_activity_log_index DESC, r.token_address ASC
       LIMIT ${boundedLimit}
     `);
 
