@@ -176,4 +176,49 @@ describe.skipIf(!RUN_DB)('Day 6 Search canonical lifecycle projection', () => {
 
     await app.close();
   });
+
+  it('filters Processing before pagination while keeping retry-pending rows in the group', async () => {
+    const dbModule = await import('../../packages/db/src/index.ts');
+    const repository = new dbModule.ExploreAgeReadRepository(dbModule.createBreadDb(pool));
+
+    const first = await repository.listNewLaunches(
+      context.chainId,
+      context.stackVersion,
+      context.factoryAddress,
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'processing',
+    );
+    expect(first.map((row) => row.tokenAddress)).toEqual([tokenProcessing.toLowerCase()]);
+
+    const firstRow = first[0]!;
+    const second = await repository.listNewLaunches(
+      context.chainId,
+      context.stackVersion,
+      context.factoryAddress,
+      1,
+      {
+        launchBlockNumber: firstRow.launchBlockNumber.toString(10),
+        launchTimestamp: firstRow.launchTimestamp!.toString(10),
+        launchLogIndex: firstRow.launchLogIndex,
+        tokenAddress: firstRow.tokenAddress,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'processing',
+    );
+    expect(second.map((row) => row.tokenAddress)).toEqual([tokenPending.toLowerCase()]);
+  });
 });

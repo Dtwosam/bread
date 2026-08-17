@@ -6,6 +6,7 @@ import type { ExploreHolderBounds } from './explore-holders.js';
 import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
+import { indexedLifecycleFilterSql, type IndexedLifecycleFilter } from './lifecycle.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type TrendingLaunchCursorKey = Readonly<{
@@ -133,6 +134,29 @@ function progressClauses(bounds: ExploreProgressBounds | undefined) {
   } as const;
 }
 
+function lifecycleClauses(filter: IndexedLifecycleFilter | undefined) {
+  if (filter === undefined) {
+    return { metricJoinClause: sql``, stateJoinClause: sql``, filterClause: sql`` } as const;
+  }
+  return {
+    metricJoinClause: sql`LEFT JOIN token_metrics lifecycle_metric
+      ON lifecycle_metric.chain_id = launch_scope.chain_id
+     AND lifecycle_metric.token_address = launch_scope.token_address`,
+    stateJoinClause: sql`LEFT JOIN launch_state lifecycle_state
+      ON lifecycle_state.chain_id = launch_scope.chain_id
+     AND lifecycle_state.token_address = launch_scope.token_address`,
+    filterClause: indexedLifecycleFilterSql({
+      graduationPhase: sql`lifecycle_state.graduation_phase`,
+      readyToGraduate: sql`lifecycle_state.ready_to_graduate`,
+      graduationFailureReasonHash: sql`lifecycle_state.graduation_failure_reason_hash`,
+      mode: sql`lifecycle_state.mode`,
+      graduationProgressBps: sql`lifecycle_metric.graduation_progress_bps`,
+      launchTimestamp: sql`launch_scope.launch_timestamp`,
+      initialSupply: sql`launch_scope.initial_supply`,
+    }, filter),
+  } as const;
+}
+
 function creatorClause(creatorAddress: string | undefined) {
   return creatorAddress === undefined ? sql`` : sql`AND launch_scope.deployer_address = ${creatorAddress}`;
 }
@@ -172,6 +196,7 @@ export class TrendingRepository {
     creatorAddress?: string,
     volumeBounds?: ExploreVolumeBounds,
     marketCapBounds?: ExploreMarketCapBounds,
+    lifecycleFilter?: IndexedLifecycleFilter,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -181,6 +206,7 @@ export class TrendingRepository {
     const holder = holderClauses(holderBounds);
     const marketCap = marketCapClauses(marketCapBounds);
     const progress = progressClauses(progressBounds);
+    const lifecycle = lifecycleClauses(lifecycleFilter);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volumeBounds, headTimestamp);
     const cursorClause = cursor
@@ -220,6 +246,8 @@ export class TrendingRepository {
         ${marketCap.joinClause}
         ${progress.metricJoinClause}
         ${progress.stateJoinClause}
+        ${lifecycle.metricJoinClause}
+        ${lifecycle.stateJoinClause}
         WHERE t.chain_id = ${chainId}
           AND t.stack_version = ${stackVersion}
           AND launch_scope.stack_version = ${stackVersion}
@@ -237,6 +265,7 @@ export class TrendingRepository {
           ${progress.minClause}
           ${progress.maxClause}
           ${progress.scopeClause}
+          ${lifecycle.filterClause}
           ${creator}
           AND t.block_timestamp IS NOT NULL
           AND t.block_timestamp >= CAST(${cutoffTimestamp.toString(10)} AS numeric)

@@ -8,6 +8,33 @@ export type IndexedLifecycleState =
   | 'NEW'
   | 'ACTIVE';
 
+export const INDEXED_LIFECYCLE_FILTERS = [
+  'new',
+  'active',
+  'almost-baked',
+  'processing',
+  'graduated',
+] as const;
+
+export type IndexedLifecycleFilter = (typeof INDEXED_LIFECYCLE_FILTERS)[number];
+
+export function isIndexedLifecycleFilter(value: string): value is IndexedLifecycleFilter {
+  return (INDEXED_LIFECYCLE_FILTERS as readonly string[]).includes(value);
+}
+
+export function matchesIndexedLifecycleFilter(
+  state: IndexedLifecycleState | null,
+  filter: IndexedLifecycleFilter,
+): boolean {
+  if (filter === 'processing') {
+    return state === 'PROCESSING' || state === 'GRADUATION_PENDING';
+  }
+  if (filter === 'graduated') return state === 'GRADUATED';
+  if (filter === 'almost-baked') return state === 'ALMOST_BAKED';
+  if (filter === 'new') return state === 'NEW';
+  return state === 'ACTIVE';
+}
+
 export type IndexedLifecycleInput = Readonly<{
   graduationPhase: string | null | undefined;
   readyToGraduate: boolean | null | undefined;
@@ -67,4 +94,24 @@ export function indexedLifecycleStateSql(fields: IndexedLifecycleSqlFields): SQL
     WHEN ${fields.mode} = 'ACTIVE' THEN 'ACTIVE'
     ELSE NULL
   END`;
+}
+
+export function indexedLifecycleFilterSql(
+  fields: IndexedLifecycleSqlFields,
+  filter: IndexedLifecycleFilter | undefined,
+): SQL {
+  if (filter === undefined) return sql``;
+  const state = indexedLifecycleStateSql(fields);
+  if (filter === 'processing') {
+    return sql`AND (${state}) IN ('PROCESSING', 'GRADUATION_PENDING')`;
+  }
+  const target: IndexedLifecycleState =
+    filter === 'graduated'
+      ? 'GRADUATED'
+      : filter === 'almost-baked'
+        ? 'ALMOST_BAKED'
+        : filter === 'new'
+          ? 'NEW'
+          : 'ACTIVE';
+  return sql`AND (${state}) = ${target}`;
 }

@@ -1,7 +1,7 @@
 import { ACTIVE_TOKEN } from '../fixtures/constants';
 import { expect, test } from '../fixtures/browser';
 
-test('Search shows backend-derived indexed age without raw RPC or lifecycle inference', async ({
+test('Search shows backend-derived indexed age and canonical lifecycle without frontend inference', async ({
   page,
   indexedApiState,
   rpcState,
@@ -16,7 +16,7 @@ test('Search shows backend-derived indexed age without raw RPC or lifecycle infe
   const result = dialog.locator(`a[href="/token/${ACTIVE_TOKEN}"]`);
   await expect(result).toBeVisible();
   await expect(result.getByText('Age 2m', { exact: true })).toBeVisible();
-  await expect(result.getByText(/New|Active|Almost Baked|Processing|Graduated/, { exact: true })).toHaveCount(0);
+  await expect(result.getByText('Lifecycle Almost Baked', { exact: true })).toBeVisible();
 
   expect(
     indexedApiState.requests.some((request) => {

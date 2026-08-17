@@ -6,6 +6,7 @@ import type { ExploreHolderBounds } from './explore-holders.js';
 import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
+import { indexedLifecycleFilterSql, type IndexedLifecycleFilter } from './lifecycle.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export const EXPLICIT_FEED_SORTS = [
@@ -229,6 +230,7 @@ export class ExplicitSortRepository {
     creatorAddress?: string;
     volumeBounds?: ExploreVolumeBounds;
     marketCapBounds?: ExploreMarketCapBounds;
+    lifecycleFilter?: IndexedLifecycleFilter;
   }>) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(input.limit)));
     const head = decimalIntegerToBigInt(input.indexedHeadTimestamp);
@@ -240,6 +242,15 @@ export class ExplicitSortRepository {
     const volume = volumeClauses(input.volumeBounds);
     const creator = input.creatorAddress === undefined ? sql`` : sql`AND l.deployer_address = ${input.creatorAddress}`;
     const membership = viewClause(input.view, cutoff.toString(10), head.toString(10));
+    const lifecycle = indexedLifecycleFilterSql({
+      graduationPhase: sql`s.graduation_phase`,
+      readyToGraduate: sql`s.ready_to_graduate`,
+      graduationFailureReasonHash: sql`s.graduation_failure_reason_hash`,
+      mode: sql`s.mode`,
+      graduationProgressBps: sql`m.graduation_progress_bps`,
+      launchTimestamp: sql`l.launch_timestamp`,
+      initialSupply: sql`l.initial_supply`,
+    }, input.lifecycleFilter);
     const after = cursorClause(input.cursor);
     const sortValue = sortExpression(input.sort);
 
@@ -280,6 +291,7 @@ export class ExplicitSortRepository {
           ${volume.minClause}
           ${volume.maxClause}
           ${creator}
+          ${lifecycle}
       )
       SELECT c.*, c.sort_value::text AS "explicitSortValue"
       FROM candidates c

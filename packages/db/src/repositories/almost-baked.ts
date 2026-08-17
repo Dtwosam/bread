@@ -6,6 +6,7 @@ import type { ExploreHolderBounds } from './explore-holders.js';
 import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
+import { indexedLifecycleFilterSql, type IndexedLifecycleFilter } from './lifecycle.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AlmostBakedLaunchCursorKey = Readonly<{
@@ -139,6 +140,7 @@ export class AlmostBakedRepository {
     creatorAddress?: string,
     volumeBounds?: ExploreVolumeBounds,
     marketCapBounds?: ExploreMarketCapBounds,
+    lifecycleFilter?: IndexedLifecycleFilter,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -150,6 +152,15 @@ export class AlmostBakedRepository {
     const progress = progressClauses(progressBounds);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volumeBounds, headTimestamp);
+    const lifecycle = indexedLifecycleFilterSql({
+      graduationPhase: sql`s.graduation_phase`,
+      readyToGraduate: sql`s.ready_to_graduate`,
+      graduationFailureReasonHash: sql`s.graduation_failure_reason_hash`,
+      mode: sql`s.mode`,
+      graduationProgressBps: sql`m.graduation_progress_bps`,
+      launchTimestamp: sql`l.launch_timestamp`,
+      initialSupply: sql`l.initial_supply`,
+    }, lifecycleFilter);
     const cursorClause = cursor
       ? sql`AND (
           r.graduation_progress_bps < CAST(${cursor.graduationProgressBps} AS numeric)
@@ -209,6 +220,7 @@ export class AlmostBakedRepository {
           ${progress.maxClause}
           ${creator}
           AND COALESCE(s.graduation_phase, 'NOT_GRADUATED') <> 'POOL_CREATED'
+          ${lifecycle}
       )
       SELECT
         l.chain_id AS "chainId", l.token_address AS "tokenAddress", l.curve_address AS "curveAddress",

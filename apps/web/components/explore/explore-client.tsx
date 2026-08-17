@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Button, EmptyState, ErrorState, Skeleton } from '@bread/ui';
 import { FreshnessBanner } from '../freshness-banner';
 import { TokenCard } from '../token-card';
-import { createBreadApiClient, type FeedAge, type FeedSort } from '../../lib/api/client';
+import { createBreadApiClient, type FeedAge, type FeedLifecycle, type FeedSort } from '../../lib/api/client';
 import { breadQueryKeys } from '../../lib/api/queries';
 import styles from './explore-filters.module.css';
 import {
@@ -32,6 +32,13 @@ const SORT_OPTIONS: readonly Readonly<{ value: FeedSort; label: string }>[] = [
   { value: 'holders', label: 'Holders ↓' },
   { value: 'baked-progress', label: 'Baked Progress ↓' },
 ];
+const LIFECYCLE_OPTIONS: readonly Readonly<{ value: FeedLifecycle; label: string }>[] = [
+  { value: 'new', label: 'New' },
+  { value: 'active', label: 'Active' },
+  { value: 'almost-baked', label: 'Almost Baked' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'graduated', label: 'Graduated' },
+];
 const AGE_OPTIONS: readonly Readonly<{ value: FeedAge; label: string }>[] = [
   { value: 'lt5m', label: '<5m' },
   { value: 'lt1h', label: '<1h' },
@@ -45,6 +52,7 @@ const QUOTE_BASE_UNITS = /^\d{1,78}$/;
 const USDC_INPUT = /^\d+(?:\.\d{1,6})?$/;
 
 type ExploreFilters = Readonly<{
+  lifecycle?: FeedLifecycle;
   age?: FeedAge;
   holdersMin?: string;
   holdersMax?: string;
@@ -63,6 +71,10 @@ function resolveFeedAge(value: string | null): FeedAge | undefined {
 
 function resolveFeedSort(value: string | null): FeedSort | undefined {
   return SORT_OPTIONS.find((option) => option.value === value)?.value;
+}
+
+function resolveFeedLifecycle(value: string | null): FeedLifecycle | undefined {
+  return LIFECYCLE_OPTIONS.find((option) => option.value === value)?.value;
 }
 
 function resolveProgressBps(value: string | null): string | undefined {
@@ -110,6 +122,10 @@ function quoteBaseUnitsToUsdc(value: string | undefined): string {
 
 function ageLabel(age: FeedAge): string {
   return AGE_OPTIONS.find((option) => option.value === age)?.label ?? age;
+}
+
+function lifecycleFilterLabel(lifecycle: FeedLifecycle): string {
+  return LIFECYCLE_OPTIONS.find((option) => option.value === lifecycle)?.label ?? lifecycle;
 }
 
 function holderLabel(min: string | undefined, max: string | undefined): string {
@@ -163,6 +179,7 @@ function exploreHref(view: ExploreView, filters: ExploreFilters, sort?: FeedSort
   const params = new URLSearchParams();
   if (view !== 'new') params.set('view', view);
   if (sort !== undefined) params.set('sort', sort);
+  if (filters.lifecycle !== undefined) params.set('lifecycle', filters.lifecycle);
   if (filters.age !== undefined) params.set('age', filters.age);
   if (filters.holdersMin !== undefined) params.set('holdersMin', filters.holdersMin);
   if (filters.holdersMax !== undefined) params.set('holdersMax', filters.holdersMax);
@@ -181,6 +198,7 @@ export function ExploreClient() {
   const searchParams = useSearchParams();
   const view = resolveExploreView(searchParams.get('view'));
   const sort = resolveFeedSort(searchParams.get('sort'));
+  const lifecycle = resolveFeedLifecycle(searchParams.get('lifecycle'));
   const age = resolveFeedAge(searchParams.get('age'));
   const holdersMin = searchParams.get('holdersMin') ?? undefined;
   const holdersMax = searchParams.get('holdersMax') ?? undefined;
@@ -192,15 +210,17 @@ export function ExploreClient() {
   const volumeMaxQuote = resolveQuoteBaseUnits(searchParams.get('volumeMaxQuote'));
   const marketCapMinQuote = resolveQuoteBaseUnits(searchParams.get('marketCapMinQuote'));
   const marketCapMaxQuote = resolveQuoteBaseUnits(searchParams.get('marketCapMaxQuote'));
+  const hasLifecycleFilter = lifecycle !== undefined;
   const hasHolderFilter = holdersMin !== undefined || holdersMax !== undefined;
   const hasProgressFilter = progressMinBps !== undefined || progressMaxBps !== undefined;
   const hasCreatorFilter = creator !== undefined;
   const hasVolumeFilter = volumeMinQuote !== undefined || volumeMaxQuote !== undefined;
   const hasMarketCapFilter = marketCapMinQuote !== undefined || marketCapMaxQuote !== undefined;
-  const hasActiveFilters = age !== undefined || hasHolderFilter || hasProgressFilter || hasCreatorFilter || hasVolumeFilter || hasMarketCapFilter;
+  const hasActiveFilters = hasLifecycleFilter || age !== undefined || hasHolderFilter || hasProgressFilter || hasCreatorFilter || hasVolumeFilter || hasMarketCapFilter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const api = useMemo(() => createBreadApiClient(), []);
   const currentFilters: ExploreFilters = {
+    lifecycle,
     age,
     holdersMin,
     holdersMax,
@@ -287,6 +307,11 @@ export function ExploreClient() {
 
       {hasActiveFilters ? (
         <div className={styles.activeFilters} aria-label="Active filters">
+          {lifecycle !== undefined ? (
+            <button aria-label={`Lifecycle: ${lifecycleFilterLabel(lifecycle)}`} className={styles.chip} onClick={() => navigateWithFilters({ ...currentFilters, lifecycle: undefined })} type="button">
+              <span>Lifecycle: {lifecycleFilterLabel(lifecycle)}</span><span aria-hidden="true">×</span>
+            </button>
+          ) : null}
           {age !== undefined ? (
             <button aria-label={`Age: ${ageLabel(age)}`} className={styles.chip} onClick={() => navigateWithFilters({ ...currentFilters, age: undefined })} type="button">
               <span>Age: {ageLabel(age)}</span><span aria-hidden="true">×</span>
@@ -327,6 +352,20 @@ export function ExploreClient() {
             <div><h2>Filters</h2><p>Refine the indexed feed.</p></div>
             <button aria-label="Close filters" className={styles.close} onClick={() => setFiltersOpen(false)} type="button">×</button>
           </div>
+          <label className={styles.field} htmlFor="bread-explore-lifecycle">
+            <span>Lifecycle</span>
+            <select
+              id="bread-explore-lifecycle"
+              onChange={(event) => {
+                navigateWithFilters({ ...currentFilters, lifecycle: resolveFeedLifecycle(event.target.value) });
+                setFiltersOpen(false);
+              }}
+              value={lifecycle ?? ''}
+            >
+              <option value="">Any</option>
+              {LIFECYCLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
           <label className={styles.field} htmlFor="bread-explore-age">
             <span>Age</span>
             <select

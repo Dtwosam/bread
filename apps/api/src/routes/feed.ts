@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import {
   isExploreAgeFilter,
   isExplicitFeedSort,
+  isIndexedLifecycleFilter,
   parseExploreHolderBounds,
   parseExploreMarketCapBounds,
   parseExploreProgressBounds,
@@ -10,6 +11,7 @@ import {
   resolveExploreAgeBounds,
   type ExplicitFeedSort,
   type ExplicitFeedView,
+  type IndexedLifecycleFilter,
 } from "../../../../packages/db/src/index.js";
 import { canonicalizeProtocolAddress } from "../../../../packages/protocol-sdk/src/index.js";
 import { stackFeedProjectionCacheChannel } from "../../../../packages/types/src/index.js";
@@ -42,6 +44,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
     const query = request.query as {
       view?: string;
       sort?: string;
+      lifecycle?: string;
       age?: string;
       holdersMin?: string;
       holdersMax?: string;
@@ -67,6 +70,14 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
         return reply.code(400).send({ error: { code: "INVALID_FEED_SORT", message: "Feed sort is not supported.", requestId: request.id } });
       }
       sort = query.sort;
+    }
+
+    let lifecycleFilter: IndexedLifecycleFilter | undefined;
+    if (query.lifecycle !== undefined) {
+      if (!isIndexedLifecycleFilter(query.lifecycle)) {
+        return reply.code(400).send({ error: { code: "INVALID_LIFECYCLE_FILTER", message: "Lifecycle filter is not supported.", requestId: request.id } });
+      }
+      lifecycleFilter = query.lifecycle;
     }
 
     if (query.age !== undefined && !isExploreAgeFilter(query.age)) {
@@ -143,7 +154,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
           ? await deps.freshness()
           : undefined;
       const ageBounds = ageFilter === undefined ? undefined : resolveExploreAgeBounds(feedMeta!.indexedThroughBlockTimestamp, ageFilter);
-      const hasProjectionFilters = ageBounds !== undefined || holderBounds !== undefined || progressBounds !== undefined || creatorAddress !== undefined || volumeBounds !== undefined || marketCapBounds !== undefined;
+      const hasProjectionFilters = ageBounds !== undefined || holderBounds !== undefined || progressBounds !== undefined || creatorAddress !== undefined || volumeBounds !== undefined || marketCapBounds !== undefined || lifecycleFilter !== undefined;
 
       const fetched = sort !== undefined
         ? await deps.explicitSortRepository.listExplicitSortedLaunches({
@@ -161,17 +172,18 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
             creatorAddress,
             volumeBounds,
             marketCapBounds,
+            lifecycleFilter,
           })
         : view === "graduated"
           ? hasProjectionFilters
-            ? await deps.exploreAgeRepository.listGraduatedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, graduatedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp, marketCapBounds)
+            ? await deps.exploreAgeRepository.listGraduatedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, graduatedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp, marketCapBounds, lifecycleFilter)
             : await deps.repository.listGraduatedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, graduatedCursor)
           : view === "trending"
-            ? await deps.trendingRepository.listTrendingLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, trendingCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, marketCapBounds)
+            ? await deps.trendingRepository.listTrendingLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, trendingCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, marketCapBounds, lifecycleFilter)
             : view === "graduating"
-              ? await deps.almostBakedRepository.listAlmostBakedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, almostBakedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, marketCapBounds)
+              ? await deps.almostBakedRepository.listAlmostBakedLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, feedMeta!.indexedThroughBlockTimestamp, parsedLimit + 1, almostBakedCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, marketCapBounds, lifecycleFilter)
               : hasProjectionFilters
-                ? await deps.exploreAgeRepository.listNewLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, newCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp, marketCapBounds)
+                ? await deps.exploreAgeRepository.listNewLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, newCursor, ageBounds, holderBounds, progressBounds, creatorAddress, volumeBounds, feedMeta?.indexedThroughBlockTimestamp, marketCapBounds, lifecycleFilter)
                 : await deps.repository.listNewLaunches(deps.context.chainId, deps.context.stackVersion, deps.context.factoryAddress, parsedLimit + 1, newCursor);
 
       const hasMore = fetched.length > parsedLimit;
@@ -245,7 +257,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
       };
     };
 
-    const cacheKey = `view=${view}&sort=${sort ?? ""}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&progressMinBps=${progressBounds?.minBps ?? ""}&progressMaxBps=${progressBounds?.maxBps ?? ""}&creator=${creatorAddress ?? ""}&volumeMinQuote=${volumeBounds?.minQuote ?? ""}&volumeMaxQuote=${volumeBounds?.maxQuote ?? ""}&marketCapMinQuote=${marketCapBounds?.minQuote ?? ""}&marketCapMaxQuote=${marketCapBounds?.maxQuote ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
+    const cacheKey = `view=${view}&sort=${sort ?? ""}&lifecycle=${lifecycleFilter ?? ""}&age=${ageFilter ?? ""}&holdersMin=${holderBounds?.min ?? ""}&holdersMax=${holderBounds?.max ?? ""}&progressMinBps=${progressBounds?.minBps ?? ""}&progressMaxBps=${progressBounds?.maxBps ?? ""}&creator=${creatorAddress ?? ""}&volumeMinQuote=${volumeBounds?.minQuote ?? ""}&volumeMaxQuote=${volumeBounds?.maxQuote ?? ""}&marketCapMinQuote=${marketCapBounds?.minQuote ?? ""}&marketCapMaxQuote=${marketCapBounds?.maxQuote ?? ""}&limit=${parsedLimit}&cursor=${query.cursor ?? ""}`;
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: stackFeedProjectionCacheChannel({ chainId: deps.context.chainId, stackVersion: deps.context.stackVersion, factoryAddress: deps.context.factoryAddress }),

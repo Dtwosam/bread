@@ -13,6 +13,7 @@ const MAX_SEARCH_TERM_LENGTH = 256;
 const FEED_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
 const FEED_AGES = new Set(['lt5m', 'lt1h', '1h-24h', '1d-7d']);
 const FEED_SORTS = new Set(['newest', 'market-cap', 'volume-24h', 'holders', 'baked-progress']);
+const FEED_LIFECYCLES = new Set(['new', 'active', 'almost-baked', 'processing', 'graduated']);
 const ADDRESS_LIKE = /^0x/i;
 const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
 const DECIMAL_INTEGER = /^\d+$/;
@@ -23,10 +24,12 @@ type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Respo
 export type FeedView = 'new' | 'trending' | 'graduating' | 'graduated';
 export type FeedAge = 'lt5m' | 'lt1h' | '1h-24h' | '1d-7d';
 export type FeedSort = 'newest' | 'market-cap' | 'volume-24h' | 'holders' | 'baked-progress';
+export type FeedLifecycle = 'new' | 'active' | 'almost-baked' | 'processing' | 'graduated';
 
 export type FeedParams = Readonly<{
   view?: FeedView;
   sort?: FeedSort;
+  lifecycle?: FeedLifecycle;
   age?: FeedAge;
   holdersMin?: string;
   holdersMax?: string;
@@ -133,6 +136,9 @@ function assertFeedParams(params: FeedParams): void {
   }
   if (params.sort !== undefined && !FEED_SORTS.has(params.sort)) {
     throw new RangeError('feed sort is not supported.');
+  }
+  if (params.lifecycle !== undefined && !FEED_LIFECYCLES.has(params.lifecycle)) {
+    throw new RangeError('feed lifecycle is not supported.');
   }
   if (params.age !== undefined && !FEED_AGES.has(params.age)) {
     throw new RangeError('feed age is not supported.');
@@ -243,6 +249,7 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       const params = new URLSearchParams();
       addOptional(params, 'view', input.view);
       addOptional(params, 'sort', input.sort);
+      addOptional(params, 'lifecycle', input.lifecycle);
       addOptional(params, 'age', input.age);
       addOptional(params, 'holdersMin', input.holdersMin);
       addOptional(params, 'holdersMax', input.holdersMax);

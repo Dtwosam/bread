@@ -12,6 +12,7 @@ export const breadQueryKeys = {
       'feed',
       input.view ?? 'new',
       input.sort ?? 'default',
+      input.lifecycle ?? '',
       input.age ?? 'any',
       input.holdersMin ?? '',
       input.holdersMax ?? '',

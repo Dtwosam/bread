@@ -73,6 +73,22 @@ describe('Day 7 indexed browser read boundary', () => {
     );
   });
 
+  it('serializes source-backed lifecycle filtering without changing exact result labels', async () => {
+    const expected: IndexedResponse<readonly { tokenAddress: string }[]> = {
+      data: [],
+      meta,
+      page: { hasMore: false },
+    };
+    const fetchImpl = vi.fn(async () => jsonResponse(expected));
+    const client = createBreadApiClient({ baseUrl: 'https://bread.test', fetchImpl });
+
+    await client.getFeed({ view: 'new', lifecycle: 'processing', limit: 25 });
+
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe(
+      'https://bread.test/v1/feed?view=new&lifecycle=processing&limit=25',
+    );
+  });
+
   it('rejects out-of-contract bounded query values before network work', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ data: [], meta }));
     const client = createBreadApiClient({ fetchImpl });
@@ -121,6 +137,7 @@ describe('Day 7 indexed browser read boundary', () => {
       'feed',
       'new',
       'default',
+      '',
       'any',
       '',
       '',
@@ -139,6 +156,7 @@ describe('Day 7 indexed browser read boundary', () => {
       'feed',
       'new',
       'default',
+      '',
       'lt5m',
       '',
       '',
@@ -155,7 +173,8 @@ describe('Day 7 indexed browser read boundary', () => {
     expect(
       breadQueryKeys.feed({
         view: 'new',
-        sort: 'marketCap',
+        sort: 'market-cap',
+        lifecycle: 'processing',
         marketCapMinQuote: '1000000',
         marketCapMaxQuote: '5000000',
         limit: 25,
@@ -164,7 +183,8 @@ describe('Day 7 indexed browser read boundary', () => {
       'bread',
       'feed',
       'new',
-      'marketCap',
+      'market-cap',
+      'processing',
       'any',
       '',
       '',

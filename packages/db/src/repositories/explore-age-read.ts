@@ -6,6 +6,7 @@ import type { ExploreHolderBounds } from './explore-holders.js';
 import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
+import { indexedLifecycleFilterSql, type IndexedLifecycleFilter } from './lifecycle.js';
 import { decimalIntegerToBigInt } from './read.js';
 
 export type AgeFilteredNewCursorKey = Readonly<{
@@ -230,6 +231,7 @@ export class ExploreAgeReadRepository {
     volume?: ExploreVolumeBounds,
     indexedHeadTimestamp?: string,
     marketCapBounds?: ExploreMarketCapBounds,
+    lifecycleFilter?: IndexedLifecycleFilter,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
@@ -239,6 +241,15 @@ export class ExploreAgeReadRepository {
     const baked = progressClauses(progress);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volume, indexedHeadTimestamp);
+    const lifecycle = indexedLifecycleFilterSql({
+      graduationPhase: sql`progress_state.graduation_phase`,
+      readyToGraduate: sql`progress_state.ready_to_graduate`,
+      graduationFailureReasonHash: sql`progress_state.graduation_failure_reason_hash`,
+      mode: sql`progress_state.mode`,
+      graduationProgressBps: sql`m.graduation_progress_bps`,
+      launchTimestamp: sql`l.launch_timestamp`,
+      initialSupply: sql`l.initial_supply`,
+    }, lifecycleFilter);
     const cursorClause = cursor
       ? sql`AND (
           l.launch_block_number < CAST(${cursor.launchBlockNumber} AS numeric)
@@ -284,6 +295,7 @@ export class ExploreAgeReadRepository {
         ${creator}
         ${volume24.minClause}
         ${volume24.maxClause}
+        ${lifecycle}
         ${cursorClause}
       ORDER BY
         l.launch_block_number DESC,
@@ -308,6 +320,7 @@ export class ExploreAgeReadRepository {
     volume?: ExploreVolumeBounds,
     indexedHeadTimestamp?: string,
     marketCapBounds?: ExploreMarketCapBounds,
+    lifecycleFilter?: IndexedLifecycleFilter,
   ) {
     if (progress) return [];
 
@@ -318,6 +331,15 @@ export class ExploreAgeReadRepository {
     const marketCap = marketCapClauses(marketCapBounds);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volume, indexedHeadTimestamp);
+    const lifecycle = indexedLifecycleFilterSql({
+      graduationPhase: sql`s.graduation_phase`,
+      readyToGraduate: sql`s.ready_to_graduate`,
+      graduationFailureReasonHash: sql`s.graduation_failure_reason_hash`,
+      mode: sql`s.mode`,
+      graduationProgressBps: sql`m.graduation_progress_bps`,
+      launchTimestamp: sql`l.launch_timestamp`,
+      initialSupply: sql`l.initial_supply`,
+    }, lifecycleFilter);
     const cursorClause = cursor
       ? sql`AND (
           s.graduation_completed_block < CAST(${cursor.graduationCompletedBlock} AS numeric)
@@ -360,6 +382,7 @@ export class ExploreAgeReadRepository {
         ${creator}
         ${volume24.minClause}
         ${volume24.maxClause}
+        ${lifecycle}
         ${cursorClause}
       ORDER BY
         s.graduation_completed_block DESC,
