@@ -112,6 +112,7 @@ function feedItem(input: {
     launchTransactionHash: LAUNCH_TX_HASH,
     launchLogIndex: 0,
     holderCount: '42',
+    marketCap: '2500000000000000',
     graduatedVenueKind: input.progressState === 'GRADUATED' ? 'UNISWAP_V3' : null,
     metrics: {
       lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
@@ -214,6 +215,7 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     matchKind,
     ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
     holderCount: item.holderCount,
+    marketCap: item.marketCap,
     lifecycleState:
       item.tokenAddress === PENDING_TOKEN
         ? 'GRADUATION_PENDING'
