@@ -6,6 +6,7 @@ import {
   ExploreAgeReadRepository,
   ReadRepository,
   SearchRepository,
+  SecondaryRepository,
   TrendingRepository,
   type BreadDb,
 } from "../../../packages/db/src/index.js";
@@ -30,6 +31,7 @@ import { registerFeedRoute } from "./routes/feed.js";
 import { registerHoldersRoute } from "./routes/holders.js";
 import { registerPortfolioRoute } from "./routes/portfolio.js";
 import { registerSearchRoute } from "./routes/search.js";
+import { registerSecondaryRoutes } from "./routes/secondary.js";
 import { registerStatusRoute } from "./routes/status.js";
 import { registerTokenRoute } from "./routes/token.js";
 import { registerTradesRoute } from "./routes/trades.js";
@@ -98,6 +100,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
     new SearchRepository(input.db),
     gate,
   );
+  const secondaryRepository = boundRepository(
+    new SecondaryRepository(input.db),
+    gate,
+  );
   const cache = new BreadCache({
     redis,
     schemaVersion: BREAD_PROJECTION_CACHE_SCHEMA_VERSION,
@@ -141,6 +147,11 @@ export function createBreadApi(input: CreateBreadApiInput) {
   registerTradesRoute(app, deps);
   registerHoldersRoute(app, deps);
   registerPortfolioRoute(app, deps);
+  registerSecondaryRoutes(app, {
+    repository: secondaryRepository,
+    context: input.context,
+    freshness,
+  });
   registerCreatorRoute(app, {
     repository: creatorRepository,
     chainId: input.context.chainId,
