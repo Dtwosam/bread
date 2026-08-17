@@ -1,0 +1,114 @@
+name: gap-closure-focused-green
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gap-closure-focused-green.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  focused-green:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - name: Reconcile ratified v1.6.1 source tests and workflow coverage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          closure = Path('tests/day7/explore-search-v2-closure.test.ts')
+          text = closure.read_text()
+          old = '''  it('does not invent Recent or Trending Search persistence/ranking semantics that the ratified source leaves undefined', () => {
+            const search = read('../../apps/web/components/search-surface.tsx');
+
+            expect(search).not.toContain('RECENT_SEARCH_STORAGE_KEY');
+            expect(search).not.toContain('MAX_RECENT_SEARCHES');
+            expect(search).not.toContain('window.localStorage');
+            expect(search).not.toContain("breadQueryKeys.feed({ view: 'trending'");
+            expect(search).not.toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
+          });'''
+          new = '''  it('uses browser-local Recent targets and the canonical Trending feed without creating ranking authority', () => {
+            const search = read('../../apps/web/components/search-surface.tsx');
+            const recent = read('../../apps/web/lib/search/recent-targets.ts');
+
+            expect(recent).toContain('MAX_RECENT_SEARCH_TARGETS = 8');
+            expect(recent).toContain('window.localStorage');
+            expect(recent).not.toMatch(/fetch\\s*\\(|wallet|account/i);
+            expect(search).toContain("breadQueryKeys.feed({ view: 'trending', limit: TRENDING_SEARCH_LIMIT })");
+            expect(search).toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending', limit: TRENDING_SEARCH_LIMIT })");
+            expect(search).not.toMatch(/searchCount|queryCount|termCount|paidPlacement|sponsor/i);
+          });'''
+          if old in text:
+              closure.write_text(text.replace(old, new))
+          elif "uses browser-local Recent targets and the canonical Trending feed" not in text:
+              raise SystemExit('Explore/Search closure source is neither stale nor ratified')
+
+          recent_test = Path('tests/day7/recent-search-gap-closure.test.ts')
+          text = recent_test.read_text()
+          text = text.replace(
+              "expect(surface).toContain('onClick={() => recordRecentTarget(result)}');",
+              "expect(surface).toContain('onSelect={recordRecentTarget}');\n    expect(surface).toContain('onClick={() => onSelect(result)}');",
+          )
+          recent_test.write_text(text)
+
+          for workflow_path, marker, tests in [
+              ('.github/workflows/day7-task3-explore-search.yml', 'tests/day7/explore-search-v2-closure.test.ts', [
+                  'tests/day7/recent-search-gap-closure.test.ts',
+                  'tests/day7/trending-search-gap-closure.test.ts',
+              ]),
+              ('.github/workflows/day7-task4-token-page.yml', 'tests/day7/token-page.test.tsx', [
+                  'tests/day7/token-metadata-gap-closure.test.ts',
+              ]),
+          ]:
+              path = Path(workflow_path)
+              text = path.read_text()
+              for test in tests:
+                  if test not in text:
+                      if marker not in text:
+                          raise SystemExit(f'{marker} missing from {workflow_path}')
+                      text = text.replace(marker, marker + '\n          ' + test, 1)
+              path.write_text(text)
+          PY
+      - run: pnpm install --frozen-lockfile
+      - name: Run v1.6.1 focused RED-to-GREEN suites
+        run: >-
+          pnpm exec vitest run
+          tests/day7/token-media-gap-closure.test.ts
+          tests/day7/token-media-runtime.test.ts
+          tests/day7/recent-search-gap-closure.test.ts
+          tests/day7/trending-search-gap-closure.test.ts
+          tests/day7/token-metadata-gap-closure.test.ts
+          tests/day7/explore-search-v2-closure.test.ts
+          tests/day7/explore-search.test.ts
+          tests/day7/read-client.test.ts
+          tests/day7/token-page.test.tsx
+          tests/day7/create-review.test.tsx
+          tests/day7/create-runtime.test.tsx
+      - name: Static and type gates
+        run: |
+          pnpm typecheck
+          pnpm lint
+      - name: Remove temporary workflows and commit reconciled evidence
+        run: |
+          rm -f .github/workflows/search-gap-sync.yml .github/workflows/metadata-gap-sync.yml .github/workflows/gap-closure-focused-green.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test(gap-closure): reconcile focused v1.6.1 evidence"
+          git push origin HEAD:${{ github.head_ref }}
