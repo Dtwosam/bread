@@ -130,6 +130,7 @@ export type IndexedSearchResult = Readonly<{
   creatorFeeRecipient: string;
   name: string | null;
   symbol: string | null;
+  metadata: IndexedDisplayMetadata;
   matchKind: string;
   ageSeconds: string | null;
   marketCap: string | null;
