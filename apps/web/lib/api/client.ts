@@ -140,12 +140,7 @@ function assertFeedParams(params: FeedParams): void {
     throw new RangeError('creator must be a valid address.');
   }
   assertExactQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote, 'volumeMinQuote', 'volumeMaxQuote');
-  assertExactQuoteBounds(
-    params.marketCapMinQuote,
-    params.marketCapMaxQuote,
-    'marketCapMinQuote',
-    'marketCapMaxQuote',
-  );
+  assertExactQuoteBounds(params.marketCapMinQuote, params.marketCapMaxQuote, 'marketCapMinQuote', 'marketCapMaxQuote');
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
 }
@@ -175,11 +170,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isApiError(value: unknown): value is ApiError {
   if (!isRecord(value) || !isRecord(value.error)) return false;
-  return (
-    typeof value.error.code === 'string' &&
-    typeof value.error.message === 'string' &&
-    typeof value.error.requestId === 'string'
-  );
+  return typeof value.error.code === 'string' && typeof value.error.message === 'string' && typeof value.error.requestId === 'string';
 }
 
 function isIndexedResponse(value: unknown): value is IndexedResponse<unknown> {
@@ -228,7 +219,6 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       headers: { accept: 'application/json' },
     });
     const body = await decodeJson(response);
-
     if (!response.ok) {
       if (isApiError(body)) throw new BreadApiRequestError(response.status, body.error);
       throw new BreadApiRequestError(response.status, {
@@ -237,10 +227,7 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
         requestId: response.headers.get('x-request-id') ?? 'unknown',
       });
     }
-
-    if (!isIndexedResponse(body)) {
-      throw new Error('Bread API returned an invalid indexed response envelope.');
-    }
+    if (!isIndexedResponse(body)) throw new Error('Bread API returned an invalid indexed response envelope.');
     return body as IndexedResponse<T>;
   }
 
@@ -270,6 +257,17 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       params.set('q', input.q.trim());
       addOptional(params, 'limit', input.limit);
       return request<T>('/v1/search', params);
+    },
+
+    async getActivity<T = unknown>(limit = 50): Promise<IndexedResponse<T>> {
+      assertIntegerInRange(limit, 'limit', MAX_PAGE_LIMIT);
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      return request<T>('/v1/activity', params);
+    },
+
+    async getStats<T = unknown>(): Promise<IndexedResponse<T>> {
+      return request<T>('/v1/stats');
     },
 
     async getToken<T = unknown>(address: string): Promise<IndexedResponse<T>> {
