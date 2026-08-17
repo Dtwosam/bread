@@ -55,8 +55,25 @@ jobs:
         run: pnpm load:hot-launch
       - name: Install release browsers
         run: pnpm --filter @bread/web exec playwright install --with-deps chromium firefox webkit
-      - name: Chromium Firefox WebKit browser matrix
-        run: pnpm --filter @bread/web exec playwright test
+      - name: Fixture-safe desktop and mobile browser journeys
+        run: pnpm --filter @bread/web test:e2e
+      - name: Chromium Firefox WebKit release browser matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          original="$RUNNER_TEMP/arc-testnet.day5.v161-original.json"
+          cp config/deployments/arc-testnet.day5.json "$original"
+          restore() {
+            cp "$original" config/deployments/arc-testnet.day5.json
+          }
+          trap restore EXIT
+          cp apps/web/e2e/fixtures/protocol-deployment.json config/deployments/arc-testnet.day5.json
+          pnpm --filter @bread/web exec playwright test --config=e2e/playwright.day9-release.config.ts
+          restore
+          trap - EXIT
+      - name: Verify browser fixtures restored canonical manifests
+        if: always()
+        run: git diff --exit-code -- config/deployments/arc-testnet.day5.json config/networks/arc-testnet.json
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
@@ -77,7 +94,7 @@ jobs:
           TRENDING_SEARCH=IMPLEMENTED
           SANITIZED_DISPLAY_METADATA=IMPLEMENTED
 
-          This exact software head passed source validation, typecheck, focused Prettier/static checks, build, the full Day-6 suite with PostgreSQL integration enabled, the full Day-7 Vitest suite, the concentrated hot-launch regression, and the configured Playwright Chromium/Firefox/WebKit suite in this workflow.
+          This exact software head passed source validation, typecheck, focused Prettier/static checks, build, the full Day-6 suite with PostgreSQL integration enabled, the full Day-7 Vitest suite, the concentrated hot-launch regression, the fixture-safe primary desktop/mobile Playwright journeys, and the configured Chromium/Firefox/WebKit release browser matrix in this workflow.
 
           This evidence does not claim Day-9 PASS, physical-device evidence, legal-copy approval, public/mainnet readiness, or an RC tag.
           EOF
