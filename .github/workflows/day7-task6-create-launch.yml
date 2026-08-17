@@ -28,13 +28,16 @@ on:
       - 'agent/day7-task6-create-launch-v2'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   create-launch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24.18.0
@@ -42,6 +45,19 @@ jobs:
         with:
           version: 11.15.1
           run_install: false
+      - name: Regenerate lockfile for pinned media decoder
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Commit regenerated lockfile when needed
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore(media): sync sharp lockfile"
+          git push origin HEAD:${{ github.head_ref }}
       - run: pnpm install --frozen-lockfile
       - name: Run Day 7 Create and launch tests
         run: >-
