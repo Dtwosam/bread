@@ -45,7 +45,7 @@ export function TokenCard({
       <dl className="bread-token-card__market">
         <div>
           <dt>Market cap</dt>
-          <dd className="bread-financial-value">—</dd>
+          <dd className="bread-financial-value">{formatUsdcBaseUnits(model.marketCap)}</dd>
         </div>
         <div>
           <dt>24h change</dt>
