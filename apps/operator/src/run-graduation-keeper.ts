@@ -31,6 +31,21 @@ function requiredEnv(name: string): string {
   return value;
 }
 
+async function requiredSecret(valueName: string, fileName: string): Promise<string> {
+  const direct = process.env[valueName]?.trim();
+  const file = process.env[fileName]?.trim();
+  if (direct && file) {
+    throw new Error(`${valueName} and ${fileName} are mutually exclusive`);
+  }
+  if (file) {
+    const value = (await readFile(file, 'utf8')).trim();
+    if (!value) throw new Error(`${fileName} points to an empty secret file`);
+    return value;
+  }
+  if (direct) return direct;
+  throw new Error(`${valueName} or ${fileName} is required`);
+}
+
 function pollIntervalMs(): number {
   const raw = process.env.BREAD_GRADUATION_KEEPER_POLL_MS?.trim();
   if (!raw) return 15_000;
@@ -85,8 +100,13 @@ async function main(): Promise<void> {
   const networkManifestPath = requiredEnv('BREAD_NETWORK_MANIFEST_PATH');
   const deploymentManifestPath = requiredEnv('BREAD_DEPLOYMENT_MANIFEST_PATH');
   const stackVersion = requiredEnv('BREAD_STACK_VERSION');
-  const privateKey = requiredEnv('BREAD_GRADUATION_KEEPER_PRIVATE_KEY');
-  if (!PRIVATE_KEY.test(privateKey)) throw new Error('BREAD_GRADUATION_KEEPER_PRIVATE_KEY is malformed');
+  const privateKey = await requiredSecret(
+    'BREAD_GRADUATION_KEEPER_PRIVATE_KEY',
+    'BREAD_GRADUATION_KEEPER_PRIVATE_KEY_FILE',
+  );
+  if (!PRIVATE_KEY.test(privateKey)) {
+    throw new Error('graduation keeper private key is malformed');
+  }
 
   const network = parseNetworkManifest(await readJson(networkManifestPath));
   const deployment = parseProtocolDeploymentManifest(await readJson(deploymentManifestPath));
