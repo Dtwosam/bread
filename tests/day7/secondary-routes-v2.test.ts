@@ -13,7 +13,7 @@ const paths = {
   statsClient: 'apps/web/components/stats/stats-client.tsx',
   activityRow: 'packages/ui/src/activity-row.ts',
   secondaryRoute: 'apps/api/src/routes/secondary.ts',
-  readRepository: 'packages/db/src/repositories/read.ts',
+  secondaryRepository: 'packages/db/src/repositories/secondary.ts',
   apiTypes: 'packages/types/src/api.ts',
   apiIndex: 'packages/types/src/index.ts',
   apiClient: 'apps/web/lib/api/client.ts',
@@ -53,13 +53,13 @@ describe('Bread UI/UX v2.2 secondary routes and global states', () => {
   });
 
   it('renders platform activity only from canonical indexed launches, trades, and graduation transitions', () => {
-    for (const path of [paths.activityClient, paths.activityRow, paths.secondaryRoute]) {
+    for (const path of [paths.activityClient, paths.activityRow, paths.secondaryRoute, paths.secondaryRepository]) {
       expect(existsSync(resolve(root, path)), path).toBe(true);
     }
     const page = read(paths.activity);
     const client = read(paths.activityClient);
     const route = read(paths.secondaryRoute);
-    const repository = read(paths.readRepository);
+    const repository = read(paths.secondaryRepository);
     const apiTypes = read(paths.apiTypes);
     const apiIndex = read(paths.apiIndex);
     const apiClient = read(paths.apiClient);
@@ -75,7 +75,7 @@ describe('Bread UI/UX v2.2 secondary routes and global states', () => {
     expect(repository).toContain("'LAUNCH'");
     expect(repository).toContain("'TRADE'");
     expect(repository).toContain("'GRADUATION'");
-    expect(repository).toMatch(/ORDER BY[\s\S]*"blockNumber" DESC[\s\S]*"logIndex" DESC/i);
+    expect(repository).toMatch(/ORDER BY[\s\S]*"blockNumberRaw" DESC[\s\S]*"logIndex" DESC/i);
     expect(apiTypes).toContain('IndexedPlatformActivityItem');
     expect(apiIndex).toContain('IndexedPlatformActivityItem');
     expect(apiClient).toContain('getActivity');
@@ -84,13 +84,13 @@ describe('Bread UI/UX v2.2 secondary routes and global states', () => {
   });
 
   it('renders only reliable indexed lifetime platform statistics', () => {
-    for (const path of [paths.statsClient, paths.secondaryRoute]) {
+    for (const path of [paths.statsClient, paths.secondaryRoute, paths.secondaryRepository]) {
       expect(existsSync(resolve(root, path)), path).toBe(true);
     }
     const page = read(paths.stats);
     const client = read(paths.statsClient);
     const route = read(paths.secondaryRoute);
-    const repository = read(paths.readRepository);
+    const repository = read(paths.secondaryRepository);
     const apiTypes = read(paths.apiTypes);
     const apiClient = read(paths.apiClient);
 
