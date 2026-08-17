@@ -186,28 +186,44 @@ if (
 const ci = await readRequired(".github/workflows/ci.yml");
 requireText(ci, "Check generated Bread SDK ABIs", "root CI ABI drift gate");
 
-const state = await readRequired("docs/current-build-state.yaml");
 let closeoutEvidence;
 try {
   closeoutEvidence = await readFile(CLOSEOUT_EVIDENCE, "utf8");
 } catch (error) {
-  const day6AlreadyClaimed =
-    /DAY6[^\n]*(?:PASS_DURABLE|DURABLY_CLOSED|CLOSEOUT[^\n]*PASS)/i.test(state);
-  if (day6AlreadyClaimed) {
-    throw new Error(
-      `Day-6 closeout validation requires ${CLOSEOUT_EVIDENCE} because current-build-state already claims Day-6 closure`,
-    );
-  }
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? error.code
+      : "UNKNOWN";
+  throw new Error(
+    `Day-6 closeout evidence is required before PASS: ${CLOSEOUT_EVIDENCE} (${code})`,
+  );
 }
 
-if (closeoutEvidence) {
-  for (const token of [
-    "DAY6_SDK_INDEXER_API_CLOSEOUT_PASS",
-    "DAY6_CLOSEOUT_EXACT_HEAD",
-    "DAY6_CLOSEOUT_GITHUB_ACTIONS_RUN_ID",
-  ]) {
-    requireText(closeoutEvidence, token, "Day-6 closeout evidence");
-  }
+const mandatoryGateTokens = [
+  "DELETE_DB_REBUILD_PASS = PASS",
+  "OVERLAP_REPLAY_IDEMPOTENT = PASS",
+  "API_FRESHNESS_METADATA_PRESENT = PASS",
+  "RECONCILE_PASS = PASS",
+  "FIRST_MEANINGFUL_CONCURRENT_READ_REPLAY_CACHE_FANOUT_TESTS_PASS = PASS",
+];
+for (const token of mandatoryGateTokens) {
+  requireText(closeoutEvidence, token, CLOSEOUT_EVIDENCE);
 }
 
-console.log("day6 read-stack validation passed");
+for (const token of [
+  "DAY6_API_ROUTE_COVERAGE = PASS",
+  "DAY6_ABI_DRIFT = PASS",
+  "DAY6_MIGRATION_REBUILD_IDENTITY = PASS",
+  "DAY6_RECONCILIATION_REPORT_IDENTITY = PASS",
+  "DAY6_NO_OPEN_CRITICAL_HIGH = PASS",
+]) {
+  requireText(closeoutEvidence, token, CLOSEOUT_EVIDENCE);
+}
+
+requirePattern(
+  closeoutEvidence,
+  /(?:candidate|exact)[_ -]head\s*:\s*`?[0-9a-f]{40}`?/i,
+  "Day-6 closeout exact candidate identity",
+);
+
+console.log("day6-read-stack-validation: PASS");
