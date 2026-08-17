@@ -114,6 +114,7 @@ function feedItem(input: {
     holderCount: '42',
     graduatedVenueKind: input.progressState === 'GRADUATED' ? 'UNISWAP_V3' : null,
     metrics: {
+      marketCap: '2500000000',
       lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
       quoteVolume: { m5: '12000000', h1: '75000000', h24: '450000000' },
       tradeCount: { h1: '24', h24: '140' },
@@ -213,6 +214,7 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     symbol: item.symbol,
     matchKind,
     ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
+    marketCap: item.metrics?.marketCap ?? null,
     holderCount: item.holderCount,
     lifecycleState:
       item.tokenAddress === PENDING_TOKEN
