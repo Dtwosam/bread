@@ -64,6 +64,30 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(explore).toContain('marketCapMaxQuote');
   });
 
+  it('requires one canonical indexed lifecycle authority with exact precedence and source-backed Explore filtering', () => {
+    const apiTypes = read('../../packages/types/src/api.ts');
+    const dbIndex = read('../../packages/db/src/index.ts');
+    const searchRepository = read('../../packages/db/src/repositories/search.ts');
+    const feedRoute = read('../../apps/api/src/routes/feed.ts');
+    const apiClient = read('../../apps/web/lib/api/client.ts');
+    const explore = read('../../apps/web/components/explore/explore-client.tsx');
+    const search = read('../../apps/web/components/search-surface.tsx');
+
+    expect(apiTypes).toContain('export type IndexedLifecycleState =');
+    for (const state of ['GRADUATED', 'GRADUATION_PENDING', 'PROCESSING', 'ALMOST_BAKED', 'NEW', 'ACTIVE']) {
+      expect(apiTypes).toContain(`"${state}"`);
+    }
+    expect(dbIndex).toContain('indexedLifecycleStateSql');
+    expect(searchRepository).toContain('indexedLifecycleStateSql');
+    expect(searchRepository.match(/CASE\s+/g) ?? []).toHaveLength(2);
+    expect(feedRoute).toContain('lifecycle?: string;');
+    expect(feedRoute).toContain('lifecycleState:');
+    expect(apiClient).toContain('lifecycle?: FeedLifecycle;');
+    expect(explore).toContain('Lifecycle');
+    expect(explore).toContain("{ value: 'processing', label: 'Processing' }");
+    expect(`${explore}\n${search}`).not.toMatch(/(?:age|progress|percent)[^\n]{0,100}(?:>=|>)[^\n]{0,100}(?:ALMOST_BAKED|NEW)/i);
+  });
+
   it('shows every currently source-backed Search token-row field with safe fallbacks', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
