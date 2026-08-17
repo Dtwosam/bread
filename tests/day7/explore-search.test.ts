@@ -74,6 +74,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
         name: 'Bread',
         symbol: 'BRD',
         metrics: {
+          marketCap: '1250000000',
           lastPrice: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
           quoteVolume: { m5: '1000000', h1: '2000000', h24: '5000000' },
           tradeCount: { h1: '3', h24: '9' },
@@ -87,6 +88,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
       name: 'Bread',
       symbol: 'BRD',
       price: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
+      marketCap: '1250000000',
       volume24h: '5000000',
       holderCount: '42',
       graduatedVenueKind: null,
@@ -109,6 +111,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
 
     expect(model.holderCount).toBe('1');
     expect(model.price).toBeNull();
+    expect(model.marketCap).toBeNull();
   });
 
   it('wires canonical holder count independently from trade metrics through feed and token DTOs', () => {
