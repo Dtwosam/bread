@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
 
-import type { IndexedSearchResult } from '../../../packages/types/src/index';
+import type { IndexedFeedItem, IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button, CreatorAttribution, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
@@ -17,6 +17,13 @@ import {
 } from '../lib/search/recent-targets';
 import { formatUsdcBaseUnits, lifecycleLabel, searchIntent, shortAddress } from './explore/model';
 import { FreshnessBanner } from './freshness-banner';
+
+const TRENDING_SEARCH_LIMIT = 5;
+
+type SelectableSearchTarget = Pick<
+  RecentSearchTarget,
+  'tokenAddress' | 'name' | 'symbol' | 'deployerAddress'
+>;
 
 function SearchGlyph() {
   return (
@@ -45,7 +52,7 @@ function formatSearchAge(ageSeconds: string | null): string | null {
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
-function searchResultInitial(result: IndexedSearchResult): string {
+function searchResultInitial(result: SelectableSearchTarget): string {
   return (result.symbol?.trim() || result.name?.trim() || '?').slice(0, 1).toUpperCase();
 }
 
@@ -54,7 +61,7 @@ function SearchResultLink({
   recordRecentTarget,
 }: Readonly<{
   result: IndexedSearchResult;
-  recordRecentTarget: (result: IndexedSearchResult) => void;
+  recordRecentTarget: (result: SelectableSearchTarget) => void;
 }>) {
   const age = formatSearchAge(result.ageSeconds);
   const lifecycle = lifecycleLabel(result.lifecycleState);
@@ -87,16 +94,47 @@ function SearchResultLink({
   );
 }
 
+function TrendingTargetLink({
+  item,
+  recordRecentTarget,
+}: Readonly<{
+  item: IndexedFeedItem;
+  recordRecentTarget: (result: SelectableSearchTarget) => void;
+}>) {
+  return (
+    <a
+      className="bread-search-result"
+      href={`/token/${encodeURIComponent(item.tokenAddress)}`}
+      onClick={() => recordRecentTarget(item)}
+    >
+      <span className="bread-search-result__identity">
+        <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(item)}</span>
+        <span className="bread-search-result__copy">
+          <strong>{item.name?.trim() || 'Unnamed token'}</strong>
+          <span>${item.symbol?.trim() || '—'}</span>
+          <CreatorAttribution creatorAddress={item.deployerAddress} />
+        </span>
+      </span>
+      <span className="bread-search-result__details">
+        <span>Market cap {formatUsdcBaseUnits(item.metrics?.marketCap ?? null)}</span>
+        <span>Holders {item.holderCount ?? '—'}</span>
+        <code className="bread-technical" title={item.tokenAddress}>
+          {shortAddress(item.tokenAddress)}
+        </code>
+      </span>
+    </a>
+  );
+}
+
 function RecentTargetRow({
   target,
   recordRecentTarget,
   removeRecentTarget,
 }: Readonly<{
   target: RecentSearchTarget;
-  recordRecentTarget: (target: RecentSearchTarget) => void;
+  recordRecentTarget: (target: SelectableSearchTarget) => void;
   removeRecentTarget: (tokenAddress: string) => void;
 }>) {
-  const initial = (target.symbol?.trim() || target.name?.trim() || '?').slice(0, 1).toUpperCase();
   return (
     <div className="bread-search-result" key={target.tokenAddress}>
       <a
@@ -104,7 +142,7 @@ function RecentTargetRow({
         href={`/token/${encodeURIComponent(target.tokenAddress)}`}
         onClick={() => recordRecentTarget(target)}
       >
-        <span className="bread-search-result__image" aria-hidden="true">{initial}</span>
+        <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(target)}</span>
         <span className="bread-search-result__copy">
           <strong>{target.name?.trim() || 'Unnamed token'}</strong>
           <span>${target.symbol?.trim() || '—'}</span>
@@ -145,6 +183,12 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     enabled: open && intent.kind === 'search',
   });
 
+  const trendingQuery = useQuery({
+    queryKey: breadQueryKeys.feed({ view: 'trending', limit: TRENDING_SEARCH_LIMIT }),
+    queryFn: () => api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending', limit: TRENDING_SEARCH_LIMIT }),
+    enabled: open,
+  });
+
   const searchGroups = useMemo(() => {
     const results = query.data?.data ?? [];
     const addressSearch = intent.kind === 'search' && /^0x[0-9a-f]{40}$/i.test(intent.query);
@@ -163,7 +207,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     ].filter((group) => group.results.length > 0);
   }, [intent, query.data?.data]);
 
-  function recordRecentTarget(result: IndexedSearchResult | RecentSearchTarget) {
+  function recordRecentTarget(result: SelectableSearchTarget) {
     const next = addRecentSearchTarget(recentTargets, {
       tokenAddress: result.tokenAddress,
       name: result.name,
@@ -285,6 +329,8 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open]);
 
+  const idleOverlay = intent.kind === 'idle' && value.trim().length === 0;
+
   return (
     <>
       <Button
@@ -345,7 +391,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
               {query.isError ? <p className="bread-inline-error">Search is unavailable right now.</p> : null}
               {query.data?.data.length === 0 ? <p className="bread-search-hint">No indexed tokens found.</p> : null}
 
-              {intent.kind === 'idle' && value.trim().length === 0 && recentTargets.length > 0 ? (
+              {idleOverlay && recentTargets.length > 0 ? (
                 <section>
                   <div className="bread-search-dialog__header">
                     <h3 className="bread-search-hint">Recent</h3>
@@ -359,6 +405,19 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
                       target={target}
                       recordRecentTarget={recordRecentTarget}
                       removeRecentTarget={removeRecentTarget}
+                    />
+                  ))}
+                </section>
+              ) : null}
+
+              {idleOverlay && (trendingQuery.data?.data.length ?? 0) > 0 ? (
+                <section>
+                  <h3 className="bread-search-hint">Trending</h3>
+                  {trendingQuery.data?.data.map((item) => (
+                    <TrendingTargetLink
+                      key={item.tokenAddress}
+                      item={item}
+                      recordRecentTarget={recordRecentTarget}
                     />
                   ))}
                 </section>
