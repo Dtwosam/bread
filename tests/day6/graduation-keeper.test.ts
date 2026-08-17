@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 import type { PublicClient } from 'viem';
 
@@ -112,5 +114,20 @@ describe('automatic graduation keeper', () => {
     expect(results[0]?.status).toBe('TERMINAL');
     expect(submissions).toBe(0);
     phase = 2;
+  });
+
+  it('ships restartable operator runtime wiring with file-mounted signing material', () => {
+    const runner = readFileSync('apps/operator/src/run-graduation-keeper.ts', 'utf8');
+    const compose = readFileSync('infra/docker/graduation-keeper.compose.yaml', 'utf8');
+
+    expect(compose).toContain('graduation-keeper:');
+    expect(compose).toContain('restart: unless-stopped');
+    expect(compose).toContain('start:graduation-keeper');
+    expect(compose).toContain(
+      'BREAD_GRADUATION_KEEPER_PRIVATE_KEY_FILE: /run/secrets/graduation_keeper_private_key',
+    );
+    expect(compose).not.toContain('BREAD_GRADUATION_KEEPER_PRIVATE_KEY:');
+    expect(runner).toContain("requiredSecret('BREAD_GRADUATION_KEEPER_PRIVATE_KEY'");
+    expect(runner).toContain("'BREAD_GRADUATION_KEEPER_PRIVATE_KEY_FILE'");
   });
 });
