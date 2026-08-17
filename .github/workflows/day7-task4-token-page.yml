@@ -5,11 +5,16 @@ on:
     paths:
       - '.github/workflows/day7-task4-token-page.yml'
       - 'apps/api/src/display-metadata.ts'
+      - 'apps/api/src/routes/feed.ts'
       - 'apps/api/src/routes/token.ts'
+      - 'apps/operator/**'
       - 'packages/types/src/api.ts'
       - 'packages/types/src/index.ts'
       - 'apps/web/app/token/**'
       - 'apps/web/components/token/**'
+      - 'apps/web/components/token-card.tsx'
+      - 'apps/web/app/portfolio/page.tsx'
+      - 'apps/web/components/explore/model.ts'
       - 'apps/web/lib/api/**'
       - 'apps/web/app/globals.css'
       - 'apps/web/app/token-v2-closure.css'
@@ -17,6 +22,7 @@ on:
       - 'tests/day7/token-page-behavior.test.tsx'
       - 'tests/day7/token-v2-closure.test.ts'
       - 'tests/day7/token-metadata-gap-closure.test.ts'
+      - 'tests/day7/source-backed-defect-closure.test.ts'
       - 'docs/current-build-state.yaml'
       - 'docs/handoffs/day7-task4-token-page-handoff.md'
   push:
@@ -40,4 +46,4 @@ jobs:
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Run Day 7 Token page consumer-contract tests
-        run: pnpm exec vitest run tests/day7/token-page.test.tsx tests/day7/token-page-behavior.test.tsx tests/day7/token-v2-closure.test.ts tests/day7/token-metadata-gap-closure.test.ts
+        run: pnpm exec vitest run tests/day7/token-page.test.tsx tests/day7/token-page-behavior.test.tsx tests/day7/token-v2-closure.test.ts tests/day7/token-metadata-gap-closure.test.ts tests/day7/source-backed-defect-closure.test.ts
