@@ -82,6 +82,7 @@ export type CreateBreadApiInput = Readonly<{
   capacity?: ReadCapacityConfig;
   rateLimits?: Readonly<Record<"feed" | "search", RateLimitPolicy>>;
   tokenMediaStore?: TokenMediaStore;
+  trustedMediaBaseUrl?: string;
 }>;
 
 export function createBreadApi(input: CreateBreadApiInput) {
@@ -126,6 +127,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
     cache,
     feedRateLimit: (subject: string) => limiter.take("feed", subject),
     now,
+    trustedMediaBaseUrl:
+      input.trustedMediaBaseUrl ??
+      process.env.BREAD_MEDIA_PUBLIC_BASE_URL?.trim() ??
+      undefined,
   } as const;
   registerStatusRoute(app, deps);
   registerFeedRoute(app, deps);
