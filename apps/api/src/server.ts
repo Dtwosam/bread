@@ -50,13 +50,17 @@ const DEFAULT_CAPACITY: ReadCapacityConfig = {
   dbQueueTimeoutMs: 250,
 };
 
-const DEFAULT_RATE_LIMITS: Readonly<Record<"feed" | "search", RateLimitPolicy>> = {
+const DEFAULT_RATE_LIMITS: Readonly<
+  Record<"feed" | "search", RateLimitPolicy>
+> = {
   feed: { maxRequests: 500, windowMs: 1_000 },
   search: { maxRequests: 30, windowMs: 1_000 },
 };
 
 function unavailableRedis(): ApiRedis {
-  const unavailable = async () => { throw new Error("Redis unavailable"); };
+  const unavailable = async () => {
+    throw new Error("Redis unavailable");
+  };
   return {
     get: unavailable,
     set: unavailable,
@@ -91,14 +95,38 @@ export function createBreadApi(input: CreateBreadApiInput) {
   const redis = input.redis ?? unavailableRedis();
   const gate = new BoundedReadGate(input.capacity ?? DEFAULT_CAPACITY);
   const repository = boundRepository(new ReadRepository(input.db), gate);
-  const exploreAgeRepository = boundRepository(new ExploreAgeReadRepository(input.db), gate);
-  const almostBakedRepository = boundRepository(new AlmostBakedRepository(input.db), gate);
-  const trendingRepository = boundRepository(new TrendingRepository(input.db), gate);
-  const explicitSortRepository = boundRepository(new ExplicitSortRepository(input.db), gate);
-  const creatorRepository = boundRepository(new CreatorRepository(input.db), gate);
-  const searchRepository = boundRepository(new SearchRepository(input.db), gate);
-  const secondaryRepository = boundRepository(new SecondaryRepository(input.db), gate);
-  const cache = new BreadCache({ redis, schemaVersion: BREAD_PROJECTION_CACHE_SCHEMA_VERSION });
+  const exploreAgeRepository = boundRepository(
+    new ExploreAgeReadRepository(input.db),
+    gate,
+  );
+  const almostBakedRepository = boundRepository(
+    new AlmostBakedRepository(input.db),
+    gate,
+  );
+  const trendingRepository = boundRepository(
+    new TrendingRepository(input.db),
+    gate,
+  );
+  const explicitSortRepository = boundRepository(
+    new ExplicitSortRepository(input.db),
+    gate,
+  );
+  const creatorRepository = boundRepository(
+    new CreatorRepository(input.db),
+    gate,
+  );
+  const searchRepository = boundRepository(
+    new SearchRepository(input.db),
+    gate,
+  );
+  const secondaryRepository = boundRepository(
+    new SecondaryRepository(input.db),
+    gate,
+  );
+  const cache = new BreadCache({
+    redis,
+    schemaVersion: BREAD_PROJECTION_CACHE_SCHEMA_VERSION,
+  });
   const limiter = new IsolatedRateLimiter({
     redis,
     policies: input.rateLimits ?? DEFAULT_RATE_LIMITS,
@@ -113,7 +141,12 @@ export function createBreadApi(input: CreateBreadApiInput) {
     );
     if (!checkpoint) throw new Error("indexer checkpoint unavailable");
     const observedHead = await input.observedHeadBlock();
-    return buildFreshness(input.context.chainId, checkpoint, observedHead, now());
+    return buildFreshness(
+      input.context.chainId,
+      checkpoint,
+      observedHead,
+      now(),
+    );
   };
 
   const deps = {
@@ -138,8 +171,16 @@ export function createBreadApi(input: CreateBreadApiInput) {
   registerTradesRoute(app, deps);
   registerHoldersRoute(app, deps);
   registerPortfolioRoute(app, deps);
-  registerSecondaryRoutes(app, { repository: secondaryRepository, context: input.context, freshness });
-  registerCreatorRoute(app, { repository: creatorRepository, chainId: input.context.chainId, freshness });
+  registerSecondaryRoutes(app, {
+    repository: secondaryRepository,
+    context: input.context,
+    freshness,
+  });
+  registerCreatorRoute(app, {
+    repository: creatorRepository,
+    chainId: input.context.chainId,
+    freshness,
+  });
   registerSearchRoute(app, {
     repository: searchRepository,
     context: input.context,
@@ -151,7 +192,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
   });
 
   app.setErrorHandler((error, request, reply) => {
-    request.log.error({ err: error, requestId: request.id }, "Bread read API request failed");
+    request.log.error(
+      { err: error, requestId: request.id },
+      "Bread read API request failed",
+    );
     if (error instanceof ReadCapacityExceededError) {
       void reply.code(503).send({
         error: {

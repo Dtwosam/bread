@@ -1,17 +1,26 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from "fastify";
 
-import { resolveIndexedLifecycleState } from '../../../../packages/db/src/index.js';
-import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/src/index.js';
+import { resolveIndexedLifecycleState } from "../../../../packages/db/src/index.js";
+import { canonicalizeProtocolAddress } from "../../../../packages/protocol-sdk/src/index.js";
 
-import { sanitizeIndexedDisplayMetadata } from '../display-metadata.js';
-import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
-import type { BreadReadRouteDeps } from './types.js';
+import { sanitizeIndexedDisplayMetadata } from "../display-metadata.js";
+import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
+import type { BreadReadRouteDeps } from "./types.js";
 
-type LaunchRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunch']>>;
-type LaunchStateRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunchState']>>;
-type TokenMetricRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getTokenMetrics']>>;
+type LaunchRow = Awaited<
+  ReturnType<BreadReadRouteDeps["repository"]["getLaunch"]>
+>;
+type LaunchStateRow = Awaited<
+  ReturnType<BreadReadRouteDeps["repository"]["getLaunchState"]>
+>;
+type TokenMetricRow = Awaited<
+  ReturnType<BreadReadRouteDeps["repository"]["getTokenMetrics"]>
+>;
 
-export function serializeLaunch(row: NonNullable<LaunchRow>, trustedMediaBaseUrl?: string) {
+export function serializeLaunch(
+  row: NonNullable<LaunchRow>,
+  trustedMediaBaseUrl?: string,
+) {
   return {
     tokenAddress: row.tokenAddress,
     curveAddress: row.curveAddress,
@@ -45,8 +54,15 @@ export function serializeLaunch(row: NonNullable<LaunchRow>, trustedMediaBaseUrl
   } as const;
 }
 
-export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefined) {
-  if (!row || row.lastPriceNumerator === null || row.lastPriceDenominator === null || row.lastPriceSource === null) {
+export function serializeTradeMetrics(
+  row: NonNullable<TokenMetricRow> | undefined,
+) {
+  if (
+    !row ||
+    row.lastPriceNumerator === null ||
+    row.lastPriceDenominator === null ||
+    row.lastPriceSource === null
+  ) {
     return null;
   }
   return {
@@ -104,7 +120,9 @@ export function serializeLifecycleState(
   });
 }
 
-export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined) {
+export function serializeCurveState(
+  row: NonNullable<LaunchStateRow> | undefined,
+) {
   if (!row) return null;
   return {
     mode: row.mode,
@@ -139,21 +157,31 @@ export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined
   } as const;
 }
 
-export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
-  app.get('/v1/tokens/:address', async (request, reply) => {
+export function registerTokenRoute(
+  app: FastifyInstance,
+  deps: BreadReadRouteDeps,
+): void {
+  app.get("/v1/tokens/:address", async (request, reply) => {
     markNoStore(reply);
     const params = request.params as { address?: string };
     let tokenAddress: string;
     try {
-      tokenAddress = canonicalizeProtocolAddress(params.address ?? '');
+      tokenAddress = canonicalizeProtocolAddress(params.address ?? "");
     } catch {
       return reply.code(400).send({
-        error: { code: 'INVALID_ADDRESS', message: 'Token address is malformed.', requestId: request.id },
+        error: {
+          code: "INVALID_ADDRESS",
+          message: "Token address is malformed.",
+          requestId: request.id,
+        },
       });
     }
 
     const load = async () => {
-      const launch = await deps.repository.getLaunch(deps.context.chainId, tokenAddress);
+      const launch = await deps.repository.getLaunch(
+        deps.context.chainId,
+        tokenAddress,
+      );
       if (!launch) return { found: false as const };
 
       const [state, metrics] = await Promise.all([
@@ -179,14 +207,18 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: `token:${deps.context.chainId}:${tokenAddress}`,
-          key: 'detail',
+          key: "detail",
           load,
         })
-      : { value: await load(), cache: 'BYPASS' as const };
+      : { value: await load(), cache: "BYPASS" as const };
 
     if (!cacheResult.value.found) {
       return reply.code(404).send({
-        error: { code: 'TOKEN_NOT_FOUND', message: 'Token is not indexed by Bread.', requestId: request.id },
+        error: {
+          code: "TOKEN_NOT_FOUND",
+          message: "Token is not indexed by Bread.",
+          requestId: request.id,
+        },
       });
     }
 

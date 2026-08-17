@@ -1,12 +1,22 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 
-import type { IndexedFeedItem, IndexedSearchResult } from '../../../packages/types/src/index';
-import { Button, CreatorAttribution, Icon } from '@bread/ui';
-import { createBreadApiClient } from '../lib/api/client';
-import { breadQueryKeys } from '../lib/api/queries';
+import type {
+  IndexedFeedItem,
+  IndexedSearchResult,
+} from "../../../packages/types/src/index";
+import { Button, CreatorAttribution, Icon } from "@bread/ui";
+import { createBreadApiClient } from "../lib/api/client";
+import { breadQueryKeys } from "../lib/api/queries";
 import {
   addRecentSearchTarget,
   clearRecentSearchTargets,
@@ -14,15 +24,20 @@ import {
   removeRecentSearchTarget,
   writeRecentSearchTargets,
   type RecentSearchTarget,
-} from '../lib/search/recent-targets';
-import { formatUsdcBaseUnits, lifecycleLabel, searchIntent, shortAddress } from './explore/model';
-import { FreshnessBanner } from './freshness-banner';
+} from "../lib/search/recent-targets";
+import {
+  formatUsdcBaseUnits,
+  lifecycleLabel,
+  searchIntent,
+  shortAddress,
+} from "./explore/model";
+import { FreshnessBanner } from "./freshness-banner";
 
 const TRENDING_SEARCH_LIMIT = 5;
 
 type SelectableSearchTarget = Pick<
   RecentSearchTarget,
-  'tokenAddress' | 'name' | 'symbol' | 'deployerAddress'
+  "tokenAddress" | "name" | "symbol" | "deployerAddress"
 >;
 
 function SearchGlyph() {
@@ -46,14 +61,16 @@ function formatSearchAge(ageSeconds: string | null): string | null {
   if (ageSeconds === null || !/^\d+$/.test(ageSeconds)) return null;
   const seconds = Number(ageSeconds);
   if (!Number.isSafeInteger(seconds) || seconds < 0) return null;
-  if (seconds < 60) return '<1m';
+  if (seconds < 60) return "<1m";
   if (seconds < 3_600) return `${Math.floor(seconds / 60)}m`;
   if (seconds < 86_400) return `${Math.floor(seconds / 3_600)}h`;
   return `${Math.floor(seconds / 86_400)}d`;
 }
 
 function searchResultInitial(result: SelectableSearchTarget): string {
-  return (result.symbol?.trim() || result.name?.trim() || '?').slice(0, 1).toUpperCase();
+  return (result.symbol?.trim() || result.name?.trim() || "?")
+    .slice(0, 1)
+    .toUpperCase();
 }
 
 function SearchResultLink({
@@ -73,19 +90,23 @@ function SearchResultLink({
       onClick={() => recordRecentTarget(result)}
     >
       <span className="bread-search-result__identity">
-        <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(result)}</span>
+        <span className="bread-search-result__image" aria-hidden="true">
+          {searchResultInitial(result)}
+        </span>
         <span className="bread-search-result__copy">
-          <strong>{result.name?.trim() || 'Unnamed token'}</strong>
-          <span>${result.symbol?.trim() || '—'}</span>
+          <strong>{result.name?.trim() || "Unnamed token"}</strong>
+          <span>${result.symbol?.trim() || "—"}</span>
           <CreatorAttribution creatorAddress={result.deployerAddress} />
         </span>
       </span>
       <span className="bread-search-result__details">
         <span>Market cap {formatUsdcBaseUnits(result.marketCap)}</span>
-        <span>Age {age ?? '—'}</span>
-        <span>Holders {result.holderCount ?? '—'}</span>
-        <span>Lifecycle {lifecycle ?? '—'}</span>
-        {result.matchKind === 'CONTRACT' ? <span>Exact contract match</span> : null}
+        <span>Age {age ?? "—"}</span>
+        <span>Holders {result.holderCount ?? "—"}</span>
+        <span>Lifecycle {lifecycle ?? "—"}</span>
+        {result.matchKind === "CONTRACT" ? (
+          <span>Exact contract match</span>
+        ) : null}
         <code className="bread-technical" title={result.tokenAddress}>
           {shortAddress(result.tokenAddress)}
         </code>
@@ -108,16 +129,20 @@ function TrendingTargetLink({
       onClick={() => recordRecentTarget(item)}
     >
       <span className="bread-search-result__identity">
-        <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(item)}</span>
+        <span className="bread-search-result__image" aria-hidden="true">
+          {searchResultInitial(item)}
+        </span>
         <span className="bread-search-result__copy">
-          <strong>{item.name?.trim() || 'Unnamed token'}</strong>
-          <span>${item.symbol?.trim() || '—'}</span>
+          <strong>{item.name?.trim() || "Unnamed token"}</strong>
+          <span>${item.symbol?.trim() || "—"}</span>
           <CreatorAttribution creatorAddress={item.deployerAddress} />
         </span>
       </span>
       <span className="bread-search-result__details">
-        <span>Market cap {formatUsdcBaseUnits(item.metrics?.marketCap ?? null)}</span>
-        <span>Holders {item.holderCount ?? '—'}</span>
+        <span>
+          Market cap {formatUsdcBaseUnits(item.metrics?.marketCap ?? null)}
+        </span>
+        <span>Holders {item.holderCount ?? "—"}</span>
         <code className="bread-technical" title={item.tokenAddress}>
           {shortAddress(item.tokenAddress)}
         </code>
@@ -142,17 +167,21 @@ function RecentTargetRow({
         href={`/token/${encodeURIComponent(target.tokenAddress)}`}
         onClick={() => recordRecentTarget(target)}
       >
-        <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(target)}</span>
+        <span className="bread-search-result__image" aria-hidden="true">
+          {searchResultInitial(target)}
+        </span>
         <span className="bread-search-result__copy">
-          <strong>{target.name?.trim() || 'Unnamed token'}</strong>
-          <span>${target.symbol?.trim() || '—'}</span>
-          {target.deployerAddress ? <CreatorAttribution creatorAddress={target.deployerAddress} /> : null}
+          <strong>{target.name?.trim() || "Unnamed token"}</strong>
+          <span>${target.symbol?.trim() || "—"}</span>
+          {target.deployerAddress ? (
+            <CreatorAttribution creatorAddress={target.deployerAddress} />
+          ) : null}
         </span>
       </a>
       <button
         type="button"
         className="bread-search-hint"
-        aria-label={`Remove recent ${target.symbol?.trim() || target.name?.trim() || 'token'}`}
+        aria-label={`Remove recent ${target.symbol?.trim() || target.name?.trim() || "token"}`}
         onClick={() => removeRecentTarget(target.tokenAddress)}
       >
         Remove recent
@@ -161,9 +190,11 @@ function RecentTargetRow({
   );
 }
 
-export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
+export function SearchSurface({
+  compact = false,
+}: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
   const [recentTargets, setRecentTargets] = useState<RecentSearchTarget[]>([]);
   const inputId = useId();
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -173,37 +204,54 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
 
   const query = useQuery({
     queryKey:
-      intent.kind === 'search'
+      intent.kind === "search"
         ? breadQueryKeys.search({ q: intent.query, limit: 20 })
-        : (['bread', 'search', 'idle'] as const),
+        : (["bread", "search", "idle"] as const),
     queryFn: () => {
-      if (intent.kind !== 'search') throw new Error('Search query is not ready.');
-      return api.search<readonly IndexedSearchResult[]>({ q: intent.query, limit: 20 });
+      if (intent.kind !== "search")
+        throw new Error("Search query is not ready.");
+      return api.search<readonly IndexedSearchResult[]>({
+        q: intent.query,
+        limit: 20,
+      });
     },
-    enabled: open && intent.kind === 'search',
+    enabled: open && intent.kind === "search",
   });
 
   const trendingQuery = useQuery({
-    queryKey: breadQueryKeys.feed({ view: 'trending', limit: TRENDING_SEARCH_LIMIT }),
-    queryFn: () => api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending', limit: TRENDING_SEARCH_LIMIT }),
+    queryKey: breadQueryKeys.feed({
+      view: "trending",
+      limit: TRENDING_SEARCH_LIMIT,
+    }),
+    queryFn: () =>
+      api.getFeed<readonly IndexedFeedItem[]>({
+        view: "trending",
+        limit: TRENDING_SEARCH_LIMIT,
+      }),
     enabled: open,
   });
 
   const searchGroups = useMemo(() => {
     const results = query.data?.data ?? [];
-    const addressSearch = intent.kind === 'search' && /^0x[0-9a-f]{40}$/i.test(intent.query);
-    const exact = results.filter((result) => result.matchKind === 'CONTRACT');
+    const addressSearch =
+      intent.kind === "search" && /^0x[0-9a-f]{40}$/i.test(intent.query);
+    const exact = results.filter((result) => result.matchKind === "CONTRACT");
     const creators = results.filter(
-      (result) => result.matchKind === 'CREATOR' || (addressSearch && result.matchKind !== 'CONTRACT'),
+      (result) =>
+        result.matchKind === "CREATOR" ||
+        (addressSearch && result.matchKind !== "CONTRACT"),
     );
     const tokens = addressSearch
       ? []
-      : results.filter((result) => result.matchKind !== 'CONTRACT' && result.matchKind !== 'CREATOR');
+      : results.filter(
+          (result) =>
+            result.matchKind !== "CONTRACT" && result.matchKind !== "CREATOR",
+        );
 
     return [
-      { label: 'Exact match', results: exact },
-      { label: 'Tokens', results: tokens },
-      { label: 'Creators / wallets', results: creators },
+      { label: "Exact match", results: exact },
+      { label: "Tokens", results: tokens },
+      { label: "Creators / wallets", results: creators },
     ].filter((group) => group.results.length > 0);
   }, [intent, query.data?.data]);
 
@@ -247,18 +295,24 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
   useEffect(() => {
     if (compact) return;
     const onShortcut = (event: KeyboardEvent) => {
-      const isShortcut = event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey) && !event.altKey;
+      const isShortcut =
+        event.key.toLowerCase() === "k" &&
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey;
       if (!isShortcut) return;
 
       event.preventDefault();
-      const trigger = document.querySelector<HTMLElement>('.bread-header .bread-search-trigger');
+      const trigger = document.querySelector<HTMLElement>(
+        ".bread-header .bread-search-trigger",
+      );
       const active = document.activeElement;
-      returnFocusRef.current = trigger ?? (active instanceof HTMLElement ? active : null);
+      returnFocusRef.current =
+        trigger ?? (active instanceof HTMLElement ? active : null);
       setOpen(true);
     };
 
-    window.addEventListener('keydown', onShortcut);
-    return () => window.removeEventListener('keydown', onShortcut);
+    window.addEventListener("keydown", onShortcut);
+    return () => window.removeEventListener("keydown", onShortcut);
   }, [compact]);
 
   useEffect(() => {
@@ -272,7 +326,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         event.preventDefault();
         setOpen(false);
         return;
@@ -281,13 +335,19 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
       const dialog = dialogRef.current;
       if (!dialog) return;
 
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-        const results = Array.from(dialog.querySelectorAll<HTMLAnchorElement>('a.bread-search-result[href]'));
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        const results = Array.from(
+          dialog.querySelectorAll<HTMLAnchorElement>(
+            "a.bread-search-result[href]",
+          ),
+        );
         if (results.length === 0) return;
 
-        const activeIndex = results.findIndex((result) => result === document.activeElement);
+        const activeIndex = results.findIndex(
+          (result) => result === document.activeElement,
+        );
         const nextIndex =
-          event.key === 'ArrowDown'
+          event.key === "ArrowDown"
             ? activeIndex >= 0
               ? (activeIndex + 1) % results.length
               : 0
@@ -300,11 +360,17 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
         return;
       }
 
-      if (event.key !== 'Tab') return;
+      if (event.key !== "Tab") return;
 
-      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )).filter((element) => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true');
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter(
+        (element) =>
+          !element.hasAttribute("hidden") &&
+          element.getAttribute("aria-hidden") !== "true",
+      );
 
       if (focusable.length === 0) {
         event.preventDefault();
@@ -315,7 +381,8 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       const active = document.activeElement;
-      const focusOutside = !(active instanceof Node) || !dialog.contains(active);
+      const focusOutside =
+        !(active instanceof Node) || !dialog.contains(active);
 
       if (event.shiftKey && (active === first || focusOutside)) {
         event.preventDefault();
@@ -325,28 +392,34 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
         first.focus();
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const idleOverlay = intent.kind === 'idle' && value.trim().length === 0;
+  const idleOverlay = intent.kind === "idle" && value.trim().length === 0;
 
   return (
     <>
       <Button
         variant="secondary"
-        className={compact ? 'bread-search-trigger--compact' : 'bread-search-trigger'}
+        className={
+          compact ? "bread-search-trigger--compact" : "bread-search-trigger"
+        }
         ariaLabel="Search"
         onClick={openSearch}
       >
         <Icon size="normal">
           <SearchGlyph />
         </Icon>
-        <span>{compact ? 'Search' : 'Search token, ticker or contract…'}</span>
+        <span>{compact ? "Search" : "Search token, ticker or contract…"}</span>
       </Button>
 
       {open ? (
-        <div className="bread-search-backdrop" role="presentation" onMouseDown={closeSearch}>
+        <div
+          className="bread-search-backdrop"
+          role="presentation"
+          onMouseDown={closeSearch}
+        >
           <section
             ref={dialogRef}
             tabIndex={-1}
@@ -361,7 +434,11 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
                 <h2 id={`${inputId}-title`}>Search Bread</h2>
                 <p>Name, ticker, contract or creator wallet.</p>
               </div>
-              <Button variant="small" ariaLabel="Close search" onClick={closeSearch}>
+              <Button
+                variant="small"
+                ariaLabel="Close search"
+                onClick={closeSearch}
+              >
                 Close
               </Button>
             </div>
@@ -380,22 +457,41 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
             </label>
 
             <div className="bread-search-results" aria-live="polite">
-              {query.data?.meta ? <FreshnessBanner meta={query.data.meta} /> : null}
-              {intent.kind === 'invalid-address' ? (
-                <p className="bread-inline-error">That contract address is incomplete or malformed.</p>
+              {query.data?.meta ? (
+                <FreshnessBanner meta={query.data.meta} />
               ) : null}
-              {intent.kind === 'idle' && value.trim().length > 0 ? (
-                <p className="bread-search-hint">Type at least two characters, or paste a full contract address.</p>
+              {intent.kind === "invalid-address" ? (
+                <p className="bread-inline-error">
+                  That contract address is incomplete or malformed.
+                </p>
               ) : null}
-              {query.isPending && intent.kind === 'search' ? <p className="bread-search-hint">Searching…</p> : null}
-              {query.isError ? <p className="bread-inline-error">Search is unavailable right now.</p> : null}
-              {query.data?.data.length === 0 ? <p className="bread-search-hint">No indexed tokens found.</p> : null}
+              {intent.kind === "idle" && value.trim().length > 0 ? (
+                <p className="bread-search-hint">
+                  Type at least two characters, or paste a full contract
+                  address.
+                </p>
+              ) : null}
+              {query.isPending && intent.kind === "search" ? (
+                <p className="bread-search-hint">Searching…</p>
+              ) : null}
+              {query.isError ? (
+                <p className="bread-inline-error">
+                  Search is unavailable right now.
+                </p>
+              ) : null}
+              {query.data?.data.length === 0 ? (
+                <p className="bread-search-hint">No indexed tokens found.</p>
+              ) : null}
 
               {idleOverlay && recentTargets.length > 0 ? (
                 <section>
                   <div className="bread-search-dialog__header">
                     <h3 className="bread-search-hint">Recent</h3>
-                    <button type="button" className="bread-search-hint" onClick={clearRecent}>
+                    <button
+                      type="button"
+                      className="bread-search-hint"
+                      onClick={clearRecent}
+                    >
                       Clear recent
                     </button>
                   </div>

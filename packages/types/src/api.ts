@@ -1,8 +1,5 @@
 import type { Hex32 } from "./identity.js";
-import type {
-  TradeExecutionPriceSource,
-  TradeVenueKind,
-} from "./trading.js";
+import type { TradeExecutionPriceSource, TradeVenueKind } from "./trading.js";
 
 export type FreshnessStatus = "FRESH" | "LAGGING" | "REBUILDING" | "DEGRADED";
 export type CacheState = "HIT" | "MISS" | "BYPASS" | "UNAVAILABLE";
