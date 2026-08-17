@@ -7,12 +7,23 @@ export const breadQueryKeys = {
   all: ['bread'] as const,
 
   feed(input: FeedParams = {}) {
-    const prefix = [
-      'bread',
-      'feed',
-      input.view ?? 'new',
-      input.age ?? 'any',
-    ] as const;
+    const prefix = ['bread', 'feed', input.view ?? 'new', input.age ?? 'any'] as const;
+    if (input.marketCapMinQuote !== undefined || input.marketCapMaxQuote !== undefined) {
+      return [
+        ...prefix,
+        input.holdersMin ?? '',
+        input.holdersMax ?? '',
+        input.progressMinBps ?? '',
+        input.progressMaxBps ?? '',
+        input.creator === undefined ? '' : normalizeAddress(input.creator),
+        input.volumeMinQuote ?? '',
+        input.volumeMaxQuote ?? '',
+        input.marketCapMinQuote ?? '',
+        input.marketCapMaxQuote ?? '',
+        input.limit ?? 25,
+        normalizeCursor(input.cursor),
+      ] as const;
+    }
     if (input.volumeMinQuote !== undefined || input.volumeMaxQuote !== undefined) {
       return [
         ...prefix,
@@ -59,15 +70,19 @@ export const breadQueryKeys = {
         normalizeCursor(input.cursor),
       ] as const;
     }
-    return [
-      ...prefix,
-      input.limit ?? 25,
-      normalizeCursor(input.cursor),
-    ] as const;
+    return [...prefix, input.limit ?? 25, normalizeCursor(input.cursor)] as const;
   },
 
   search(input: SearchParams) {
     return ['bread', 'search', input.q.trim().toLowerCase(), input.limit ?? 10] as const;
+  },
+
+  activity(limit = 50) {
+    return ['bread', 'activity', limit] as const;
+  },
+
+  stats() {
+    return ['bread', 'stats'] as const;
   },
 
   token(address: string) {
@@ -75,35 +90,15 @@ export const breadQueryKeys = {
   },
 
   trades(address: string, input: CursorParams = {}) {
-    return [
-      'bread',
-      'token',
-      normalizeAddress(address),
-      'trades',
-      input.limit ?? 25,
-      normalizeCursor(input.cursor),
-    ] as const;
+    return ['bread', 'token', normalizeAddress(address), 'trades', input.limit ?? 25, normalizeCursor(input.cursor)] as const;
   },
 
   holders(address: string, input: CursorParams = {}) {
-    return [
-      'bread',
-      'token',
-      normalizeAddress(address),
-      'holders',
-      input.limit ?? 25,
-      normalizeCursor(input.cursor),
-    ] as const;
+    return ['bread', 'token', normalizeAddress(address), 'holders', input.limit ?? 25, normalizeCursor(input.cursor)] as const;
   },
 
   portfolio(address: string, input: CursorParams = {}) {
-    return [
-      'bread',
-      'portfolio',
-      normalizeAddress(address),
-      input.limit ?? 25,
-      normalizeCursor(input.cursor),
-    ] as const;
+    return ['bread', 'portfolio', normalizeAddress(address), input.limit ?? 25, normalizeCursor(input.cursor)] as const;
   },
 
   creator(address: string) {
