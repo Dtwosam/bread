@@ -38,6 +38,11 @@ export {
 
 export { ReadRepository, decimalIntegerToBigInt } from "./repositories/read.js";
 export {
+  SecondaryRepository,
+  type PlatformActivityRow,
+  type PlatformStatsRow,
+} from "./repositories/secondary.js";
+export {
   EXPLORE_AGE_FILTERS,
   isExploreAgeFilter,
   resolveExploreAgeBounds,
