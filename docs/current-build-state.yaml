@@ -1,6 +1,6 @@
-schema_version: 1.90
+schema_version: 1.91
 project: Bread
-updated_at: 2026-08-17T00:50:00Z
+updated_at: 2026-08-17T01:10:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -8,7 +8,7 @@ source_pack:
   project_source_pack_ratified: v1.6-pre-rc-ui-ux-v2.2
   current_uploaded_living_handoff: CURRENT-BUILD-STATE-v1.9-recovered
   proposed_living_handoff_replacement: null
-  continuation_state: V1_9_UPLOADED_READ_BACK_AND_RECONCILED_WITH_GIT_WORKFLOW_STATE
+  continuation_state: V1_9_UPLOADED_READ_BACK_RECONCILED_AND_SOFTWARE_CLOSURE_RECORDED
   retired_only:
     - 04B-visual-design-system-component-specification
     - 04C-page-by-page-responsive-specification
@@ -25,27 +25,11 @@ source_pack:
     - 06I-high-traffic-bot-burst-launch-stampede-scalability
   per_slice_source_rule: "Before each implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or a prior slice's source pass."
 
-history_preservation:
-  prior_living_yaml_schema: 1.89
-  prior_living_yaml_head: a8750e0a6ecb3f0c26ae87d6e400119714d17009
-  pending_graduation_handoff: docs/handoffs/ui-v2-2-token-pending-graduation-bc18035.md
-  recovered_token_trade_handoff: docs/handoffs/ui-v2-2-token-trade-recovered-a5ddf6f.md
-  recovered_handoff_commit: ee1321eef7f8a6add468a6811653f8d4b96a649b
-  rule: "Earlier RED/GREEN detail remains authoritative in immutable handoffs, Git history and exact-head evidence. This mirror records current workflow position and does not reopen accepted behavior."
-
-legacy_ratifications:
-  day4:
-    pack: v1.4-day4-design
-    day4_production_ratification: RATIFIED
-  day5:
-    pack: v1.5-day5-preflight-consolidated
-    status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
-
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "UI/UX v2.2 source-conformance repair and remaining software closure"
+active_lane: "UI/UX v2.2 automated software closure complete; external/source release gates remain"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_continuity_gate: NONE
-active_ui_gate: UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
+active_ui_gate: UI_UX_V2_2_EXTERNAL_AND_SOURCE_GAPS_REMAIN
 day9_started: true
 day9_complete: false
 day9_rc_tag_created: false
@@ -63,15 +47,13 @@ integration_baseline:
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
   recovered_accepted_code_bearing_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
   v1_9_project_source_readback_base: a8750e0a6ecb3f0c26ae87d6e400119714d17009
-  last_pre_repair_software_head: c526c50590158653c03a2d6320f0478b8e4abff4
   source_conformance_red_head: 68088081129cb3b8a0709faa4ee7ef2e19b42192
-  source_conformance_red_status: "TEST_ONLY — ratified v1.9 explicitly keeps market-cap value authority and Recent/Trending Search semantics unresolved; current branch contains candidate implementations that must be removed or independently sourced before acceptance."
+  source_conformance_red_run: 31983072074
+  source_conformance_repair_head: d8e0e8e8ad0a2034c97cde21ebf2ca6e93d7a5f1
+  exact_verified_ui_software_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  exact_verified_ui_software_status: ALL_AUTOMATED_REQUIRED_WORKFLOWS_GREEN
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
-
-working_branches:
-  - day9/synthra-arc-testnet-v3-candidate
-  - agent/ui-ux-v2-2-implementation
 
 repository:
   remote: https://github.com/Dtwosam/bread
@@ -81,7 +63,7 @@ repository:
   ui_pr: 94
   ui_pr_state: OPEN_DRAFT_UNMERGED
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
-  current_ui_head_before_this_sync: 68088081129cb3b8a0709faa4ee7ef2e19b42192
+  exact_verified_ui_software_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
   day9_complete: false
   rc_tag_created: false
   day10_started: false
@@ -89,51 +71,58 @@ repository:
 accepted_state:
   lane1_foundations: COMPLETE
   lane2_global_shell_navigation: COMPLETE
-  lane3_explore_search: OPEN_WITH_RECORDED_SOURCE_SECURITY_BLOCKERS
-  token_trade:
-    canonical_creator_attribution: COMPLETE_AT_51cbcbabf0624f62d6a4c31ea84a332efa9e94bf
-    primary_indexed_holder_stat: COMPLETE_AT_5ca948568e7b5c24f652ef2fb5beaba979c1abbd
-    active_graduation_baked_progress: COMPLETE_AT_01c6c10ac357453d77e942ff667ba026671dea1a
-    graduation_pending: COMPLETE_AT_bc18035ce4a37e1dfff2e2c5c8850b31cd61971a
-    processing_graduating: COMPLETE
-    graduated_token_treatment: COMPLETE
-    trade_panel_balance_route_ticker_cta: COMPLETE
-    stale_quote_refresh_before_signing: COMPLETE
-    transaction_explorer_link: COMPLETE
-    buy_max_gas_reserve: COMPLETE_SOURCE_BACKED
-  create: SOURCE_STAGED_FLOW_IMPLEMENTED_BROWSER_TEST_RECONCILED
-  portfolio_creator: SOURCE_BACKED_IMPLEMENTED
+  lane3_explore_search: SOURCE_BACKED_EXECUTABLE_PORTION_COMPLETE_WITH_RECORDED_SEMANTIC_GAPS
+  token_trade: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
+  create: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
+  portfolio_creator: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
   secondary_routes:
-    docs_legal_profile_errors: IMPLEMENTED_WITH_MISSING_LEGAL_COPY_RETAINED_AS_BLOCKER
-    activity_stats: CANDIDATE_SOURCE_BACKED_INDEXED_READS_PENDING_EXACT_HEAD_VERIFICATION
-
-verification:
-  last_known_exact_head_green_before_gap_closure: 6da08d261c0cc5378a5e1ab1b7f7fd3ec4047b0b
-  last_known_root_ci: PASS_RUN_31977496748
-  last_known_token_page: PASS_RUN_31977496646
-  last_known_explore_search: PASS_RUN_31977496698
-  last_known_production_gates: PASS_RUN_31977496737
-  current_exact_head_verification: PENDING_GITHUB_ACTIONS_QUEUE
-  physical_device_gate: OPEN_EXTERNAL_EXECUTION_REQUIRED
+    docs_profile_error_states: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
+    activity_stats: COMPLETE_SOURCE_BACKED_INDEXED_READS
+    legal_copy: BLOCKED_APPROVED_COPY_REQUIRED
+  source_conformance_repair: COMPLETE
+  automated_ui_software_closure: COMPLETE_AT_B60318EF
 
 source_conformance_repair:
   trigger: "CURRENT-BUILD-STATE v1.9 explicitly says not to fabricate market-cap values or Recent/Trending Search semantics."
   red_test_commit: 68088081129cb3b8a0709faa4ee7ef2e19b42192
-  observed_repository_drift:
-    - "packages/db/src/repositories/trades.ts currently derives market_cap from execution price multiplied by initial supply without controlling source authority."
-    - "apps/web/components/search-surface.tsx currently invents localStorage retention/max-count semantics for Recent searches."
-    - "apps/web/components/search-surface.tsx currently equates Trending Search suggestions with the Explore Trending feed without source authority."
-  required_repair:
-    - "Remove the invented market-cap projection formula while preserving nullable canonical indexed field plumbing."
-    - "Remove invented Recent/Trending Search persistence/ranking behavior; keep those groups explicitly unresolved rather than fabricating semantics."
-    - "Correct repository plan/tests so future agents cannot treat those candidate decisions as authority."
-  status: RED_PENDING_FOCUSED_CI_EXECUTION
+  red_run: 31983072074
+  red_result: "25 adjacent tests passed; exactly two intended guards failed for invented Recent/Trending Search behavior and market-cap formula population."
+  repaired_behavior:
+    - "Removed price-times-supply market-cap projection and filter activation; required UI surfaces show explicit unavailable state instead of fabricated authority."
+    - "Removed localStorage Recent Search retention/limit semantics."
+    - "Removed reuse of Explore Trending feed as Trending Search authority."
+    - "Retained canonical indexed Activity/Stats implementation and all previously accepted source-backed UI/transaction behavior."
+    - "Corrected stale Create E2E success assertion to v2.2 Launch Success identity semantics; no production Create behavior was weakened."
+  exact_verified_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  status: COMPLETE
+
+verification:
+  exact_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  root_ci: PASS_RUN_31983756714
+  create_launch: PASS_RUN_31983756703
+  explore_search: PASS_RUN_31983756679
+  token_page: PASS_RUN_31983756636
+  portfolio_creator: PASS_RUN_31983756695
+  production_gates: PASS_RUN_31983756672
+  frontend_security: PASS_RUN_31983756708
+  playwright_desktop_mobile: PASS_RUN_31983756707
+  cross_browser_probe: PASS_RUN_31983756688
+  release_browser_matrix: PASS_RUN_31983756668
+  hot_launch_10k_capacity: PASS_RUN_31983756674
+  failure_recovery: PASS_RUN_31983756731
+  day9_recovery_drills: PASS_RUN_31983756675
+  service_rollback: PASS_RUN_31983756641
+  rebuild_reconcile: PASS_RUN_31983756681
+  indexed_read_boundary: PASS_RUN_31983756664
+  day9_truthfulness_final_rc_gate: PASS_RUN_31983756751
+  truthfulness_note: "The final-RC workflow proves the blocked verdict remains truthful; it does not establish Day-9 PASS or authorize an RC tag."
+  physical_device_gate: OPEN_EXTERNAL_EXECUTION_REQUIRED
 
 unresolved_source_interface_gaps:
-  market_cap_value_authority: "OPEN — do not invent formula/value authority. Nullable indexed field/filter plumbing may exist but production population remains undefined."
+  market_cap_value_authority: "OPEN — do not invent formula/value authority. Required UI surfaces remain explicit unavailable state until authority is ratified."
   sort_semantics: "OPEN — allowed sort names exist, but direction/default/tie-break semantics are not frozen."
   lifecycle_full_categories: "OPEN — do not infer New/Active/Almost Baked boundaries from age/progress beyond accepted feed memberships and canonical graduation states."
-  search_images: "BLOCKED — no approved canonical safe image URL/storage/proxy projection; fixed fallback slots are allowed."
+  search_images: "BLOCKED — no approved canonical safe image URL/storage/proxy projection; fixed deterministic fallback slots are allowed."
   recent_searches: OPEN_UNDEFINED_AUTHORITY
   trending_searches: OPEN_UNDEFINED_AUTHORITY
   token_info_description_social_projection: OPEN
@@ -141,23 +130,20 @@ unresolved_source_interface_gaps:
   physical_devices: OPEN_EXTERNAL_EXECUTION_REQUIRED
 
 final_day9_verification_release_gates:
-  unified_responsive_closure: OPEN
-  accessibility: OPEN
-  performance_04d: OPEN_ON_FINAL_UNIFIED_CANDIDATE
-  degraded_loading_error_recovery: OPEN_ON_FINAL_UNIFIED_CANDIDATE
-  wallet_network_matrix: OPEN_ON_FINAL_UNIFIED_CANDIDATE
-  full_desktop_mobile_browser_matrix: OPEN_ON_FINAL_UNIFIED_CANDIDATE
-  affected_06i_10k_load: OPEN_ON_FINAL_UNIFIED_CANDIDATE
-  rollback_reconcile: MUST_REVERIFY_ON_FINAL_UNIFIED_CANDIDATE
+  automated_desktop_mobile_chromium: PASS_AT_B60318EF
+  automated_cross_browser_chromium_firefox_webkit: PASS_AT_B60318EF
+  accessibility_and_reduced_motion_automated_checks: PASS_AT_B60318EF
+  affected_06i_10k_load: PASS_AT_B60318EF
+  rollback_reconcile: PASS_AT_B60318EF
   physical_current_branded_devices: OPEN_EXTERNAL_EXECUTION_REQUIRED
-  one_exact_head_final_release_gate: OPEN
+  approved_legal_copy: OPEN_EXTERNAL_CONTENT_DEPENDENCY
+  source_semantic_gaps: OPEN_AND_INTENTIONALLY_NOT_FABRICATED
+  one_exact_head_final_release_gate: BLOCKED_UNTIL_ALL_MANDATORY_EXTERNAL_SOURCE_GATES_PASS
   rc_freeze_tag: BLOCKED
   day10: NOT_STARTED
 
 blockers:
-  - SOURCE_CONFORMANCE_REPAIR_PENDING
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-  - UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE
   - EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS
   - APPROVED_LEGAL_COPY
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -167,10 +153,8 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  SOURCE_CONFORMANCE_REPAIR_PENDING: "Candidate code introduced market-cap and Search Recent/Trending semantics that v1.9 explicitly leaves unresolved. Repair before accepting the software candidate."
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Primary Day-9 release gate: final redesigned candidate still needs genuine required iOS Safari, representative Android Chrome and current branded Edge evidence."
-  UI_UX_V2_2_IMPLEMENTATION_AND_EVIDENCE: "Remaining source-authorized software closure and final exact-head evidence are not complete."
-  EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Sort/full lifecycle/Search media/Recent/Trending and market-cap value authority remain source/interface gaps; do not invent them."
+  EXPLORE_SEARCH_LANE3_SOURCE_SECURITY_DECISIONS: "Market-cap value authority, sort semantics, full lifecycle classification and Search media/Recent/Trending semantics remain source/interface gaps; do not invent them."
   APPROVED_LEGAL_COPY: "Terms/privacy/risk public copy cannot be fabricated by implementation agent."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
   PONS_V2_RUNTIME_REFERENCE: "Reference evidence only; do not guess numeric runtime state."
@@ -185,7 +169,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Execute the source-conformance RED at 68088081129cb3b8a0709faa4ee7ef2e19b42192 and verify it fails only because the current candidate invents market-cap population plus Recent/Trending Search semantics. Then remove only those invented semantics, preserve source-backed nullable market-cap/filter presentation and accepted Search behavior, run focused plus adjacent exact-head regressions, and continue source-authorized software closure. Do not invent sort/full-lifecycle/media semantics. Keep PR #94 draft/open/unmerged and retain the physical-device blocker.
+  Preserve b60318ef3417b9ec38354cc341cfdb69f9f18fca as the exact verified automated UI software head. Do not reopen accepted software without a demonstrated regression. Complete only the remaining externally sourced/authorized Day-9 gates: genuine physical/current branded-device evidence, approved legal copy/source decisions, and any explicit source amendments required for unresolved market-cap/sort/full-lifecycle/Search media/Recent/Trending semantics. Keep PR #94 draft/open/unmerged. Do not tag RC or begin Day 10 until every mandatory gate passes.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
