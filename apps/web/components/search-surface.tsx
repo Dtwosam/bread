@@ -127,7 +127,7 @@ function indexedAgeSeconds(
   }
   const launched = BigInt(launchTimestamp);
   const indexed = BigInt(indexedThroughBlockTimestamp);
-  return (indexed > launched ? indexed - launched : 0n).toString(10);
+  return (indexed > launched ? indexed - launched : BigInt(0)).toString(10);
 }
 
 function feedLifecycleState(item: IndexedFeedItem): IndexedSearchResult['lifecycleState'] {
