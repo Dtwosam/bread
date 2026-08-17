@@ -2,8 +2,6 @@ name: v1.6.1-gap-closure-exact-head
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/v161-gap-closure-exact-head.yml'
 
 permissions:
   contents: write
