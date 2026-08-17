@@ -1,6 +1,6 @@
 schema_version: 1.91
 project: Bread
-updated_at: 2026-08-17T01:10:00Z
+updated_at: 2026-08-17T01:16:00Z
 
 source_pack:
   current_ratified: v1.6-pre-rc-ui-ux-v2.2
@@ -54,6 +54,10 @@ integration_baseline:
   exact_verified_ui_software_status: ALL_AUTOMATED_REQUIRED_WORKFLOWS_GREEN
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
+
+working_branches:
+  - day9/synthra-arc-testnet-v3-candidate
+  - agent/ui-ux-v2-2-implementation
 
 repository:
   remote: https://github.com/Dtwosam/bread
