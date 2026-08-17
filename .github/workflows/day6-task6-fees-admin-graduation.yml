@@ -30,6 +30,16 @@ jobs:
           BREAD_DB_INTEGRATION: "1"
           BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
         run: pnpm exec vitest run tests/day6/fees-admin-graduation.test.ts tests/day6/fees-admin-graduation-conformance.test.ts tests/day6/creator-trade-count.test.ts tests/day6/graduation-keeper.test.ts
+      - name: Validate automatic graduation keeper deployment descriptor
+        env:
+          BREAD_API_BASE_URL: http://127.0.0.1:4010
+          BREAD_STACK_VERSION: ci-validation
+          BREAD_GRADUATION_KEEPER_SECRET_FILE: /tmp/bread-graduation-keeper.key
+        run: |
+          printf '%s\n' '0x0000000000000000000000000000000000000000000000000000000000000001' > "$BREAD_GRADUATION_KEEPER_SECRET_FILE"
+          docker compose -f infra/docker/graduation-keeper.compose.yaml config --quiet
+      - name: Build automatic graduation keeper container
+        run: docker build --file infra/docker/graduation-keeper.Dockerfile --tag bread-graduation-keeper:ci .
       - name: Stop infrastructure
         if: always()
         run: docker compose -f infra/docker/compose.yaml down -v
