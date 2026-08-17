@@ -186,6 +186,7 @@ export function createBreadApi(input: CreateBreadApiInput) {
     context: input.context,
     freshness,
     rateLimit: (subject: string) => limiter.take("search", subject),
+    trustedMediaBaseUrl: deps.trustedMediaBaseUrl,
   });
   registerTokenMediaRoutes(app, {
     store: input.tokenMediaStore ?? configuredTokenMediaStore(),

@@ -93,8 +93,10 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(graduation).toMatch(/bonding curve is complete/i);
     expect(graduation).toMatch(/liquidity creation is in progress/i);
     expect(graduation).toMatch(/completed trades remain confirmed/i);
-    expect(graduation).toContain("state === 'Graduating'");
-    expect(graduation).toContain('Continue graduation');
+    expect(graduation).toContain("displayState(token) === 'Graduating'");
+    expect(graduation).toMatch(/automatic graduation keeper/i);
+    expect(graduation).toMatch(/No creator action or wallet signature is required/i);
+    expect(graduation).not.toMatch(/Retry graduation|Continue graduation|Connect wallet to retry/);
     expect(trade).toContain('routeUnavailableReason');
     expect(tradePanel).toContain('routeUnavailableReason');
     expect(tradePanel).toContain('Trading unavailable');

@@ -244,7 +244,7 @@ export function registerFeedRoute(app: FastifyInstance, deps: BreadFeedRouteDeps
           const metricRow = metricsByToken.get(tokenKey);
           const stateRow = statesByToken.get(tokenKey);
           return {
-            ...serializeLaunch(launch),
+            ...serializeLaunch(launch, deps.trustedMediaBaseUrl),
             holderCount: metricRow?.holderCount?.toString(10) ?? null,
             graduatedVenueKind: stateRow?.graduatedVenueKind ?? null,
             lifecycleState: serializeLifecycleState(launch, stateRow, metricRow),

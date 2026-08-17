@@ -47,7 +47,7 @@ function automaticGraduationCopy(token: IndexedTokenDetail): string | null {
     return 'Your completed trade remains confirmed. Bread’s automatic graduation keeper will retry from fresh canonical onchain coordinator state. No creator or user wallet signature is required.';
   }
   if (displayState(token) === 'Graduating') {
-    return 'The bonding curve is complete. Liquidity creation is in progress. Bread’s automatic graduation keeper advances the next permissionless coordinator step. No creator action or wallet signature is required.';
+    return 'The bonding curve is complete. Liquidity creation is in progress. Completed trades remain confirmed. Bread’s automatic graduation keeper advances the next permissionless coordinator step. No creator action or wallet signature is required.';
   }
   return null;
 }

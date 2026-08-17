@@ -40,6 +40,8 @@ type SelectableSearchTarget = Pick<
   "tokenAddress" | "name" | "symbol" | "deployerAddress"
 >;
 
+type SearchResultWithMetadata = IndexedSearchResult & Readonly<{ metadata?: IndexedFeedItem["metadata"] }>;
+
 function SearchGlyph() {
   return (
     <svg
@@ -73,11 +75,27 @@ function searchResultInitial(result: SelectableSearchTarget): string {
     .toUpperCase();
 }
 
+function TokenSearchImage({ image, fallback }: Readonly<{ image?: string; fallback: string }>) {
+  return image ? (
+    <img
+      className="bread-search-result__image"
+      src={image}
+      alt=""
+      width={40}
+      height={40}
+      loading="lazy"
+      decoding="async"
+    />
+  ) : (
+    <span className="bread-search-result__image" aria-hidden="true">{fallback}</span>
+  );
+}
+
 function SearchResultLink({
   result,
   recordRecentTarget,
 }: Readonly<{
-  result: IndexedSearchResult;
+  result: SearchResultWithMetadata;
   recordRecentTarget: (result: SelectableSearchTarget) => void;
 }>) {
   const age = formatSearchAge(result.ageSeconds);
@@ -90,9 +108,7 @@ function SearchResultLink({
       onClick={() => recordRecentTarget(result)}
     >
       <span className="bread-search-result__identity">
-        <span className="bread-search-result__image" aria-hidden="true">
-          {searchResultInitial(result)}
-        </span>
+        <TokenSearchImage image={result.metadata?.image} fallback={searchResultInitial(result)} />
         <span className="bread-search-result__copy">
           <strong>{result.name?.trim() || "Unnamed token"}</strong>
           <span>${result.symbol?.trim() || "—"}</span>
@@ -129,9 +145,7 @@ function TrendingTargetLink({
       onClick={() => recordRecentTarget(item)}
     >
       <span className="bread-search-result__identity">
-        <span className="bread-search-result__image" aria-hidden="true">
-          {searchResultInitial(item)}
-        </span>
+        <TokenSearchImage image={item.metadata.image} fallback={searchResultInitial(item)} />
         <span className="bread-search-result__copy">
           <strong>{item.name?.trim() || "Unnamed token"}</strong>
           <span>${item.symbol?.trim() || "—"}</span>
@@ -210,7 +224,7 @@ export function SearchSurface({
     queryFn: () => {
       if (intent.kind !== "search")
         throw new Error("Search query is not ready.");
-      return api.search<readonly IndexedSearchResult[]>({
+      return api.search<readonly SearchResultWithMetadata[]>({
         q: intent.query,
         limit: 20,
       });
