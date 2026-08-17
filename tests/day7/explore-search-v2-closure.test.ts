@@ -31,36 +31,40 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(css).toMatch(/@media \(max-width:\s*767px\)[\s\S]*?\.bread-token-card__image\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/s);
   });
 
-  it('keeps market-cap presentation explicit but unavailable until value authority is ratified', () => {
+  it('renders the canonical indexed market-cap value in TokenCard and Search without a frontend formula', () => {
     const card = read('../../apps/web/components/token-card.tsx');
     const search = read('../../apps/web/components/search-surface.tsx');
+    const model = read('../../apps/web/components/explore/model.ts');
+    const apiTypes = read('../../packages/types/src/api.ts');
 
-    expect(card).toMatch(/<dt>Market cap<\/dt>\s*<dd[^>]*>—<\/dd>/s);
-    expect(search).toContain('Market cap —');
-    expect(`${card}\n${search}`).not.toMatch(/circulatingSupply|marketCap\s*=/);
+    expect(model).toContain('marketCap: source.metrics?.marketCap ?? null');
+    expect(card).toContain('formatUsdcBaseUnits(model.marketCap)');
+    expect(search).toContain('formatUsdcBaseUnits(result.marketCap)');
+    expect(apiTypes).toContain('marketCap: string | null;');
+    expect(`${card}\n${search}\n${model}`).not.toMatch(/marketCap\s*=.*(?:price|supply)|(?:price|supply).*\*.*(?:supply|price)/i);
   });
 
-  it('does not activate a market-cap Explore filter while its canonical value authority is unresolved', () => {
+  it('activates the canonical indexed market-cap Explore filter through the read-model/API boundary', () => {
     const explore = read('../../apps/web/components/explore/explore-client.tsx');
     const apiClient = read('../../apps/web/lib/api/client.ts');
     const feedRoute = read('../../apps/api/src/routes/feed.ts');
     const dbIndex = read('../../packages/db/src/index.ts');
 
-    expect(explore).not.toContain('Market cap min');
-    expect(explore).not.toContain('Market cap max');
-    expect(explore).not.toContain('marketCapMinQuote');
-    expect(explore).not.toContain('marketCapMaxQuote');
-    expect(apiClient).not.toContain('marketCapMinQuote');
-    expect(apiClient).not.toContain('marketCapMaxQuote');
-    expect(feedRoute).not.toContain('parseExploreMarketCapBounds');
-    expect(dbIndex).not.toContain('parseExploreMarketCapBounds');
+    expect(explore).toContain('Market cap min');
+    expect(explore).toContain('Market cap max');
+    expect(explore).toContain('marketCapMinQuote');
+    expect(explore).toContain('marketCapMaxQuote');
+    expect(apiClient).toContain('marketCapMinQuote');
+    expect(apiClient).toContain('marketCapMaxQuote');
+    expect(feedRoute).toContain('parseExploreMarketCapBounds');
+    expect(dbIndex).toContain('parseExploreMarketCapBounds');
   });
 
   it('shows every currently source-backed Search token-row field with safe fallbacks', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
     expect(search).toContain('bread-search-result__image');
-    expect(search).toContain('Market cap —');
+    expect(search).toContain('formatUsdcBaseUnits(result.marketCap)');
     expect(search).toContain("Age {age ?? '—'}");
     expect(search).toContain("Holders {result.holderCount ?? '—'}");
     expect(search).toContain("Lifecycle {lifecycle ?? '—'}");
@@ -78,9 +82,11 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(search).not.toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
   });
 
-  it('does not invent a market-cap formula in the indexer while market-cap value authority remains unresolved', () => {
+  it('projects market cap centrally from exact indexed execution price and snapshotted fixed supply', () => {
     const projection = read('../../packages/db/src/repositories/trades.ts');
 
-    expect(projection).not.toMatch(/const\s+marketCap\s*=|market_cap\s*=\s*EXCLUDED\.market_cap/);
+    expect(projection).toMatch(/const\s+marketCap\s*=\s*\(trade\.executionPriceNumerator\s*\*\s*initialSupply\)\s*\/\s*trade\.executionPriceDenominator/);
+    expect(projection).toContain('market_cap = EXCLUDED.market_cap');
+    expect(projection).not.toMatch(/Number\([^\n]*marketCap|parseFloat\([^\n]*marketCap/);
   });
 });
