@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
 
-import type { IndexedSearchResult } from '../../../packages/types/src/index';
+import type { IndexedFeedItem, IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button, CreatorAttribution, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
@@ -12,6 +12,7 @@ import { FreshnessBanner } from './freshness-banner';
 
 const RECENT_SEARCH_STORAGE_KEY = 'bread.search.recent.v1';
 const MAX_RECENT_SEARCHES = 8;
+const MAX_TRENDING_SEARCHES = 8;
 const TOKEN_ADDRESS = /^0x[0-9a-f]{40}$/;
 
 function SearchGlyph() {
@@ -117,6 +118,41 @@ function writeRecentSearches(recent: readonly IndexedSearchResult[]): void {
   window.localStorage.setItem(RECENT_SEARCH_STORAGE_KEY, JSON.stringify(recent));
 }
 
+function indexedAgeSeconds(
+  launchTimestamp: string | null,
+  indexedThroughBlockTimestamp: string,
+): string | null {
+  if (launchTimestamp === null || !/^\d+$/.test(launchTimestamp) || !/^\d+$/.test(indexedThroughBlockTimestamp)) {
+    return null;
+  }
+  const launched = BigInt(launchTimestamp);
+  const indexed = BigInt(indexedThroughBlockTimestamp);
+  return (indexed > launched ? indexed - launched : 0n).toString(10);
+}
+
+function feedLifecycleState(item: IndexedFeedItem): IndexedSearchResult['lifecycleState'] {
+  if (item.graduatedVenueKind !== null || item.progress?.state === 'GRADUATED') return 'GRADUATED';
+  if (item.progress?.state === 'GRADUATION_PENDING') return 'GRADUATION_PENDING';
+  if (item.progress?.state === 'PROCESSING') return 'PROCESSING';
+  return null;
+}
+
+function feedToSearchResult(item: IndexedFeedItem, indexedThroughBlockTimestamp: string): IndexedSearchResult {
+  return {
+    tokenAddress: item.tokenAddress,
+    curveAddress: item.curveAddress,
+    deployerAddress: item.deployerAddress,
+    creatorFeeRecipient: item.creatorFeeRecipient,
+    name: item.name,
+    symbol: item.symbol,
+    matchKind: 'TRENDING',
+    ageSeconds: indexedAgeSeconds(item.launchTimestamp, indexedThroughBlockTimestamp),
+    holderCount: item.holderCount,
+    marketCap: item.marketCap,
+    lifecycleState: feedLifecycleState(item),
+  };
+}
+
 function SearchResultLink({
   result,
   onSelect,
@@ -163,6 +199,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const api = useMemo(() => createBreadApiClient(), []);
   const intent = searchIntent(value);
+  const isIdleSurface = intent.kind === 'idle' && value.trim().length === 0;
 
   const query = useQuery({
     queryKey:
@@ -175,6 +212,18 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     },
     enabled: open && intent.kind === 'search',
   });
+
+  const trendingQuery = useQuery({
+    queryKey: breadQueryKeys.feed({ view: 'trending', limit: MAX_TRENDING_SEARCHES }),
+    queryFn: () => api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending', limit: MAX_TRENDING_SEARCHES }),
+    enabled: open && isIdleSurface,
+  });
+
+  const trendingSearches = useMemo(() => {
+    const response = trendingQuery.data;
+    if (!response) return [];
+    return response.data.map((item) => feedToSearchResult(item, response.meta.indexedThroughBlockTimestamp));
+  }, [trendingQuery.data]);
 
   const searchGroups = useMemo(() => {
     const results = query.data?.data ?? [];
@@ -369,6 +418,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
 
             <div className="bread-search-results" aria-live="polite">
               {query.data?.meta ? <FreshnessBanner meta={query.data.meta} /> : null}
+              {isIdleSurface && trendingQuery.data?.meta ? <FreshnessBanner meta={trendingQuery.data.meta} /> : null}
               {intent.kind === 'invalid-address' ? (
                 <p className="bread-inline-error">That contract address is incomplete or malformed.</p>
               ) : null}
@@ -379,7 +429,7 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
               {query.isError ? <p className="bread-inline-error">Search is unavailable right now.</p> : null}
               {query.data?.data.length === 0 ? <p className="bread-search-hint">No indexed tokens found.</p> : null}
 
-              {intent.kind === 'idle' && value.trim().length === 0 && recentSearches.length > 0 ? (
+              {isIdleSurface && recentSearches.length > 0 ? (
                 <section>
                   <div className="bread-search-dialog__header">
                     <h3 className="bread-search-hint">Recent searches</h3>
@@ -398,6 +448,20 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
                         Remove
                       </Button>
                     </div>
+                  ))}
+                </section>
+              ) : null}
+
+              {isIdleSurface ? (
+                <section>
+                  <h3 className="bread-search-hint">Trending searches</h3>
+                  {trendingQuery.isPending ? <p className="bread-search-hint">Loading indexed trends…</p> : null}
+                  {trendingQuery.isError ? <p className="bread-inline-error">Trending suggestions are unavailable right now.</p> : null}
+                  {trendingQuery.isSuccess && trendingSearches.length === 0 ? (
+                    <p className="bread-search-hint">No indexed trending tokens are available.</p>
+                  ) : null}
+                  {trendingSearches.map((result) => (
+                    <SearchResultLink result={result} onSelect={recordRecentSearch} key={result.tokenAddress} />
                   ))}
                 </section>
               ) : null}
