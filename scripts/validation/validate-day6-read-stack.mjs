@@ -53,11 +53,17 @@ function mutationRoutes(source) {
     routes.push({ method: match[1].toUpperCase(), path: match[2] });
   }
 
-  const routeCalls = source.match(/\.route\s*\(\s*\{[\s\S]{0,2000}?\}\s*\)/gi) ?? [];
+  const routeCalls =
+    source.match(/\.route\s*\(\s*\{[\s\S]{0,2000}?\}\s*\)/gi) ?? [];
   for (const routeCall of routeCalls) {
-    const method = routeCall.match(/method\s*:\s*["'](POST|PUT|PATCH|DELETE)["']/i)?.[1];
-    const routePath = routeCall.match(/(?:url|path)\s*:\s*["'](\/v1\/[^"']+)["']/i)?.[1];
-    if (method && routePath) routes.push({ method: method.toUpperCase(), path: routePath });
+    const method = routeCall.match(
+      /method\s*:\s*["'](POST|PUT|PATCH|DELETE)["']/i,
+    )?.[1];
+    const routePath = routeCall.match(
+      /(?:url|path)\s*:\s*["'](\/v1\/[^"']+)["']/i,
+    )?.[1];
+    if (method && routePath)
+      routes.push({ method: method.toUpperCase(), path: routePath });
   }
   return routes;
 }
@@ -68,7 +74,8 @@ function validateMutationRoutes(file, source) {
 
   const allowedPaths = NON_FINANCIAL_MUTATION_ROUTES.get(file) ?? [];
   for (const route of routes) {
-    const allowed = route.method === "POST" && allowedPaths.includes(route.path);
+    const allowed =
+      route.method === "POST" && allowedPaths.includes(route.path);
     if (!allowed) {
       throw new Error(
         `production API financial/action surface must remain read-only: ${file} ${route.method} ${route.path}`,
