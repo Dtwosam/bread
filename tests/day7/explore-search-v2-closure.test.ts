@@ -41,6 +41,29 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(card).not.toMatch(/<dt>Market cap<\/dt>\s*<dd[^>]*>—<\/dd>/s);
   });
 
+  it('filters Explore by the canonical indexed market-cap projection without frontend market-cap math', () => {
+    const explore = read('../../apps/web/components/explore/explore-client.tsx');
+    const apiClient = read('../../apps/web/lib/api/client.ts');
+    const feedRoute = read('../../apps/api/src/routes/feed.ts');
+    const dbIndex = read('../../packages/db/src/index.ts');
+    const ageRead = read('../../packages/db/src/repositories/explore-age-read.ts');
+
+    expect(explore).toContain('Market cap min');
+    expect(explore).toContain('Market cap max');
+    expect(explore).toContain("params.set('marketCapMinQuote'");
+    expect(explore).toContain("params.set('marketCapMaxQuote'");
+    expect(apiClient).toContain('marketCapMinQuote?: string');
+    expect(apiClient).toContain('marketCapMaxQuote?: string');
+    expect(feedRoute).toContain('parseExploreMarketCapBounds');
+    expect(feedRoute).toContain('marketCapMinQuote?: string');
+    expect(feedRoute).toContain('marketCapMaxQuote?: string');
+    expect(dbIndex).toContain('parseExploreMarketCapBounds');
+    expect(ageRead).toContain('m.market_cap IS NOT NULL');
+    expect(ageRead).toContain('m.market_cap >= CAST');
+    expect(ageRead).toContain('m.market_cap <= CAST');
+    expect(explore).not.toMatch(/price\s*\*\s*supply|marketCap\s*=/);
+  });
+
   it('shows every source-required Search token-row field while unavailable values stay explicit', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
