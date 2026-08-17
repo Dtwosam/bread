@@ -64,6 +64,15 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(search).not.toMatch(/walletAddress.*recent|recent.*walletAddress/i);
   });
 
+  it('sources Trending searches from the canonical indexed Trending feed rather than query-frequency telemetry', () => {
+    const search = read('../../apps/web/components/search-surface.tsx');
+
+    expect(search).toContain('Trending searches');
+    expect(search).toContain("breadQueryKeys.feed({ view: 'trending'");
+    expect(search).toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
+    expect(search).not.toMatch(/searchCount|queryCount|popularQuer|trendingQuer|analytics.*search/i);
+  });
+
   it('does not create competing market-cap math in public UI', () => {
     const card = read('../../apps/web/components/token-card.tsx');
     const search = read('../../apps/web/components/search-surface.tsx');
