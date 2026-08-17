@@ -227,9 +227,9 @@ describe("Bread UI/UX v2.2 Explore/Search source-constrained closure", () => {
 
     expect(search).toContain("bread-search-result__image");
     expect(search).toContain("formatUsdcBaseUnits(result.marketCap)");
-    expect(search).toContain("Age {age ?? '—'}");
-    expect(search).toContain("Holders {result.holderCount ?? '—'}");
-    expect(search).toContain("Lifecycle {lifecycle ?? '—'}");
+    expect(search).toMatch(/Age \{age \?\? ["']—["']\}/);
+    expect(search).toMatch(/Holders \{result\.holderCount \?\? ["']—["']\}/);
+    expect(search).toMatch(/Lifecycle \{lifecycle \?\? ["']—["']\}/);
     expect(search).not.toMatch(/Date\.now\(|new Date\(\)/);
     expect(search).not.toMatch(
       /<img[^>]+src=\{result\.(?:metadata|image|logo)/,
@@ -246,11 +246,11 @@ describe("Bread UI/UX v2.2 Explore/Search source-constrained closure", () => {
       /fetch\s*\(|wallet|account|searchCount|queryCount|termCount/i,
     );
     expect(search).toContain("recordRecentTarget");
-    expect(search).toContain(
-      "breadQueryKeys.feed({ view: 'trending', limit: TRENDING_SEARCH_LIMIT })",
+    expect(search).toMatch(
+      /breadQueryKeys\.feed\(\{\s*view:\s*["']trending["'],\s*limit:\s*TRENDING_SEARCH_LIMIT,?\s*\}\)/s,
     );
-    expect(search).toContain(
-      "api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending', limit: TRENDING_SEARCH_LIMIT })",
+    expect(search).toMatch(
+      /api\.getFeed<readonly IndexedFeedItem\[]>\(\{\s*view:\s*["']trending["'],\s*limit:\s*TRENDING_SEARCH_LIMIT,?\s*\}\)/s,
     );
     expect(search).toContain("const TRENDING_SEARCH_LIMIT = 5;");
     expect(search).not.toMatch(
