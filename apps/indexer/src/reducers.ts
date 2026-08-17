@@ -5,6 +5,7 @@ import {
   incrementCreatorTradeCountForToken,
   launches,
   launchState,
+  metadata as metadataTable,
   projectCreatorTradeCount,
   projectCurveGraduationProgress,
   type BreadDb,
@@ -81,6 +82,12 @@ export function createLaunchReducer(
       launchBlockNumber: snapshot.launchBlockNumber.toString(10),
       launchTransactionHash: snapshot.launchTransactionHash,
       launchLogIndex: snapshot.launchLogIndex,
+    });
+
+    await tx.insert(metadataTable).values({
+      chainId: snapshot.chainId,
+      tokenAddress: snapshot.tokenAddress,
+      metadataJson: snapshot.metadata,
     });
 
     const remainingSellableTokens =
