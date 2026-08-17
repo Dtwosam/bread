@@ -9,6 +9,15 @@ const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
 const paths = {
   activity: 'apps/web/app/activity/page.tsx',
   stats: 'apps/web/app/stats/page.tsx',
+  activityClient: 'apps/web/components/activity/activity-client.tsx',
+  statsClient: 'apps/web/components/stats/stats-client.tsx',
+  activityRow: 'packages/ui/src/activity-row.ts',
+  secondaryRoute: 'apps/api/src/routes/secondary.ts',
+  readRepository: 'packages/db/src/repositories/read.ts',
+  apiTypes: 'packages/types/src/api.ts',
+  apiIndex: 'packages/types/src/index.ts',
+  apiClient: 'apps/web/lib/api/client.ts',
+  apiServer: 'apps/api/src/server.ts',
   docs: 'apps/web/app/docs/page.tsx',
   terms: 'apps/web/app/legal/terms/page.tsx',
   privacy: 'apps/web/app/legal/privacy/page.tsx',
@@ -43,19 +52,62 @@ describe('Bread UI/UX v2.2 secondary routes and global states', () => {
     expect(profile).not.toMatch(/score|reputation|performance history/i);
   });
 
-  it('fails closed for platform-wide activity and statistics while aggregate projections are absent', () => {
-    const activity = read(paths.activity);
-    const stats = read(paths.stats);
+  it('renders platform activity only from canonical indexed launches, trades, and graduation transitions', () => {
+    for (const path of [paths.activityClient, paths.activityRow, paths.secondaryRoute]) {
+      expect(existsSync(resolve(root, path)), path).toBe(true);
+    }
+    const page = read(paths.activity);
+    const client = read(paths.activityClient);
+    const route = read(paths.secondaryRoute);
+    const repository = read(paths.readRepository);
+    const apiTypes = read(paths.apiTypes);
+    const apiIndex = read(paths.apiIndex);
+    const apiClient = read(paths.apiClient);
+    const server = read(paths.apiServer);
 
-    expect(activity).toMatch(/platform-wide activity/i);
-    expect(activity).toMatch(/unavailable|not available/i);
-    expect(activity).toMatch(/indexed/i);
-    expect(activity).not.toMatch(/fake|sample|mock/i);
+    expect(page).toContain('ActivityClient');
+    expect(client).toContain('ActivityRow');
+    expect(client).toContain('CreatorAttribution');
+    expect(client).toContain('getActivity');
+    expect(route).toContain("'/v1/activity'");
+    expect(route).toContain('listPlatformActivity');
+    expect(repository).toContain('listPlatformActivity');
+    expect(repository).toContain("'LAUNCH'");
+    expect(repository).toContain("'TRADE'");
+    expect(repository).toContain("'GRADUATION'");
+    expect(repository).toMatch(/ORDER BY[\s\S]*"blockNumber" DESC[\s\S]*"logIndex" DESC/i);
+    expect(apiTypes).toContain('IndexedPlatformActivityItem');
+    expect(apiIndex).toContain('IndexedPlatformActivityItem');
+    expect(apiClient).toContain('getActivity');
+    expect(server).toContain('registerSecondaryRoutes');
+    expect(`${page}\n${client}`).not.toMatch(/sample|mock activity|fake activity/i);
+  });
 
-    expect(stats).toMatch(/platform statistics/i);
-    expect(stats).toMatch(/unavailable|not available/i);
-    expect(stats).toMatch(/indexed/i);
-    expect(stats).not.toMatch(/\b\d+(?:\.\d+)?\s*(?:USDC|launches|trades|graduations)\b/i);
+  it('renders only reliable indexed lifetime platform statistics', () => {
+    for (const path of [paths.statsClient, paths.secondaryRoute]) {
+      expect(existsSync(resolve(root, path)), path).toBe(true);
+    }
+    const page = read(paths.stats);
+    const client = read(paths.statsClient);
+    const route = read(paths.secondaryRoute);
+    const repository = read(paths.readRepository);
+    const apiTypes = read(paths.apiTypes);
+    const apiClient = read(paths.apiClient);
+
+    expect(page).toContain('StatsClient');
+    expect(client).toContain('getStats');
+    expect(client).toContain('Volume');
+    expect(client).toContain('Launches');
+    expect(client).toContain('Trades');
+    expect(client).toContain('Graduations');
+    expect(route).toContain("'/v1/stats'");
+    expect(route).toContain('getPlatformStats');
+    expect(repository).toContain('getPlatformStats');
+    expect(repository).toContain('SUM(t.quote_amount)');
+    expect(repository).toContain("s.graduation_phase = 'POOL_CREATED'");
+    expect(apiTypes).toContain('IndexedPlatformStats');
+    expect(apiClient).toContain('getStats');
+    expect(`${page}\n${client}`).not.toMatch(/active users|tvl|pnl|success rate/i);
   });
 
   it('uses the readable documentation/legal shell and does not invent missing legal copy', () => {
