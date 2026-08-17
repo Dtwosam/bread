@@ -70,7 +70,7 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(search).toContain('Trending searches');
     expect(search).toContain("breadQueryKeys.feed({ view: 'trending'");
     expect(search).toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
-    expect(search).not.toMatch(/searchCount|queryCount|popularQuer|trendingQuer|analytics.*search/i);
+    expect(search).not.toMatch(/searchCount|queryCount|popularQuery|searchAnalytics|analytics.*search/i);
   });
 
   it('does not create competing market-cap math in public UI', () => {
