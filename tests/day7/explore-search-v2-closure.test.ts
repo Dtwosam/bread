@@ -104,6 +104,39 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(resolveIndexedLifecycleState({ ...overlap, graduationPhase: null, readyToGraduate: false, graduationFailureReasonHash: null, graduationProgressBps: null, launchTimestamp: null, initialSupply: null })).toBe('ACTIVE');
   });
 
+  it('requires canonical lifecycle filtering and keeps retry-pending inside Processing without relabeling it', async () => {
+    const lifecycleModule = await import('../../packages/db/src/repositories/lifecycle');
+    const filterMatches = (lifecycleModule as Record<string, unknown>).matchesIndexedLifecycleFilter;
+    expect(typeof filterMatches).toBe('function');
+    if (typeof filterMatches !== 'function') return;
+
+    const matches = filterMatches as (state: string | null, filter: string) => boolean;
+    expect(matches('PROCESSING', 'processing')).toBe(true);
+    expect(matches('GRADUATION_PENDING', 'processing')).toBe(true);
+    expect(matches('GRADUATED', 'processing')).toBe(false);
+    expect(matches('NEW', 'new')).toBe(true);
+    expect(matches('ACTIVE', 'active')).toBe(true);
+    expect(matches('ALMOST_BAKED', 'almost-baked')).toBe(true);
+    expect(matches('GRADUATED', 'graduated')).toBe(true);
+
+    const lifecycleSource = read('../../packages/db/src/repositories/lifecycle.ts');
+    const feedRoute = read('../../apps/api/src/routes/feed.ts');
+    const apiClient = read('../../apps/web/lib/api/client.ts');
+    const queries = read('../../apps/web/lib/api/queries.ts');
+    const explore = read('../../apps/web/components/explore/explore-client.tsx');
+
+    expect(lifecycleSource).toContain('indexedLifecycleFilterSql');
+    expect(feedRoute).toContain('lifecycle?: string;');
+    expect(feedRoute).toContain('isIndexedLifecycleFilter');
+    expect(apiClient).toContain("export type FeedLifecycle = 'new' | 'active' | 'almost-baked' | 'processing' | 'graduated';");
+    expect(apiClient).toContain('lifecycle?: FeedLifecycle;');
+    expect(queries).toContain("input.lifecycle ?? ''");
+    for (const option of ['New', 'Active', 'Almost Baked', 'Processing', 'Graduated']) {
+      expect(explore).toContain(`label: '${option}'`);
+    }
+    expect(explore).toContain('Lifecycle');
+  });
+
   it('shows every currently source-backed Search token-row field with safe fallbacks', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
