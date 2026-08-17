@@ -23,6 +23,10 @@ import {
 } from "./capacity.js";
 import { buildFreshness } from "./freshness.js";
 import {
+  FileSystemTokenMediaStore,
+  type TokenMediaStore,
+} from "./media/token-image.js";
+import {
   IsolatedRateLimiter,
   type RateLimitPolicy,
   type RateLimitRedis,
@@ -30,6 +34,7 @@ import {
 import { registerCreatorRoute } from "./routes/creators.js";
 import { registerFeedRoute } from "./routes/feed.js";
 import { registerHoldersRoute } from "./routes/holders.js";
+import { registerTokenMediaRoutes } from "./routes/media.js";
 import { registerPortfolioRoute } from "./routes/portfolio.js";
 import { registerSearchRoute } from "./routes/search.js";
 import { registerSecondaryRoutes } from "./routes/secondary.js";
@@ -61,6 +66,13 @@ function unavailableRedis(): ApiRedis {
   };
 }
 
+function configuredTokenMediaStore(): TokenMediaStore | undefined {
+  const directory = process.env.BREAD_MEDIA_STORAGE_DIR?.trim();
+  const publicBaseUrl = process.env.BREAD_MEDIA_PUBLIC_BASE_URL?.trim();
+  if (!directory || !publicBaseUrl) return undefined;
+  return new FileSystemTokenMediaStore(directory, publicBaseUrl);
+}
+
 export type CreateBreadApiInput = Readonly<{
   db: BreadDb;
   context: ProtocolContext;
@@ -69,6 +81,7 @@ export type CreateBreadApiInput = Readonly<{
   redis?: ApiRedis;
   capacity?: ReadCapacityConfig;
   rateLimits?: Readonly<Record<"feed" | "search", RateLimitPolicy>>;
+  tokenMediaStore?: TokenMediaStore;
 }>;
 
 export function createBreadApi(input: CreateBreadApiInput) {
@@ -127,6 +140,9 @@ export function createBreadApi(input: CreateBreadApiInput) {
     context: input.context,
     freshness,
     rateLimit: (subject: string) => limiter.take("search", subject),
+  });
+  registerTokenMediaRoutes(app, {
+    store: input.tokenMediaStore ?? configuredTokenMediaStore(),
   });
 
   app.setErrorHandler((error, request, reply) => {
