@@ -1,0 +1,47 @@
+name: v1.6.1-gap-closure-format-once
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/v161-format-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Format v1.6.1 touched TypeScript
+        run: |
+          pnpm exec prettier --write \
+            apps/api/src/display-metadata.ts \
+            apps/api/src/routes/token.ts \
+            apps/api/src/routes/types.ts \
+            apps/api/src/server.ts \
+            apps/indexer/src/reducers.ts \
+            apps/web/components/search-surface.tsx \
+            apps/web/components/token/token-identity.tsx \
+            packages/types/src/api.ts \
+            packages/types/src/index.ts \
+            tests/day7/explore-search-v2-closure.test.ts \
+            tests/day7/token-metadata-gap-closure.test.ts
+          rm .github/workflows/v161-format-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style(gap-closure): format v1.6.1 implementation"
+          git push origin HEAD:${{ github.head_ref }}
