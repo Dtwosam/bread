@@ -9,7 +9,11 @@ describe('Day 7 Search indexed freshness presentation', () => {
       'utf8',
     );
 
-    expect(source).toContain("import { FreshnessBanner } from './freshness-banner'");
-    expect(source).toContain('query.data?.meta ? <FreshnessBanner meta={query.data.meta} /> : null');
+    expect(source).toMatch(
+      /import\s+\{\s*FreshnessBanner\s*\}\s+from\s+["']\.\/freshness-banner["'];?/,
+    );
+    expect(source).toMatch(
+      /query\.data\?\.meta\s*\?\s*\(\s*<FreshnessBanner\s+meta=\{query\.data\.meta\}\s*\/>\s*\)\s*:\s*null/s,
+    );
   });
 });
