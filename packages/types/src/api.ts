@@ -229,3 +229,28 @@ export type IndexedTokenHolders = Readonly<{
     userHolderCount: string;
   }>;
 }>;
+
+export type IndexedPlatformActivityKind = "LAUNCH" | "TRADE" | "GRADUATION";
+
+export type IndexedPlatformActivityItem = Readonly<{
+  kind: IndexedPlatformActivityKind;
+  tokenAddress: string;
+  creatorAddress: string | null;
+  name: string | null;
+  symbol: string | null;
+  transactionHash: string;
+  blockNumber: string;
+  logIndex: number;
+  blockTimestamp: string | null;
+  side: string | null;
+  tokenAmount: string | null;
+  quoteAmount: string | null;
+}>;
+
+export type IndexedPlatformStats = Readonly<{
+  scope: "LIFETIME";
+  quoteVolume: string;
+  launches: string;
+  trades: string;
+  graduations: string;
+}>;
