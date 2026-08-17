@@ -18,6 +18,7 @@ export type BreadReadRouteDeps = Readonly<{
   cache?: BreadCache;
   feedRateLimit?: (subject: string) => Promise<RateLimitResult>;
   now?: () => Date;
+  trustedMediaBaseUrl?: string;
 }>;
 
 export type BreadFeedRouteDeps = BreadReadRouteDeps & Readonly<{
