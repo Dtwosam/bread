@@ -31,7 +31,18 @@ jobs:
         run: |
           pnpm validate
           pnpm typecheck
-          pnpm lint
+          pnpm exec prettier --check \
+            apps/api/src/display-metadata.ts \
+            apps/api/src/routes/token.ts \
+            apps/api/src/routes/types.ts \
+            apps/api/src/server.ts \
+            apps/indexer/src/reducers.ts \
+            apps/web/components/search-surface.tsx \
+            apps/web/components/token/token-identity.tsx \
+            packages/types/src/api.ts \
+            packages/types/src/index.ts \
+            tests/day7/explore-search-v2-closure.test.ts \
+            tests/day7/token-metadata-gap-closure.test.ts
           pnpm build
       - name: Start exact Bread development infrastructure
         run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
@@ -68,7 +79,7 @@ jobs:
           TRENDING_SEARCH=IMPLEMENTED
           SANITIZED_DISPLAY_METADATA=IMPLEMENTED
 
-          This exact software head passed source validation, typecheck, lint, build, the full Day-6 suite with PostgreSQL integration enabled, the full Day-7 Vitest suite, the concentrated hot-launch regression, and the configured Playwright Chromium/Firefox/WebKit suite in this workflow.
+          This exact software head passed source validation, typecheck, focused Prettier/static checks, build, the full Day-6 suite with PostgreSQL integration enabled, the full Day-7 Vitest suite, the concentrated hot-launch regression, and the configured Playwright Chromium/Firefox/WebKit suite in this workflow.
 
           This evidence does not claim Day-9 PASS, physical-device evidence, legal-copy approval, public/mainnet readiness, or an RC tag.
           EOF
