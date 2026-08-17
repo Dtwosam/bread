@@ -27,8 +27,8 @@ async function connectAndFillCreateForm(page: import('@playwright/test').Page, i
 }
 
 for (const scenario of [
-  { name: 'launch-only', initialBuy: '', finalAction: 'Launch' },
-  { name: 'atomic launch-and-buy', initialBuy: '10', finalAction: 'Launch & Buy' },
+  { name: 'launch-only', initialBuy: '', finalAction: 'Launch', successName: 'Plain Bread' },
+  { name: 'atomic launch-and-buy', initialBuy: '10', finalAction: 'Launch & Buy', successName: 'Atomic Bread' },
 ] as const) {
   test(`Create ${scenario.name} reviews canonical values and confirms from LaunchCreated`, async ({
     page,
@@ -63,7 +63,8 @@ for (const scenario of [
     await setWalletTransactionHashes(page, [LAUNCH_TX_HASH]);
     await main.getByRole('button', { name: scenario.finalAction, exact: true }).click();
 
-    await expect(main.getByRole('heading', { name: 'Token launched' })).toBeVisible();
+    await expect(main.getByText('Confirmed', { exact: true })).toBeVisible();
+    await expect(main.getByRole('heading', { name: scenario.successName, exact: true })).toBeVisible();
     await expect(main.getByText(NEW_LAUNCH_TOKEN, { exact: true })).toBeVisible();
     await expect(main.getByRole('status')).toContainText('CONFIRMED');
     const snapshot = await walletSnapshot(page);
