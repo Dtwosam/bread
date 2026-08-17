@@ -17,6 +17,89 @@
   margin-block: 0;
 }
 
+.bread-secondary-page__scope {
+  margin: 0;
+  color: var(--bread-text-secondary);
+  font-size: 13px;
+}
+
+.bread-secondary-list {
+  display: grid;
+  gap: 8px;
+}
+
+.bread-activity-row {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-card);
+  background: var(--bread-surface-1);
+  color: var(--bread-text-primary);
+  text-decoration: none;
+}
+
+.bread-activity-row:hover,
+.bread-activity-row:focus-visible {
+  border-color: var(--bread-border-strong);
+}
+
+.bread-activity-row__content {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.bread-activity-row__primary {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bread-activity-row__secondary,
+.bread-activity-row__meta {
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.bread-activity-row__meta {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.bread-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.bread-stat-card {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-card);
+  background: var(--bread-surface-1);
+}
+
+.bread-stat-card dt {
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bread-stat-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .bread-secondary-link {
   min-height: 44px;
   width: fit-content;
@@ -98,6 +181,21 @@
 }
 
 @media (max-width: 767px) {
+  .bread-activity-row {
+    min-height: 76px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bread-activity-row__meta {
+    text-align: left;
+  }
+
+  .bread-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .bread-readable-route {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -110,5 +208,11 @@
 
   .bread-readable-route__nav a {
     justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .bread-stats-grid {
+    grid-template-columns: 1fr;
   }
 }
