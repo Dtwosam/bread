@@ -18,14 +18,21 @@ describe('source-backed interface and automatic-graduation defect closure', () =
 
   it('owns permissionless graduation continuation in the operator runtime', () => {
     const keeperPath = resolve(root, 'apps/operator/src/graduation-keeper.ts');
+    const runnerPath = resolve(root, 'apps/operator/src/run-graduation-keeper.ts');
     expect(existsSync(keeperPath)).toBe(true);
-    if (!existsSync(keeperPath)) return;
+    expect(existsSync(runnerPath)).toBe(true);
+    if (!existsSync(keeperPath) || !existsSync(runnerPath)) return;
 
     const keeper = read('apps/operator/src/graduation-keeper.ts');
+    const runner = read('apps/operator/src/run-graduation-keeper.ts');
     expect(keeper).toContain('prepareRetryGraduation');
     expect(keeper).toContain('simulatePreparedTransaction');
     expect(keeper).toMatch(/CREATE_POOL|SWEEP/);
     expect(keeper).toMatch(/waitForTransactionReceipt/);
+    expect(runner).toContain("url.searchParams.set('lifecycle', 'processing')");
+    expect(runner).toContain('BREAD_GRADUATION_KEEPER_PRIVATE_KEY');
+    expect(runner).toContain('runGraduationKeeperPass');
+    expect(runner).not.toMatch(/creator.*private.?key|user.*private.?key/i);
   });
 
   it('renders canonical indexed market cap on Token detail', () => {
