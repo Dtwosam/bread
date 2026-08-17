@@ -70,9 +70,11 @@ export function sanitizeIndexedDisplayMetadata(
     !Array.isArray(source.socials)
       ? (source.socials as Record<string, unknown>)
       : {};
+  const effectiveTrustedMediaBaseUrl =
+    trustedMediaBaseUrl ?? process.env.BREAD_MEDIA_PUBLIC_BASE_URL?.trim();
   const image = trustedMediaReference(
     source.image ?? source.logo,
-    trustedMediaBaseUrl,
+    effectiveTrustedMediaBaseUrl,
   );
   const description = plainText(source.description);
   const website = normalizedHttps(source.website ?? socials.website);

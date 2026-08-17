@@ -8,7 +8,7 @@ function priceRatio(token: IndexedTokenDetail): string {
 
 export function TokenStats({ token }: Readonly<{ token: IndexedTokenDetail }>) {
   const metrics = [
-    ['Market cap', '—'],
+    ['Market cap', formatUsdcBaseUnits(token.metrics?.marketCap ?? null)],
     ['Price', priceRatio(token)],
     ['24h volume', formatUsdcBaseUnits(token.metrics?.quoteVolume.h24 ?? null)],
     ['Holders', token.holderCount ?? '—'],

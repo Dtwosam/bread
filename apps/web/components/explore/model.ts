@@ -10,7 +10,7 @@ export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
 export type IndexedFeedCardFields = Pick<
   IndexedFeedItem,
-  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'lifecycleState' | 'launchTimestamp' | 'name' | 'symbol' | 'metrics' | 'progress'
+  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'lifecycleState' | 'launchTimestamp' | 'name' | 'symbol' | 'metadata' | 'metrics' | 'progress'
 >;
 
 export type SearchIntent =
@@ -23,13 +23,13 @@ export type TokenCardModel = Readonly<{
   creatorAddress: string;
   name: string;
   symbol: string;
+  image: string | null;
   price: IndexedPriceSummary | null;
   marketCap: string | null;
   volume24h: string | null;
   holderCount: string | null;
   graduatedVenueKind: string | null;
   lifecycleState: IndexedLifecycleState | null;
-  priceChange24h: null;
   progress: Readonly<{
     bps: number;
     percent: number;
@@ -99,13 +99,13 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     creatorAddress: source.deployerAddress,
     name: source.name?.trim() || 'Unnamed token',
     symbol: source.symbol?.trim() || '—',
+    image: source.metadata.image ?? null,
     price: source.metrics?.lastPrice ?? null,
     marketCap: source.metrics?.marketCap ?? null,
     volume24h: source.metrics?.quoteVolume.h24 ?? null,
     holderCount: source.holderCount,
     graduatedVenueKind: source.graduatedVenueKind,
     lifecycleState: source.lifecycleState,
-    priceChange24h: null,
     progress: progressModel(source.progress),
   };
 }

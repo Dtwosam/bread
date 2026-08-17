@@ -108,10 +108,6 @@ export default function PortfolioPage() {
           <strong>{walletValue === null ? '—' : `${formatUnits(walletValue, 6)} USDC`}</strong>
         </div>
         <div>
-          <span>24h change</span>
-          <strong>—</strong>
-        </div>
-        <div>
           <span>Positions</span>
           <strong>{portfolio.holdings.length}</strong>
         </div>

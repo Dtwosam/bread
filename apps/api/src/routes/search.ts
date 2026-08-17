@@ -4,6 +4,7 @@ import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/s
 import type { SearchRepository } from '../../../../packages/db/src/index.js';
 import type { FreshnessMeta } from '../../../../packages/types/src/index.js';
 import type { ProtocolContext } from '../../../../packages/protocol-sdk/src/index.js';
+import { sanitizeIndexedDisplayMetadata } from '../display-metadata.js';
 
 const DEFAULT_SEARCH_LIMIT = 10;
 const MAX_SEARCH_LIMIT = 50;
@@ -28,6 +29,7 @@ export function registerSearchRoute(app: FastifyInstance, deps: Readonly<{
   context: ProtocolContext;
   freshness: () => Promise<FreshnessMeta>;
   rateLimit: (subject: string) => Promise<SearchRateLimitResult>;
+  trustedMediaBaseUrl?: string;
 }>): void {
   app.get('/v1/search', async (request, reply) => {
     const query = request.query as { q?: string; limit?: string };
@@ -104,6 +106,7 @@ export function registerSearchRoute(app: FastifyInstance, deps: Readonly<{
         creatorFeeRecipient: row.creatorFeeRecipient,
         name: row.name,
         symbol: row.symbol,
+        metadata: sanitizeIndexedDisplayMetadata(row.metadata, deps.trustedMediaBaseUrl),
         matchKind: row.matchKind,
         ageSeconds: ageSecondsAtIndexedHead(row.launchTimestamp, meta.indexedThroughBlockTimestamp),
         marketCap: row.marketCap,

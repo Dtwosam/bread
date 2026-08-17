@@ -28,6 +28,7 @@ export type SearchLaunchRow = Readonly<{
   lifecycleState: SearchLifecycleState | null;
   name: string | null;
   symbol: string | null;
+  metadata: Record<string, unknown> | null;
   launchBlockNumber: string;
   launchLogIndex: number;
   matchKind: 'CONTRACT' | 'CREATOR' | 'TICKER_EXACT' | 'TICKER_PREFIX' | 'NAME_PREFIX';
@@ -72,6 +73,7 @@ export class SearchRepository {
           ${lifecycleState} AS "lifecycleState",
           l.name,
           l.symbol,
+          l.metadata,
           l.launch_block_number::text AS "launchBlockNumber",
           l.launch_log_index AS "launchLogIndex",
           CASE
@@ -115,6 +117,7 @@ export class SearchRepository {
         ${lifecycleState} AS "lifecycleState",
         l.name,
         l.symbol,
+        l.metadata,
         l.launch_block_number::text AS "launchBlockNumber",
         l.launch_log_index AS "launchLogIndex",
         CASE

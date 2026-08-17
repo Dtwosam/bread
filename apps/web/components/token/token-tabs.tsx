@@ -150,6 +150,14 @@ function HoldersPanel({
   );
 }
 
+function MetadataLink({ href, label }: Readonly<{ href: string; label: string }>) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer">
+      {label}
+    </a>
+  );
+}
+
 function InfoPanel({ token }: Readonly<{ token: IndexedTokenDetail }>) {
   const facts = [
     ['Contract', token.tokenAddress],
@@ -160,6 +168,11 @@ function InfoPanel({ token }: Readonly<{ token: IndexedTokenDetail }>) {
     ['Protocol version', token.stackVersion],
     ['Graduation adapter', token.curveState?.graduationAdapter ?? token.graduationAdapter ?? '—'],
   ] as const;
+  const links = [
+    token.metadata.website ? { label: 'Website', href: token.metadata.website } : null,
+    token.metadata.x ? { label: 'X', href: token.metadata.x } : null,
+    token.metadata.telegram ? { label: 'Telegram', href: token.metadata.telegram } : null,
+  ].filter((entry): entry is { label: string; href: string } => entry !== null);
 
   return (
     <dl className="bread-token-info">
@@ -171,11 +184,20 @@ function InfoPanel({ token }: Readonly<{ token: IndexedTokenDetail }>) {
       ))}
       <div>
         <dt>Description</dt>
-        <dd>—</dd>
+        <dd>{token.metadata.description ?? '—'}</dd>
       </div>
       <div>
         <dt>Social links</dt>
-        <dd>—</dd>
+        <dd>
+          {links.length === 0
+            ? '—'
+            : links.map((link, index) => (
+                <span key={link.label}>
+                  {index === 0 ? null : ' · '}
+                  <MetadataLink href={link.href} label={link.label} />
+                </span>
+              ))}
+        </dd>
       </div>
     </dl>
   );

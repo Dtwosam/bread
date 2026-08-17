@@ -32,7 +32,19 @@ export function TokenCard({
   return (
     <a className="bread-token-card" href={`/token/${encodeURIComponent(model.tokenAddress)}`}>
       <div className="bread-token-card__identity">
-        <span className="bread-token-card__image" aria-hidden="true">{tokenInitial || '?'}</span>
+        {model.image ? (
+          <img
+            className="bread-token-card__image"
+            src={model.image}
+            alt=""
+            width={64}
+            height={64}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <span className="bread-token-card__image" aria-hidden="true">{tokenInitial || '?'}</span>
+        )}
         <div className="bread-token-card__identity-copy">
           <strong>{model.name}</strong>
           <span>${model.symbol} · {age}{lifecycle ? ` · ${lifecycle}` : ''}</span>
@@ -48,10 +60,6 @@ export function TokenCard({
         <div>
           <dt>Market cap</dt>
           <dd className="bread-financial-value">{formatUsdcBaseUnits(model.marketCap)}</dd>
-        </div>
-        <div>
-          <dt>24h change</dt>
-          <dd className="bread-financial-value">—</dd>
         </div>
       </dl>
 

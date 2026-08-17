@@ -1,22 +1,5 @@
-'use client';
-
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-
 import arcTestnetManifest from '../../../../config/networks/arc-testnet.json';
 import type { IndexedTokenDetail } from '../../../../packages/types/src/index';
-import { Button } from '@bread/ui';
-import { breadQueryKeys } from '../../lib/api/queries';
-import {
-  executeGraduationRetryLifecycle,
-  recoverGraduationRetryTransactions,
-} from '../../lib/transactions/graduation-controller';
-import {
-  createGraduationTransactionState,
-  type TransactionState,
-} from '../../lib/transactions/state';
-import { TransactionStatus } from '../transaction-status';
-import { useTradeRuntime } from '../trade/trade-runtime';
 import { formatUsdcBaseUnits } from '../explore/model';
 
 type Address = `0x${string}`;
@@ -58,24 +41,18 @@ function displayState(token: IndexedTokenDetail): 'Active' | 'Graduating' | 'Gra
   return 'Active';
 }
 
-function recoveryEligible(token: IndexedTokenDetail): boolean {
-  if (token.curveState?.positionLocked === true) return false;
-  const phase = token.curveState?.graduationPhase ?? null;
-  return Boolean(token.curveState?.graduationFailureReasonHash)
-    || token.curveState?.readyToGraduate === true
-    || phase === 'SWEPT';
-}
-
-function recoveryCopy(token: IndexedTokenDetail): string {
+function automaticGraduationCopy(token: IndexedTokenDetail): string | null {
+  if (token.curveState?.positionLocked === true) return null;
   if (token.curveState?.graduationFailureReasonHash) {
-    return 'Your completed trade remains confirmed. Automatic graduation did not complete. The next permissionless graduation step can be retried from fresh onchain coordinator state.';
+    return 'Your completed trade remains confirmed. Bread’s automatic graduation keeper will retry from fresh canonical onchain coordinator state. No creator or user wallet signature is required.';
   }
-  return 'The bonding curve is complete. Liquidity creation is in progress. Completed trades remain confirmed. The next permissionless graduation step re-reads fresh onchain coordinator state before the wallet opens.';
+  if (displayState(token) === 'Graduating') {
+    return 'The bonding curve is complete. Liquidity creation is in progress. Bread’s automatic graduation keeper advances the next permissionless coordinator step. No creator action or wallet signature is required.';
+  }
+  return null;
 }
 
 export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail }>) {
-  const queryClient = useQueryClient();
-  const runtime = useTradeRuntime();
   const progressBps = token.progress?.progressBps ?? null;
   const percent = progressPercent(progressBps);
   const state = displayState(token);
@@ -91,94 +68,7 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
     : null;
   const accumulatedQuote = token.curveState?.realQuoteReserve ?? null;
   const remainingQuoteAmount = remainingQuote(accumulatedQuote, token.graduationThreshold);
-  const tokenAddress = ADDRESS.test(token.tokenAddress) ? token.tokenAddress as Address : null;
-  const eligible = tokenAddress !== null && recoveryEligible(token);
-  const initialToken = tokenAddress ?? ('0x0000000000000000000000000000000000000000' as Address);
-  const [transactionState, setTransactionState] = useState<TransactionState>(
-    createGraduationTransactionState(initialToken),
-  );
-  const recoveryStartedFor = useRef<string | null>(null);
-  const busy = new Set(['VALIDATING', 'PREPARING', 'AWAITING_SIGNATURE', 'SUBMITTED', 'CONFIRMING', 'REPLACED', 'UNKNOWN'])
-    .has(transactionState.status);
-
-  useEffect(() => {
-    if (!tokenAddress || !runtime?.storage || !runtime.client) return;
-    if (recoveryStartedFor.current === tokenAddress.toLowerCase()) return;
-    recoveryStartedFor.current = tokenAddress.toLowerCase();
-
-    void recoverGraduationRetryTransactions({
-      client: runtime.client,
-      storage: runtime.storage,
-      chainId: runtime.context.chainId,
-      tokenAddress,
-      onStateChange: setTransactionState,
-      onConfirmed: async () => {
-        await queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(tokenAddress) });
-      },
-    });
-  }, [queryClient, runtime, tokenAddress]);
-
-  async function handleRecovery(): Promise<void> {
-    if (!runtime || !tokenAddress) return;
-    if (runtime.connectionStatus === 'DISCONNECTED') {
-      try {
-        await runtime.connectWallet();
-      } catch (error) {
-        setTransactionState({
-          action: 'GRADUATION',
-          tokenAddress,
-          status: 'REJECTED',
-          error: error instanceof Error ? error.message : 'Wallet connection failed.',
-        });
-      }
-      return;
-    }
-    if (runtime.connectionStatus === 'WRONG_NETWORK') {
-      try {
-        await runtime.switchToTargetChain();
-      } catch (error) {
-        setTransactionState({
-          action: 'GRADUATION',
-          tokenAddress,
-          status: 'REJECTED',
-          error: error instanceof Error ? error.message : 'Network switch failed.',
-        });
-      }
-      return;
-    }
-    if (!runtime.wallet || !runtime.protocolContext) {
-      setTransactionState({
-        action: 'GRADUATION',
-        tokenAddress,
-        status: 'REJECTED',
-        error: 'Graduation retry requires the verified Arc wallet runtime.',
-      });
-      return;
-    }
-
-    const result = await executeGraduationRetryLifecycle({
-      client: runtime.client,
-      wallet: runtime.wallet,
-      storage: runtime.storage,
-      context: runtime.protocolContext,
-      tokenAddress,
-      onStateChange: setTransactionState,
-      onConfirmed: async () => {
-        await queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(tokenAddress) });
-      },
-    });
-    if (result.review?.kind === 'TERMINAL') {
-      await queryClient.invalidateQueries({ queryKey: breadQueryKeys.token(tokenAddress) });
-    }
-  }
-
-  const recoveryLabel = state === 'Graduating'
-    ? 'Continue graduation'
-    : runtime?.connectionStatus === 'DISCONNECTED'
-      ? 'Connect wallet to retry'
-      : runtime?.connectionStatus === 'WRONG_NETWORK'
-        ? 'Switch to Arc'
-        : 'Retry graduation';
+  const automaticCopy = automaticGraduationCopy(token);
 
   return (
     <section className="bread-graduation" aria-labelledby="bread-graduation-heading">
@@ -288,24 +178,16 @@ export function GraduationModule({ token }: Readonly<{ token: IndexedTokenDetail
         )}
       </dl>
 
-      {eligible ? (
-        <div className="bread-graduation__recovery">
-          <p className="bread-token-note">{recoveryCopy(token)}</p>
-          <Button
-            disabled={busy}
-            ariaLabel={recoveryLabel}
-            onClick={() => { void handleRecovery(); }}
-          >
-            {recoveryLabel}
-          </Button>
-          {transactionState.status === 'IDLE' ? null : <TransactionStatus state={transactionState} />}
+      {automaticCopy ? (
+        <div className="bread-graduation__recovery" role="status">
+          <p className="bread-token-note">{automaticCopy}</p>
         </div>
       ) : null}
 
       <p className="bread-token-note">
         {state === 'Graduated'
           ? 'Venue, pool and permanent-lock status reflect indexed protocol evidence. Permanent lock is not a safety guarantee or protocol security assessment.'
-          : 'Graduation and lock labels reflect indexed protocol events. Retry preparation re-reads authoritative onchain coordinator state before the wallet opens. Status labels are evidence, not a protocol security assessment.'}
+          : 'Graduation and lock labels reflect indexed protocol events. Bread’s automatic keeper re-reads authoritative onchain coordinator state before every retry. Status labels are evidence, not a protocol security assessment.'}
       </p>
     </section>
   );
