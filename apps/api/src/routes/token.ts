@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { resolveIndexedLifecycleState } from '../../../../packages/db/src/index.js';
 import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/src/index.js';
 
+import { sanitizeIndexedDisplayMetadata } from '../display-metadata.js';
 import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
 import type { BreadReadRouteDeps } from './types.js';
 
@@ -10,7 +11,7 @@ type LaunchRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunch'
 type LaunchStateRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunchState']>>;
 type TokenMetricRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getTokenMetrics']>>;
 
-export function serializeLaunch(row: NonNullable<LaunchRow>) {
+export function serializeLaunch(row: NonNullable<LaunchRow>, trustedMediaBaseUrl?: string) {
   return {
     tokenAddress: row.tokenAddress,
     curveAddress: row.curveAddress,
@@ -24,7 +25,7 @@ export function serializeLaunch(row: NonNullable<LaunchRow>) {
     launchTimestamp: row.launchTimestamp?.toString(10) ?? null,
     name: row.name,
     symbol: row.symbol,
-    metadata: row.metadata,
+    metadata: sanitizeIndexedDisplayMetadata(row.metadata, trustedMediaBaseUrl),
     quoteAsset: row.quoteAsset,
     initialSupply: row.initialSupply?.toString(10) ?? null,
     phantomQuote: row.phantomQuote?.toString(10) ?? null,
@@ -163,7 +164,7 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
       return {
         found: true as const,
         data: {
-          ...serializeLaunch(launch),
+          ...serializeLaunch(launch, deps.trustedMediaBaseUrl),
           holderCount: metrics?.holderCount?.toString(10) ?? null,
           graduatedVenueKind: state?.graduatedVenueKind ?? null,
           lifecycleState: serializeLifecycleState(launch, state, metrics),
