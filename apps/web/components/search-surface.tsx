@@ -7,6 +7,14 @@ import type { IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button, CreatorAttribution, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
+import {
+  addRecentSearchTarget,
+  clearRecentSearchTargets,
+  readRecentSearchTargets,
+  removeRecentSearchTarget,
+  writeRecentSearchTargets,
+  type RecentSearchTarget,
+} from '../lib/search/recent-targets';
 import { formatUsdcBaseUnits, lifecycleLabel, searchIntent, shortAddress } from './explore/model';
 import { FreshnessBanner } from './freshness-banner';
 
@@ -41,7 +49,13 @@ function searchResultInitial(result: IndexedSearchResult): string {
   return (result.symbol?.trim() || result.name?.trim() || '?').slice(0, 1).toUpperCase();
 }
 
-function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>) {
+function SearchResultLink({
+  result,
+  recordRecentTarget,
+}: Readonly<{
+  result: IndexedSearchResult;
+  recordRecentTarget: (result: IndexedSearchResult) => void;
+}>) {
   const age = formatSearchAge(result.ageSeconds);
   const lifecycle = lifecycleLabel(result.lifecycleState);
   return (
@@ -49,6 +63,7 @@ function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>)
       className="bread-search-result"
       href={`/token/${encodeURIComponent(result.tokenAddress)}`}
       key={result.tokenAddress}
+      onClick={() => recordRecentTarget(result)}
     >
       <span className="bread-search-result__identity">
         <span className="bread-search-result__image" aria-hidden="true">{searchResultInitial(result)}</span>
@@ -72,9 +87,46 @@ function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>)
   );
 }
 
+function RecentTargetRow({
+  target,
+  recordRecentTarget,
+  removeRecentTarget,
+}: Readonly<{
+  target: RecentSearchTarget;
+  recordRecentTarget: (target: RecentSearchTarget) => void;
+  removeRecentTarget: (tokenAddress: string) => void;
+}>) {
+  const initial = (target.symbol?.trim() || target.name?.trim() || '?').slice(0, 1).toUpperCase();
+  return (
+    <div className="bread-search-result" key={target.tokenAddress}>
+      <a
+        className="bread-search-result__identity"
+        href={`/token/${encodeURIComponent(target.tokenAddress)}`}
+        onClick={() => recordRecentTarget(target)}
+      >
+        <span className="bread-search-result__image" aria-hidden="true">{initial}</span>
+        <span className="bread-search-result__copy">
+          <strong>{target.name?.trim() || 'Unnamed token'}</strong>
+          <span>${target.symbol?.trim() || '—'}</span>
+          {target.deployerAddress ? <CreatorAttribution creatorAddress={target.deployerAddress} /> : null}
+        </span>
+      </a>
+      <button
+        type="button"
+        className="bread-search-hint"
+        aria-label={`Remove recent ${target.symbol?.trim() || target.name?.trim() || 'token'}`}
+        onClick={() => removeRecentTarget(target.tokenAddress)}
+      >
+        Remove recent
+      </button>
+    </div>
+  );
+}
+
 export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean }>) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
+  const [recentTargets, setRecentTargets] = useState<RecentSearchTarget[]>([]);
   const inputId = useId();
   const dialogRef = useRef<HTMLElement | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -111,6 +163,29 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
     ].filter((group) => group.results.length > 0);
   }, [intent, query.data?.data]);
 
+  function recordRecentTarget(result: IndexedSearchResult | RecentSearchTarget) {
+    const next = addRecentSearchTarget(recentTargets, {
+      tokenAddress: result.tokenAddress,
+      name: result.name,
+      symbol: result.symbol,
+      deployerAddress: result.deployerAddress,
+    });
+    setRecentTargets(next);
+    writeRecentSearchTargets(next);
+  }
+
+  function removeRecentTarget(tokenAddress: string) {
+    const next = removeRecentSearchTarget(recentTargets, tokenAddress);
+    setRecentTargets(next);
+    writeRecentSearchTargets(next);
+  }
+
+  function clearRecent() {
+    const next = clearRecentSearchTargets();
+    setRecentTargets(next);
+    writeRecentSearchTargets(next);
+  }
+
   function openSearch(event: MouseEvent<HTMLButtonElement>) {
     returnFocusRef.current = event.currentTarget;
     setOpen(true);
@@ -119,6 +194,11 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
   function closeSearch() {
     setOpen(false);
   }
+
+  useEffect(() => {
+    if (!open) return;
+    setRecentTargets(readRecentSearchTargets());
+  }, [open]);
 
   useEffect(() => {
     if (compact) return;
@@ -265,11 +345,34 @@ export function SearchSurface({ compact = false }: Readonly<{ compact?: boolean 
               {query.isError ? <p className="bread-inline-error">Search is unavailable right now.</p> : null}
               {query.data?.data.length === 0 ? <p className="bread-search-hint">No indexed tokens found.</p> : null}
 
+              {intent.kind === 'idle' && value.trim().length === 0 && recentTargets.length > 0 ? (
+                <section>
+                  <div className="bread-search-dialog__header">
+                    <h3 className="bread-search-hint">Recent</h3>
+                    <button type="button" className="bread-search-hint" onClick={clearRecent}>
+                      Clear recent
+                    </button>
+                  </div>
+                  {recentTargets.map((target) => (
+                    <RecentTargetRow
+                      key={target.tokenAddress}
+                      target={target}
+                      recordRecentTarget={recordRecentTarget}
+                      removeRecentTarget={removeRecentTarget}
+                    />
+                  ))}
+                </section>
+              ) : null}
+
               {searchGroups.map((group) => (
                 <section key={group.label}>
                   <h3 className="bread-search-hint">{group.label}</h3>
                   {group.results.map((result) => (
-                    <SearchResultLink result={result} key={result.tokenAddress} />
+                    <SearchResultLink
+                      result={result}
+                      key={result.tokenAddress}
+                      recordRecentTarget={recordRecentTarget}
+                    />
                   ))}
                 </section>
               ))}
