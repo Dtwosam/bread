@@ -1,0 +1,34 @@
+name: source-backed-followup-sync
+
+on:
+  push:
+    branches:
+      - agent/ui-ux-v2-2-implementation
+    paths:
+      - '.github/workflows/source-backed-followup-sync.yml'
+      - 'scripts/maintenance/apply-source-backed-followup.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: agent/ui-ux-v2-2-implementation
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - name: Apply source-backed follow-up corrections
+        run: node scripts/maintenance/apply-source-backed-followup.mjs
+      - name: Persist corrections and remove temporary sync harness
+        run: |
+          git config user.name "bread-closure-bot"
+          git config user.email "bread-closure-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "test: align retained regressions with authoritative UI data"
+          git push origin HEAD:agent/ui-ux-v2-2-implementation
