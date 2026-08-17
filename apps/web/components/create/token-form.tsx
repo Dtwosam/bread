@@ -1,6 +1,8 @@
 'use client';
 
-import { useId, type FormEvent } from 'react';
+import { useId, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+
+import { createBreadApiClient } from '../../lib/api/client';
 
 export type CreateTokenDraft = Readonly<{
   image: string;
@@ -60,14 +62,43 @@ export function TokenForm({
   onReview: () => void;
 }>) {
   const errorId = useId();
+  const mediaStatusId = useId();
+  const api = useMemo(() => createBreadApiClient(), []);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   function update<K extends keyof CreateTokenDraft>(key: K, value: CreateTokenDraft[K]) {
     onChange({ ...draft, [key]: value });
   }
 
+  async function selectImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    setImageError(null);
+    if (!file) {
+      update('image', '');
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const uploaded = await api.uploadTokenImage(file);
+      update('image', uploaded.canonicalUrl);
+    } catch (caught) {
+      update('image', '');
+      setImageError(
+        caught instanceof RangeError
+          ? caught.message
+          : 'Image upload is unavailable right now. You can continue without an image.',
+      );
+    } finally {
+      setImageUploading(false);
+      event.currentTarget.value = '';
+    }
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (disabled) return;
+    if (disabled || imageUploading) return;
     if (stage === 'TOKEN') onContinue();
     else onReview();
   }
@@ -94,16 +125,32 @@ export function TokenForm({
         <>
           <label className="bread-create-field">
             <span>Image</span>
-            <span className="bread-create-field__hint">Use a public HTTPS image URL. File upload storage is not part of the current Bread runtime.</span>
+            <span className="bread-create-field__hint">PNG, JPEG or WebP, max 5 MB. Image is optional.</span>
             <input
-              type="url"
-              inputMode="url"
-              value={draft.image}
-              disabled={disabled}
-              placeholder="https://…"
-              onChange={(event) => update('image', event.target.value)}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              aria-describedby={mediaStatusId}
+              disabled={disabled || imageUploading}
+              onChange={(event) => void selectImage(event)}
             />
           </label>
+          <div id={mediaStatusId} className="bread-create-field__hint" aria-live="polite">
+            {imageUploading ? 'Uploading and sanitizing image…' : draft.image ? 'Image ready.' : 'No image selected. Bread will use the deterministic fallback.'}
+          </div>
+          {draft.image ? (
+            <button
+              type="button"
+              className="bread-create-secondary-action"
+              disabled={disabled || imageUploading}
+              onClick={() => {
+                update('image', '');
+                setImageError(null);
+              }}
+            >
+              Remove image
+            </button>
+          ) : null}
+          {imageError ? <p className="bread-create-error" role="alert">{imageError}</p> : null}
 
           <div className="bread-create-field-row">
             <label className="bread-create-field">
@@ -214,7 +261,7 @@ export function TokenForm({
             Back
           </button>
         ) : null}
-        <button className="bread-create-primary-action" type="submit" disabled={disabled}>
+        <button className="bread-create-primary-action" type="submit" disabled={disabled || imageUploading}>
           {stage === 'TOKEN' ? 'Continue' : 'Review'}
         </button>
       </div>
