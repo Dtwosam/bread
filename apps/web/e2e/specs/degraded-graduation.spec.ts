@@ -135,7 +135,7 @@ test('degraded and failed indexed reads stay truthful without raw RPC fallback',
   expect(rpcState.requests).toEqual([]);
 });
 
-test('active pending and graduated tokens show distinct graduation truth', async ({ page }) => {
+test('active pending and graduated tokens show status-only automatic graduation truth', async ({ page }) => {
   await page.goto(`/token/${ACTIVE_TOKEN}`);
   await expect(page.getByRole('heading', { name: 'Graduation' })).toBeVisible();
   await expect(page.getByText(/Active · Indexed state ACTIVE/)).toBeVisible();
@@ -146,16 +146,18 @@ test('active pending and graduated tokens show distinct graduation truth', async
   await expect(page.getByText(/Graduation pending · Indexed state GRADUATION_PENDING/)).toBeVisible();
   await expect(page.getByText('Indexed locked')).toHaveCount(0);
   await expect(page.getByText(/completed trade remains confirmed/i)).toBeVisible();
+  await expect(page.getByText(/automatic graduation keeper will retry/i)).toBeVisible();
+  await expect(page.getByText(/no creator or user wallet signature is required/i)).toBeVisible();
   await expect(page.getByText(/trade failed/i)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /retry/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /retry|continue graduation|complete graduation|graduate/i })).toHaveCount(0);
 
   await page.goto(`/token/${GRADUATED_TOKEN}`);
   await expect(page.getByText(/Graduated · Indexed state GRADUATED/)).toBeVisible();
   await expect(page.getByText('Indexed locked')).toBeVisible();
-  await expect(page.getByRole('button', { name: /retry/i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /retry|continue graduation|complete graduation|graduate/i })).toHaveCount(0);
 });
 
-test('processing token is Graduating, preserves completed trades, and disables the invalid curve route', async ({ page }) => {
+test('processing token is Graduating, preserves completed trades, and leaves graduation to the automatic keeper', async ({ page }) => {
   await installProcessingTokenDetail(page);
   await page.goto(`/token/${ACTIVE_TOKEN}`);
 
@@ -164,8 +166,10 @@ test('processing token is Graduating, preserves completed trades, and disables t
   await expect(graduation.getByText(/bonding curve is complete/i)).toBeVisible();
   await expect(graduation.getByText(/liquidity creation is in progress/i)).toBeVisible();
   await expect(graduation.getByText(/completed trades remain confirmed/i)).toBeVisible();
+  await expect(graduation.getByText(/automatic graduation keeper advances the next permissionless coordinator step/i)).toBeVisible();
+  await expect(graduation.getByText(/no creator action or wallet signature is required/i)).toBeVisible();
   await expect(page.getByText(/trade failed/i)).toHaveCount(0);
-  await expect(graduation.getByRole('button', { name: /continue graduation/i })).toBeVisible();
+  await expect(graduation.getByRole('button', { name: /retry|continue graduation|complete graduation|graduate/i })).toHaveCount(0);
 
   await expect(page.locator('.bread-token-trade-slot button[aria-label="Trading unavailable while graduation completes"]')).toBeDisabled();
   await expect(page.locator('.bread-token-tablet-trade-trigger button[aria-label="Trading unavailable while graduation completes"]')).toBeDisabled();
@@ -186,6 +190,7 @@ test('graduated lifecycle exposes canonical venue, pool identity, indexed liquid
   await expect(graduationFacts.getByText('990 USDC', { exact: true })).toBeVisible();
   await expect(graduationFacts.getByText('Permanent lock', { exact: true })).toBeVisible();
   await expect(graduationFacts.getByText('Indexed locked', { exact: true })).toBeVisible();
+  await expect(graduation.getByRole('button', { name: /retry|continue graduation|complete graduation|graduate/i })).toHaveCount(0);
 
   const positionManager = graduation.getByRole('link', { name: 'Open position manager in Arcscan' });
   await expect(positionManager).toHaveAttribute(
