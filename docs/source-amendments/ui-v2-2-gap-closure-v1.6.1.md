@@ -1,8 +1,8 @@
 # Bread UI/UX v2.2 Gap-Closure Source Amendment
 
-**Proposed source label:** `v1.6.1-pre-rc-ui-gap-closure`  
+**Project Source label:** `v1.6.1-pre-rc-ui-gap-closure`  
 **Date:** 17 Aug 2026  
-**Status:** USER-APPROVED DECISIONS — PROPOSED CONTROLLING AMENDMENT; Project Source upload/readback ratification required before affected production implementation.
+**Status:** RATIFIED — uploaded Project Source read back and reconciled on 17 Aug 2026; affected candidate implementation is subject to source-to-code conformance and fresh exact-head verification before acceptance.
 
 ## Authority boundary
 
@@ -47,15 +47,20 @@ It does **not** change Solidity, protocol economics, supply, custody, graduation
 - No final legal claims without real operator/legal facts.
 - No weakening of 04D accessibility, performance, CSP, malicious-metadata, recovery or physical-device gates.
 
-## Ratification gate
+## Ratification record
+
+The user uploaded the controlling `v1.6.1-pre-rc-ui-gap-closure` Project Source on 17 Aug 2026. Active-chat readback confirms that its eight frozen decisions, cross-layer boundaries, acceptance requirements and non-goals agree with this repository note and directly supersede the matching unresolved-gap entries in CURRENT-BUILD-STATE v1.9. PR #94 remains based on `day9/synthra-arc-testnet-v3-candidate` at `18952b20a56021350000c0f5d89552380c883be3`.
+
+Candidate production code for these decisions already existed before final Project Source upload. Under the Bread recovery rule, that code is preserved but is not accepted merely by ratification. It is frozen for source-to-code conformance review and fresh exact-head integrated CI.
 
 ```text
-PROJECT_SOURCE_PACK_PROPOSED = v1.6.1-pre-rc-ui-gap-closure
+PROJECT_SOURCE_PACK = v1.6.1-pre-rc-ui-gap-closure
 USER_DECISION_STATUS = APPROVED_IN_CHAT
-PROJECT_SOURCE_UPLOAD = PENDING_USER_UPLOAD / REPLACEMENT
-PROJECT_SOURCE_RATIFICATION = PENDING
-AFFECTED_PRODUCTION_IMPLEMENTATION = BLOCKED_UNTIL_UPLOAD + ACTIVE-CHAT_READBACK + GIT/YAML_RECONCILIATION
+PROJECT_SOURCE_UPLOAD = UPLOADED
+PROJECT_SOURCE_READBACK = VERIFIED
+PROJECT_SOURCE_RATIFICATION = RATIFIED
+CANDIDATE_CODE_STATUS = RATIFIED_PENDING_CONFORMANCE_AND_EXACT_HEAD_CI
 DAY9 / RC = STILL INCOMPLETE
 ```
 
-After upload/readback reconciliation, execute each area as bounded RED → GREEN slices under 06D, rerun focused + adjacent + security + performance/load + browser evidence, keep PR #94 draft/open/unmerged, and preserve the physical-device blocker.
+Execute each area as bounded RED → GREEN/conformance slices under 06D, rerun focused + adjacent + security + performance/load + browser evidence, keep PR #94 draft/open/unmerged, and preserve the physical-device and approved-legal-copy blockers.
