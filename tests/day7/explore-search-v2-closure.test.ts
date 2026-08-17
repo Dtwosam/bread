@@ -53,7 +53,18 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(search).not.toMatch(/<img[^>]+src=\{result\.(?:metadata|image|logo)/);
   });
 
-  it('does not invent currently undefined Lane-3 authorities while closing the presentation contract', () => {
+  it('keeps Recent searches device-local, bounded to eight unique selections, and clearable', () => {
+    const search = read('../../apps/web/components/search-surface.tsx');
+
+    expect(search).toContain('Recent searches');
+    expect(search).toContain('bread.search.recent.v1');
+    expect(search).toContain('MAX_RECENT_SEARCHES = 8');
+    expect(search).toContain('window.localStorage');
+    expect(search).toContain('Clear recent');
+    expect(search).not.toMatch(/walletAddress.*recent|recent.*walletAddress/i);
+  });
+
+  it('does not create competing market-cap math in public UI', () => {
     const card = read('../../apps/web/components/token-card.tsx');
     const search = read('../../apps/web/components/search-surface.tsx');
 
