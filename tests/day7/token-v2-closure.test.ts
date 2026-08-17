@@ -8,7 +8,7 @@ describe('Bread UI/UX v2.2 Token detail source-conformance closure', () => {
   it('uses the exact source-defined primary stats without promoting creator tax or unavailable movement', () => {
     const stats = read('../../apps/web/components/token/token-stats.tsx');
 
-    expect(stats).toContain("['Market cap', '—']");
+    expect(stats).toContain("['Market cap', formatUsdcBaseUnits(token.marketCap)]");
     expect(stats).toContain("['Price', priceRatio(token)]");
     expect(stats).toContain("['24h volume', formatUsdcBaseUnits(token.metrics?.quoteVolume.h24 ?? null)]");
     expect(stats).toContain("['Holders', token.holderCount ?? '—']");
