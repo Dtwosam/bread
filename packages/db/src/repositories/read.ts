@@ -10,6 +10,12 @@ export type NewLaunchCursorKey = Readonly<{
   tokenAddress: string;
 }>;
 
+export type GraduatedLaunchCursorKey = Readonly<{
+  graduationCompletedBlock: string;
+  graduationCompletedLogIndex: number;
+  tokenAddress: string;
+}>;
+
 export type TradeCursorKey = Readonly<{
   blockNumber: string;
   transactionIndex: number;
@@ -217,6 +223,16 @@ export class ReadRepository {
     return row ? normalizeLaunchStateRow(row) : undefined;
   }
 
+  async listLaunchStates(chainId: number, tokenAddresses: readonly string[]) {
+    if (tokenAddresses.length === 0) return [];
+    const canonical = [...new Set(tokenAddresses.map((value) => value.toLowerCase()))];
+    const rows = await this.db
+      .select()
+      .from(launchState)
+      .where(and(eq(launchState.chainId, chainId), inArray(launchState.tokenAddress, canonical)));
+    return rows.map(normalizeLaunchStateRow);
+  }
+
   async getTokenMetrics(chainId: number, tokenAddress: string) {
     const [row] = await this.db
       .select()
@@ -300,6 +316,90 @@ export class ReadRepository {
       )
       .limit(boundedLimit);
     return rows.map(normalizeLaunchRow);
+  }
+
+  async listGraduatedLaunches(
+    chainId: number,
+    stackVersion: string,
+    factoryAddress: string,
+    limit: number,
+    cursor?: GraduatedLaunchCursorKey,
+  ) {
+    const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
+    const cursorPredicate = cursor
+      ? or(
+          lt(launchState.graduationCompletedBlock, cursor.graduationCompletedBlock),
+          and(
+            eq(launchState.graduationCompletedBlock, cursor.graduationCompletedBlock),
+            lt(launchState.graduationCompletedLogIndex, cursor.graduationCompletedLogIndex),
+          ),
+          and(
+            eq(launchState.graduationCompletedBlock, cursor.graduationCompletedBlock),
+            eq(launchState.graduationCompletedLogIndex, cursor.graduationCompletedLogIndex),
+            gt(launchState.tokenAddress, cursor.tokenAddress.toLowerCase()),
+          ),
+        )
+      : undefined;
+
+    const keys = await this.db
+      .select({
+        tokenAddress: launchState.tokenAddress,
+        graduationCompletedBlock: launchState.graduationCompletedBlock,
+        graduationCompletedLogIndex: launchState.graduationCompletedLogIndex,
+      })
+      .from(launchState)
+      .innerJoin(
+        launches,
+        and(
+          eq(launches.chainId, launchState.chainId),
+          eq(launches.tokenAddress, launchState.tokenAddress),
+        ),
+      )
+      .where(
+        and(
+          eq(launchState.chainId, chainId),
+          eq(launchState.graduationPhase, 'POOL_CREATED'),
+          isNotNull(launchState.graduationCompletedBlock),
+          isNotNull(launchState.graduationCompletedLogIndex),
+          eq(launches.stackVersion, stackVersion),
+          eq(launches.factoryAddress, factoryAddress.toLowerCase()),
+          cursorPredicate,
+        ),
+      )
+      .orderBy(
+        desc(launchState.graduationCompletedBlock),
+        desc(launchState.graduationCompletedLogIndex),
+        asc(launchState.tokenAddress),
+      )
+      .limit(boundedLimit);
+
+    if (keys.length === 0) return [];
+    const tokenAddresses = keys.map((key) => key.tokenAddress);
+    const launchRows = await this.db
+      .select()
+      .from(launches)
+      .where(
+        and(
+          eq(launches.chainId, chainId),
+          eq(launches.stackVersion, stackVersion),
+          eq(launches.factoryAddress, factoryAddress.toLowerCase()),
+          inArray(launches.tokenAddress, tokenAddresses),
+        ),
+      );
+    const launchesByToken = new Map(launchRows.map((row) => [row.tokenAddress.toLowerCase(), row]));
+
+    return keys.map((key) => {
+      const launch = launchesByToken.get(key.tokenAddress.toLowerCase());
+      if (!launch) throw new Error(`Graduated-feed launch missing for ${key.tokenAddress}`);
+      if (key.graduationCompletedBlock === null || key.graduationCompletedLogIndex === null) {
+        throw new Error(`Graduated-feed completion key missing for ${key.tokenAddress}`);
+      }
+      return {
+        ...normalizeLaunchRow(launch),
+        graduationCompletedBlock: decimalIntegerToBigInt(key.graduationCompletedBlock),
+        graduationCompletedLogIndex: key.graduationCompletedLogIndex,
+      } as const;
+    });
   }
 
   async listTrades(chainId: number, tokenAddress: string, limit: number, cursor?: TradeCursorKey): Promise<TradeReadRow[]> {

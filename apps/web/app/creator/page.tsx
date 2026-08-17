@@ -1,12 +1,12 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button, CreatorAttribution, EmptyState, ErrorState, Skeleton } from '@bread/ui';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
 
-import type { IndexedCreatorOverview } from '../../../../packages/types/src/index';
-import { Button, EmptyState, ErrorState, Skeleton } from '@bread/ui';
+import type { IndexedCreatorLaunch, IndexedCreatorOverview } from '../../../../packages/types/src/index';
 import { ClaimPanel } from '../../components/creator/claim-panel';
 import { FreshnessBanner } from '../../components/freshness-banner';
 import { TransactionStatus } from '../../components/transaction-status';
@@ -22,6 +22,26 @@ import {
 import { canSubmitTransactionAction, type TransactionState } from '../../lib/transactions/state';
 
 type Address = `0x${string}`;
+
+function launchName(launch: IndexedCreatorLaunch): string {
+  return launch.name ?? launch.symbol ?? `${launch.tokenAddress.slice(0, 6)}…${launch.tokenAddress.slice(-4)}`;
+}
+
+function launchTicker(launch: IndexedCreatorLaunch): string {
+  return launch.symbol ? `$${launch.symbol}` : launch.tokenAddress;
+}
+
+function marketCap(launch: IndexedCreatorLaunch): string {
+  return launch.marketCap === null ? '—' : `${formatUnits(BigInt(launch.marketCap), 6)} USDC`;
+}
+
+function activeLaunchCount(launches: readonly IndexedCreatorLaunch[]): number | null {
+  if (launches.some((launch) => launch.lifecycleState === null)) return null;
+  return launches.filter((launch) => {
+    const state = launch.lifecycleState?.toUpperCase();
+    return state !== 'GRADUATED' && state !== 'POOL_CREATED';
+  }).length;
+}
 
 export default function CreatorPage() {
   const runtime = useTradeRuntime();
@@ -135,6 +155,7 @@ export default function CreatorPage() {
 
   const creator = query.data.data;
   const claimUnlocked = claimState === null || canSubmitTransactionAction(claimState);
+  const activeLaunches = activeLaunchCount(creator.createdLaunches);
 
   async function reviewClaim() {
     if (!readyRuntime.protocolContext || !account) {
@@ -211,16 +232,13 @@ export default function CreatorPage() {
           <strong>{formatUnits(BigInt(creator.fees.credited), 6)} USDC</strong>
         </div>
         <div>
-          <span>Indexed claimable</span>
+          <span>Claimable USDC</span>
           <strong>{formatUnits(BigInt(creator.fees.indexedClaimable), 6)} USDC</strong>
+          <small>Indexed; the claim review rereads FeeEscrow onchain.</small>
         </div>
         <div>
           <span>Active launches</span>
-          <strong>—</strong>
-        </div>
-        <div>
-          <span>Locked buyback tokens</span>
-          <strong>—</strong>
+          <strong>{activeLaunches ?? '—'}</strong>
         </div>
       </section>
 
@@ -237,8 +255,11 @@ export default function CreatorPage() {
 
       {claimState ? <TransactionStatus state={claimState} /> : null}
 
-      <section aria-label="Created launches">
-        <h2>Created launches</h2>
+      <section className="bread-creator-launches" aria-labelledby="bread-creator-launches-heading">
+        <div className="bread-portfolio-section-heading">
+          <h2 id="bread-creator-launches-heading">Created launches</h2>
+          <p>Revenue is indexed per launch. Claims remain recipient-level because FeeEscrow does not assign withdrawals back to individual launches.</p>
+        </div>
         {creator.createdLaunches.length === 0 ? (
           <p className="bread-muted">No indexed launches for this creator wallet.</p>
         ) : (
@@ -247,10 +268,22 @@ export default function CreatorPage() {
               const earned = creator.perLaunchEarnedRevenue.find((row) => row.tokenAddress === launch.tokenAddress);
               return (
                 <li key={launch.tokenAddress}>
-                  <Link href={`/token/${launch.tokenAddress}`}>{launch.tokenAddress}</Link>
-                  <span>{earned ? `${formatUnits(BigInt(earned.credited), 6)} USDC earned` : 'Revenue —'}</span>
-                  <span>Market cap —</span>
-                  <span>State —</span>
+                  <div className="bread-creator-launch-identity">
+                    <span className="bread-portfolio-position-token__image" aria-hidden="true">
+                      {launchName(launch).slice(0, 1).toUpperCase()}
+                    </span>
+                    <div>
+                      <Link href={`/token/${launch.tokenAddress}`}><strong>{launchName(launch)}</strong></Link>
+                      <code>{launchTicker(launch)}</code>
+                      <CreatorAttribution creatorAddress={creator.address} isCurrentUser />
+                    </div>
+                  </div>
+                  <span><small>Market cap</small><strong>{marketCap(launch)}</strong></span>
+                  <span><small>Lifecycle</small><strong>{launch.lifecycleState ?? '—'}</strong></span>
+                  <span><small>Revenue</small><strong>{earned ? `${formatUnits(BigInt(earned.credited), 6)} USDC` : '—'}</strong></span>
+                  <span title="FeeEscrow claims are recipient-level, so Bread cannot truthfully attribute claimed amounts to one launch.">
+                    <small>Claim status</small><strong>Recipient-level</strong>
+                  </span>
                 </li>
               );
             })}

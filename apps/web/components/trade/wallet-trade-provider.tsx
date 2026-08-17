@@ -16,6 +16,7 @@ import { recoverPersistedTransactions } from '../../lib/transactions/controller'
 import type { TransactionState } from '../../lib/transactions/state';
 import {
   createTradeWalletAdapter,
+  readArcBuyMaxBalance,
   readSpendableTradeBalance,
   recoverPersistedAllowanceTransactions,
 } from '../../lib/transactions/wallet-adapter';
@@ -168,6 +169,15 @@ export function WalletTradeProvider({ children }: Readonly<{ children: ReactNode
         action,
         tokenAddress,
         quoteAsset: arcTradeExecutionContext.quoteAsset,
+      });
+    },
+    async getBuyMaxBalance() {
+      if (!connection.address) throw new Error('Connect a wallet before calculating Buy MAX.');
+      return readArcBuyMaxBalance({
+        publicClient,
+        account: connection.address,
+        quoteAsset: arcTradeExecutionContext.quoteAsset,
+        quoteDecimals: arcTradeExecutionContext.quoteDecimals,
       });
     },
     ...(browserStorage ? { storage: browserStorage } : {}),

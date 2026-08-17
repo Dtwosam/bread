@@ -13,7 +13,7 @@
 .bread-portfolio-summary,
 .bread-creator-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
   border: 1px solid var(--bread-border-subtle);
@@ -30,12 +30,37 @@
   background: var(--bread-surface-1);
 }
 
+.bread-creator-summary small,
+.bread-portfolio-section-heading p {
+  color: var(--bread-text-secondary);
+  font-size: 12px;
+  line-height: 17px;
+}
+
 .bread-portfolio-summary span,
 .bread-creator-summary span,
-.bread-portfolio-position > td > span:first-child {
+.bread-portfolio-position > td > span:first-child,
+.bread-creator-launch-list small {
   color: var(--bread-text-tertiary);
   font-size: 12px;
   line-height: 17px;
+}
+
+.bread-portfolio-holdings,
+.bread-portfolio-activity,
+.bread-creator-launches {
+  display: grid;
+  gap: 12px;
+}
+
+.bread-portfolio-section-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.bread-portfolio-section-heading h2,
+.bread-portfolio-section-heading p {
+  margin: 0;
 }
 
 .bread-portfolio-list {
@@ -50,7 +75,7 @@
 .bread-portfolio-header,
 .bread-portfolio-position {
   display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) minmax(120px, 0.8fr) minmax(140px, 0.9fr) minmax(100px, 0.65fr) minmax(150px, 0.9fr);
+  grid-template-columns: minmax(220px, 1.55fr) minmax(120px, 0.75fr) minmax(140px, 0.85fr) minmax(92px, 0.45fr);
   align-items: center;
 }
 
@@ -77,72 +102,155 @@
   gap: 4px;
 }
 
-.bread-portfolio-position-token a {
+.bread-portfolio-position-token__identity,
+.bread-creator-launch-identity {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.bread-portfolio-position-token__identity > div,
+.bread-creator-launch-identity > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.bread-portfolio-position-token__image {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--bread-brand-butter-soft);
+  color: var(--bread-brand-butter);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bread-portfolio-position-token a,
+.bread-creator-launch-list a,
+.bread-portfolio-activity a {
   color: var(--bread-text-primary);
   text-decoration: none;
 }
 
-.bread-portfolio-position-token a:hover {
+.bread-portfolio-position-token a:hover,
+.bread-creator-launch-list a:hover,
+.bread-portfolio-activity a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .bread-portfolio-position-token code,
-.bread-portfolio-position-activity code {
+.bread-creator-launch-identity code,
+.bread-portfolio-activity code {
   overflow-wrap: anywhere;
   color: var(--bread-text-secondary);
   font-size: 12px;
 }
 
+.bread-portfolio-trade-action {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0 14px;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-control);
+  background: var(--bread-accent-soft);
+  color: var(--bread-text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bread-portfolio-activity ul,
+.bread-creator-launch-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bread-portfolio-activity ul {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--bread-border-subtle);
+  border-radius: var(--bread-radius-card);
+  background: var(--bread-surface-1);
+}
+
+.bread-portfolio-activity li {
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+}
+
+.bread-portfolio-activity li + li {
+  border-top: 1px solid var(--bread-border-subtle);
+}
+
+.bread-portfolio-activity li > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
 .bread-creator-launch-list {
   display: grid;
   gap: 1px;
-  margin: 0;
-  padding: 0;
   overflow: hidden;
   border: 1px solid var(--bread-border-subtle);
   border-radius: var(--bread-radius-card);
   background: var(--bread-border-subtle);
-  list-style: none;
 }
 
 .bread-creator-launch-list li {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(110px, 0.7fr));
+  grid-template-columns: minmax(210px, 1.45fr) repeat(4, minmax(110px, 0.7fr));
   align-items: center;
   gap: 16px;
   padding: 14px 16px;
   background: var(--bread-surface-1);
 }
 
-.bread-creator-launch-list a {
+.bread-creator-launch-list li > span {
   min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.bread-creator-launch-list li > span strong {
   overflow-wrap: anywhere;
-  color: var(--bread-text-primary);
+  font-size: 13px;
+  line-height: 18px;
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .bread-portfolio-summary,
   .bread-creator-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .bread-portfolio-position,
   .bread-portfolio-header {
-    grid-template-columns: minmax(170px, 1.4fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr) minmax(120px, 0.8fr);
-  }
-
-  .bread-portfolio-header th:nth-child(4),
-  .bread-portfolio-position td:nth-child(4) {
-    display: none;
+    grid-template-columns: minmax(190px, 1.4fr) minmax(100px, 0.7fr) minmax(120px, 0.85fr) minmax(82px, 0.45fr);
   }
 
   .bread-creator-launch-list li {
-    grid-template-columns: minmax(180px, 1.4fr) repeat(2, minmax(110px, 0.8fr));
+    grid-template-columns: minmax(190px, 1.35fr) repeat(2, minmax(110px, 0.8fr));
   }
 
-  .bread-creator-launch-list li > :nth-child(3) {
+  .bread-creator-launch-list li > :nth-child(3),
+  .bread-creator-launch-list li > :nth-child(5) {
     display: none;
   }
 }
@@ -194,11 +302,34 @@
   }
 
   .bread-portfolio-position-token {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+  }
+
+  .bread-portfolio-position-token > span:first-child {
+    display: none;
+  }
+
+  .bread-portfolio-position-trade {
+    align-items: center !important;
+  }
+
+  .bread-portfolio-trade-action {
+    width: 100%;
+  }
+
+  .bread-portfolio-activity li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .bread-creator-launch-list li {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
+  }
+
+  .bread-creator-launch-list li > :nth-child(3),
+  .bread-creator-launch-list li > :nth-child(5) {
+    display: grid;
   }
 }

@@ -10,16 +10,38 @@ const MAX_SEARCH_LIMIT = 50;
 const MAX_PAGE_LIMIT = 100;
 const MAX_CURSOR_LENGTH = 512;
 const MAX_SEARCH_TERM_LENGTH = 256;
+export const MAX_TOKEN_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
 const FEED_VIEWS = new Set(['new', 'trending', 'graduating', 'graduated']);
+const FEED_AGES = new Set(['lt5m', 'lt1h', '1h-24h', '1d-7d']);
+const FEED_SORTS = new Set(['newest', 'market-cap', 'volume-24h', 'holders', 'baked-progress']);
+const FEED_LIFECYCLES = new Set(['new', 'active', 'almost-baked', 'processing', 'graduated']);
+const TOKEN_IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const ADDRESS_LIKE = /^0x/i;
 const ADDRESS_SHAPE = /^0x[0-9a-fA-F]{40}$/;
+const DECIMAL_INTEGER = /^\d+$/;
+const EXACT_QUOTE_INTEGER = /^\d{1,78}$/;
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 export type FeedView = 'new' | 'trending' | 'graduating' | 'graduated';
+export type FeedAge = 'lt5m' | 'lt1h' | '1h-24h' | '1d-7d';
+export type FeedSort = 'newest' | 'market-cap' | 'volume-24h' | 'holders' | 'baked-progress';
+export type FeedLifecycle = 'new' | 'active' | 'almost-baked' | 'processing' | 'graduated';
 
 export type FeedParams = Readonly<{
   view?: FeedView;
+  sort?: FeedSort;
+  lifecycle?: FeedLifecycle;
+  age?: FeedAge;
+  holdersMin?: string;
+  holdersMax?: string;
+  progressMinBps?: string;
+  progressMaxBps?: string;
+  creator?: string;
+  volumeMinQuote?: string;
+  volumeMaxQuote?: string;
+  marketCapMinQuote?: string;
+  marketCapMaxQuote?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -32,6 +54,20 @@ export type SearchParams = Readonly<{
 export type CursorParams = Readonly<{
   limit?: number;
   cursor?: string;
+}>;
+
+export type TokenImageUploadResult = Readonly<{
+  assetId: string;
+  canonicalUrl: string;
+  width: number;
+  height: number;
+  variants: readonly Readonly<{
+    name: 'card' | 'detail';
+    canonicalUrl: string;
+    width: number;
+    height: number;
+    contentType: 'image/webp';
+  }>[];
 }>;
 
 export type BreadApiClientOptions = Readonly<{
@@ -69,10 +105,70 @@ function assertCursor(cursor: string | undefined): void {
   }
 }
 
+function parseBps(value: string | undefined, label: string): number | undefined {
+  if (value === undefined) return undefined;
+  if (!DECIMAL_INTEGER.test(value)) {
+    throw new RangeError(`${label} must be an integer from 0 to 10000.`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 10_000) {
+    throw new RangeError(`${label} must be an integer from 0 to 10000.`);
+  }
+  return parsed;
+}
+
+function canonicalInteger(value: string): string {
+  return value.replace(/^0+(?=\d)/, '');
+}
+
+function compareCanonicalIntegers(left: string, right: string): number {
+  const a = canonicalInteger(left);
+  const b = canonicalInteger(right);
+  if (a.length !== b.length) return a.length < b.length ? -1 : 1;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function assertExactQuoteBounds(
+  min: string | undefined,
+  max: string | undefined,
+  minLabel: string,
+  maxLabel: string,
+): void {
+  if (min !== undefined && !EXACT_QUOTE_INTEGER.test(min)) {
+    throw new RangeError(`${minLabel} must be a non-negative integer quote amount.`);
+  }
+  if (max !== undefined && !EXACT_QUOTE_INTEGER.test(max)) {
+    throw new RangeError(`${maxLabel} must be a non-negative integer quote amount.`);
+  }
+  if (min !== undefined && max !== undefined && compareCanonicalIntegers(min, max) > 0) {
+    throw new RangeError(`${minLabel} must not exceed ${maxLabel}.`);
+  }
+}
+
 function assertFeedParams(params: FeedParams): void {
   if (params.view !== undefined && !FEED_VIEWS.has(params.view)) {
     throw new RangeError('feed view is not supported.');
   }
+  if (params.sort !== undefined && !FEED_SORTS.has(params.sort)) {
+    throw new RangeError('feed sort is not supported.');
+  }
+  if (params.lifecycle !== undefined && !FEED_LIFECYCLES.has(params.lifecycle)) {
+    throw new RangeError('feed lifecycle is not supported.');
+  }
+  if (params.age !== undefined && !FEED_AGES.has(params.age)) {
+    throw new RangeError('feed age is not supported.');
+  }
+  const progressMin = parseBps(params.progressMinBps, 'progressMinBps');
+  const progressMax = parseBps(params.progressMaxBps, 'progressMaxBps');
+  if (progressMin !== undefined && progressMax !== undefined && progressMin > progressMax) {
+    throw new RangeError('progressMinBps must not exceed progressMaxBps.');
+  }
+  if (params.creator !== undefined && !ADDRESS_SHAPE.test(params.creator)) {
+    throw new RangeError('creator must be a valid address.');
+  }
+  assertExactQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote, 'volumeMinQuote', 'volumeMaxQuote');
+  assertExactQuoteBounds(params.marketCapMinQuote, params.marketCapMaxQuote, 'marketCapMinQuote', 'marketCapMaxQuote');
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
 }
@@ -102,11 +198,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isApiError(value: unknown): value is ApiError {
   if (!isRecord(value) || !isRecord(value.error)) return false;
-  return (
-    typeof value.error.code === 'string' &&
-    typeof value.error.message === 'string' &&
-    typeof value.error.requestId === 'string'
-  );
+  return typeof value.error.code === 'string' && typeof value.error.message === 'string' && typeof value.error.requestId === 'string';
 }
 
 function isIndexedResponse(value: unknown): value is IndexedResponse<unknown> {
@@ -120,6 +212,27 @@ function isIndexedResponse(value: unknown): value is IndexedResponse<unknown> {
     typeof value.meta.servedAt === 'string' &&
     value.meta.source === 'bread-indexer' &&
     ['FRESH', 'LAGGING', 'REBUILDING', 'DEGRADED'].includes(String(value.meta.status))
+  );
+}
+
+function isTokenImageUploadResult(value: unknown): value is TokenImageUploadResult {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value.assetId !== 'string' ||
+    typeof value.canonicalUrl !== 'string' ||
+    !value.canonicalUrl.startsWith('https://') ||
+    typeof value.width !== 'number' ||
+    typeof value.height !== 'number' ||
+    !Array.isArray(value.variants)
+  ) return false;
+  return value.variants.every((variant) =>
+    isRecord(variant) &&
+    (variant.name === 'card' || variant.name === 'detail') &&
+    typeof variant.canonicalUrl === 'string' &&
+    variant.canonicalUrl.startsWith('https://') &&
+    typeof variant.width === 'number' &&
+    typeof variant.height === 'number' &&
+    variant.contentType === 'image/webp',
   );
 }
 
@@ -141,6 +254,15 @@ async function decodeJson(response: Response): Promise<unknown> {
   }
 }
 
+function responseError(response: Response, body: unknown): BreadApiRequestError {
+  if (isApiError(body)) return new BreadApiRequestError(response.status, body.error);
+  return new BreadApiRequestError(response.status, {
+    code: `HTTP_${response.status}`,
+    message: response.statusText || 'Bread API request failed.',
+    requestId: response.headers.get('x-request-id') ?? 'unknown',
+  });
+}
+
 export function classifyFreshness(meta: FreshnessMeta): FreshnessStatus {
   return meta.status;
 }
@@ -155,19 +277,8 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       headers: { accept: 'application/json' },
     });
     const body = await decodeJson(response);
-
-    if (!response.ok) {
-      if (isApiError(body)) throw new BreadApiRequestError(response.status, body.error);
-      throw new BreadApiRequestError(response.status, {
-        code: `HTTP_${response.status}`,
-        message: response.statusText || 'Bread API request failed.',
-        requestId: response.headers.get('x-request-id') ?? 'unknown',
-      });
-    }
-
-    if (!isIndexedResponse(body)) {
-      throw new Error('Bread API returned an invalid indexed response envelope.');
-    }
+    if (!response.ok) throw responseError(response, body);
+    if (!isIndexedResponse(body)) throw new Error('Bread API returned an invalid indexed response envelope.');
     return body as IndexedResponse<T>;
   }
 
@@ -176,6 +287,18 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       assertFeedParams(input);
       const params = new URLSearchParams();
       addOptional(params, 'view', input.view);
+      addOptional(params, 'sort', input.sort);
+      addOptional(params, 'lifecycle', input.lifecycle);
+      addOptional(params, 'age', input.age);
+      addOptional(params, 'holdersMin', input.holdersMin);
+      addOptional(params, 'holdersMax', input.holdersMax);
+      addOptional(params, 'progressMinBps', input.progressMinBps);
+      addOptional(params, 'progressMaxBps', input.progressMaxBps);
+      addOptional(params, 'creator', input.creator);
+      addOptional(params, 'volumeMinQuote', input.volumeMinQuote);
+      addOptional(params, 'volumeMaxQuote', input.volumeMaxQuote);
+      addOptional(params, 'marketCapMinQuote', input.marketCapMinQuote);
+      addOptional(params, 'marketCapMaxQuote', input.marketCapMaxQuote);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);
@@ -187,6 +310,38 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       params.set('q', input.q.trim());
       addOptional(params, 'limit', input.limit);
       return request<T>('/v1/search', params);
+    },
+
+    async uploadTokenImage(file: Blob): Promise<TokenImageUploadResult> {
+      const contentType = file.type.toLowerCase();
+      if (!TOKEN_IMAGE_MIME_TYPES.has(contentType)) {
+        throw new RangeError('Token image must be PNG, JPEG, or WebP.');
+      }
+      if (file.size < 1 || file.size > MAX_TOKEN_IMAGE_UPLOAD_BYTES) {
+        throw new RangeError('Token image must be from 1 byte to 5 MB.');
+      }
+      const response = await fetchImpl(buildUrl(baseUrl, '/v1/media/token-image'), {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': contentType },
+        body: file,
+      });
+      const body = await decodeJson(response);
+      if (!response.ok) throw responseError(response, body);
+      if (!isRecord(body) || !isTokenImageUploadResult(body.data)) {
+        throw new Error('Bread API returned an invalid token-image upload response.');
+      }
+      return body.data;
+    },
+
+    async getActivity<T = unknown>(limit = 50): Promise<IndexedResponse<T>> {
+      assertIntegerInRange(limit, 'limit', MAX_PAGE_LIMIT);
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      return request<T>('/v1/activity', params);
+    },
+
+    async getStats<T = unknown>(): Promise<IndexedResponse<T>> {
+      return request<T>('/v1/stats');
     },
 
     async getToken<T = unknown>(address: string): Promise<IndexedResponse<T>> {

@@ -60,6 +60,8 @@ describe('Day 7 Task 6 Create runtime integration', () => {
       'launchFeeUsdc',
       'graduationThreshold',
       'creatorRevenueWallet',
+      'economicsDigest',
+      'configVersion',
       'initialBuyReview',
       'expectedOutput',
       'minimumOutput',
@@ -71,13 +73,25 @@ describe('Day 7 Task 6 Create runtime integration', () => {
     }
   });
 
+  it('keeps stale-economics re-review explicit and highlights changed canonical values', () => {
+    const route = read(paths.route);
+    const review = read('apps/web/components/create/launch-review.tsx');
+    expect(route).toContain('reviewChanged');
+    expect(route).toContain('changedReviewFields');
+    expect(route).toContain('reviewChanges');
+    expect(review).toContain('changedFields');
+    expect(review).toContain('bread-launch-review__value--changed');
+    expect(review).toMatch(/economics changed/i);
+  });
+
   it('uses canonical confirmed token identity for success actions and never guesses deployment order', () => {
     const route = read(paths.route);
     expect(route).toContain('tokenAddress');
-    expect(route).toContain('View token');
+    expect(route).toContain('View Token');
     expect(route).toContain('Share on X');
     expect(route).toContain('Copy link');
     expect(route).toContain('Creator economics');
+    expect(route).toContain('bread-create-preview__creator');
     expect(route).toContain('/token/');
     expect(route).not.toMatch(/CREATE2|predict.*address/i);
   });

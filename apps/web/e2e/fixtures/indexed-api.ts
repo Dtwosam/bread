@@ -78,6 +78,13 @@ function feedItem(input: {
   progressBps: string;
   progressState: string;
 }): IndexedFeedItem {
+  const lifecycleState: IndexedFeedItem['lifecycleState'] =
+    input.progressState === 'GRADUATED'
+      ? 'GRADUATED'
+      : input.progressState === 'GRADUATION_PENDING'
+        ? 'GRADUATION_PENDING'
+        : 'ALMOST_BAKED';
+
   return {
     tokenAddress: input.tokenAddress,
     curveAddress: input.curveAddress,
@@ -111,7 +118,11 @@ function feedItem(input: {
     launchBlockNumber: '900',
     launchTransactionHash: LAUNCH_TX_HASH,
     launchLogIndex: 0,
+    holderCount: '42',
+    graduatedVenueKind: input.progressState === 'GRADUATED' ? 'UNISWAP_V3' : null,
+    lifecycleState,
     metrics: {
+      marketCap: '2500000000',
       lastPrice: { numerator: '2500000', denominator: '1000000000000000000', source: 'TRACKED_CURVE' },
       quoteVolume: { m5: '12000000', h1: '75000000', h24: '450000000' },
       tradeCount: { h1: '24', h24: '140' },
@@ -201,15 +212,29 @@ const tokenDetails = new Map<string, IndexedTokenDetail>([
   [GRADUATED_TOKEN.toLowerCase(), detail(graduatedFeed, 'GRADUATED')],
 ]);
 
-const searchResults: readonly IndexedSearchResult[] = [activeFeed, pendingFeed].map((item) => ({
-  tokenAddress: item.tokenAddress,
-  curveAddress: item.curveAddress,
-  deployerAddress: item.deployerAddress,
-  creatorFeeRecipient: item.creatorFeeRecipient,
-  name: item.name,
-  symbol: item.symbol,
-  matchKind: 'NAME',
-}));
+function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchResult {
+  return {
+    tokenAddress: item.tokenAddress,
+    curveAddress: item.curveAddress,
+    deployerAddress: item.deployerAddress,
+    creatorFeeRecipient: item.creatorFeeRecipient,
+    name: item.name,
+    symbol: item.symbol,
+    metadata: item.metadata,
+    matchKind,
+    ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
+    marketCap: item.metrics?.marketCap ?? null,
+    holderCount: item.holderCount,
+    lifecycleState: item.lifecycleState,
+  };
+}
+
+const activeSearchResult = searchResult(activeFeed, 'NAME');
+const pendingSearchResult = searchResult(pendingFeed, 'NAME');
+const searchResults: readonly IndexedSearchResult[] = [activeSearchResult, pendingSearchResult];
+const exactActiveSearchResults: readonly IndexedSearchResult[] = [
+  { ...activeSearchResult, matchKind: 'CONTRACT' },
+];
 
 const trades: readonly IndexedTokenTrade[] = [];
 
@@ -243,6 +268,7 @@ function portfolio(): IndexedPortfolio {
         tokenAddress: ACTIVE_TOKEN,
         name: 'Bread Twin',
         symbol: 'TWIN',
+        creatorAddress: E2E_DEPLOYER,
         balance: '2500000000000000000000000',
         isProtocolAddress: false,
         graduationState: 'ACTIVE',
@@ -265,10 +291,19 @@ function portfolio(): IndexedPortfolio {
 }
 
 function creator(): IndexedCreatorOverview {
+  const activeLaunch = {
+    tokenAddress: ACTIVE_TOKEN,
+    curveAddress: ACTIVE_CURVE,
+    name: 'Bread Twin',
+    symbol: 'TWIN',
+    marketCap: null,
+    lifecycleState: 'ACTIVE',
+  } as const;
+
   return {
     address: E2E_WALLET,
-    createdLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
-    feeRecipientLaunches: [{ tokenAddress: ACTIVE_TOKEN, curveAddress: ACTIVE_CURVE }],
+    createdLaunches: [activeLaunch],
+    feeRecipientLaunches: [activeLaunch],
     fees: {
       credited: '25000000',
       claimed: '15000000',
@@ -282,8 +317,39 @@ function creator(): IndexedCreatorOverview {
 
 function routePayload(state: IndexedApiFixtureState, requestUrl: string): unknown {
   const url = new URL(requestUrl);
-  if (url.pathname === '/v1/feed') return envelope(state, [activeFeed, pendingFeed, graduatedFeed]);
-  if (url.pathname === '/v1/search') return envelope(state, searchResults);
+  if (url.pathname === '/v1/feed') {
+    const view = url.searchParams.get('view') ?? 'new';
+    const age = url.searchParams.get('age');
+    const holdersMin = url.searchParams.get('holdersMin');
+    const holdersMax = url.searchParams.get('holdersMax');
+    const progressMinBps = url.searchParams.get('progressMinBps');
+    const progressMaxBps = url.searchParams.get('progressMaxBps');
+    const viewItems =
+      view === 'graduated'
+        ? [graduatedFeed]
+        : view === 'trending'
+          ? [activeFeed, pendingFeed]
+          : view === 'graduating'
+            ? [activeFeed, pendingFeed]
+            : [activeFeed, pendingFeed, graduatedFeed];
+    // The fixture models server-selected membership only. It deliberately does
+    // not reproduce or define the production age/holder/progress classification algorithms.
+    const holderFilteredItems =
+      view === 'trending' && holdersMin === '10' && holdersMax === '20'
+        ? [{ ...activeFeed, holderCount: '15' }]
+        : viewItems;
+    const progressFilteredItems =
+      view === 'trending' && progressMinBps === '8500' && progressMaxBps === '9500'
+        ? [{ ...activeFeed, progress: { progressBps: '9000', state: 'ACTIVE' } }]
+        : holderFilteredItems;
+    const items =
+      view === 'trending' && age === 'lt5m' ? [activeFeed] : progressFilteredItems;
+    return envelope(state, items);
+  }
+  if (url.pathname === '/v1/search') {
+    const query = url.searchParams.get('q')?.toLowerCase();
+    return envelope(state, query === ACTIVE_TOKEN.toLowerCase() ? exactActiveSearchResults : searchResults);
+  }
   if (url.pathname === `/v1/portfolio/${E2E_WALLET}`) return envelope(state, portfolio());
   if (url.pathname === `/v1/creators/${E2E_WALLET}`) return envelope(state, creator());
 

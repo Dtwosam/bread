@@ -95,14 +95,16 @@ describe.skipIf(!RUN_DB)('Day 6 Task 6 creator trade-count projection', () => {
     await pool.query(
       `INSERT INTO launches (
         chain_id, token_address, curve_address, stack_version, factory_address,
-        creator_fee_recipient, initial_supply, reserved_tokens_baseline,
+        creator_fee_recipient, initial_supply, reserved_tokens_baseline, graduation_threshold,
         launch_block_number, launch_transaction_hash, launch_log_index
-      ) VALUES ($1,$2,$3,$4,$5,$6,'1000','200','100',$7,4)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,'1000','200','900','100',$7,4)`,
       [context.chainId, token, curve, context.stackVersion, factory, creator, hash('1')],
     );
     await pool.query(
-      `INSERT INTO launch_state (chain_id, token_address, remaining_sellable_tokens, tracked_sold_inventory, updated_at)
-       VALUES ($1,$2,'400','400',now())`,
+      `INSERT INTO launch_state (
+        chain_id, token_address, remaining_sellable_tokens, tracked_sold_inventory,
+        real_quote_reserve, updated_at
+      ) VALUES ($1,$2,'400','400','450',now())`,
       [context.chainId, token],
     );
   });

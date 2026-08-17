@@ -1,6 +1,9 @@
 import { canonicalizeProtocolAddress } from '../../../packages/protocol-sdk/src/index.js';
 
 export const NEW_FEED_CURSOR_VERSION = 1 as const;
+export const TRENDING_FEED_CURSOR_VERSION = 1 as const;
+export const ALMOST_BAKED_FEED_CURSOR_VERSION = 1 as const;
+export const GRADUATED_FEED_CURSOR_VERSION = 1 as const;
 export const TRADE_CURSOR_VERSION = 1 as const;
 export const HOLDER_CURSOR_VERSION = 1 as const;
 export const PORTFOLIO_CURSOR_VERSION = 1 as const;
@@ -21,6 +24,31 @@ export type NewFeedCursor = Readonly<{
   launchBlockNumber: string;
   launchTimestamp: string;
   launchLogIndex: number;
+  tokenAddress: string;
+}>;
+
+export type TrendingFeedCursor = Readonly<{
+  version: number;
+  quoteVolume1h: string;
+  uniqueTraders1h: string;
+  tradeCount1h: string;
+  latestActivityBlockNumber: string;
+  latestActivityLogIndex: number;
+  tokenAddress: string;
+}>;
+
+export type AlmostBakedFeedCursor = Readonly<{
+  version: number;
+  graduationProgressBps: string;
+  quoteVolume1h: string;
+  launchTimestamp: string;
+  tokenAddress: string;
+}>;
+
+export type GraduatedFeedCursor = Readonly<{
+  version: number;
+  graduationCompletedBlock: string;
+  graduationCompletedLogIndex: number;
   tokenAddress: string;
 }>;
 
@@ -148,6 +176,103 @@ export function encodeNewFeedCursor(input: Readonly<Record<string, unknown>>): s
 export function decodeNewFeedCursor(input: string): NewFeedCursor {
   const cursor = normalizeFeedCursor(parseCursorJson(input));
   if (cursor.version !== NEW_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeTrendingFeedCursor(input: Readonly<Record<string, unknown>>): TrendingFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    quoteVolume1h: exactDecimal(input.quoteVolume1h, 'quoteVolume1h'),
+    uniqueTraders1h: exactDecimal(input.uniqueTraders1h, 'uniqueTraders1h'),
+    tradeCount1h: exactDecimal(input.tradeCount1h, 'tradeCount1h'),
+    latestActivityBlockNumber: exactDecimal(input.latestActivityBlockNumber, 'latestActivityBlockNumber'),
+    latestActivityLogIndex: exactIndex(input.latestActivityLogIndex, 'latestActivityLogIndex'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeTrendingFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeTrendingFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    quoteVolume1h: cursor.quoteVolume1h,
+    uniqueTraders1h: cursor.uniqueTraders1h,
+    tradeCount1h: cursor.tradeCount1h,
+    latestActivityBlockNumber: cursor.latestActivityBlockNumber,
+    latestActivityLogIndex: cursor.latestActivityLogIndex,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeTrendingFeedCursor(input: string): TrendingFeedCursor {
+  const cursor = normalizeTrendingFeedCursor(parseCursorJson(input));
+  if (cursor.version !== TRENDING_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
+  return cursor;
+}
+
+function normalizeAlmostBakedFeedCursor(input: Readonly<Record<string, unknown>>): AlmostBakedFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    graduationProgressBps: exactDecimal(input.graduationProgressBps, 'graduationProgressBps'),
+    quoteVolume1h: exactDecimal(input.quoteVolume1h, 'quoteVolume1h'),
+    launchTimestamp: exactDecimal(input.launchTimestamp, 'launchTimestamp'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeAlmostBakedFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeAlmostBakedFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    graduationProgressBps: cursor.graduationProgressBps,
+    quoteVolume1h: cursor.quoteVolume1h,
+    launchTimestamp: cursor.launchTimestamp,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeAlmostBakedFeedCursor(input: string): AlmostBakedFeedCursor {
+  const cursor = normalizeAlmostBakedFeedCursor(parseCursorJson(input));
+  if (cursor.version !== ALMOST_BAKED_FEED_CURSOR_VERSION) {
+    throw new Error(`unsupported cursor version: ${cursor.version}`);
+  }
+  return cursor;
+}
+
+function normalizeGraduatedFeedCursor(input: Readonly<Record<string, unknown>>): GraduatedFeedCursor {
+  const version = input.version;
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0) {
+    throw new Error('cursor version is invalid');
+  }
+  return {
+    version,
+    graduationCompletedBlock: exactDecimal(input.graduationCompletedBlock, 'graduationCompletedBlock'),
+    graduationCompletedLogIndex: exactIndex(input.graduationCompletedLogIndex, 'graduationCompletedLogIndex'),
+    tokenAddress: canonicalizeProtocolAddress(String(input.tokenAddress ?? '')),
+  };
+}
+
+export function encodeGraduatedFeedCursor(input: Readonly<Record<string, unknown>>): string {
+  const cursor = normalizeGraduatedFeedCursor(input);
+  return encodeCursorJson({
+    version: cursor.version,
+    graduationCompletedBlock: cursor.graduationCompletedBlock,
+    graduationCompletedLogIndex: cursor.graduationCompletedLogIndex,
+    tokenAddress: cursor.tokenAddress,
+  });
+}
+
+export function decodeGraduatedFeedCursor(input: string): GraduatedFeedCursor {
+  const cursor = normalizeGraduatedFeedCursor(parseCursorJson(input));
+  if (cursor.version !== GRADUATED_FEED_CURSOR_VERSION) throw new Error(`unsupported cursor version: ${cursor.version}`);
   return cursor;
 }
 

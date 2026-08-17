@@ -1,1 +1,21 @@
-{"name":"@bread/operator","version":"0.0.0","private":true,"type":"module","scripts":{"build":"tsc -b"},"devDependencies":{"typescript":"7.0.2"}}
+{
+  "name": "@bread/operator",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "start:graduation-keeper": "tsx src/run-graduation-keeper.ts"
+  },
+  "dependencies": {
+    "@bread/config": "workspace:*",
+    "@bread/protocol-sdk": "workspace:*",
+    "@bread/types": "workspace:*",
+    "tsx": "4.23.1",
+    "viem": "2.55.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
+  }
+}

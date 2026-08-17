@@ -9,7 +9,13 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"]
   },
+  "references": [
+    { "path": "../../packages/config" },
+    { "path": "../../packages/types" },
+    { "path": "../../packages/protocol-sdk" }
+  ],
   "include": ["src/**/*.ts"]
 }

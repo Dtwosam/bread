@@ -11,6 +11,7 @@ const paths = {
   forbiddenRoute: 'apps/web/app/create/review/page.tsx',
   form: 'apps/web/components/create/token-form.tsx',
   review: 'apps/web/components/create/launch-review.tsx',
+  css: 'apps/web/components/create/create.module.css',
 } as const;
 
 describe('Day 7 Task 6 Create and Review source contract', () => {
@@ -24,6 +25,21 @@ describe('Day 7 Task 6 Create and Review source contract', () => {
     expect(route).toContain('TokenForm');
     expect(route).toContain('LaunchReview');
     expect(route).not.toContain('/create/review');
+  });
+
+  it('implements the v2.2 staged Create flow without changing launch semantics', () => {
+    const route = read(paths.route);
+    const form = read(paths.form);
+
+    expect(route).toContain("'TOKEN'");
+    expect(route).toContain("'ECONOMICS'");
+    expect(route).toContain("'REVIEW'");
+    expect(route).toContain('bread-create-stepper');
+    expect(route).toContain('bread-create-preview');
+    expect(form).toContain('Token details');
+    expect(form).toContain('Economics');
+    expect(form).toContain('Continue');
+    expect(form).toContain('Review');
   });
 
   it('exposes only source-defined creator inputs and no protocol-only reserve controls', () => {
@@ -55,7 +71,21 @@ describe('Day 7 Task 6 Create and Review source contract', () => {
     expect(form).toMatch(/disabled/);
   });
 
-  it('shows actual prepared launch values and exact final action labels', () => {
+  it('shows canonical economics in the economics step and a truthful creator live preview', () => {
+    const route = read(paths.route);
+    const form = read(paths.form);
+
+    for (const label of ['Quote asset', 'Launch fee', 'Graduation target', 'Creator revenue wallet']) {
+      expect(form).toContain(label);
+    }
+    expect(route).toContain('readLaunchReviewSnapshot');
+    expect(route).toContain('maxCreatorTaxBps');
+    expect(route).toContain('bread-create-preview__creator');
+    expect(route).toContain('by you');
+    expect(route).not.toMatch(/preview.*(?:volume|holders|market cap|price)/i);
+  });
+
+  it('shows actual prepared launch values, config pin, and exact final action labels', () => {
     const review = read(paths.review);
     for (const label of [
       'Fixed supply',
@@ -67,11 +97,19 @@ describe('Day 7 Task 6 Create and Review source contract', () => {
       'Graduation target',
       'Creator revenue wallet',
       'Permanent liquidity lock',
+      'Economics/config pin',
     ]) {
       expect(review).toContain(label);
     }
     expect(review).toContain('Launch & Buy');
     expect(review).toContain('Launch');
+  });
+
+  it('uses the exact v2.2 desktop create geometry and collapses to one column below desktop', () => {
+    const css = read(paths.css);
+    expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*720px\)\s+360px/);
+    expect(css).toMatch(/bread-create-preview[\s\S]*position:\s*sticky/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*1023px\)[\s\S]*grid-template-columns:\s*1fr/);
   });
 
   it('uses bounded desktop form/review regions and remains single-column on mobile', () => {

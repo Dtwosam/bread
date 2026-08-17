@@ -1,6 +1,7 @@
 import type {
   IndexedFeedItem,
   IndexedGraduationProgressSummary,
+  IndexedLifecycleState,
   IndexedPriceSummary,
 } from '../../../../packages/types/src/index';
 import { BreadApiRequestError } from '../../lib/api/client';
@@ -9,7 +10,7 @@ export type ExploreView = 'new' | 'trending' | 'graduating' | 'graduated';
 
 export type IndexedFeedCardFields = Pick<
   IndexedFeedItem,
-  'tokenAddress' | 'name' | 'symbol' | 'metrics' | 'progress'
+  'tokenAddress' | 'deployerAddress' | 'holderCount' | 'graduatedVenueKind' | 'lifecycleState' | 'launchTimestamp' | 'name' | 'symbol' | 'metadata' | 'metrics' | 'progress'
 >;
 
 export type SearchIntent =
@@ -19,11 +20,16 @@ export type SearchIntent =
 
 export type TokenCardModel = Readonly<{
   tokenAddress: string;
+  creatorAddress: string;
   name: string;
   symbol: string;
+  image: string | null;
   price: IndexedPriceSummary | null;
+  marketCap: string | null;
   volume24h: string | null;
-  priceChange24h: null;
+  holderCount: string | null;
+  graduatedVenueKind: string | null;
+  lifecycleState: IndexedLifecycleState | null;
   progress: Readonly<{
     bps: number;
     percent: number;
@@ -47,6 +53,16 @@ export function searchIntent(rawValue: string): SearchIntent {
   }
   if (value.length < 2) return { kind: 'idle' };
   return { kind: 'search', query: value };
+}
+
+export function lifecycleLabel(state: IndexedLifecycleState | null): string | null {
+  if (state === 'GRADUATED') return 'Graduated';
+  if (state === 'GRADUATION_PENDING') return 'Graduation pending';
+  if (state === 'PROCESSING') return 'Graduating';
+  if (state === 'ALMOST_BAKED') return 'Almost Baked';
+  if (state === 'NEW') return 'New';
+  if (state === 'ACTIVE') return 'Active';
+  return null;
 }
 
 export function feedErrorPresentation(error: unknown) {
@@ -80,13 +96,41 @@ function progressModel(progress: IndexedGraduationProgressSummary | null) {
 export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel {
   return {
     tokenAddress: source.tokenAddress,
+    creatorAddress: source.deployerAddress,
     name: source.name?.trim() || 'Unnamed token',
     symbol: source.symbol?.trim() || '—',
+    image: source.metadata?.image ?? null,
     price: source.metrics?.lastPrice ?? null,
+    marketCap: source.metrics?.marketCap ?? null,
     volume24h: source.metrics?.quoteVolume.h24 ?? null,
-    priceChange24h: null,
+    holderCount: source.holderCount,
+    graduatedVenueKind: source.graduatedVenueKind,
+    lifecycleState: source.lifecycleState,
     progress: progressModel(source.progress),
   };
+}
+
+export function formatIndexedAge(
+  launchTimestamp: string | null,
+  indexedThroughBlockTimestamp: string | null,
+): string {
+  if (
+    launchTimestamp === null ||
+    indexedThroughBlockTimestamp === null ||
+    !/^\d+$/.test(launchTimestamp) ||
+    !/^\d+$/.test(indexedThroughBlockTimestamp)
+  ) {
+    return '—';
+  }
+
+  const launched = BigInt(launchTimestamp);
+  const indexed = BigInt(indexedThroughBlockTimestamp);
+  const seconds = indexed > launched ? indexed - launched : BigInt(0);
+
+  if (seconds < BigInt(60)) return '<1m';
+  if (seconds < BigInt(3_600)) return `${(seconds / BigInt(60)).toString(10)}m`;
+  if (seconds < BigInt(86_400)) return `${(seconds / BigInt(3_600)).toString(10)}h`;
+  return `${(seconds / BigInt(86_400)).toString(10)}d`;
 }
 
 export function formatUsdcBaseUnits(value: string | null): string {

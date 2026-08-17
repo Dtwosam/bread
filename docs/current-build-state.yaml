@@ -1,286 +1,212 @@
-schema_version: 1.60
+schema_version: 1.93
 project: Bread
-source_pack_expected: v1.5-day5-preflight-consolidated
-updated_at: 2026-08-14
+updated_at: 2026-08-17T11:40:00Z
 
-completed_checkpoints:
-  - "1-6I: specification checkpoints complete per Project Sources"
-  - "7A: CHECKPOINT_7A_PONS_ARC_RECONCILIATION_PARTIAL_PASS_WITH_BLOCKERS"
-  - "7B: CHECKPOINT_7B_REPOSITORY_BOOTSTRAP_INITIAL_INTEGRATED_BASELINE_PASS"
-  - "Day 1: BASELINE_BUILD_SKELETON_INTEGRATED_PASS"
-  - "Day 2: DAY_2_FINANCIAL_CORE_MATH_TOKEN_INTEGRATED_PASS"
-  - "Day 3: DAY_3_TRADING_FEES_ESCROW_INTEGRATED_PASS"
-  - "Day 4: DAY_4_FACTORY_LAUNCH_BUY_SNIPE_EMERGENCY_INTEGRATED_PASS"
-  - "Day 5: DAY_5_GRADUATION_ADAPTER_LOCK_INTEGRATED_PASS_DURABLE"
-  - "Day 6: SDK_INDEXER_API_INTEGRATED_PASS_DURABLE"
-  - "Day 7: PUBLIC_WEB_PRIMARY_JOURNEYS_AND_DAY7_CLOSEOUT_INTEGRATED_PASS_DURABLE"
-  - "Day 8: DAY_8_ATTACK_SYSTEM_INTEGRATED_PASS_DURABLE"
+source_pack:
+  current_ratified: v1.6.1-pre-rc-ui-gap-closure
+  ratification: RATIFIED
+  project_source_pack_ratified: v1.6.1-pre-rc-ui-gap-closure
+  parent_ratified_pack: v1.6-pre-rc-ui-ux-v2.2
+  current_uploaded_living_handoff: CURRENT-BUILD-STATE-v1.9-recovered
+  proposed_living_handoff_replacement: null
+  continuation_state: V1_6_1_RATIFIED_IMPLEMENTATION_ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
+  retired_only:
+    - 04B-visual-design-system-component-specification
+    - 04C-page-by-page-responsive-specification
+  remains_controlling:
+    - 00-bread-master-source-of-truth-v1.6
+    - Bread-UI-UX-v2-complete-interface-specification-v2.2
+    - Bread-UI-UX-v2.2-gap-closure-source-amendment-v1.6.1
+    - 04A-product-information-architecture-user-journeys
+    - 04D-ux-performance-accessibility-production-gates
+    - 06B-interfaces-data-model-indexer-runtime-contracts
+    - 06C-exact-10-day-build-order-daily-gates-v1.6
+    - 06D-chatgpt-agent-execution-protocol-quality-gates-v1.5
+    - 06F-nested-lane-checkpoint-continuity-integration-gates-v1.4
+    - 06H-cross-chat-continuity-build-state-handoff-protocol-v1.4
+    - 06I-high-traffic-bot-burst-launch-stampede-scalability
+  per_slice_source_rule: "Before each implementation slice, re-read the relevant ratified Project Sources and owning interfaces; do not rely on chat memory or a prior slice's source pass."
+
+legacy_ratifications:
+  day4:
+    pack: v1.4-day4-design
+    day4_production_ratification: RATIFIED
+  day5:
+    pack: v1.5-day5-preflight-consolidated
+    status: RETAINED_NON_CONFLICTING_PROTOCOL_SECURITY_ARCHITECTURE_AUTHORITY
+  ui_v2_2:
+    pack: v1.6-pre-rc-ui-ux-v2.2
+    status: RETAINED_NON_CONFLICTING_PARENT_UI_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "Automated Day-9 V3 indexing/rebuild/reconcile, service rollback, production build, Chromium desktop/mobile E2E and Chromium/Firefox/WebKit release matrix are PASS at verified code head 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e; required remaining physical/current branded-device execution remains open"
+active_lane: "v1.6.1 automated software closure accepted; external physical-device/legal/public-release gates remain"
 active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-
-project_source_state:
-  pack: v1.5-day5-preflight-consolidated
-  upload: UPLOADED_AND_READ_BACK
-  ratification: RATIFIED
-  day4_ratified_source:
-    pack: v1.4-day4-design
-  day4_production_ratification: RATIFIED
-  day5_preflight_amendment_ratification: RATIFIED
-  current_ratified_pack: v1.5-day5-preflight-consolidated
-
-history_preservation:
-  prior_state_schema_version: 1.59
-  prior_state_git_commit: 403de1f1f248bbd0681ef085a96b3728e85ded2d
-  prior_state_blob_sha: 4758876fb54588af845553b57a90f60b948d698d
-  note: >-
-    v1.60 preserves the complete v1.59 Day-9 history and replaces only facts that are now disproven by executed repository evidence. GitHub Actions is executing normally again; the approved post-graduation V3 indexing continuity work progressed through observed RED -> minimal GREEN slices and is closed through deterministic rebuild/reconcile, REC-04 venue identity, REC-06 retained V3 Swap identity, fail-before-commit malformed/conflicting evidence, runtime canonical-event scanning, post-commit cache continuity and downstream route/read-model checks. Exact-head automated release evidence at code head 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e includes the broad V3 final regression, service rollback, Chromium desktop/mobile journeys and Chromium/Firefox/WebKit release matrix. Day 9 remains incomplete because required physical/current branded-device rows are still open. No Day-9 PASS, RC tag, Day-10 start, production economics freeze, Arc-mainnet DEX selection, physical-device waiver or unrestricted-public-money claim is declared.
+active_continuity_gate: NONE
+active_ui_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+day9_started: true
+day9_complete: false
+day9_rc_tag_created: false
+day10_started: false
 
 integration_baseline:
-  id: DAY9-ARC-TESTNET-AUTOMATED-RELEASE-MATRIX-PASS-PHYSICAL-DEVICE-GATE-OPEN
   durable_main: c21b49a1f8edaaad999e461edb0ce602071bda5c
-  active_branch: day9/synthra-arc-testnet-v3-candidate
-  active_pr: 93
-  day9_live_arc_deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-  day9_live_arc_smoke_recovery_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
-  day9_safe_recovery_execution_head: bb04ee1574be298fe4e45b1a2de7e07310638514
-  exact_head_local_release_matrix_head: 80b94dcf106b5dce2f6000dab1205405084535ac
-  physical_android_graduation_repair_verified_head: 92e70a31ddf1806f843af4142dc8172b6f55f211
-  physical_android_graduation_evidence_head: 06e26cc58a3f635caf12bea41a8e39837f9ce536
-  post_graduation_v3_indexing_design_head: f3706917b2860094de58942ae8ae5ada18821bf3
-  post_graduation_v3_indexing_plan_head: f0db7dd33e54c6a514862383647ee090608bb0de
-  post_graduation_v3_indexing_red_test_head: d0f20bf88a9a28bb8a6770a00e6038638d673b36
-  post_graduation_v3_indexing_determinism_head: c222f52b92f991fdfda1964483ca8a541cb94a39
-  post_graduation_v3_zero_output_swap_head: 3951c22781ce490065f394a9c0709b86c6689c6d
-  post_graduation_v3_read_consumer_head: 5c786acfeeb68e786abbd05aa92ba7133595a0d9
-  post_graduation_v3_registry_cache_isolation_head: 0007107f4931cc44c6c032b0005f7e0a08864ec9
-  post_graduation_v3_same_range_ordering_head: 8483b85943bbbde94c8a231feafb0db5b83c0106
-  post_graduation_v3_slice_f_closeout_head: 2ab65729a47211384bba7a1e8af67fe16d04c4d7
-  automated_release_matrix_verified_head: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
-  automated_v3_final_regression_run: 31847654814
-  automated_service_rollback_run: 31847657797
-  automated_chromium_e2e_run: 31847657870
-  automated_release_browser_matrix_run: 31847657841
-  status: DAY_9_AUTOMATED_RELEASE_MATRIX_PASS_PHYSICAL_DEVICE_GATE_OPEN
-
-day8_scope:
-  lane1: EXTENDED_FINANCIAL_INVARIANTS_PASS_201_OF_201_AND_CURRENT_HIGH_INTENSITY_RECHECK_PASS
-  lane2: STATIC_SECURITY_TRIAGE_PASS_NO_OPEN_CRITICAL_HIGH_FINANCIAL_ISSUE
-  lane3: FRONTEND_SECURITY_ADVERSARIAL_PASS_CURRENT_PRODUCTION_WEB_BUILD_PASS
-  lane4: FAILURE_RECOVERY_INJECTION_PASS
-  lane5: HOT_LAUNCH_BOT_CACHE_RPC_INDEXER_DB_CAPACITY_PASS
-  forbidden_change_review: PASS_NO_SOLIDITY_ECONOMICS_CUSTODY_SIGNING_ABI_ADDRESS_MAINNET_OR_LOCKFILE_CHANGE
-
-day9_scope:
-  task1_environment_reconciliation: PASS
-  task2_rehearsal_readiness: PASS_FAIL_CLOSED
-  task3_clean_local_rehearsal: PASS_NON_CANONICAL
-  task4_service_rollback: PASS_EXACT_HEAD_GITHUB_ACTIONS_RUN_31847657797
-  task5_recovery_drills: PASS_REAL_SAFE_THRESHOLD_RECOVERY_RETAINED_EVIDENCE
-  task6_browser_engine_matrix: PASS_EXACT_HEAD_CHROMIUM_FIREFOX_WEBKIT_WITH_PHYSICAL_REMAINDER
-  task7_live_arc_gate: PUBLIC_LIFECYCLE_SMOKE_PASS
-  task8_final_rc_verdict: BLOCKED_PHYSICAL_DEVICE_ONLY
-  exact_head_integration_matrix: PASS_GITHUB_ACTIONS_HEAD_5A8A6AB49C0F4DD6CD41F200792665AE26A1168E
-  physical_android_auto_graduation_recovery: PASS_EXISTING_BTST_PERMISSIONLESS_SWEEP_CREATE_POOL_PERMANENT_LOCK_ZERO_RESIDUE
-  post_graduation_v3_indexing_continuity: PASS_RED_GREEN_DETERMINISTIC_REBUILD_REC04_REC06_RUNTIME_SCANNER_CACHE_AND_DOWNSTREAM_CONTINUITY
-  production_change_note: >-
-    The live Arc lane activated only an Arc-Testnet V3-compatible adapter dependency behind the existing DEX-neutral boundary and deployed/exercised the already reviewed Bread contracts using explicit non-production testnet economics. The Safe recovery drill exercised only the existing testnet Protocol Admin owner set and restored it exactly. The Android graduation repair changed only the existing browser transaction/recovery owner and tests; no Solidity/protocol/economics/deployment/authority configuration changed. The V3 indexing-continuity implementation preserved one canonical trade ledger, fresh chain-authoritative write routing, exact verified-pool discovery and rebuild/reconcile ownership; it did not introduce server custody, an alternate financial ledger, production economics, Arc-mainnet DEX selection or unrestricted-public-money authorization.
-
-day9_live_arc:
-  dex_dependency:
-    status: PASS
-    family: UNISWAP_V3
-    provider_provenance: Synthra
-    factory: 0x0fB6EEDA6e90E90797083861A75D15752a27f59c
-    position_manager: 0x444Cc395346428216fB6f2892eb03cB804aE4CD5
-    testnet_fee: 3000
-  fork_integration:
-    status: PASS
-    source_head: fe7bf6fcd33d2f23530dda54f18d29823cb9ce72
-    fork_block: 56439192
-  safe_authority:
-    status: PASS
-    safe: 0x9004e285521d69197cd9965c301b02161eb1d0d8
-    version: "1.4.1"
-    threshold: 2
-    owner_count: 3
-    guardian: 0xdcb9cb7038ff1a282265a855754dba8695a3121c
-    deployment_authority: 0x1bc5a40329b309be3ac77cb3688061b985f8d3fb
-    production_authority_claim: false
-  safe_threshold_recovery:
-    status: PASS
-    evidence: docs/evidence/day9-safe-threshold-recovery.json
-    simulated_lost_owner: 0x2473795adf14b131ca76580acb4ecdff7ac08011
-    recovery_owner: 0x45d681c18cfd3c9e4132359b5ceb7b347289c0cb
-    start_nonce: 0
-    end_nonce: 2
-    rotate_transaction_hash: 0x732b6c530711821684354fbf19bd74fd84b1092f5b032cc955739d94c674a4f7
-    rotate_safe_tx_hash: 0x5edb1a0b64f7c6916dad730f8f3bffbaa5afad67a12c0a40119382937d171aff
-    restore_transaction_hash: 0x3745320e5cf24acd0515c88b0aa9de6e5e446cd1cfb018cf2710113abd857894
-    restore_safe_tx_hash: 0x67f9e71d815847cbccfbca2306503aa97b028d1aa6f5144f33b1a4564174fd91
-    final_owner_set_restored: true
-    recovery_owner_removed_after_drill: true
-    recovered_signer_participated_in_restore: true
-    independent_verifier_used_signing_secret_material: false
-    signing_secret_material_printed: false
-    production_authority_claim: false
-  deployment_preflight:
-    status: PASS
-    source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-    transaction_broadcast: false
-  deployment:
-    status: VERIFIED
-    source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-    deployment_start_block: 56448201
-    fee_policy: 0x388e534b94268e231a1badf14c4678f01bfc60e3
-    fee_escrow: 0xea9bb3330e0a2c9898776c75f549d06d2a644c94
-    emergency_controller: 0xb6879be6a83b3a6e7a7de5cb841ca1550178ba42
-    factory: 0xddf400f7a376fb8a962eee6d74c1ba37efa644f7
-    launch_deployer: 0x89f70023c11b368d4ce5c6e4c100d4fa176f64fd
-    permanent_liquidity_locker: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
-    graduation_coordinator: 0x239da83ec8294b2433848ea8c85155f41e76f60a
-    graduation_adapter: 0xfe2378a81d655e051b53aba57271d2b4d5b5dd84
-    adapter_config_hash: 0x4069e56d708b6bc2d4b003e09e6a566299b799bc8646732a901024fcf77781c7
-    economics_config_hash: 0x081b597d7b603cb67d3921f269f7940a84221524b2d9baefc4f319c9f15f9747
-    dex_evidence_hash: 0xd30f72e114168ae2786f24e1375804d4ba1dd99822bbb292855597c60384ea26
-    protocol_admin_safe: 0x9004e285521d69197cd9965c301b02161eb1d0d8
-    production_money_claim: false
-    production_authority_claim: false
-  smoke:
-    status: PASS
-    deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-    recovery_implementation_head: 8bb27d0b6be657b3f3d935a4378e9b93fc1be290
-    execution_mode: DIRECT_ARC_RPC_WITH_REAL_NODE_SIMULATION_PER_TRANSACTION
-    recovered_from_prepared_intent: true
-    token: 0x9dc6c650929b641f93269a3b6d7d5237297d938b
-    curve: 0x68db37eea822d42af898b9777a96bef022a0e36d
-    launch_transaction_hash: 0xb5542a77d767a784f6ce4dc77d3e00a50170256a1320179947d25b2c468883a5
-    position_manager: 0x444Cc395346428216fB6f2892eb03cB804aE4CD5
-    position_id: 265870
-    nft_owner: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
-    creator_claim_log_count: 1
-    creator_claim_remaining: 0
-    graduation_residue_zero: true
-    replay_rejected: true
-    operator_usdc_at_resume: 19696729
-    operator_usdc_after: 9473184
-    production_money_claim: false
-    signing_secret_material_printed: false
-  physical_android_auto_graduation_recovery:
-    status: PASS
-    evidence: docs/evidence/day9-physical-android-auto-graduation-recovery.md
-    repair_verified_head: 92e70a31ddf1806f843af4142dc8172b6f55f211
-    token: 0x9E9c161316FFA946E0D809Ba17345728478132f5
-    curve: 0x11960c4A51647593BbCD2F7ece11F5732b60276F
-    threshold_crossing_buy_transaction_hash: 0x0fa24e607ec2d5972bec8b6c87a8c68741216526194eaaecabc1f22b89212ac3
-    root_cause: AUTO_GRADUATION_BEST_EFFORT_GAS_ESTIMATION_LIVENESS_DEFECT
-    focused_vitest: PASS_15_OF_15
-    browser_regression: PASS_2_OF_2_DESKTOP_CHROMIUM
-    workspace_typecheck: PASS
-    workspace_build: PASS
-    stage1_sweep_transaction_hash: 0xbb4e1d42339aa68faaa90ae765f2f1392d7fb9dc4387a10c56049e4713e71360
-    stage2_create_pool_transaction_hash: 0xa87ee13b73656edd678e4c4505162bf8dd49d76baef8cda46d3b8f625f0df2e9
-    stage2_receipt_status: SUCCESS
-    final_phase: POOL_CREATED
-    final_pool: 0x9995b278d08484ff746bbe91187a723d85c093f1
-    position_manager: 0x444Cc395346428216fB6f2892eb03cB804aE4CD5
-    position_id: 266664
-    nft_owner: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
-    curve_graduated: true
-    coordinator_token_residue: 0
-    adapter_token_residue: 0
-    coordinator_usdc_residue: 0
-    adapter_usdc_residue: 0
-    fresh_token_created_for_recovery: false
-    extra_trade_for_recovery: false
-    manual_cast_send_sweep_used: false
-
-day9_verdict:
-  result: DAY_9_INCOMPLETE_PHYSICAL_DEVICE_GATE_OPEN
-  exact_head_local_release_matrix: PASS_RETAINED_HISTORICAL_HEAD
-  exact_head_local_release_matrix_verified_head: 80b94dcf106b5dce2f6000dab1205405084535ac
-  exact_head_external_ci: PASS_GITHUB_ACTIONS_AUTOMATED_AT_5A8A6AB49C0F4DD6CD41F200792665AE26A1168E
-  post_graduation_v3_indexing: PASS_RED_GREEN_CLOSED
-  empty_environment_to_usable_launchpad: PASS_ARC_TESTNET_DEPLOYMENT_AND_PUBLIC_LIFECYCLE
-  rollback: PASS_EXACT_HEAD_RUN_31847657797
-  reconcile: PASS_V3_DETERMINISTIC_REBUILD_REC04_REC06
-  supported_matrix: PHYSICAL_CURRENT_DEVICE_COMPLETION_REQUIRED
-  canonical_arc_testnet_deployment: PASS_VERIFIED
-  public_arc_testnet_lifecycle_smoke: PASS
-  recovery_drills: PASS_REAL_SAFE_THRESHOLD_RECOVERY_RETAINED_EVIDENCE
-  physical_android_auto_graduation_recovery: PASS
-  browser_engine_matrix: PASS_EXACT_HEAD_RUN_31847657841
-  physical_device_matrix: EXTERNAL_EXECUTION_PARTIAL_REMAINDER
-  wallet_browser_matrix: NO_FIRST_CLASS_WALLET_BROWSER_CLAIM
-  live_arc_broadcast_performed: true
-  live_arc_smoke_performed: true
-  rc_tag_created: false
-  day10_started: false
+  day9_branch: day9/synthra-arc-testnet-v3-candidate
+  day9_pr: 93
+  day9_pr_head: 18952b20a56021350000c0f5d89552380c883be3
+  verified_day9_code_candidate: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
+  ui_branch: agent/ui-ux-v2-2-implementation
+  ui_pr: 94
+  ui_pr_base: day9/synthra-arc-testnet-v3-candidate
+  ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  recovered_accepted_code_bearing_head: a5ddf6fe3f5f60b43e2d8671948e4e59e96143ee
+  v1_9_project_source_readback_base: a8750e0a6ecb3f0c26ae87d6e400119714d17009
+  source_conformance_red_head: 68088081129cb3b8a0709faa4ee7ef2e19b42192
+  source_conformance_red_run: 31983072074
+  source_conformance_repair_head: d8e0e8e8ad0a2034c97cde21ebf2ca6e93d7a5f1
+  prior_exact_verified_ui_software_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  prior_exact_verified_ui_software_status: ALL_AUTOMATED_REQUIRED_WORKFLOWS_GREEN
+  v1_6_1_pre_ratification_candidate_head: 71218eedf197118c2ab76e5f3651fc1266ada498
+  v1_6_1_exact_verified_software_head: 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+  v1_6_1_exact_head_run: 32024924987
+  v1_6_1_exact_head_evidence_commit: 64c4a2c7a421b05b66bd77595a0ffe8fcbf531b2
+  v1_6_1_post_evidence_test_guard_head: 72e7fcd8ce9bce160b203b08a41e63a2db921a2b
+  v1_6_1_candidate_status: ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
+  lan_environment: /tmp/bread-synthra-fork-proof
+  lan_environment_rule: DO_NOT_TOUCH
 
 working_branches:
   - day9/synthra-arc-testnet-v3-candidate
+  - agent/ui-ux-v2-2-implementation
 
 repository:
   remote: https://github.com/Dtwosam/bread
   default_branch: main
-  day8_complete: true
   day9_pr: 93
-  day9_physical_safari_pr: 92
-  day9_physical_safari_pr_state: CLOSED_SUPERSEDED_EVIDENCE_INTEGRATED_IN_PR_93
-  day9_started: true
+  day9_pr_state: OPEN_DRAFT_UNMERGED
+  ui_pr: 94
+  ui_pr_state: OPEN_DRAFT_UNMERGED
+  ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
+  prior_exact_verified_ui_software_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  v1_6_1_pre_ratification_candidate_head: 71218eedf197118c2ab76e5f3651fc1266ada498
+  v1_6_1_exact_verified_software_head: 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+  v1_6_1_exact_head_evidence_commit: 64c4a2c7a421b05b66bd77595a0ffe8fcbf531b2
   day9_complete: false
-  day9_rc_tag_created: false
+  rc_tag_created: false
   day10_started: false
 
+accepted_state:
+  lane1_foundations: COMPLETE
+  lane2_global_shell_navigation: COMPLETE
+  lane3_explore_search: COMPLETE_FOR_RATIFIED_V1_6_1_AUTOMATED_SCOPE
+  token_trade: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
+  create: COMPLETE_FOR_RATIFIED_V1_6_1_AUTOMATED_SCOPE
+  portfolio_creator: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
+  secondary_routes:
+    docs_profile_error_states: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
+    activity_stats: COMPLETE_SOURCE_BACKED_INDEXED_READS
+    legal_route_structure: SOURCE_AUTHORIZED_ENGINEERING_STRUCTURE_ALLOWED
+    legal_copy: BLOCKED_APPROVED_COPY_REQUIRED
+  source_conformance_repair: COMPLETE
+  prior_automated_ui_software_closure: COMPLETE_AT_B60318EF
+  v1_6_1_source_ratification: RATIFIED
+  v1_6_1_candidate_acceptance: ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
+
+v1_6_1_ratification:
+  source_label: v1.6.1-pre-rc-ui-gap-closure
+  uploaded_project_source: Bread-UI-UX-v2.2-gap-closure-source-amendment-v1.6.1
+  user_decision_status: APPROVED_IN_CHAT
+  project_source_upload: UPLOADED
+  active_chat_readback: VERIFIED
+  project_source_ratification: RATIFIED
+  repository_source_note: docs/source-amendments/ui-v2-2-gap-closure-v1.6.1.md
+  candidate_code_status: ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
+  exact_verified_software_head: 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+  exact_head_run: 32024924987
+  exact_head_evidence: docs/evidence/v1.6.1-gap-closure-exact-head.md
+  reconciliation:
+    - "Uploaded amendment and repository source note agree on canonical indexed market-cap authority."
+    - "They agree on explicit sort direction, deterministic tie-break and null-last semantics."
+    - "They agree on canonical indexed lifecycle precedence and no React-invented thresholds."
+    - "They agree on image-only provider-neutral media with PNG/JPEG/WebP, 5 MB maximum, byte/MIME validation, server decode/sanitization and canonical HTTPS references."
+    - "They agree on browser-local max-8 canonical Recent Search targets with no wallet/server/ranking authority."
+    - "They agree Trending Search reuses canonical Trending feed order without query-frequency or paid ranking."
+    - "They agree sanitized image/description/website/X/Telegram metadata remains separate from finance state."
+    - "They agree Terms/Privacy/Risks route structure is engineering scope while final legal claims remain externally approval-gated."
+
+source_conformance_repair:
+  trigger: "CURRENT-BUILD-STATE v1.9 explicitly said not to fabricate market-cap values or Recent/Trending Search semantics before a controlling amendment existed."
+  red_test_commit: 68088081129cb3b8a0709faa4ee7ef2e19b42192
+  red_run: 31983072074
+  red_result: "25 adjacent tests passed; exactly two intended guards failed for invented Recent/Trending Search behavior and market-cap formula population."
+  repaired_behavior:
+    - "Removed the then-unauthorized market-cap projection before v1.6.1 source authority existed."
+    - "Removed the then-unauthorized localStorage Recent Search retention/limit semantics."
+    - "Removed the then-unauthorized reuse of Explore Trending feed as Trending Search authority."
+    - "Retained canonical indexed Activity/Stats implementation and all previously accepted source-backed UI/transaction behavior."
+    - "Corrected stale Create E2E success assertion to v2.2 Launch Success identity semantics; no production Create behavior was weakened."
+  exact_verified_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  status: HISTORICAL_COMPLETE_BEFORE_V1_6_1
+
 verification:
-  day9_live_arc_deployment_source_commit: db0f6ed28e4a2475f54e84efadd7cf9693701353
-  day9_live_arc_fork_block: 56439192
-  day9_live_arc_deployment_start_block: 56448201
-  day9_live_arc_manifest_status: VERIFIED
-  day9_live_arc_smoke: PASS
-  day9_live_arc_smoke_token: 0x9dc6c650929b641f93269a3b6d7d5237297d938b
-  day9_live_arc_smoke_position_id: 265870
-  day9_live_arc_smoke_creator_claim: PASS_LOG_COUNT_1_REMAINING_ZERO
-  day9_live_arc_smoke_replay_rejection: PASS
-  day9_safe_threshold_recovery: PASS
-  day9_safe_threshold_recovery_end_nonce: 2
-  day9_safe_original_owner_set_restored: true
-  day9_physical_android_auto_graduation_recovery: PASS
-  day9_physical_android_repair_verified_head: 92e70a31ddf1806f843af4142dc8172b6f55f211
-  day9_physical_android_recovery_evidence: docs/evidence/day9-physical-android-auto-graduation-recovery.md
-  day9_physical_android_final_phase: POOL_CREATED
-  day9_physical_android_position_id: 266664
-  day9_physical_android_permanent_lock_owner: 0xecf66a3a221d90a413d9015803417aa8d4ba97fe
-  day9_physical_android_graduation_residue_zero: true
-  day9_exact_head_release_matrix: PASS_GITHUB_ACTIONS_AUTOMATED_CODE_HEAD
-  day9_exact_head_release_matrix_verified_head: 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e
-  day9_exact_head_release_matrix_evidence: docs/evidence/day9-release-candidate-rehearsal.md
-  day9_v3_final_regression: PASS_RUN_31847654814
-  day9_service_rollback: PASS_RUN_31847657797
-  day9_chromium_desktop_mobile_e2e: PASS_RUN_31847657870
-  day9_release_browser_matrix: PASS_RUN_31847657841
-  day9_exact_head_browser_matrix_result: PASS_CHROMIUM_FIREFOX_WEBKIT_AND_MOBILE_CHROMIUM_AUTOMATION
-  day9_webkit_accessibility_repairs: PASS_RETAINED_FOCUS_RESTORATION_AND_SAFARI_SEQUENTIAL_FOCUS_NO_ASSERTION_WEAKENED
-  post_graduation_v3_indexing_design: docs/superpowers/specs/2026-08-13-post-graduation-v3-trade-indexing-design.md
-  post_graduation_v3_indexing_plan: docs/superpowers/plans/2026-08-13-post-graduation-v3-trade-indexing.md
-  post_graduation_v3_indexing_red_test: tests/day9/post-graduation-v3-indexing.test.ts
-  post_graduation_v3_indexing_red_test_status: EXECUTED_RED_THEN_GREEN_CLOSED
-  post_graduation_v3_indexing_production_green_status: PASS
-  post_graduation_v3_indexing_determinism_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-trade-indexing-determinism-addendum.md
-  post_graduation_v3_zero_output_swap_addendum: docs/superpowers/specs/2026-08-13-post-graduation-v3-zero-output-swap-semantics-addendum.md
-  post_graduation_v3_read_consumer_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-read-consumer-continuity-addendum.md
-  post_graduation_v3_registry_cache_isolation_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-registry-cache-isolation-addendum.md
-  post_graduation_v3_same_range_ordering_addendum: docs/superpowers/plans/2026-08-13-post-graduation-v3-same-range-graduation-holder-addendum.md
-  post_graduation_v3_same_range_discovery_rule: BREAD_TWO_PASS_THEN_VERIFIED_EXACT_POOL_POST_NORMALIZATION_DISCOVERY_PRESERVE_SAME_BLOCK_POST_COMPLETION_SWAPS
-  post_graduation_v3_holder_same_range_rule: VERIFIED_POOL_MUST_BE_IN_PROTOCOL_ADDRESS_SET_BEFORE_REDUCERS_PROCESS_EARLIER_GRADUATION_TX_TRANSFERS
-  github_actions_current_state: EXECUTING_NORMALLY
-  github_actions_exact_head_jobs_created: true
-  github_actions_exact_head_classification: PASS_AUTOMATED_RELEASE_SURFACE_AT_5A8A6AB49C0F4DD6CD41F200792665AE26A1168E
-  github_actions_previous_unavailability_note: "Aug-12/Aug-13 startup_failure observations are retained as history only and are no longer current state"
-  vercel_current_state: NOT_REQUIRED_AS_SUBSTITUTE_WHILE_GITHUB_ACTIONS_EXECUTES
+  historical_exact_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
+  historical_root_ci: PASS_RUN_31983756714
+  historical_create_launch: PASS_RUN_31983756703
+  historical_explore_search: PASS_RUN_31983756679
+  historical_token_page: PASS_RUN_31983756636
+  historical_portfolio_creator: PASS_RUN_31983756695
+  historical_production_gates: PASS_RUN_31983756672
+  historical_frontend_security: PASS_RUN_31983756708
+  historical_playwright_desktop_mobile: PASS_RUN_31983756707
+  historical_cross_browser_probe: PASS_RUN_31983756688
+  historical_release_browser_matrix: PASS_RUN_31983756668
+  historical_hot_launch_10k_capacity: PASS_RUN_31983756674
+  historical_failure_recovery: PASS_RUN_31983756731
+  historical_day9_recovery_drills: PASS_RUN_31983756675
+  historical_service_rollback: PASS_RUN_31983756641
+  historical_rebuild_reconcile: PASS_RUN_31983756681
+  historical_indexed_read_boundary: PASS_RUN_31983756664
+  historical_day9_truthfulness_final_rc_gate: PASS_RUN_31983756751
+  v1_6_1_exact_head: PASS_RUN_32024924987_SOFTWARE_HEAD_67A405B8
+  v1_6_1_root_ci: PASS_RUN_32025706737_TEST_GUARD_HEAD_72E7FCD8
+  v1_6_1_day6_indexed_read: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_day7_frontend: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_frontend_security: PASS_RUN_32025706745
+  v1_6_1_production_gates: PASS_RUN_32025706796
+  v1_6_1_browser_matrix: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_hot_launch_10k_capacity: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_service_rollback: PASS_RUN_32025706667_AND_SAME_SOFTWARE_SHA_RERUN_32024925001_ATTEMPT_2
+  v1_6_1_rebuild_reconcile: PASS_RUN_32025706738
+  v1_6_1_exact_evidence_file: docs/evidence/v1.6.1-gap-closure-exact-head.md
+  rollback_transient_note: "The first service-rollback attempt on 67a405b8 failed during a nested root build. The same workflow re-run on the unchanged 67a405b8 software SHA passed the rehearsal and post-rollback root build, and the fresh 72e7fcd8 run also passed; no product-code repair was required."
+  truthfulness_note: "v1.6.1 bounded automated software acceptance is complete. The final-RC workflow does not substitute for physical-device, approved-legal-copy or public/mainnet release gates."
+  physical_device_gate: OPEN_EXTERNAL_EXECUTION_REQUIRED
+
+resolved_source_interface_gaps_v1_6_1:
+  market_cap_value_authority: RESOLVED_BY_RATIFIED_V1_6_1
+  sort_semantics: RESOLVED_BY_RATIFIED_V1_6_1
+  lifecycle_full_categories: RESOLVED_BY_RATIFIED_V1_6_1
+  search_images_and_media_policy: RESOLVED_BY_RATIFIED_V1_6_1
+  recent_searches: RESOLVED_BY_RATIFIED_V1_6_1
+  trending_searches: RESOLVED_BY_RATIFIED_V1_6_1
+  token_info_description_social_projection: RESOLVED_BY_RATIFIED_V1_6_1
+
+unresolved_source_interface_gaps:
+  approved_legal_copy: OPEN_EXTERNAL_CONTENT_DEPENDENCY
+  physical_devices: OPEN_EXTERNAL_EXECUTION_REQUIRED
+
+final_day9_verification_release_gates:
+  v1_6_1_source_ratification: PASS
+  v1_6_1_source_to_code_conformance: PASS
+  v1_6_1_exact_head_automated_gate: PASS
+  physical_current_branded_devices: OPEN_EXTERNAL_EXECUTION_REQUIRED
+  approved_legal_copy: OPEN_EXTERNAL_CONTENT_DEPENDENCY
+  one_exact_head_final_release_gate: BLOCKED_UNTIL_ALL_MANDATORY_GATES_PASS
+  rc_freeze_tag: BLOCKED
+  day10: NOT_STARTED
 
 blockers:
+  - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
+  - APPROVED_LEGAL_COPY
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
   - PONS_V2_RUNTIME_REFERENCE
   - BREAD_PRODUCTION_ECONOMICS_CONFIG
@@ -288,50 +214,28 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  CURRENT_PONS_FACTORY_SOURCE_PARITY: "reference/parity-claim gap only; do not claim exact-current Pons parity"
-  PONS_V2_RUNTIME_REFERENCE: "numeric runtime observation remains a reference task; do not guess"
-  BREAD_PRODUCTION_ECONOMICS_CONFIG: "public/mainnet release gate; production economics/authority values remain unfrozen"
-  PONS_AUDIT_FINDINGS: "continuing watch; Bread independent review remains required before unrestricted public funds"
-  ARC_MAINNET_VALUES: "official-publication mainnet deployment gate; no mainnet/canonical DEX values may be invented"
+  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Primary non-substitutable Day-9 release gate: final redesigned candidate still needs genuine required iOS Safari, representative Android Chrome and current branded Edge evidence."
+  APPROVED_LEGAL_COPY: "Terms/privacy/risk public copy cannot be fabricated by implementation agent; real operator/jurisdiction/eligibility/contact/data-processing facts and approval remain required."
+  CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
+  PONS_V2_RUNTIME_REFERENCE: "Reference evidence only; do not guess numeric runtime state."
+  BREAD_PRODUCTION_ECONOMICS_CONFIG: "Public/mainnet release gate remains open."
+  PONS_AUDIT_FINDINGS: "Continuing security watch; Bread independent review remains mandatory."
+  ARC_MAINNET_VALUES: "Official-publication mainnet deployment gate; do not invent values."
 
-day9_blockers:
-  - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
-
-day9_cleared_blockers:
-  - ARC_DEX_DEPLOYMENT_EVIDENCE_REQUIRED
-  - ARC_TESTNET_DEPLOYMENT_MANIFEST_NOT_READY
-  - DAY9_RECOVERY_DRILL_BLOCKED_MULTISIG_ENVIRONMENT
-  - BREAD_ARC_TESTNET_PUBLIC_LIFECYCLE_SMOKE_REQUIRED
-  - DAY9_THRESHOLD_RECOVERY_DRILL_EXECUTION_REQUIRED
-  - PHYSICAL_ANDROID_AUTO_GRADUATION_REGRESSION
-  - POST_GRADUATION_V3_INDEXING_CONTINUITY_REQUIRED
-  - DAY9_EXACT_HEAD_RELEASE_CI_REQUIRED
-
-day9_implementation_prerequisites_repaired:
-  mobile_wallet_connectivity: PASS_WALLETCONNECT_ALONGSIDE_INJECTED
-  mobile_wallet_connectivity_reason: "injected() alone can never present a wallet on ordinary iOS Safari or Android Chrome; 04C names WalletConnect-compatible wallets"
-  executable_lan_runtime_composition: PASS_OPERATOR_ONLY_SAME_ORIGIN
-  executable_lan_runtime_composition_reason: "no .listen() existed anywhere; real API/indexer could not be launched and no single-origin web+API composition existed"
-  canonical_stack_version_derivation: 0xc862a0ec7e5eb592f1a77b4971552b79f65528b1f1addf97fdfc42b8f774e063
-  canonical_stack_version_proof: RECONCILES_WITH_MANIFEST_ECONOMICS_CONFIG_HASH
-  prior_classification_note: "PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED was partly premature while these two prerequisites were missing; those prerequisites are now repaired"
-
-day9_blocker_scope:
-  PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "actual macOS Safari/Rabby/network-switch evidence is integrated in PR #93; physical Android Chrome has retained real-device automatic-graduation failure/recovery evidence through POOL_CREATED and permanent lock, but that does not complete every required Android checklist row. Required iOS Safari, still-unexecuted representative physical Android Chrome checklist steps, and current branded Edge remain external; engine emulation is not relabeled and no wallet brand is promoted without complete claimed-path execution."
+tooling_status:
+  github: CONNECTED_CANONICAL_REMOTE_HISTORY_AND_CI
+  figma: CANONICAL_STARTER_COMPATIBLE_SHELL_ESTABLISHED_PRIOR_LIMIT_RECORDED
+  vercel: CONNECTED_PREVIEW_EVIDENCE_EXISTS_PROVIDER_LIMITS_DO_NOT_REPLACE_GITHUB
+  rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Do not begin Day 10. Preserve the automated code-bearing candidate evidence at 5a8a6ab49c0f4dd6cd41f200792665ae26a1168e and complete only the remaining non-waivable physical/current branded-device matrix: physical iOS Safari, the remaining representative Android Chrome checklist rows, and current branded Microsoft Edge. Do not relabel Chromium/WebKit emulation, partial Android evidence or unexecuted wallet-browser paths as physical PASS. After those external rows are genuinely executed and evidenced, rerun the final Day-9 release gate and exact-head release matrix on one immutable candidate. Only then may Day 9 be marked complete and an RC tag be considered. No Day-10 start, production economics freeze, Arc-mainnet DEX selection or unrestricted-public-money release is authorized by this state.
+  Preserve the accepted v1.6.1 automated software candidate and execute the remaining non-substitutable Day-9 release gates: genuine required physical/current-device evidence, approved final legal copy, and the still-open public/mainnet release facts. Keep PR #94 draft/open/unmerged. Do not tag RC, claim Day-9 PASS or begin Day 10 until every mandatory gate passes; after those external inputs are satisfied, rerun the one exact final release gate on the final release head.
 
 do_not_do:
-  - "Do not create or push bread-day9-rc1 while Day 9 remains incomplete."
-  - "Do not begin Day 10, enable unrestricted public-money release, or claim Day-9 PASS while any non-waivable Day-9 end gate is open."
-  - "Do not deploy a second Bread Arc Testnet stack; the verified stack starting at block 56448201 is canonical for this Day-9 rehearsal."
-  - "Do not create a second public smoke launch; token 0x9dc6c650929b641f93269a3b6d7d5237297d938b / position 265870 is the canonical Day-9 public lifecycle evidence."
-  - "Do not rerun the completed Safe owner rotation; retained evidence in docs/evidence/day9-safe-threshold-recovery.json is the canonical Day-9 threshold recovery proof."
-  - "Do not retry or alter recovered BTST token 0x9E9c161316FFA946E0D809Ba17345728478132f5; its graduation recovery is complete at POOL_CREATED with position 266664 permanently locked."
-  - "Do not invent production economics, Arc mainnet DEX/admin values, Pons runtime numeric values, or missing audit findings."
-  - "Do not convert Playwright engine/emulation evidence or the bounded Android graduation-recovery run into unexecuted physical/branded Safari/Android/Edge/wallet-browser claims."
-  - "Do not reopen accepted Day-1 through Day-8 behavior absent a demonstrated regression, genuine source conflict or newly ratified source change."
-  - "Do not introduce a second wallet provider, transaction lifecycle, recovery store, API/domain authority, chain authority or financial ledger."
-  - "Do not route user trades, launches or claims through a centralized Bread transaction server or add server-side signing/relaying/custody."
-  - "Do not make DB/indexer/API/Redis authoritative for financial state."
+  - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
+  - "Do not merge or close PR #94."
+  - "Do not create/push the Day-9 RC tag while Day 9 remains incomplete."
+  - "Do not begin Day 10 or claim Day-9 PASS."
+  - "Do not fabricate performance evidence, physical-device evidence, approved legal copy or live/runtime values."
+  - "Do not change Solidity, protocol economics, supply, custody, admin authority, canonical USDC, graduation mechanics, DEX semantics, transaction construction or financial ledgers in this UI/runtime closure."
+  - "Do not reopen resolved v1.6.1 source/interface gaps unless a new controlling Project Source explicitly changes them."

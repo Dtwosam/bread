@@ -1,6 +1,10 @@
 import { sql } from 'drizzle-orm';
 
 import type { BreadDb } from '../client.js';
+import {
+  indexedLifecycleStateSql,
+  type IndexedLifecycleState,
+} from './lifecycle.js';
 
 export type SearchLaunchInput = Readonly<{
   chainId: number;
@@ -11,13 +15,20 @@ export type SearchLaunchInput = Readonly<{
   limit: number;
 }>;
 
+export type SearchLifecycleState = IndexedLifecycleState;
+
 export type SearchLaunchRow = Readonly<{
   tokenAddress: string;
   curveAddress: string;
   deployerAddress: string | null;
   creatorFeeRecipient: string | null;
+  launchTimestamp: string | null;
+  marketCap: string | null;
+  holderCount: string | null;
+  lifecycleState: SearchLifecycleState | null;
   name: string | null;
   symbol: string | null;
+  metadata: Record<string, unknown> | null;
   launchBlockNumber: string;
   launchLogIndex: number;
   matchKind: 'CONTRACT' | 'CREATOR' | 'TICKER_EXACT' | 'TICKER_PREFIX' | 'NAME_PREFIX';
@@ -28,6 +39,18 @@ function resultRows<T>(result: unknown): T[] {
   return Array.isArray(candidate?.rows) ? candidate.rows : [];
 }
 
+function searchLifecycleStateSql() {
+  return indexedLifecycleStateSql({
+    graduationPhase: sql`s.graduation_phase`,
+    readyToGraduate: sql`s.ready_to_graduate`,
+    graduationFailureReasonHash: sql`s.graduation_failure_reason_hash`,
+    mode: sql`s.mode`,
+    graduationProgressBps: sql`m.graduation_progress_bps`,
+    launchTimestamp: sql`l.launch_timestamp`,
+    initialSupply: sql`l.initial_supply`,
+  });
+}
+
 export class SearchRepository {
   constructor(private readonly db: BreadDb) {}
 
@@ -35,36 +58,47 @@ export class SearchRepository {
     const limit = Math.max(1, Math.min(50, Math.trunc(input.limit)));
     const factory = input.factoryAddress.toLowerCase();
     const query = input.query.toLowerCase();
+    const lifecycleState = searchLifecycleStateSql();
 
     if (input.kind === 'ADDRESS') {
       const result = await this.db.execute(sql`
         SELECT
-          token_address AS "tokenAddress",
-          curve_address AS "curveAddress",
-          deployer_address AS "deployerAddress",
-          creator_fee_recipient AS "creatorFeeRecipient",
-          name,
-          symbol,
-          launch_block_number::text AS "launchBlockNumber",
-          launch_log_index AS "launchLogIndex",
+          l.token_address AS "tokenAddress",
+          l.curve_address AS "curveAddress",
+          l.deployer_address AS "deployerAddress",
+          l.creator_fee_recipient AS "creatorFeeRecipient",
+          l.launch_timestamp::text AS "launchTimestamp",
+          m.market_cap::text AS "marketCap",
+          m.holder_count::text AS "holderCount",
+          ${lifecycleState} AS "lifecycleState",
+          l.name,
+          l.symbol,
+          l.metadata,
+          l.launch_block_number::text AS "launchBlockNumber",
+          l.launch_log_index AS "launchLogIndex",
           CASE
-            WHEN token_address = ${query} THEN 'CONTRACT'
+            WHEN l.token_address = ${query} THEN 'CONTRACT'
             ELSE 'CREATOR'
           END AS "matchKind"
-        FROM launches
-        WHERE chain_id = ${input.chainId}
-          AND stack_version = ${input.stackVersion}
-          AND factory_address = ${factory}
+        FROM launches l
+        LEFT JOIN token_metrics m
+          ON m.chain_id = l.chain_id
+         AND m.token_address = l.token_address
+        LEFT JOIN launch_state s
+          ON s.chain_id = l.chain_id
+         AND s.token_address = l.token_address
+        WHERE l.chain_id = ${input.chainId}
+          AND l.stack_version = ${input.stackVersion}
+          AND l.factory_address = ${factory}
           AND (
-            token_address = ${query}
-            OR deployer_address = ${query}
-            OR creator_fee_recipient = ${query}
+            l.token_address = ${query}
+            OR l.deployer_address = ${query}
           )
         ORDER BY
-          CASE WHEN token_address = ${query} THEN 0 ELSE 1 END ASC,
-          launch_block_number DESC,
-          launch_log_index DESC,
-          token_address ASC
+          CASE WHEN l.token_address = ${query} THEN 0 ELSE 1 END ASC,
+          l.launch_block_number DESC,
+          l.launch_log_index DESC,
+          l.token_address ASC
         LIMIT ${limit}
       `);
       return resultRows<SearchLaunchRow>(result);
@@ -73,37 +107,48 @@ export class SearchRepository {
     const prefix = `${query}%`;
     const result = await this.db.execute(sql`
       SELECT
-        token_address AS "tokenAddress",
-        curve_address AS "curveAddress",
-        deployer_address AS "deployerAddress",
-        creator_fee_recipient AS "creatorFeeRecipient",
-        name,
-        symbol,
-        launch_block_number::text AS "launchBlockNumber",
-        launch_log_index AS "launchLogIndex",
+        l.token_address AS "tokenAddress",
+        l.curve_address AS "curveAddress",
+        l.deployer_address AS "deployerAddress",
+        l.creator_fee_recipient AS "creatorFeeRecipient",
+        l.launch_timestamp::text AS "launchTimestamp",
+        m.market_cap::text AS "marketCap",
+        m.holder_count::text AS "holderCount",
+        ${lifecycleState} AS "lifecycleState",
+        l.name,
+        l.symbol,
+        l.metadata,
+        l.launch_block_number::text AS "launchBlockNumber",
+        l.launch_log_index AS "launchLogIndex",
         CASE
-          WHEN lower(symbol) = ${query} THEN 'TICKER_EXACT'
-          WHEN lower(symbol) LIKE ${prefix} THEN 'TICKER_PREFIX'
+          WHEN lower(l.symbol) = ${query} THEN 'TICKER_EXACT'
+          WHEN lower(l.symbol) LIKE ${prefix} THEN 'TICKER_PREFIX'
           ELSE 'NAME_PREFIX'
         END AS "matchKind"
-      FROM launches
-      WHERE chain_id = ${input.chainId}
-        AND stack_version = ${input.stackVersion}
-        AND factory_address = ${factory}
+      FROM launches l
+      LEFT JOIN token_metrics m
+        ON m.chain_id = l.chain_id
+       AND m.token_address = l.token_address
+      LEFT JOIN launch_state s
+        ON s.chain_id = l.chain_id
+       AND s.token_address = l.token_address
+      WHERE l.chain_id = ${input.chainId}
+        AND l.stack_version = ${input.stackVersion}
+        AND l.factory_address = ${factory}
         AND (
-          lower(symbol) = ${query}
-          OR lower(symbol) LIKE ${prefix}
-          OR lower(name) LIKE ${prefix}
+          lower(l.symbol) = ${query}
+          OR lower(l.symbol) LIKE ${prefix}
+          OR lower(l.name) LIKE ${prefix}
         )
       ORDER BY
         CASE
-          WHEN lower(symbol) = ${query} THEN 0
-          WHEN lower(symbol) LIKE ${prefix} THEN 1
+          WHEN lower(l.symbol) = ${query} THEN 0
+          WHEN lower(l.symbol) LIKE ${prefix} THEN 1
           ELSE 2
         END ASC,
-        launch_block_number DESC,
-        launch_log_index DESC,
-        token_address ASC
+        l.launch_block_number DESC,
+        l.launch_log_index DESC,
+        l.token_address ASC
       LIMIT ${limit}
     `);
     return resultRows<SearchLaunchRow>(result);

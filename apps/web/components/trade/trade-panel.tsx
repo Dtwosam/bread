@@ -6,6 +6,7 @@ import { Button } from '@bread/ui';
 import { formatUnits } from 'viem';
 
 import { BREAD_LAUNCH_TOKEN_DECIMALS } from '../../../../packages/protocol-sdk/src/constants';
+import type { CanonicalTradeRoute } from '../../../../packages/protocol-sdk/src/trade-route';
 import type {
   BuyTradeReview,
   SellTradeReview,
@@ -37,53 +38,84 @@ export function TradePanel({
   amount,
   slippageBps,
   review,
+  reviewRoute,
+  quoteNeedsRefresh,
+  spendableBalance,
+  tokenSymbol,
   transactionState,
   connectionStatus,
   busy,
   reviewError,
+  routeUnavailableReason,
   onActionChange,
   onAmountChange,
   onSlippageChange,
   onPreset,
   onConnectionAction,
   onReview,
+  onRefreshQuote,
   onSubmit,
 }: Readonly<{
   action: TradeAction;
   amount: string;
   slippageBps: number;
   review: TradeReview | null;
+  reviewRoute: CanonicalTradeRoute | null;
+  quoteNeedsRefresh: boolean;
+  spendableBalance: bigint | null;
+  tokenSymbol: string | null;
   transactionState: TransactionState;
   connectionStatus: TradeConnectionStatus;
   busy: boolean;
   reviewError: string | null;
+  routeUnavailableReason: string | null;
   onActionChange: (action: TradeAction) => void;
   onAmountChange: (amount: string) => void;
   onSlippageChange: (slippageBps: number) => void;
   onPreset: (preset: Preset) => void;
   onConnectionAction: () => void;
   onReview: () => void;
+  onRefreshQuote: () => void;
   onSubmit: () => void;
 }>) {
   const presets: readonly Preset[] = action === 'BUY' ? ['$25', '$50', '$100', 'MAX'] : ['25%', '50%', '75%', 'MAX'];
   const outputDecimals = action === 'BUY' ? BREAD_LAUNCH_TOKEN_DECIMALS : 6;
+  const inputDecimals = action === 'BUY' ? 6 : BREAD_LAUNCH_TOKEN_DECIMALS;
+  const normalizedTokenSymbol = tokenSymbol?.trim() || null;
+  const inputAsset = action === 'BUY' ? 'USDC' : normalizedTokenSymbol ?? 'token';
+  const actionLabel = action === 'BUY' ? 'Buy' : 'Sell';
+  const reviewedActionLabel = normalizedTokenSymbol ? `${actionLabel} ${normalizedTokenSymbol}` : `${actionLabel} token`;
   const quoteDecimals = 6;
   const walletReady = connectionStatus === 'READY';
+  const routeUnavailable = routeUnavailableReason !== null;
   const v3Review = review !== null && 'route' in review && review.route === 'V3_POOL';
-  const primaryLabel = connectionStatus === 'DISCONNECTED'
-    ? 'Connect wallet'
-    : connectionStatus === 'WRONG_NETWORK'
-      ? 'Switch to Arc'
-      : review
-        ? action === 'BUY' ? 'Buy' : 'Sell'
-        : `Review ${action === 'BUY' ? 'Buy' : 'Sell'}`;
-  const primaryAriaLabel = connectionStatus === 'DISCONNECTED'
-    ? 'Connect wallet'
-    : connectionStatus === 'WRONG_NETWORK'
-      ? 'Switch wallet to Arc Testnet'
-      : review
-        ? `${action === 'BUY' ? 'Buy' : 'Sell'} after reviewing current values`
-        : `Review ${action === 'BUY' ? 'buy' : 'sell'}`;
+  const routeLabel = reviewRoute?.kind === 'CURVE'
+    ? 'Bonding curve'
+    : reviewRoute?.kind === 'V3_POOL'
+      ? 'Uniswap V3'
+      : null;
+  const primaryLabel = routeUnavailable
+    ? 'Trading unavailable'
+    : connectionStatus === 'DISCONNECTED'
+      ? 'Connect wallet'
+      : connectionStatus === 'WRONG_NETWORK'
+        ? 'Switch to Arc'
+        : quoteNeedsRefresh
+          ? 'Refresh Quote'
+          : review
+            ? reviewedActionLabel
+            : `Review ${actionLabel}`;
+  const primaryAriaLabel = routeUnavailable
+    ? 'Trading unavailable while graduation completes'
+    : connectionStatus === 'DISCONNECTED'
+      ? 'Connect wallet'
+      : connectionStatus === 'WRONG_NETWORK'
+        ? 'Switch wallet to Arc Testnet'
+        : quoteNeedsRefresh
+          ? 'Refresh Quote'
+          : review
+            ? `${reviewedActionLabel} after reviewing current values`
+            : `Review ${actionLabel.toLowerCase()}`;
 
   return (
     <div className="bread-trade-panel">
@@ -95,7 +127,7 @@ export function TradePanel({
             role="tab"
             aria-selected={action === side}
             key={side}
-            disabled={busy}
+            disabled={busy || routeUnavailable}
             onClick={() => onActionChange(side)}
           >
             {side === 'BUY' ? 'Buy' : 'Sell'}
@@ -104,14 +136,21 @@ export function TradePanel({
       </div>
 
       <label className="bread-trade-field">
-        <span>{action === 'BUY' ? 'USDC amount' : 'Token amount'}</span>
+        <span className="bread-trade-field__header">
+          <span>{action === 'BUY' ? 'USDC amount' : 'Token amount'}</span>
+          <span className="bread-trade-balance">
+            {spendableBalance === null
+              ? 'Balance —'
+              : `Balance ${formatAmount(spendableBalance, inputDecimals)} ${inputAsset}`}
+          </span>
+        </span>
         <input
-          className="bread-trade-input"
+          className="bread-trade-input bread-trade-amount-input"
           aria-label="Trade amount"
           inputMode="decimal"
           autoComplete="off"
           value={amount}
-          disabled={busy}
+          disabled={busy || routeUnavailable}
           onChange={(event) => onAmountChange(event.target.value)}
           placeholder="0.00"
         />
@@ -123,7 +162,7 @@ export function TradePanel({
             className="bread-trade-preset"
             type="button"
             key={preset}
-            disabled={busy || !walletReady}
+            disabled={busy || routeUnavailable || !walletReady}
             onClick={() => onPreset(preset)}
           >
             {preset}
@@ -137,7 +176,7 @@ export function TradePanel({
           className="bread-trade-input"
           aria-label="Slippage tolerance"
           value={slippageBps}
-          disabled={busy}
+          disabled={busy || routeUnavailable}
           onChange={(event) => onSlippageChange(Number(event.target.value))}
         >
           <option value={25}>0.25%</option>
@@ -150,6 +189,7 @@ export function TradePanel({
         <dl className="bread-trade-review">
           <div><dt>Expected output</dt><dd>{formatAmount(review.expectedOutput, outputDecimals)}</dd></div>
           <div><dt>Minimum output</dt><dd>{formatAmount(review.minimumOutput, outputDecimals)}</dd></div>
+          {routeLabel ? <div><dt>Route</dt><dd>{routeLabel}</dd></div> : null}
           {v3Review ? (
             <div><dt>V3 venue fee</dt><dd>{formatV3Fee(review.venueFee)}</dd></div>
           ) : (
@@ -167,17 +207,20 @@ export function TradePanel({
       {review?.action === 'BUY' && review.openingTaxBps > 0 ? (
         <div className="bread-trade-warning" role="alert">
           <strong>Opening buy tax is active.</strong>
-          <span>The current canonical opening tax is {formatBps(review.openingTaxBps)}. This value is re-read before the wallet opens.</span>
+          <span>
+            Estimated opening tax: {formatAmount(review.openingTax, quoteDecimals)} USDC ({formatBps(review.openingTaxBps)}). This canonical value is re-read before the wallet opens.
+          </span>
         </div>
       ) : null}
 
+      {routeUnavailableReason ? <p className="bread-token-note">{routeUnavailableReason}</p> : null}
       {reviewError ? <p className="bread-inline-error">{reviewError}</p> : null}
 
       <Button
         variant={action === 'BUY' ? 'buy' : 'sell'}
-        disabled={busy || (walletReady && amount.trim() === '')}
+        disabled={busy || routeUnavailable || (walletReady && amount.trim() === '')}
         ariaLabel={primaryAriaLabel}
-        onClick={walletReady ? (review ? onSubmit : onReview) : onConnectionAction}
+        onClick={walletReady ? (quoteNeedsRefresh ? onRefreshQuote : review ? onSubmit : onReview) : onConnectionAction}
       >
         {primaryLabel}
       </Button>

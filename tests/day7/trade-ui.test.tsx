@@ -66,6 +66,20 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     expect(experience).not.toMatch(/getAmountOut|getAmountIn|quoteReserve\s*\*/);
   });
 
+  it('invalidates a changed final review behind the source-defined Refresh Quote state before signing', () => {
+    const experience = read(paths.experience);
+    const controller = read(paths.controller);
+    const panel = read(paths.panel);
+
+    expect(controller).toContain('reviewChanged: true');
+    expect(experience).toContain('quoteNeedsRefresh');
+    expect(experience).toContain('refreshQuote');
+    expect(experience).toMatch(/result\.reviewChanged[\s\S]*setReview\(null\)/);
+    expect(experience).toContain('onRefreshQuote');
+    expect(panel).toContain('quoteNeedsRefresh');
+    expect(panel).toContain('Refresh Quote');
+  });
+
   it('keeps the exact Buy/Sell quick actions and mobile-friendly numeric input', () => {
     const panel = read(paths.panel);
 
@@ -76,19 +90,32 @@ describe('Day 7 Task 5 responsive trade surface', () => {
     expect(panel).toContain('aria-label="Trade amount"');
   });
 
-  it('warns whenever canonical opening buy tax is active without inventing a new threshold', () => {
+  it('gives the transaction amount the exact 56px desktop and 60px mobile emphasis', () => {
+    const panel = read(paths.panel);
+    const css = read(paths.tradeCss);
+
+    expect(panel).toContain('className="bread-trade-input bread-trade-amount-input"');
+    expect(css).toMatch(/:global\(\.bread-trade-amount-input\)\s*\{[\s\S]*?min-height:\s*56px/);
+    expect(css).toMatch(/@media \(max-width: 767px\)[\s\S]*:global\(\.bread-trade-amount-input\)\s*\{[\s\S]*?min-height:\s*60px/);
+  });
+
+  it('warns whenever canonical opening buy tax is active and shows its estimated USDC cost', () => {
     const panel = read(paths.panel);
 
     expect(panel).toContain('review.openingTaxBps > 0');
     expect(panel).toContain('Opening buy tax is active');
-    expect(panel).toContain('review.openingTaxBps');
+    expect(panel).toContain('Estimated opening tax');
+    expect(panel).toMatch(/bread-trade-warning[\s\S]*formatAmount\(review\.openingTax, quoteDecimals\)[\s\S]*USDC/);
   });
 
-  it('renders the frozen transaction statuses through an accessible live region', () => {
+  it('renders the frozen transaction statuses through an accessible live region with canonical explorer access', () => {
     const status = read(paths.status);
 
     expect(status).toContain('role="status"');
     expect(status).toContain('aria-live="polite"');
+    expect(status).toContain('arcTestnetManifest.explorer');
+    expect(status).toContain('View transaction on Arcscan');
+    expect(status).toMatch(/\/tx\/\$\{state\.hash\}/);
     for (const state of [
       'VALIDATING',
       'PREPARING',

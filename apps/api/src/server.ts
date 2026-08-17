@@ -1,9 +1,14 @@
 import Fastify from "fastify";
 
 import {
+  AlmostBakedRepository,
   CreatorRepository,
+  ExplicitSortRepository,
+  ExploreAgeReadRepository,
   ReadRepository,
   SearchRepository,
+  SecondaryRepository,
+  TrendingRepository,
   type BreadDb,
 } from "../../../packages/db/src/index.js";
 import type { ProtocolContext } from "../../../packages/protocol-sdk/src/index.js";
@@ -18,6 +23,10 @@ import {
 } from "./capacity.js";
 import { buildFreshness } from "./freshness.js";
 import {
+  FileSystemTokenMediaStore,
+  type TokenMediaStore,
+} from "./media/token-image.js";
+import {
   IsolatedRateLimiter,
   type RateLimitPolicy,
   type RateLimitRedis,
@@ -25,8 +34,10 @@ import {
 import { registerCreatorRoute } from "./routes/creators.js";
 import { registerFeedRoute } from "./routes/feed.js";
 import { registerHoldersRoute } from "./routes/holders.js";
+import { registerTokenMediaRoutes } from "./routes/media.js";
 import { registerPortfolioRoute } from "./routes/portfolio.js";
 import { registerSearchRoute } from "./routes/search.js";
+import { registerSecondaryRoutes } from "./routes/secondary.js";
 import { registerStatusRoute } from "./routes/status.js";
 import { registerTokenRoute } from "./routes/token.js";
 import { registerTradesRoute } from "./routes/trades.js";
@@ -59,6 +70,13 @@ function unavailableRedis(): ApiRedis {
   };
 }
 
+function configuredTokenMediaStore(): TokenMediaStore | undefined {
+  const directory = process.env.BREAD_MEDIA_STORAGE_DIR?.trim();
+  const publicBaseUrl = process.env.BREAD_MEDIA_PUBLIC_BASE_URL?.trim();
+  if (!directory || !publicBaseUrl) return undefined;
+  return new FileSystemTokenMediaStore(directory, publicBaseUrl);
+}
+
 export type CreateBreadApiInput = Readonly<{
   db: BreadDb;
   context: ProtocolContext;
@@ -67,6 +85,8 @@ export type CreateBreadApiInput = Readonly<{
   redis?: ApiRedis;
   capacity?: ReadCapacityConfig;
   rateLimits?: Readonly<Record<"feed" | "search", RateLimitPolicy>>;
+  tokenMediaStore?: TokenMediaStore;
+  trustedMediaBaseUrl?: string;
 }>;
 
 export function createBreadApi(input: CreateBreadApiInput) {
@@ -75,12 +95,32 @@ export function createBreadApi(input: CreateBreadApiInput) {
   const redis = input.redis ?? unavailableRedis();
   const gate = new BoundedReadGate(input.capacity ?? DEFAULT_CAPACITY);
   const repository = boundRepository(new ReadRepository(input.db), gate);
+  const exploreAgeRepository = boundRepository(
+    new ExploreAgeReadRepository(input.db),
+    gate,
+  );
+  const almostBakedRepository = boundRepository(
+    new AlmostBakedRepository(input.db),
+    gate,
+  );
+  const trendingRepository = boundRepository(
+    new TrendingRepository(input.db),
+    gate,
+  );
+  const explicitSortRepository = boundRepository(
+    new ExplicitSortRepository(input.db),
+    gate,
+  );
   const creatorRepository = boundRepository(
     new CreatorRepository(input.db),
     gate,
   );
   const searchRepository = boundRepository(
     new SearchRepository(input.db),
+    gate,
+  );
+  const secondaryRepository = boundRepository(
+    new SecondaryRepository(input.db),
     gate,
   );
   const cache = new BreadCache({
@@ -111,11 +151,19 @@ export function createBreadApi(input: CreateBreadApiInput) {
 
   const deps = {
     repository,
+    exploreAgeRepository,
+    almostBakedRepository,
+    trendingRepository,
+    explicitSortRepository,
     context: input.context,
     freshness,
     cache,
     feedRateLimit: (subject: string) => limiter.take("feed", subject),
     now,
+    trustedMediaBaseUrl:
+      input.trustedMediaBaseUrl ??
+      process.env.BREAD_MEDIA_PUBLIC_BASE_URL?.trim() ??
+      undefined,
   } as const;
   registerStatusRoute(app, deps);
   registerFeedRoute(app, deps);
@@ -123,6 +171,11 @@ export function createBreadApi(input: CreateBreadApiInput) {
   registerTradesRoute(app, deps);
   registerHoldersRoute(app, deps);
   registerPortfolioRoute(app, deps);
+  registerSecondaryRoutes(app, {
+    repository: secondaryRepository,
+    context: input.context,
+    freshness,
+  });
   registerCreatorRoute(app, {
     repository: creatorRepository,
     chainId: input.context.chainId,
@@ -133,6 +186,10 @@ export function createBreadApi(input: CreateBreadApiInput) {
     context: input.context,
     freshness,
     rateLimit: (subject: string) => limiter.take("search", subject),
+    trustedMediaBaseUrl: deps.trustedMediaBaseUrl,
+  });
+  registerTokenMediaRoutes(app, {
+    store: input.tokenMediaStore ?? configuredTokenMediaStore(),
   });
 
   app.setErrorHandler((error, request, reply) => {

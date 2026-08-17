@@ -14,6 +14,7 @@ export type IndexedPortfolioHolding = Readonly<{
   tokenAddress: string;
   name: string | null;
   symbol: string | null;
+  creatorAddress: string | null;
   balance: string;
   isProtocolAddress: boolean;
   graduationState: string | null;
@@ -33,6 +34,10 @@ export type IndexedPortfolio = Readonly<{
 export type IndexedCreatorLaunch = Readonly<{
   tokenAddress: string;
   curveAddress: string;
+  name: string | null;
+  symbol: string | null;
+  marketCap: string | null;
+  lifecycleState: string | null;
 }>;
 
 export type IndexedCreatorOverview = Readonly<{

@@ -1,3 +1,4 @@
+import { CreatorAttribution } from '@bread/ui';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
 
@@ -9,38 +10,42 @@ function holdingName(holding: IndexedPortfolioHolding): string {
   return holding.name ?? holding.symbol ?? `${holding.tokenAddress.slice(0, 6)}…${holding.tokenAddress.slice(-4)}`;
 }
 
-function shortHash(hash: string): string {
-  return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
+function tokenInitial(holding: IndexedPortfolioHolding): string {
+  return (holding.name ?? holding.symbol ?? 'B').trim().slice(0, 1).toUpperCase() || 'B';
 }
 
 export function PortfolioPosition({ holding }: Readonly<{ holding: IndexedPortfolioHolding }>) {
   const currentValue = formatIndexedCurrentValueUsdc(holding.currentValue) ?? '—';
-  const lastEvent = holding.activity.lastEvent;
+  const tokenHref = `/token/${holding.tokenAddress}`;
 
   return (
     <tr className="bread-portfolio-position">
       <td className="bread-portfolio-position-token">
         <span>Token</span>
-        <Link href={`/token/${holding.tokenAddress}`}>
-          <strong>{holdingName(holding)}</strong>
-        </Link>
-        <code>{holding.symbol ?? holding.tokenAddress}</code>
+        <div className="bread-portfolio-position-token__identity">
+          <span className="bread-portfolio-position-token__image" aria-hidden="true">
+            {tokenInitial(holding)}
+          </span>
+          <div>
+            <Link href={tokenHref}>
+              <strong>{holdingName(holding)}</strong>
+            </Link>
+            <code>{holding.symbol ? `$${holding.symbol}` : holding.tokenAddress}</code>
+            <CreatorAttribution creatorAddress={holding.creatorAddress} />
+          </div>
+        </div>
       </td>
       <td className="bread-portfolio-position-balance">
-        <span>Balance</span>
+        <span>Amount held</span>
         <strong>{formatUnits(BigInt(holding.balance), BREAD_LAUNCH_TOKEN_DECIMALS)}</strong>
       </td>
       <td className="bread-portfolio-position-value">
         <span>Current value</span>
         <strong>{currentValue}</strong>
       </td>
-      <td className="bread-portfolio-position-movement">
-        <span>Movement</span>
-        <strong>—</strong>
-      </td>
-      <td className="bread-portfolio-position-activity">
-        <span>Activity</span>
-        {lastEvent ? <code>{shortHash(lastEvent.transactionHash)}</code> : <strong>Block {holding.activity.asOfBlockNumber}</strong>}
+      <td className="bread-portfolio-position-trade">
+        <span>Action</span>
+        <Link className="bread-portfolio-trade-action" href={tokenHref}>Trade</Link>
       </td>
     </tr>
   );

@@ -25,3 +25,113 @@ test('Explore consumes the indexed API fixture without raw RPC fanout', async ({
   );
   expect(horizontalOverflow).toBe(false);
 });
+
+test('Explore Trending view renders only backend-projected trailing-window membership', async ({ page }) => {
+  const state = createIndexedApiFixtureState();
+  const rawRpcRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().startsWith(ARC_TESTNET_RPC)) rawRpcRequests.push(request.url());
+  });
+  await installIndexedApiRoutes(page, state);
+
+  await page.goto('/explore?view=trending');
+
+  const feedNav = page.getByRole('navigation', { name: 'Explore feed' });
+  await expect(feedNav.getByRole('link', { name: 'Trending' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Bread Twin')).toHaveCount(2);
+  await expect(page.getByText('Bread Locked')).toHaveCount(0);
+  expect(
+    state.requests.some((request) => {
+      const url = new URL(request);
+      return url.pathname === '/v1/feed' && url.searchParams.get('view') === 'trending';
+    }),
+  ).toBe(true);
+  expect(rawRpcRequests).toEqual([]);
+});
+
+test('Explore Almost Baked view renders only backend-projected non-graduated membership', async ({ page }) => {
+  const state = createIndexedApiFixtureState();
+  const rawRpcRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().startsWith(ARC_TESTNET_RPC)) rawRpcRequests.push(request.url());
+  });
+  await installIndexedApiRoutes(page, state);
+
+  await page.goto('/explore?view=graduating');
+
+  const feedNav = page.getByRole('navigation', { name: 'Explore feed' });
+  await expect(feedNav.getByRole('link', { name: 'Almost Baked' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Bread Twin')).toHaveCount(2);
+  await expect(page.getByText('Bread Locked')).toHaveCount(0);
+  expect(
+    state.requests.some((request) => {
+      const url = new URL(request);
+      return url.pathname === '/v1/feed' && url.searchParams.get('view') === 'graduating';
+    }),
+  ).toBe(true);
+  expect(rawRpcRequests).toEqual([]);
+});
+
+test('Explore Graduated view renders only canonical graduated feed membership', async ({ page }) => {
+  const state = createIndexedApiFixtureState();
+  const rawRpcRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().startsWith(ARC_TESTNET_RPC)) rawRpcRequests.push(request.url());
+  });
+  await installIndexedApiRoutes(page, state);
+
+  await page.goto('/explore?view=graduated');
+
+  const feedNav = page.getByRole('navigation', { name: 'Explore feed' });
+  await expect(feedNav.getByRole('link', { name: 'Graduated' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Bread Locked')).toBeVisible();
+  await expect(page.getByText('Bread Twin')).toHaveCount(0);
+  expect(
+    state.requests.some((request) => {
+      const url = new URL(request);
+      return url.pathname === '/v1/feed' && url.searchParams.get('view') === 'graduated';
+    }),
+  ).toBe(true);
+  expect(rawRpcRequests).toEqual([]);
+});
+
+test('Explore Age filter is backend-backed, preserves view context, and resets cleanly', async ({ page }) => {
+  const state = createIndexedApiFixtureState();
+  const rawRpcRequests: string[] = [];
+
+  page.on('request', (request) => {
+    if (request.url().startsWith(ARC_TESTNET_RPC)) rawRpcRequests.push(request.url());
+  });
+  await installIndexedApiRoutes(page, state);
+
+  await page.goto('/explore?view=trending');
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Age', exact: true }).selectOption('lt5m');
+
+  await expect(page).toHaveURL(/\/explore\?view=trending&age=lt5m$/);
+  await expect(page.getByRole('button', { name: 'Age: <5m' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reset filters' })).toBeVisible();
+  await expect(page.getByText('Bread Twin')).toHaveCount(1);
+  await expect(page.getByRole('link', { name: 'Graduated' })).toHaveAttribute(
+    'href',
+    '/explore?view=graduated&age=lt5m',
+  );
+  expect(
+    state.requests.some((request) => {
+      const url = new URL(request);
+      return (
+        url.pathname === '/v1/feed' &&
+        url.searchParams.get('view') === 'trending' &&
+        url.searchParams.get('age') === 'lt5m'
+      );
+    }),
+  ).toBe(true);
+  expect(rawRpcRequests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Reset filters' }).click();
+  await expect(page).toHaveURL('/explore?view=trending');
+  await expect(page.getByRole('button', { name: 'Age: <5m' })).toHaveCount(0);
+});

@@ -53,8 +53,10 @@ describe('Day 8 malicious metadata and frontend release-integrity attacks', () =
   it('renders indexed token identity values through React text expressions rather than HTML sinks', () => {
     const identity = read('apps/web/components/token/token-identity.tsx');
 
-    expect(identity).toContain("{token.name?.trim() || 'Unnamed token'}");
-    expect(identity).toContain("{token.symbol?.trim() ? `$${token.symbol.trim()}` : '—'}");
+    expect(identity).toMatch(/\{token\.name\?\.trim\(\)\s*\|\|\s*["']Unnamed token["']\}/);
+    expect(identity).toMatch(
+      /\{token\.symbol\?\.trim\(\)\s*\?\s*`\$\$\{token\.symbol\.trim\(\)\}`\s*:\s*["']—["']\}/,
+    );
     expect(identity).not.toMatch(/dangerouslySetInnerHTML|\binnerHTML\b|\bouterHTML\b|insertAdjacentHTML/);
   });
 

@@ -10,6 +10,7 @@ const paths = {
   page: 'apps/web/app/token/[address]/page.tsx',
   client: 'apps/web/components/token/token-client.tsx',
   trade: 'apps/web/components/trade/trade-experience.tsx',
+  tradePanel: 'apps/web/components/trade/trade-panel.tsx',
   identity: 'apps/web/components/token/token-identity.tsx',
   stats: 'apps/web/components/token/token-stats.tsx',
   chart: 'apps/web/components/token/token-chart.tsx',
@@ -46,8 +47,90 @@ describe('Day 7 Task 4 Token page behavior', () => {
     expect(identity).toContain('{token.tokenAddress}');
     expect(identity).not.toContain('shortAddress(token.tokenAddress)');
     expect(stats).toContain('Market cap');
-    expect(stats).toContain('24h change');
+    expect(stats).toContain('Trades');
     expect(stats.match(/—/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+  });
+
+  it('uses the canonical onchain deployer for the Token-header creator attribution', () => {
+    const identity = read(paths.identity);
+
+    expect(identity).toContain('CreatorAttribution');
+    expect(identity).toContain('creatorAddress={token.deployerAddress}');
+    expect(identity).toContain("size=\"token-header\"");
+    expect(identity).not.toContain('token.creatorFeeRecipient');
+  });
+
+  it('renders canonical primary-detail holder count in Token market stats', () => {
+    const stats = read(paths.stats);
+
+    expect(stats).toContain("['Holders', token.holderCount ?? '—']");
+  });
+
+  it('presents active baked progress from the canonical real quote reserve and snapshotted target', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('realQuoteReserve');
+    expect(graduation).toContain('graduationThreshold');
+    expect(graduation).toContain('% baked');
+    expect(graduation).toContain('Accumulated');
+    expect(graduation).toContain('Remaining');
+  });
+
+  it('uses the source-defined Graduation pending label without implying the completed trade failed', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('Graduation pending');
+    expect(graduation).toMatch(/completed trade remains confirmed/i);
+    expect(graduation).not.toMatch(/trade failed/i);
+  });
+
+  it('presents Processing as Graduating and disables the invalid trade route while preserving completed trades', () => {
+    const graduation = read(paths.graduation);
+    const trade = read(paths.trade);
+    const tradePanel = read(paths.tradePanel);
+
+    expect(graduation).toContain("'Graduating'");
+    expect(graduation).toMatch(/bonding curve is complete/i);
+    expect(graduation).toMatch(/liquidity creation is in progress/i);
+    expect(graduation).toMatch(/completed trades remain confirmed/i);
+    expect(graduation).toContain("displayState(token) === 'Graduating'");
+    expect(graduation).toMatch(/automatic graduation keeper/i);
+    expect(graduation).toMatch(/No creator action or wallet signature is required/i);
+    expect(graduation).not.toMatch(/Retry graduation|Continue graduation|Connect wallet to retry/);
+    expect(trade).toContain('routeUnavailableReason');
+    expect(tradePanel).toContain('routeUnavailableReason');
+    expect(tradePanel).toContain('Trading unavailable');
+  });
+
+  it('transforms the lifecycle module for canonical Graduated state without inventing a pool address', () => {
+    const graduation = read(paths.graduation);
+
+    expect(graduation).toContain('graduatedVenueKind');
+    expect(graduation).toContain('Uniswap V3');
+    expect(graduation).toContain('Pool ID');
+    expect(graduation).toContain('positionManager');
+    expect(graduation).toContain('Position manager');
+    expect(graduation).toContain('usdcUsed');
+    expect(graduation).toContain('Liquidity USDC');
+    expect(graduation).toContain('Permanent lock');
+    expect(graduation).toMatch(/not a safety guarantee/i);
+    expect(graduation).not.toMatch(/pool address.*poolId/i);
+  });
+
+  it('exposes source-defined TradePanel balance, reviewed route context and ticker-aware final CTA inputs', () => {
+    const trade = read(paths.trade);
+    const tradePanel = read(paths.tradePanel);
+
+    expect(trade).toContain('spendableBalance');
+    expect(trade).toContain('getSpendableBalance');
+    expect(trade).toContain('reviewRoute');
+    expect(trade).toContain('tokenSymbol: token.symbol');
+    expect(tradePanel).toContain('spendableBalance');
+    expect(tradePanel).toContain('reviewRoute');
+    expect(tradePanel).toContain('tokenSymbol');
+    expect(tradePanel).toContain('Balance');
+    expect(tradePanel).toContain('Bonding curve');
+    expect(tradePanel).toContain('Uniswap V3');
   });
 
   it('lazy-loads secondary Trades and Holders only when their tabs are active', () => {

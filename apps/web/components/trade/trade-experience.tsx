@@ -30,17 +30,31 @@ function message(error: unknown): string {
   return error instanceof Error ? error.message : 'Trade preparation failed.';
 }
 
+function processingRouteUnavailableReason(token: IndexedTokenDetail): string | null {
+  if (token.curveState?.positionLocked === true) return null;
+  if (token.curveState?.graduationFailureReasonHash) return null;
+  const graduationPhase = token.curveState?.graduationPhase;
+  const graduationInProgress = token.curveState?.readyToGraduate === true
+    || (graduationPhase !== null && graduationPhase !== undefined && graduationPhase !== 'NOT_GRADUATED');
+  return graduationInProgress
+    ? 'Trading is unavailable while graduation completes. The bonding curve is complete and liquidity creation is in progress.'
+    : null;
+}
+
 export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail }>) {
   const runtime = useTradeRuntime();
   const queryClient = useQueryClient();
   const tokenAddress = token.tokenAddress as `0x${string}`;
   const curveAddress = token.curveAddress as `0x${string}`;
+  const routeUnavailableReason = processingRouteUnavailableReason(token);
   const adoptedRecoveryHash = useRef<`0x${string}` | null>(null);
   const [action, setAction] = useState<TradeAction>('BUY');
   const [amount, setAmount] = useState('');
   const [slippageBps, setSlippageBps] = useState(50);
   const [review, setReview] = useState<TradeReview | null>(null);
   const [reviewRoute, setReviewRoute] = useState<CanonicalTradeRoute | null>(null);
+  const [quoteNeedsRefresh, setQuoteNeedsRefresh] = useState(false);
+  const [spendableBalance, setSpendableBalance] = useState<bigint | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -75,9 +89,33 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     setAction(recoveredTransactionState.action as TradeAction);
     setReview(null);
     setReviewRoute(null);
+    setQuoteNeedsRefresh(false);
     setReviewError(null);
     setTransactionState(recoveredTransactionState);
   }, [recoveredTransactionState, transactionState.hash, transactionState.status]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!runtime || !walletReady || routeUnavailableReason !== null) {
+      setSpendableBalance(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setSpendableBalance(null);
+    void runtime.getSpendableBalance(action, tokenAddress)
+      .then((balance) => {
+        if (!cancelled) setSpendableBalance(balance);
+      })
+      .catch(() => {
+        if (!cancelled) setSpendableBalance(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [action, routeUnavailableReason, runtime, tokenAddress, walletReady]);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -94,52 +132,59 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       amount,
       slippageBps,
       review,
+      reviewRoute,
+      quoteNeedsRefresh,
+      spendableBalance,
+      tokenSymbol: token.symbol,
       transactionState,
       connectionStatus,
       busy,
       reviewError,
+      routeUnavailableReason,
       onActionChange: changeAction,
       onAmountChange: changeAmount,
       onSlippageChange: changeSlippage,
       onPreset: applyPreset,
       onConnectionAction: handleConnectionAction,
       onReview: reviewTrade,
+      onRefreshQuote: refreshQuote,
       onSubmit: submitTrade,
     }),
     // Handler identities are intentionally recreated from the latest state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [action, amount, slippageBps, review, reviewRoute, transactionState, connectionStatus, runtime, busy, reviewError],
+    [action, amount, slippageBps, review, reviewRoute, quoteNeedsRefresh, spendableBalance, token.symbol, transactionState, connectionStatus, runtime, busy, reviewError, routeUnavailableReason],
   );
 
   function resetReview(nextAction: TradeAction = action) {
     setReview(null);
     setReviewRoute(null);
+    setQuoteNeedsRefresh(false);
     setReviewError(null);
     setTransactionState(createTransactionState(nextAction, tokenAddress));
   }
 
   function changeAction(nextAction: TradeAction) {
-    if (busy || nextAction === action) return;
+    if (busy || routeUnavailableReason !== null || nextAction === action) return;
     setAction(nextAction);
     setAmount('');
     resetReview(nextAction);
   }
 
   function changeAmount(nextAmount: string) {
-    if (busy) return;
+    if (busy || routeUnavailableReason !== null) return;
     if (!/^\d*(?:\.\d*)?$/.test(nextAmount)) return;
     setAmount(nextAmount);
     resetReview();
   }
 
   function changeSlippage(nextSlippageBps: number) {
-    if (busy) return;
+    if (busy || routeUnavailableReason !== null) return;
     setSlippageBps(nextSlippageBps);
     resetReview();
   }
 
   async function handleConnectionAction() {
-    if (!runtime || busy) return;
+    if (!runtime || busy || routeUnavailableReason !== null) return;
     setReviewError(null);
     setReviewBusy(true);
     try {
@@ -156,7 +201,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function applyPreset(preset: Preset) {
-    if (!runtime || !walletReady || busy) return;
+    if (!runtime || !walletReady || busy || routeUnavailableReason !== null) return;
     setReviewError(null);
 
     if (action === 'BUY' && preset !== 'MAX') {
@@ -166,14 +211,19 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }
 
     try {
-      const balance = await runtime.getSpendableBalance(action, tokenAddress);
       if (action === 'BUY') {
-        setAmount(formatUnits(balance, runtime.context.quoteDecimals));
-      } else {
-        const percent = preset === 'MAX' ? BigInt(100) : BigInt(Number.parseInt(preset, 10));
-        const selected = (balance * percent) / BigInt(100);
-        setAmount(formatUnits(selected, BREAD_LAUNCH_TOKEN_DECIMALS));
+        const { balance, maxInput } = await runtime.getBuyMaxBalance();
+        setSpendableBalance(balance);
+        setAmount(formatUnits(maxInput, runtime.context.quoteDecimals));
+        resetReview();
+        return;
       }
+
+      const balance = await runtime.getSpendableBalance(action, tokenAddress);
+      setSpendableBalance(balance);
+      const percent = preset === 'MAX' ? BigInt(100) : BigInt(Number.parseInt(preset, 10));
+      const selected = (balance * percent) / BigInt(100);
+      setAmount(formatUnits(selected, BREAD_LAUNCH_TOKEN_DECIMALS));
       resetReview();
     } catch (error) {
       setReviewError(message(error));
@@ -190,7 +240,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
   }
 
   async function reviewTrade() {
-    if (!runtime || !runtime.wallet || !walletReady || busy) return;
+    if (!runtime || !runtime.wallet || !walletReady || busy || routeUnavailableReason !== null) return;
     setReviewBusy(true);
     setReviewError(null);
     try {
@@ -214,6 +264,7 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       });
       setReview(result.review);
       setReviewRoute(result.route);
+      setQuoteNeedsRefresh(false);
       setTransactionState(createTransactionState(action, tokenAddress));
     } catch (error) {
       setReview(null);
@@ -224,8 +275,12 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
     }
   }
 
+  async function refreshQuote() {
+    await reviewTrade();
+  }
+
   async function submitTrade() {
-    if (!runtime || !runtime.wallet || !walletReady || !review || busy) return;
+    if (!runtime || !runtime.wallet || !walletReady || !review || busy || quoteNeedsRefresh || routeUnavailableReason !== null) return;
     setReviewError(null);
 
     const protocolContext = runtime.protocolContext;
@@ -259,23 +314,32 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
 
     setTransactionState(result.state);
     if (result.reviewChanged && result.prepared) {
-      setReview(result.prepared.review);
+      setReview(null);
       setReviewRoute(null);
-      setReviewError('Trade values changed during the final canonical reread. Review the updated values before opening your wallet.');
+      setQuoteNeedsRefresh(true);
+      setReviewError('Trade values changed during the final canonical reread. Refresh quote before signing.');
       return;
     }
     if (result.state.status === 'CONFIRMED') {
       setReview(null);
       setReviewRoute(null);
+      setQuoteNeedsRefresh(false);
       setAmount('');
+      try {
+        setSpendableBalance(await runtime.getSpendableBalance(action, tokenAddress));
+      } catch {
+        setSpendableBalance(null);
+      }
     }
   }
 
   function openSheet(nextAction: TradeAction = action) {
-    if (busy) return;
+    if (busy || routeUnavailableReason !== null) return;
     if (nextAction !== action) changeAction(nextAction);
     setSheetOpen(true);
   }
+
+  const tradeSurfaceDisabled = busy || routeUnavailableReason !== null;
 
   return (
     <>
@@ -286,7 +350,12 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       </aside>
 
       <div className="bread-token-tablet-trade-trigger">
-        <Button variant="secondary" onClick={() => openSheet()} ariaLabel="Open trade panel">
+        <Button
+          variant="secondary"
+          disabled={tradeSurfaceDisabled}
+          onClick={() => openSheet()}
+          ariaLabel={routeUnavailableReason === null ? 'Open trade panel' : 'Trading unavailable while graduation completes'}
+        >
           Trade
         </Button>
       </div>
@@ -312,8 +381,8 @@ export function TradeExperience({ token }: Readonly<{ token: IndexedTokenDetail 
       ) : null}
 
       <div className="bread-token-mobile-actions" aria-label="Token trade actions">
-        <Button variant="buy" disabled={busy} onClick={() => openSheet('BUY')} ariaLabel="Open buy panel">Buy</Button>
-        <Button variant="sell" disabled={busy} onClick={() => openSheet('SELL')} ariaLabel="Open sell panel">Sell</Button>
+        <Button variant="buy" disabled={tradeSurfaceDisabled} onClick={() => openSheet('BUY')} ariaLabel="Open buy panel">Buy</Button>
+        <Button variant="sell" disabled={tradeSurfaceDisabled} onClick={() => openSheet('SELL')} ariaLabel="Open sell panel">Sell</Button>
       </div>
     </>
   );

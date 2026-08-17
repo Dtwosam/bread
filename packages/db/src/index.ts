@@ -38,6 +38,67 @@ export {
 
 export { ReadRepository, decimalIntegerToBigInt } from "./repositories/read.js";
 export {
+  SecondaryRepository,
+  type PlatformActivityRow,
+  type PlatformStatsRow,
+} from "./repositories/secondary.js";
+export {
+  EXPLORE_AGE_FILTERS,
+  isExploreAgeFilter,
+  resolveExploreAgeBounds,
+  type ExploreAgeBounds,
+  type ExploreAgeFilter,
+} from "./repositories/explore-age.js";
+export {
+  ExploreAgeReadRepository,
+  type AgeFilteredGraduatedCursorKey,
+  type AgeFilteredNewCursorKey,
+} from "./repositories/explore-age-read.js";
+export {
+  parseExploreHolderBounds,
+  type ExploreHolderBounds,
+} from "./repositories/explore-holders.js";
+export {
+  parseExploreProgressBounds,
+  type ExploreProgressBounds,
+} from "./repositories/explore-progress.js";
+export {
+  parseExploreVolumeBounds,
+  type ExploreVolumeBounds,
+} from "./repositories/explore-volume.js";
+export {
+  parseExploreMarketCapBounds,
+  type ExploreMarketCapBounds,
+} from "./repositories/explore-market-cap.js";
+export {
+  INDEXED_LIFECYCLE_FILTERS,
+  indexedLifecycleFilterSql,
+  indexedLifecycleStateSql,
+  isIndexedLifecycleFilter,
+  matchesIndexedLifecycleFilter,
+  resolveIndexedLifecycleState,
+  type IndexedLifecycleFilter,
+  type IndexedLifecycleInput,
+  type IndexedLifecycleSqlFields,
+  type IndexedLifecycleState,
+} from "./repositories/lifecycle.js";
+export {
+  EXPLICIT_FEED_SORTS,
+  ExplicitSortRepository,
+  isExplicitFeedSort,
+  type ExplicitFeedSort,
+  type ExplicitFeedView,
+  type ExplicitSortCursorKey,
+} from "./repositories/explicit-sort.js";
+export {
+  AlmostBakedRepository,
+  type AlmostBakedLaunchCursorKey,
+} from "./repositories/almost-baked.js";
+export {
+  TrendingRepository,
+  type TrendingLaunchCursorKey,
+} from "./repositories/trending.js";
+export {
   SearchRepository,
   type SearchLaunchInput,
   type SearchLaunchRow,

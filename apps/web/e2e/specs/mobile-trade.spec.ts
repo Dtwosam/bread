@@ -47,6 +47,7 @@ test('mobile trade sheet survives keyboard-sized viewport pressure and executes 
   expect(sheetStyle.paddingBottom).toBeGreaterThanOrEqual(18);
 
   await dialog.getByRole('button', { name: 'Connect wallet' }).click();
+  await expect(dialog.getByText('Balance 1000 USDC', { exact: true })).toBeVisible();
   const amount = dialog.getByLabel('Trade amount');
   await expect(amount).toBeEnabled();
   await amount.focus();
@@ -66,8 +67,11 @@ test('mobile trade sheet survives keyboard-sized viewport pressure and executes 
   await expect(review.getByText('Expected output', { exact: true })).toBeVisible();
   await expect(review.getByText('Minimum output', { exact: true })).toBeVisible();
   await expect(review.getByText('Slippage', { exact: true })).toBeVisible();
+  await expect(review.getByText('Route', { exact: true })).toBeVisible();
+  await expect(review.getByText('Bonding curve', { exact: true })).toBeVisible();
 
-  const submit = dialog.getByRole('button', { name: 'Buy after reviewing current values' });
+  const submit = dialog.getByRole('button', { name: 'Buy TWIN after reviewing current values' });
+  await expect(submit.locator('.bread-button__label')).toHaveText('Buy TWIN');
   await submit.scrollIntoViewIfNeeded();
   await expect(submit).toBeVisible();
   const submitBox = await submit.boundingBox();

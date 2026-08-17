@@ -57,6 +57,38 @@ describe('Day 7 indexed browser read boundary', () => {
     );
   });
 
+  it('serializes supported Explore Age filters without frontend classification', async () => {
+    const expected: IndexedResponse<readonly { tokenAddress: string }[]> = {
+      data: [],
+      meta,
+      page: { hasMore: false },
+    };
+    const fetchImpl = vi.fn(async () => jsonResponse(expected));
+    const client = createBreadApiClient({ baseUrl: 'https://bread.test', fetchImpl });
+
+    await client.getFeed({ view: 'trending', age: 'lt5m', limit: 25 });
+
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe(
+      'https://bread.test/v1/feed?view=trending&age=lt5m&limit=25',
+    );
+  });
+
+  it('serializes source-backed lifecycle filtering without changing exact result labels', async () => {
+    const expected: IndexedResponse<readonly { tokenAddress: string }[]> = {
+      data: [],
+      meta,
+      page: { hasMore: false },
+    };
+    const fetchImpl = vi.fn(async () => jsonResponse(expected));
+    const client = createBreadApiClient({ baseUrl: 'https://bread.test', fetchImpl });
+
+    await client.getFeed({ view: 'new', lifecycle: 'processing', limit: 25 });
+
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe(
+      'https://bread.test/v1/feed?view=new&lifecycle=processing&limit=25',
+    );
+  });
+
   it('rejects out-of-contract bounded query values before network work', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ data: [], meta }));
     const client = createBreadApiClient({ fetchImpl });
@@ -104,8 +136,67 @@ describe('Day 7 indexed browser read boundary', () => {
       'bread',
       'feed',
       'new',
+      'default',
+      '',
+      'any',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
       25,
       'abc',
+    ]);
+    expect(breadQueryKeys.feed({ view: 'new', age: 'lt5m', limit: 25, cursor: 'abc' })).toEqual([
+      'bread',
+      'feed',
+      'new',
+      'default',
+      '',
+      'lt5m',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      25,
+      'abc',
+    ]);
+    expect(
+      breadQueryKeys.feed({
+        view: 'new',
+        sort: 'market-cap',
+        lifecycle: 'processing',
+        marketCapMinQuote: '1000000',
+        marketCapMaxQuote: '5000000',
+        limit: 25,
+      }),
+    ).toEqual([
+      'bread',
+      'feed',
+      'new',
+      'market-cap',
+      'processing',
+      'any',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '1000000',
+      '5000000',
+      25,
+      '',
     ]);
     expect(breadQueryKeys.search({ q: 'bread', limit: 10 })).toEqual([
       'bread',
@@ -123,9 +214,9 @@ describe('Day 7 indexed browser read boundary', () => {
       '../../apps/web/lib/api/queries.ts',
     ]) {
       const source = readFileSync(new URL(path, import.meta.url), 'utf8');
-      expect(source).not.toMatch(/from ['"]viem['"]/);
-      expect(source).not.toMatch(/from ['"]wagmi['"]/);
-      expect(source).not.toMatch(/createPublicClient|eth_call|request\s*\(\s*\{\s*method:\s*['"]eth_/);
+      expect(source).not.toMatch(/from ['\"]viem['\"]/);
+      expect(source).not.toMatch(/from ['\"]wagmi['\"]/);
+      expect(source).not.toMatch(/createPublicClient|eth_call|request\s*\(\s*\{\s*method:\s*['\"]eth_/);
     }
   });
 });

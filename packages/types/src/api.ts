@@ -1,8 +1,5 @@
 import type { Hex32 } from "./identity.js";
-import type {
-  TradeExecutionPriceSource,
-  TradeVenueKind,
-} from "./trading.js";
+import type { TradeExecutionPriceSource, TradeVenueKind } from "./trading.js";
 
 export type FreshnessStatus = "FRESH" | "LAGGING" | "REBUILDING" | "DEGRADED";
 export type CacheState = "HIT" | "MISS" | "BYPASS" | "UNAVAILABLE";
@@ -49,6 +46,7 @@ export type IndexedPriceSummary = Readonly<{
 }>;
 
 export type IndexedTradeMetricsSummary = Readonly<{
+  marketCap: string | null;
   lastPrice: IndexedPriceSummary;
   quoteVolume: Readonly<{
     m5: string | null;
@@ -70,6 +68,22 @@ export type IndexedGraduationProgressSummary = Readonly<{
   state: string | null;
 }>;
 
+export type IndexedLifecycleState =
+  | "GRADUATED"
+  | "GRADUATION_PENDING"
+  | "PROCESSING"
+  | "ALMOST_BAKED"
+  | "NEW"
+  | "ACTIVE";
+
+export type IndexedDisplayMetadata = Readonly<{
+  image?: string;
+  description?: string;
+  website?: string;
+  x?: string;
+  telegram?: string;
+}>;
+
 export type IndexedFeedItem = Readonly<{
   tokenAddress: string;
   curveAddress: string;
@@ -83,7 +97,7 @@ export type IndexedFeedItem = Readonly<{
   launchTimestamp: string | null;
   name: string | null;
   symbol: string | null;
-  metadata: unknown;
+  metadata: IndexedDisplayMetadata;
   quoteAsset: string | null;
   initialSupply: string | null;
   phantomQuote: string | null;
@@ -100,9 +114,14 @@ export type IndexedFeedItem = Readonly<{
   launchBlockNumber: string;
   launchTransactionHash: string;
   launchLogIndex: number;
+  holderCount: string | null;
+  graduatedVenueKind: string | null;
+  lifecycleState: IndexedLifecycleState | null;
   metrics: IndexedTradeMetricsSummary | null;
   progress: IndexedGraduationProgressSummary | null;
 }>;
+
+export type IndexedSearchLifecycleState = IndexedLifecycleState;
 
 export type IndexedSearchResult = Readonly<{
   tokenAddress: string;
@@ -111,7 +130,12 @@ export type IndexedSearchResult = Readonly<{
   creatorFeeRecipient: string;
   name: string | null;
   symbol: string | null;
+  metadata: IndexedDisplayMetadata;
   matchKind: string;
+  ageSeconds: string | null;
+  marketCap: string | null;
+  holderCount: string | null;
+  lifecycleState: IndexedSearchLifecycleState | null;
 }>;
 
 export type IndexedCurveStateSummary = Readonly<{
@@ -216,4 +240,29 @@ export type IndexedTokenHolders = Readonly<{
     holderCount: string;
     userHolderCount: string;
   }>;
+}>;
+
+export type IndexedPlatformActivityKind = "LAUNCH" | "TRADE" | "GRADUATION";
+
+export type IndexedPlatformActivityItem = Readonly<{
+  kind: IndexedPlatformActivityKind;
+  tokenAddress: string;
+  creatorAddress: string | null;
+  name: string | null;
+  symbol: string | null;
+  transactionHash: string;
+  blockNumber: string;
+  logIndex: number;
+  blockTimestamp: string | null;
+  side: string | null;
+  tokenAmount: string | null;
+  quoteAmount: string | null;
+}>;
+
+export type IndexedPlatformStats = Readonly<{
+  scope: "LIFETIME";
+  quoteVolume: string;
+  launches: string;
+  trades: string;
+  graduations: string;
 }>;

@@ -1,15 +1,26 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from "fastify";
 
-import { canonicalizeProtocolAddress } from '../../../../packages/protocol-sdk/src/index.js';
+import { resolveIndexedLifecycleState } from "../../../../packages/db/src/index.js";
+import { canonicalizeProtocolAddress } from "../../../../packages/protocol-sdk/src/index.js";
 
-import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';
-import type { BreadReadRouteDeps } from './types.js';
+import { sanitizeIndexedDisplayMetadata } from "../display-metadata.js";
+import { markNoStore, markPublicProjectionCacheable } from "../http-cache.js";
+import type { BreadReadRouteDeps } from "./types.js";
 
-type LaunchRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunch']>>;
-type LaunchStateRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getLaunchState']>>;
-type TokenMetricRow = Awaited<ReturnType<BreadReadRouteDeps['repository']['getTokenMetrics']>>;
+type LaunchRow = Awaited<
+  ReturnType<BreadReadRouteDeps["repository"]["getLaunch"]>
+>;
+type LaunchStateRow = Awaited<
+  ReturnType<BreadReadRouteDeps["repository"]["getLaunchState"]>
+>;
+type TokenMetricRow = Awaited<
+  ReturnType<BreadReadRouteDeps["repository"]["getTokenMetrics"]>
+>;
 
-export function serializeLaunch(row: NonNullable<LaunchRow>) {
+export function serializeLaunch(
+  row: NonNullable<LaunchRow>,
+  trustedMediaBaseUrl?: string,
+) {
   return {
     tokenAddress: row.tokenAddress,
     curveAddress: row.curveAddress,
@@ -23,7 +34,7 @@ export function serializeLaunch(row: NonNullable<LaunchRow>) {
     launchTimestamp: row.launchTimestamp?.toString(10) ?? null,
     name: row.name,
     symbol: row.symbol,
-    metadata: row.metadata,
+    metadata: sanitizeIndexedDisplayMetadata(row.metadata, trustedMediaBaseUrl),
     quoteAsset: row.quoteAsset,
     initialSupply: row.initialSupply?.toString(10) ?? null,
     phantomQuote: row.phantomQuote?.toString(10) ?? null,
@@ -43,11 +54,19 @@ export function serializeLaunch(row: NonNullable<LaunchRow>) {
   } as const;
 }
 
-export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefined) {
-  if (!row || row.lastPriceNumerator === null || row.lastPriceDenominator === null || row.lastPriceSource === null) {
+export function serializeTradeMetrics(
+  row: NonNullable<TokenMetricRow> | undefined,
+) {
+  if (
+    !row ||
+    row.lastPriceNumerator === null ||
+    row.lastPriceDenominator === null ||
+    row.lastPriceSource === null
+  ) {
     return null;
   }
   return {
+    marketCap: row.marketCap?.toString(10) ?? null,
     lastPrice: {
       numerator: row.lastPriceNumerator.toString(10),
       denominator: row.lastPriceDenominator.toString(10),
@@ -85,7 +104,25 @@ export function serializeGraduationProgress(
   } as const;
 }
 
-export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined) {
+export function serializeLifecycleState(
+  launch: NonNullable<LaunchRow>,
+  state: NonNullable<LaunchStateRow> | undefined,
+  metrics: NonNullable<TokenMetricRow> | undefined,
+) {
+  return resolveIndexedLifecycleState({
+    graduationPhase: state?.graduationPhase,
+    readyToGraduate: state?.readyToGraduate,
+    graduationFailureReasonHash: state?.graduationFailureReasonHash,
+    mode: state?.mode,
+    graduationProgressBps: metrics?.graduationProgressBps,
+    launchTimestamp: launch.launchTimestamp,
+    initialSupply: launch.initialSupply,
+  });
+}
+
+export function serializeCurveState(
+  row: NonNullable<LaunchStateRow> | undefined,
+) {
   if (!row) return null;
   return {
     mode: row.mode,
@@ -120,21 +157,31 @@ export function serializeCurveState(row: NonNullable<LaunchStateRow> | undefined
   } as const;
 }
 
-export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDeps): void {
-  app.get('/v1/tokens/:address', async (request, reply) => {
+export function registerTokenRoute(
+  app: FastifyInstance,
+  deps: BreadReadRouteDeps,
+): void {
+  app.get("/v1/tokens/:address", async (request, reply) => {
     markNoStore(reply);
     const params = request.params as { address?: string };
     let tokenAddress: string;
     try {
-      tokenAddress = canonicalizeProtocolAddress(params.address ?? '');
+      tokenAddress = canonicalizeProtocolAddress(params.address ?? "");
     } catch {
       return reply.code(400).send({
-        error: { code: 'INVALID_ADDRESS', message: 'Token address is malformed.', requestId: request.id },
+        error: {
+          code: "INVALID_ADDRESS",
+          message: "Token address is malformed.",
+          requestId: request.id,
+        },
       });
     }
 
     const load = async () => {
-      const launch = await deps.repository.getLaunch(deps.context.chainId, tokenAddress);
+      const launch = await deps.repository.getLaunch(
+        deps.context.chainId,
+        tokenAddress,
+      );
       if (!launch) return { found: false as const };
 
       const [state, metrics] = await Promise.all([
@@ -145,7 +192,10 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
       return {
         found: true as const,
         data: {
-          ...serializeLaunch(launch),
+          ...serializeLaunch(launch, deps.trustedMediaBaseUrl),
+          holderCount: metrics?.holderCount?.toString(10) ?? null,
+          graduatedVenueKind: state?.graduatedVenueKind ?? null,
+          lifecycleState: serializeLifecycleState(launch, state, metrics),
           curveState: serializeCurveState(state),
           metrics: serializeTradeMetrics(metrics),
           progress: serializeGraduationProgress(metrics),
@@ -157,14 +207,18 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
     const cacheResult = deps.cache
       ? await deps.cache.getOrLoad({
           channel: `token:${deps.context.chainId}:${tokenAddress}`,
-          key: 'detail',
+          key: "detail",
           load,
         })
-      : { value: await load(), cache: 'BYPASS' as const };
+      : { value: await load(), cache: "BYPASS" as const };
 
     if (!cacheResult.value.found) {
       return reply.code(404).send({
-        error: { code: 'TOKEN_NOT_FOUND', message: 'Token is not indexed by Bread.', requestId: request.id },
+        error: {
+          code: "TOKEN_NOT_FOUND",
+          message: "Token is not indexed by Bread.",
+          requestId: request.id,
+        },
       });
     }
 

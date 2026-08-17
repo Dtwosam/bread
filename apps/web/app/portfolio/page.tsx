@@ -1,19 +1,28 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Button, CreatorAttribution, EmptyState, ErrorState, Skeleton } from '@bread/ui';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { formatUnits } from 'viem';
 
-import type { IndexedPortfolio } from '../../../../packages/types/src/index';
-import { Button, EmptyState, ErrorState, Skeleton } from '@bread/ui';
-import { PortfolioPosition } from '../../components/portfolio/position';
+import type { IndexedPortfolio, IndexedPortfolioHolding } from '../../../../packages/types/src/index';
 import { FreshnessBanner } from '../../components/freshness-banner';
+import { PortfolioPosition } from '../../components/portfolio/position';
 import { useTradeRuntime } from '../../components/trade/trade-runtime';
 import { createBreadApiClient } from '../../lib/api/client';
 import { breadQueryKeys } from '../../lib/api/queries';
 import { indexedWalletValueBaseUnits } from '../../lib/portfolio/value';
 
 type Address = `0x${string}`;
+
+function shortHash(hash: string): string {
+  return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
+}
+
+function holdingName(holding: IndexedPortfolioHolding): string {
+  return holding.name ?? holding.symbol ?? `${holding.tokenAddress.slice(0, 6)}…${holding.tokenAddress.slice(-4)}`;
+}
 
 export default function PortfolioPage() {
   const runtime = useTradeRuntime();
@@ -80,6 +89,9 @@ export default function PortfolioPage() {
 
   const portfolio = query.data.data;
   const walletValue = indexedWalletValueBaseUnits(portfolio.holdings);
+  const recentActivity = portfolio.holdings
+    .filter((holding) => holding.activity.lastEvent !== null)
+    .slice(0, 5);
 
   return (
     <main className="bread-page bread-portfolio-page">
@@ -96,31 +108,61 @@ export default function PortfolioPage() {
           <strong>{walletValue === null ? '—' : `${formatUnits(walletValue, 6)} USDC`}</strong>
         </div>
         <div>
-          <span>Indexed holdings</span>
+          <span>Positions</span>
           <strong>{portfolio.holdings.length}</strong>
         </div>
       </section>
 
-      {portfolio.holdings.length === 0 ? (
-        <EmptyState title="No holdings yet" detail="Tokens held by this wallet will appear here after the indexer confirms them." />
-      ) : (
-        <table className="bread-portfolio-list" aria-label="Wallet holdings">
-          <thead>
-            <tr className="bread-portfolio-header">
-              <th scope="col">Token</th>
-              <th scope="col">Balance</th>
-              <th scope="col">Current value</th>
-              <th scope="col">Movement</th>
-              <th scope="col">Activity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {portfolio.holdings.map((holding) => (
-              <PortfolioPosition key={holding.tokenAddress} holding={holding} />
-            ))}
-          </tbody>
-        </table>
-      )}
+      <section className="bread-portfolio-holdings" aria-labelledby="bread-portfolio-holdings-heading">
+        <div className="bread-portfolio-section-heading">
+          <h2 id="bread-portfolio-holdings-heading">Holdings</h2>
+          <p>Current values use only indexed execution prices. Cost basis and PnL stay hidden until complete history is available.</p>
+        </div>
+        {portfolio.holdings.length === 0 ? (
+          <EmptyState title="No holdings yet" detail="Tokens held by this wallet will appear here after the indexer confirms them." />
+        ) : (
+          <table className="bread-portfolio-list" aria-label="Wallet holdings">
+            <thead>
+              <tr className="bread-portfolio-header">
+                <th scope="col">Token</th>
+                <th scope="col">Amount held</th>
+                <th scope="col">Current value</th>
+                <th scope="col">Trade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {portfolio.holdings.map((holding) => (
+                <PortfolioPosition key={holding.tokenAddress} holding={holding} />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="bread-portfolio-activity" aria-labelledby="bread-portfolio-activity-heading">
+        <div className="bread-portfolio-section-heading">
+          <h2 id="bread-portfolio-activity-heading">Recent wallet activity</h2>
+          <p>Latest indexed event per current Bread position.</p>
+        </div>
+        {recentActivity.length === 0 ? (
+          <p className="bread-muted">No indexed wallet activity yet.</p>
+        ) : (
+          <ul>
+            {recentActivity.map((holding) => {
+              const event = holding.activity.lastEvent!;
+              return (
+                <li key={`${holding.tokenAddress}:${event.transactionHash}:${event.logIndex}`}>
+                  <div>
+                    <Link href={`/token/${holding.tokenAddress}`}><strong>{holdingName(holding)}</strong></Link>
+                    <CreatorAttribution creatorAddress={holding.creatorAddress} />
+                  </div>
+                  <code title={event.transactionHash}>{shortHash(event.transactionHash)}</code>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

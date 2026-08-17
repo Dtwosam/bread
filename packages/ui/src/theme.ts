@@ -14,12 +14,19 @@ export const breadTheme = {
     accent: '#4C8DFF',
     accentHover: '#68A0FF',
     accentSoft: '#14233E',
+    brandButter: '#F4C35D',
+    brandButterHover: '#FFD477',
+    brandButterSoft: '#2B2210',
+    brandLavender: '#A98BFA',
+    brandLavenderSoft: '#211A35',
+    brandMint: '#47D7B0',
+    brandMintSoft: '#102B26',
     positive: '#32D583',
     positiveSoft: '#102A20',
     negative: '#F97066',
     negativeSoft: '#351817',
-    warning: '#FDB022',
-    warningSoft: '#35290D',
+    warning: '#F79009',
+    warningSoft: '#35240D',
   },
   fonts: {
     primary: 'Inter',
@@ -27,16 +34,19 @@ export const breadTheme = {
   },
   typography: {
     display: { size: 32, weight: 700, lineHeight: 38 },
-    h1: { size: 24, weight: 700, lineHeight: 30 },
+    pageH1: { size: 24, weight: 700, lineHeight: 30 },
     mobileH1: { size: 22, weight: 700, lineHeight: 28 },
-    h2: { size: 20, weight: 600, lineHeight: 26 },
-    h3: { size: 17, weight: 600, lineHeight: 23 },
+    tokenTitle: { size: 28, weight: 700, lineHeight: 34 },
+    sectionH2: { size: 20, weight: 600, lineHeight: 26 },
+    sectionH3: { size: 17, weight: 600, lineHeight: 23 },
+    cardName: { size: 15, weight: 600, lineHeight: 20 },
     bodyLg: { size: 16, weight: 400, lineHeight: 24 },
     body: { size: 14, weight: 400, lineHeight: 21 },
     bodyMedium: { size: 14, weight: 500, lineHeight: 21 },
     label: { size: 13, weight: 500, lineHeight: 18 },
+    creator: { size: 12, weight: 500, lineHeight: 17 },
     small: { size: 12, weight: 400, lineHeight: 17 },
-    micro: { size: 11, weight: 500, lineHeight: 15 },
+    micro: { size: 11, weight: 600, lineHeight: 15 },
   },
   controls: {
     standardButtonHeight: 40,
@@ -46,8 +56,6 @@ export const breadTheme = {
   },
   spacing: [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64] as const,
   radii: {
-    xs: 4,
-    sm: 6,
     control: 8,
     card: 12,
     modal: 16,
@@ -72,8 +80,12 @@ export const breadTheme = {
     tabletPageGutter: 24,
     desktopPageGutter: 32,
     maxWidth: 1440,
+    exploreMaxWidth: 1600,
     desktopTradePanel: 360,
+    filterRail: 232,
     desktopHeader: 64,
+    desktopLiveStrip: 40,
+    mobileLiveStrip: 36,
     mobileTopBar: 56,
     mobileBottomNav: 64,
     minimumTouchTarget: 44,
@@ -90,14 +102,9 @@ export const breadTheme = {
 
 export const desktopNavigation = [
   { label: 'Explore', href: '/explore' },
-  { label: 'Graduating', href: '/explore?view=graduating' },
-  { label: 'Portfolio', href: '/portfolio' },
-  { label: 'Create', href: '/create' },
-] as const;
-
-export const mobileNavigation = [
-  { label: 'Explore', href: '/explore' },
   { label: 'Trending', href: '/explore?view=trending' },
   { label: 'Create', href: '/create' },
   { label: 'Portfolio', href: '/portfolio' },
 ] as const;
+
+export const mobileNavigation = desktopNavigation;

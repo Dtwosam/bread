@@ -1,4 +1,10 @@
-export type { Address, CanonicalLogIdentity, ChainId, Hex, Hex32 } from "./identity.js";
+export type {
+  Address,
+  CanonicalLogIdentity,
+  ChainId,
+  Hex,
+  Hex32,
+} from "./identity.js";
 export { canonicalEventId } from "./identity.js";
 
 export {
@@ -15,10 +21,7 @@ export type {
   EventDisposition,
 } from "./events.js";
 
-export type {
-  TradeExecutionPriceSource,
-  TradeVenueKind,
-} from "./trading.js";
+export type { TradeExecutionPriceSource, TradeVenueKind } from "./trading.js";
 
 export type {
   ApiError,
@@ -27,10 +30,16 @@ export type {
   FreshnessMeta,
   FreshnessStatus,
   IndexedCurveStateSummary,
+  IndexedDisplayMetadata,
   IndexedFeedItem,
   IndexedGraduationProgressSummary,
+  IndexedLifecycleState,
+  IndexedPlatformActivityItem,
+  IndexedPlatformActivityKind,
+  IndexedPlatformStats,
   IndexedPriceSummary,
   IndexedResponse,
+  IndexedSearchLifecycleState,
   IndexedSearchResult,
   IndexedTokenDetail,
   IndexedTokenHolder,
