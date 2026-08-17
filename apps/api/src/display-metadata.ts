@@ -54,11 +54,15 @@ export function sanitizeIndexedDisplayMetadata(
 ): SanitizedIndexedDisplayMetadata {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
   const source = raw as Record<string, unknown>;
-  const image = trustedMediaReference(source.image, trustedMediaBaseUrl);
+  const socials =
+    typeof source.socials === 'object' && source.socials !== null && !Array.isArray(source.socials)
+      ? (source.socials as Record<string, unknown>)
+      : {};
+  const image = trustedMediaReference(source.image ?? source.logo, trustedMediaBaseUrl);
   const description = plainText(source.description);
-  const website = normalizedHttps(source.website);
-  const x = normalizedHttps(source.x);
-  const telegram = normalizedHttps(source.telegram);
+  const website = normalizedHttps(source.website ?? socials.website);
+  const x = normalizedHttps(source.x ?? socials.twitter);
+  const telegram = normalizedHttps(source.telegram ?? socials.telegram);
   return {
     ...(image ? { image } : {}),
     ...(description ? { description } : {}),
