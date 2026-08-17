@@ -1,0 +1,31 @@
+services:
+  graduation-keeper:
+    build:
+      context: ../..
+      dockerfile: infra/docker/graduation-keeper.Dockerfile
+    restart: unless-stopped
+    init: true
+    command:
+      - corepack
+      - pnpm
+      - --filter
+      - '@bread/operator'
+      - start:graduation-keeper
+    environment:
+      BREAD_API_BASE_URL: ${BREAD_API_BASE_URL:?BREAD_API_BASE_URL is required}
+      BREAD_NETWORK_MANIFEST_PATH: ${BREAD_NETWORK_MANIFEST_PATH:-/app/config/networks/arc-testnet.json}
+      BREAD_DEPLOYMENT_MANIFEST_PATH: ${BREAD_DEPLOYMENT_MANIFEST_PATH:-/app/config/deployments/arc-testnet.day5.json}
+      BREAD_STACK_VERSION: ${BREAD_STACK_VERSION:?BREAD_STACK_VERSION is required}
+      BREAD_GRADUATION_KEEPER_PRIVATE_KEY_FILE: /run/secrets/graduation_keeper_private_key
+      BREAD_GRADUATION_KEEPER_POLL_MS: ${BREAD_GRADUATION_KEEPER_POLL_MS:-15000}
+    secrets:
+      - graduation_keeper_private_key
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+secrets:
+  graduation_keeper_private_key:
+    file: ${BREAD_GRADUATION_KEEPER_SECRET_FILE:?BREAD_GRADUATION_KEEPER_SECRET_FILE is required}
