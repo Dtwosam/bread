@@ -1,5 +1,6 @@
 export const UI_STATUS = 'day7-design-foundation' as const;
 
+export { ActivityRow, type ActivityRowProps } from './activity-row';
 export { Button, type ButtonProps, type ButtonVariant } from './button';
 export { Card, type CardProps } from './card';
 export {
