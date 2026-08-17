@@ -1,0 +1,93 @@
+name: metadata-gap-sync
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/metadata-gap-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-metadata-gap:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Wire sanitized display metadata through shared read contracts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          api_types = Path('packages/types/src/api.ts')
+          text = api_types.read_text()
+          if 'export type IndexedDisplayMetadata = Readonly<{' not in text:
+              marker = 'export type IndexedFeedItem = Readonly<{'
+              definition = '''export type IndexedDisplayMetadata = Readonly<{\n  image?: string;\n  description?: string;\n  website?: string;\n  x?: string;\n  telegram?: string;\n}>;\n\n'''
+              if marker not in text:
+                  raise SystemExit('IndexedFeedItem marker missing')
+              text = text.replace(marker, definition + marker)
+          text = text.replace('  metadata: unknown;', '  metadata: IndexedDisplayMetadata;')
+          api_types.write_text(text)
+
+          types_index = Path('packages/types/src/index.ts')
+          text = types_index.read_text()
+          if '  IndexedDisplayMetadata,' not in text:
+              text = text.replace('  IndexedFeedItem,', '  IndexedDisplayMetadata,\n  IndexedFeedItem,')
+          types_index.write_text(text)
+
+          route_types = Path('apps/api/src/routes/types.ts')
+          text = route_types.read_text()
+          if 'trustedMediaBaseUrl?: string;' not in text:
+              text = text.replace('  now?: () => Date;', '  now?: () => Date;\n  trustedMediaBaseUrl?: string;')
+          route_types.write_text(text)
+
+          token = Path('apps/api/src/routes/token.ts')
+          text = token.read_text()
+          if 'sanitizeIndexedDisplayMetadata' not in text:
+              text = text.replace(
+                  "import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';",
+                  "import { markNoStore, markPublicProjectionCacheable } from '../http-cache.js';\nimport { sanitizeIndexedDisplayMetadata } from '../display-metadata.js';",
+              )
+          text = text.replace(
+              'export function serializeLaunch(row: NonNullable<LaunchRow>) {',
+              'export function serializeLaunch(row: NonNullable<LaunchRow>, trustedMediaBaseUrl?: string) {',
+          )
+          text = text.replace('    metadata: row.metadata,', '    metadata: sanitizeIndexedDisplayMetadata(row.metadata, trustedMediaBaseUrl),')
+          text = text.replace('...serializeLaunch(launch),', '...serializeLaunch(launch, deps.trustedMediaBaseUrl),')
+          token.write_text(text)
+
+          feed = Path('apps/api/src/routes/feed.ts')
+          text = feed.read_text()
+          text = text.replace('...serializeLaunch(launch),', '...serializeLaunch(launch, deps.trustedMediaBaseUrl),')
+          feed.write_text(text)
+
+          server = Path('apps/api/src/server.ts')
+          text = server.read_text()
+          if 'trustedMediaBaseUrl:' not in text:
+              marker = '    now,\n  } as const;'
+              if marker not in text:
+                  raise SystemExit('server deps marker missing')
+              text = text.replace(marker, "    now,\n    trustedMediaBaseUrl: process.env.BREAD_MEDIA_PUBLIC_BASE_URL?.trim() || undefined,\n  } as const;")
+          server.write_text(text)
+
+          workflow = Path('.github/workflows/day7-task4-token-page.yml')
+          text = workflow.read_text()
+          if 'tests/day7/token-metadata-gap-closure.test.ts' not in text:
+              marker = 'tests/day7/token-page.test.tsx'
+              if marker not in text:
+                  raise SystemExit('token-page workflow marker missing')
+              text = text.replace(marker, marker + '\n          tests/day7/token-metadata-gap-closure.test.ts', 1)
+          workflow.write_text(text)
+          PY
+      - name: Remove temporary sync workflow and commit
+        run: |
+          rm .github/workflows/metadata-gap-sync.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/types/src/api.ts packages/types/src/index.ts apps/api/src/routes/types.ts apps/api/src/routes/token.ts apps/api/src/routes/feed.ts apps/api/src/server.ts .github/workflows/day7-task4-token-page.yml .github/workflows/metadata-gap-sync.yml
+          git commit -m "feat(metadata): wire sanitized display metadata"
+          git push origin HEAD:${{ github.head_ref }}
