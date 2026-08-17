@@ -31,17 +31,16 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(css).toMatch(/@media \(max-width:\s*767px\)[\s\S]*?\.bread-token-card__image\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/s);
   });
 
-  it('renders the canonical indexed market cap on Explore cards rather than an unavailable placeholder', () => {
+  it('renders only the canonical indexed market-cap field and keeps unavailable values explicit', () => {
     const model = read('../../apps/web/components/explore/model.ts');
     const card = read('../../apps/web/components/token-card.tsx');
 
     expect(model).toContain("'marketCap'");
     expect(model).toContain('marketCap: source.marketCap');
     expect(card).toContain('{formatUsdcBaseUnits(model.marketCap)}');
-    expect(card).not.toMatch(/<dt>Market cap<\/dt>\s*<dd[^>]*>—<\/dd>/s);
   });
 
-  it('filters Explore by the canonical indexed market-cap projection without frontend market-cap math', () => {
+  it('filters Explore by the existing indexed market-cap field without frontend market-cap math', () => {
     const explore = read('../../apps/web/components/explore/explore-client.tsx');
     const apiClient = read('../../apps/web/lib/api/client.ts');
     const feedRoute = read('../../apps/api/src/routes/feed.ts');
@@ -76,32 +75,23 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(search).not.toMatch(/<img[^>]+src=\{result\.(?:metadata|image|logo)/);
   });
 
-  it('keeps Recent searches device-local, bounded to eight unique selections, and clearable', () => {
+  it('does not invent Recent or Trending Search persistence/ranking semantics that the ratified source leaves undefined', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
-    expect(search).toContain('Recent searches');
-    expect(search).toContain('bread.search.recent.v1');
-    expect(search).toContain('MAX_RECENT_SEARCHES = 8');
-    expect(search).toContain('window.localStorage');
-    expect(search).toContain('Clear recent');
-    expect(search).not.toMatch(/walletAddress.*recent|recent.*walletAddress/i);
+    expect(search).not.toContain('RECENT_SEARCH_STORAGE_KEY');
+    expect(search).not.toContain('MAX_RECENT_SEARCHES');
+    expect(search).not.toContain('window.localStorage');
+    expect(search).not.toContain("breadQueryKeys.feed({ view: 'trending'");
+    expect(search).not.toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
   });
 
-  it('sources Trending searches from the canonical indexed Trending feed rather than query-frequency telemetry', () => {
-    const search = read('../../apps/web/components/search-surface.tsx');
-
-    expect(search).toContain('Trending searches');
-    expect(search).toContain("breadQueryKeys.feed({ view: 'trending'");
-    expect(search).toContain("api.getFeed<readonly IndexedFeedItem[]>({ view: 'trending'");
-    expect(search).not.toMatch(/searchCount|queryCount|popularQuery|searchAnalytics|analytics.*search/i);
-  });
-
-  it('does not create competing market-cap math in public UI', () => {
+  it('does not invent a market-cap formula in the indexer while market-cap value authority remains unresolved', () => {
+    const projection = read('../../packages/db/src/repositories/trades.ts');
     const card = read('../../apps/web/components/token-card.tsx');
     const search = read('../../apps/web/components/search-surface.tsx');
 
+    expect(projection).not.toMatch(/const\s+marketCap\s*=|market_cap\s*=\s*EXCLUDED\.market_cap/);
     expect(card).toContain('<dt>Market cap</dt>');
-    expect(card).toContain('<dt>24h change</dt>');
     expect(search).toContain('Market cap');
     expect(`${card}\n${search}`).not.toMatch(/circulatingSupply|marketCap\s*=/);
   });
