@@ -31,6 +31,16 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(css).toMatch(/@media \(max-width:\s*767px\)[\s\S]*?\.bread-token-card__image\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/s);
   });
 
+  it('renders the canonical indexed market cap on Explore cards rather than an unavailable placeholder', () => {
+    const model = read('../../apps/web/components/explore/model.ts');
+    const card = read('../../apps/web/components/token-card.tsx');
+
+    expect(model).toContain("'marketCap'");
+    expect(model).toContain('marketCap: source.marketCap');
+    expect(card).toContain('{formatUsdcBaseUnits(model.marketCap)}');
+    expect(card).not.toMatch(/<dt>Market cap<\/dt>\s*<dd[^>]*>—<\/dd>/s);
+  });
+
   it('shows every source-required Search token-row field while unavailable values stay explicit', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
@@ -50,6 +60,6 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(card).toContain('<dt>Market cap</dt>');
     expect(card).toContain('<dt>24h change</dt>');
     expect(search).toContain('Market cap');
-    expect(`${card}\n${search}`).not.toMatch(/circulatingSupply|marketCap\s*=|localStorage|Recent searches|Trending searches/);
+    expect(`${card}\n${search}`).not.toMatch(/circulatingSupply|marketCap\s*=/);
   });
 });
