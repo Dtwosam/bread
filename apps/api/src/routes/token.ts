@@ -147,7 +147,6 @@ export function registerTokenRoute(app: FastifyInstance, deps: BreadReadRouteDep
         data: {
           ...serializeLaunch(launch),
           holderCount: metrics?.holderCount?.toString(10) ?? null,
-          marketCap: metrics?.marketCap?.toString(10) ?? null,
           graduatedVenueKind: state?.graduatedVenueKind ?? null,
           curveState: serializeCurveState(state),
           metrics: serializeTradeMetrics(metrics),

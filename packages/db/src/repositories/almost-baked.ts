@@ -3,7 +3,6 @@ import { sql } from 'drizzle-orm';
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
-import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
 import { decimalIntegerToBigInt } from './read.js';
@@ -90,21 +89,6 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
   } as const;
 }
 
-function marketCapClauses(bounds: ExploreMarketCapBounds | undefined) {
-  if (!bounds) return { knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
-  return {
-    knownClause: sql`AND m.market_cap IS NOT NULL`,
-    minClause:
-      bounds.minQuote === undefined
-        ? sql``
-        : sql`AND m.market_cap >= CAST(${bounds.minQuote} AS numeric)`,
-    maxClause:
-      bounds.maxQuote === undefined
-        ? sql``
-        : sql`AND m.market_cap <= CAST(${bounds.maxQuote} AS numeric)`,
-  } as const;
-}
-
 function progressClauses(bounds: ExploreProgressBounds | undefined) {
   if (!bounds) return { minClause: sql``, maxClause: sql`` } as const;
   return {
@@ -165,7 +149,6 @@ export class AlmostBakedRepository {
     progressBounds?: ExploreProgressBounds,
     creatorAddress?: string,
     volumeBounds?: ExploreVolumeBounds,
-    marketCapBounds?: ExploreMarketCapBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const headTimestamp = decimalIntegerToBigInt(indexedHeadTimestamp);
@@ -173,7 +156,6 @@ export class AlmostBakedRepository {
     const canonicalFactory = factoryAddress.toLowerCase();
     const { minClause, maxClause } = launchAgeClauses(ageBounds);
     const holder = holderClauses(holderBounds);
-    const cap = marketCapClauses(marketCapBounds);
     const progress = progressClauses(progressBounds);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volumeBounds, headTimestamp);
@@ -234,9 +216,6 @@ export class AlmostBakedRepository {
           ${holder.knownClause}
           ${holder.minClause}
           ${holder.maxClause}
-          ${cap.knownClause}
-          ${cap.minClause}
-          ${cap.maxClause}
           AND m.graduation_progress_bps IS NOT NULL
           ${progress.minClause}
           ${progress.maxClause}

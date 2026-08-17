@@ -3,7 +3,6 @@ import { sql } from 'drizzle-orm';
 import type { BreadDb } from '../client.js';
 import type { ExploreAgeBounds } from './explore-age.js';
 import type { ExploreHolderBounds } from './explore-holders.js';
-import type { ExploreMarketCapBounds } from './explore-market-cap.js';
 import type { ExploreProgressBounds } from './explore-progress.js';
 import type { ExploreVolumeBounds } from './explore-volume.js';
 import { decimalIntegerToBigInt } from './read.js';
@@ -90,21 +89,6 @@ function holderClauses(bounds: ExploreHolderBounds | undefined) {
     knownClause: sql`AND m.holder_count IS NOT NULL`,
     minClause: bounds.min === undefined ? sql`` : sql`AND m.holder_count >= CAST(${bounds.min} AS numeric)`,
     maxClause: bounds.max === undefined ? sql`` : sql`AND m.holder_count <= CAST(${bounds.max} AS numeric)`,
-  } as const;
-}
-
-function marketCapClauses(bounds: ExploreMarketCapBounds | undefined) {
-  if (!bounds) return { knownClause: sql``, minClause: sql``, maxClause: sql`` } as const;
-  return {
-    knownClause: sql`AND m.market_cap IS NOT NULL`,
-    minClause:
-      bounds.minQuote === undefined
-        ? sql``
-        : sql`AND m.market_cap >= CAST(${bounds.minQuote} AS numeric)`,
-    maxClause:
-      bounds.maxQuote === undefined
-        ? sql``
-        : sql`AND m.market_cap <= CAST(${bounds.maxQuote} AS numeric)`,
   } as const;
 }
 
@@ -235,13 +219,11 @@ export class ExploreAgeReadRepository {
     creatorAddress?: string,
     volume?: ExploreVolumeBounds,
     indexedHeadTimestamp?: string,
-    marketCap?: ExploreMarketCapBounds,
   ) {
     const boundedLimit = Math.max(1, Math.min(101, Math.trunc(limit)));
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
-    const cap = marketCapClauses(marketCap);
     const baked = progressClauses(progress);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volume, indexedHeadTimestamp);
@@ -280,9 +262,6 @@ export class ExploreAgeReadRepository {
         ${holder.knownClause}
         ${holder.minClause}
         ${holder.maxClause}
-        ${cap.knownClause}
-        ${cap.minClause}
-        ${cap.maxClause}
         ${baked.knownClause}
         ${baked.minClause}
         ${baked.maxClause}
@@ -313,7 +292,6 @@ export class ExploreAgeReadRepository {
     creatorAddress?: string,
     volume?: ExploreVolumeBounds,
     indexedHeadTimestamp?: string,
-    marketCap?: ExploreMarketCapBounds,
   ) {
     if (progress) return [];
 
@@ -321,7 +299,6 @@ export class ExploreAgeReadRepository {
     const canonicalFactory = factoryAddress.toLowerCase();
     const age = ageClauses(bounds);
     const holder = holderClauses(holders);
-    const cap = marketCapClauses(marketCap);
     const creator = creatorClause(creatorAddress);
     const volume24 = volumeClauses(volume, indexedHeadTimestamp);
     const cursorClause = cursor
@@ -360,9 +337,6 @@ export class ExploreAgeReadRepository {
         ${holder.knownClause}
         ${holder.minClause}
         ${holder.maxClause}
-        ${cap.knownClause}
-        ${cap.minClause}
-        ${cap.maxClause}
         ${creator}
         ${volume24.minClause}
         ${volume24.maxClause}

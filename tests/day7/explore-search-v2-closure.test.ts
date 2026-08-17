@@ -6,7 +6,7 @@ import { formatIndexedAge } from '../../apps/web/components/explore/model';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation', () => {
+describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
   it('formats TokenCard age only from the launch timestamp and committed indexed-head timestamp', () => {
     expect(formatIndexedAge('1700000000', '1700000120')).toBe('2m');
     expect(formatIndexedAge('1700000000', '1700003600')).toBe('1h');
@@ -31,43 +31,36 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
     expect(css).toMatch(/@media \(max-width:\s*767px\)[\s\S]*?\.bread-token-card__image\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/s);
   });
 
-  it('renders only the canonical indexed market-cap field and keeps unavailable values explicit', () => {
-    const model = read('../../apps/web/components/explore/model.ts');
+  it('keeps market-cap presentation explicit but unavailable until value authority is ratified', () => {
     const card = read('../../apps/web/components/token-card.tsx');
+    const search = read('../../apps/web/components/search-surface.tsx');
 
-    expect(model).toContain("'marketCap'");
-    expect(model).toContain('marketCap: source.marketCap');
-    expect(card).toContain('{formatUsdcBaseUnits(model.marketCap)}');
+    expect(card).toMatch(/<dt>Market cap<\/dt>\s*<dd[^>]*>—<\/dd>/s);
+    expect(search).toContain('Market cap —');
+    expect(`${card}\n${search}`).not.toMatch(/circulatingSupply|marketCap\s*=/);
   });
 
-  it('filters Explore by the existing indexed market-cap field without frontend market-cap math', () => {
+  it('does not activate a market-cap Explore filter while its canonical value authority is unresolved', () => {
     const explore = read('../../apps/web/components/explore/explore-client.tsx');
     const apiClient = read('../../apps/web/lib/api/client.ts');
     const feedRoute = read('../../apps/api/src/routes/feed.ts');
     const dbIndex = read('../../packages/db/src/index.ts');
-    const ageRead = read('../../packages/db/src/repositories/explore-age-read.ts');
 
-    expect(explore).toContain('Market cap min');
-    expect(explore).toContain('Market cap max');
-    expect(explore).toContain("params.set('marketCapMinQuote'");
-    expect(explore).toContain("params.set('marketCapMaxQuote'");
-    expect(apiClient).toContain('marketCapMinQuote?: string');
-    expect(apiClient).toContain('marketCapMaxQuote?: string');
-    expect(feedRoute).toContain('parseExploreMarketCapBounds');
-    expect(feedRoute).toContain('marketCapMinQuote?: string');
-    expect(feedRoute).toContain('marketCapMaxQuote?: string');
-    expect(dbIndex).toContain('parseExploreMarketCapBounds');
-    expect(ageRead).toContain('m.market_cap IS NOT NULL');
-    expect(ageRead).toContain('m.market_cap >= CAST');
-    expect(ageRead).toContain('m.market_cap <= CAST');
-    expect(explore).not.toMatch(/price\s*\*\s*supply|marketCap\s*=/);
+    expect(explore).not.toContain('Market cap min');
+    expect(explore).not.toContain('Market cap max');
+    expect(explore).not.toContain('marketCapMinQuote');
+    expect(explore).not.toContain('marketCapMaxQuote');
+    expect(apiClient).not.toContain('marketCapMinQuote');
+    expect(apiClient).not.toContain('marketCapMaxQuote');
+    expect(feedRoute).not.toContain('parseExploreMarketCapBounds');
+    expect(dbIndex).not.toContain('parseExploreMarketCapBounds');
   });
 
-  it('shows every source-required Search token-row field while unavailable values stay explicit', () => {
+  it('shows every currently source-backed Search token-row field with safe fallbacks', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
     expect(search).toContain('bread-search-result__image');
-    expect(search).toContain('Market cap');
+    expect(search).toContain('Market cap —');
     expect(search).toContain("Age {age ?? '—'}");
     expect(search).toContain("Holders {result.holderCount ?? '—'}");
     expect(search).toContain("Lifecycle {lifecycle ?? '—'}");
@@ -87,12 +80,7 @@ describe('Bread UI/UX v2.2 Explore/Search remaining source-backed presentation',
 
   it('does not invent a market-cap formula in the indexer while market-cap value authority remains unresolved', () => {
     const projection = read('../../packages/db/src/repositories/trades.ts');
-    const card = read('../../apps/web/components/token-card.tsx');
-    const search = read('../../apps/web/components/search-surface.tsx');
 
     expect(projection).not.toMatch(/const\s+marketCap\s*=|market_cap\s*=\s*EXCLUDED\.market_cap/);
-    expect(card).toContain('<dt>Market cap</dt>');
-    expect(search).toContain('Market cap');
-    expect(`${card}\n${search}`).not.toMatch(/circulatingSupply|marketCap\s*=/);
   });
 });

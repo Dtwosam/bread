@@ -125,7 +125,6 @@ jobs:
           tests/day6/almost-baked-feed-db.test.ts
           tests/day6/explore-age-filter-db.test.ts
           tests/day6/explore-holder-filter-db.test.ts
-          tests/day6/explore-market-cap-filter-db.test.ts
           tests/day6/search-holder-db.test.ts
           tests/day6/secondary-projections-db.test.ts
       - name: Stop infrastructure

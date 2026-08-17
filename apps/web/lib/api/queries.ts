@@ -8,22 +8,6 @@ export const breadQueryKeys = {
 
   feed(input: FeedParams = {}) {
     const prefix = ['bread', 'feed', input.view ?? 'new', input.age ?? 'any'] as const;
-    if (input.marketCapMinQuote !== undefined || input.marketCapMaxQuote !== undefined) {
-      return [
-        ...prefix,
-        input.holdersMin ?? '',
-        input.holdersMax ?? '',
-        input.progressMinBps ?? '',
-        input.progressMaxBps ?? '',
-        input.creator === undefined ? '' : normalizeAddress(input.creator),
-        input.volumeMinQuote ?? '',
-        input.volumeMaxQuote ?? '',
-        input.marketCapMinQuote ?? '',
-        input.marketCapMaxQuote ?? '',
-        input.limit ?? 25,
-        normalizeCursor(input.cursor),
-      ] as const;
-    }
     if (input.volumeMinQuote !== undefined || input.volumeMaxQuote !== undefined) {
       return [
         ...prefix,

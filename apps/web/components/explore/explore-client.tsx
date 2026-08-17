@@ -46,8 +46,6 @@ type ExploreFilters = Readonly<{
   creator?: string;
   volumeMinQuote?: string;
   volumeMaxQuote?: string;
-  marketCapMinQuote?: string;
-  marketCapMaxQuote?: string;
 }>;
 
 function resolveFeedAge(value: string | null): FeedAge | undefined {
@@ -132,20 +130,12 @@ function progressLabel(minBps: string | undefined, maxBps: string | undefined): 
   return `≤${max}%`;
 }
 
-function quoteRangeLabel(minQuote: string | undefined, maxQuote: string | undefined, prefix = ''): string {
+function volumeLabel(minQuote: string | undefined, maxQuote: string | undefined): string {
   const min = quoteBaseUnitsToUsdc(minQuote);
   const max = quoteBaseUnitsToUsdc(maxQuote);
-  if (minQuote !== undefined && maxQuote !== undefined) return `${prefix}${min}–${prefix}${max}`;
-  if (minQuote !== undefined) return `≥${prefix}${min}`;
-  return `≤${prefix}${max}`;
-}
-
-function volumeLabel(minQuote: string | undefined, maxQuote: string | undefined): string {
-  return `${quoteRangeLabel(minQuote, maxQuote)} USDC`;
-}
-
-function marketCapLabel(minQuote: string | undefined, maxQuote: string | undefined): string {
-  return quoteRangeLabel(minQuote, maxQuote, '$');
+  if (minQuote !== undefined && maxQuote !== undefined) return `${min}–${max} USDC`;
+  if (minQuote !== undefined) return `≥${min} USDC`;
+  return `≤${max} USDC`;
 }
 
 function exploreHref(view: ExploreView, filters: ExploreFilters): string {
@@ -159,8 +149,6 @@ function exploreHref(view: ExploreView, filters: ExploreFilters): string {
   if (filters.creator !== undefined) params.set('creator', filters.creator);
   if (filters.volumeMinQuote !== undefined) params.set('volumeMinQuote', filters.volumeMinQuote);
   if (filters.volumeMaxQuote !== undefined) params.set('volumeMaxQuote', filters.volumeMaxQuote);
-  if (filters.marketCapMinQuote !== undefined) params.set('marketCapMinQuote', filters.marketCapMinQuote);
-  if (filters.marketCapMaxQuote !== undefined) params.set('marketCapMaxQuote', filters.marketCapMaxQuote);
   return params.size > 0 ? `/explore?${params.toString()}` : '/explore';
 }
 
@@ -177,20 +165,16 @@ export function ExploreClient() {
   const creator = creatorParam === null ? undefined : creatorParam.toLowerCase();
   const volumeMinQuote = resolveQuoteBaseUnits(searchParams.get('volumeMinQuote'));
   const volumeMaxQuote = resolveQuoteBaseUnits(searchParams.get('volumeMaxQuote'));
-  const marketCapMinQuote = resolveQuoteBaseUnits(searchParams.get('marketCapMinQuote'));
-  const marketCapMaxQuote = resolveQuoteBaseUnits(searchParams.get('marketCapMaxQuote'));
   const hasHolderFilter = holdersMin !== undefined || holdersMax !== undefined;
   const hasProgressFilter = progressMinBps !== undefined || progressMaxBps !== undefined;
   const hasCreatorFilter = creator !== undefined;
   const hasVolumeFilter = volumeMinQuote !== undefined || volumeMaxQuote !== undefined;
-  const hasMarketCapFilter = marketCapMinQuote !== undefined || marketCapMaxQuote !== undefined;
   const hasActiveFilters =
     age !== undefined ||
     hasHolderFilter ||
     hasProgressFilter ||
     hasCreatorFilter ||
-    hasVolumeFilter ||
-    hasMarketCapFilter;
+    hasVolumeFilter;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const api = useMemo(() => createBreadApiClient(), []);
 
@@ -205,8 +189,6 @@ export function ExploreClient() {
       creator,
       volumeMinQuote,
       volumeMaxQuote,
-      marketCapMinQuote,
-      marketCapMaxQuote,
       limit: PAGE_SIZE,
     }),
     initialPageParam: '',
@@ -221,8 +203,6 @@ export function ExploreClient() {
         creator,
         volumeMinQuote,
         volumeMaxQuote,
-        marketCapMinQuote,
-        marketCapMaxQuote,
         limit: PAGE_SIZE,
         cursor: pageParam || undefined,
       }),
@@ -264,8 +244,6 @@ export function ExploreClient() {
                 creator,
                 volumeMinQuote,
                 volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
               })}
               key={item.value}
             >
@@ -290,131 +268,134 @@ export function ExploreClient() {
             <button
               aria-label={`Age: ${ageLabel(age)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({
-                holdersMin,
-                holdersMax,
-                progressMinBps,
-                progressMaxBps,
-                creator,
-                volumeMinQuote,
-                volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
-              })}
+              onClick={() =>
+                navigateWithFilters({
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                  creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
+                })
+              }
               type="button"
             >
-              <span>Age: {ageLabel(age)}</span><span aria-hidden="true">×</span>
+              <span>Age: {ageLabel(age)}</span>
+              <span aria-hidden="true">×</span>
             </button>
           ) : null}
           {hasHolderFilter ? (
             <button
               aria-label={`Holders: ${holderLabel(holdersMin, holdersMax)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({
-                age,
-                progressMinBps,
-                progressMaxBps,
-                creator,
-                volumeMinQuote,
-                volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
-              })}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  progressMinBps,
+                  progressMaxBps,
+                  creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
+                })
+              }
               type="button"
             >
-              <span>Holders: {holderLabel(holdersMin, holdersMax)}</span><span aria-hidden="true">×</span>
+              <span>Holders: {holderLabel(holdersMin, holdersMax)}</span>
+              <span aria-hidden="true">×</span>
             </button>
           ) : null}
           {hasProgressFilter ? (
             <button
               aria-label={`Baked progress: ${progressLabel(progressMinBps, progressMaxBps)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({
-                age,
-                holdersMin,
-                holdersMax,
-                creator,
-                volumeMinQuote,
-                volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
-              })}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  holdersMin,
+                  holdersMax,
+                  creator,
+                  volumeMinQuote,
+                  volumeMaxQuote,
+                })
+              }
               type="button"
             >
-              <span>Baked progress: {progressLabel(progressMinBps, progressMaxBps)}</span><span aria-hidden="true">×</span>
+              <span>Baked progress: {progressLabel(progressMinBps, progressMaxBps)}</span>
+              <span aria-hidden="true">×</span>
             </button>
           ) : null}
           {hasCreatorFilter ? (
             <button
               aria-label={`Creator: ${creator}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({
-                age,
-                holdersMin,
-                holdersMax,
-                progressMinBps,
-                progressMaxBps,
-                volumeMinQuote,
-                volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
-              })}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                  volumeMinQuote,
+                  volumeMaxQuote,
+                })
+              }
               type="button"
             >
-              <span>Creator: {shortAddress(creator)}</span><span aria-hidden="true">×</span>
+              <span>Creator: {shortAddress(creator)}</span>
+              <span aria-hidden="true">×</span>
             </button>
           ) : null}
           {hasVolumeFilter ? (
             <button
               aria-label={`24h Volume: ${volumeLabel(volumeMinQuote, volumeMaxQuote)}`}
               className={styles.chip}
-              onClick={() => navigateWithFilters({
-                age,
-                holdersMin,
-                holdersMax,
-                progressMinBps,
-                progressMaxBps,
-                creator,
-                marketCapMinQuote,
-                marketCapMaxQuote,
-              })}
+              onClick={() =>
+                navigateWithFilters({
+                  age,
+                  holdersMin,
+                  holdersMax,
+                  progressMinBps,
+                  progressMaxBps,
+                  creator,
+                })
+              }
               type="button"
             >
-              <span>24h Volume: {volumeLabel(volumeMinQuote, volumeMaxQuote)}</span><span aria-hidden="true">×</span>
+              <span>24h Volume: {volumeLabel(volumeMinQuote, volumeMaxQuote)}</span>
+              <span aria-hidden="true">×</span>
             </button>
           ) : null}
-          {hasMarketCapFilter ? (
-            <button
-              aria-label={`Market cap: ${marketCapLabel(marketCapMinQuote, marketCapMaxQuote)}`}
-              className={styles.chip}
-              onClick={() => navigateWithFilters({
-                age,
-                holdersMin,
-                holdersMax,
-                progressMinBps,
-                progressMaxBps,
-                creator,
-                volumeMinQuote,
-                volumeMaxQuote,
-              })}
-              type="button"
-            >
-              <span>Market cap: {marketCapLabel(marketCapMinQuote, marketCapMaxQuote)}</span><span aria-hidden="true">×</span>
-            </button>
-          ) : null}
-          <button aria-label="Reset filters" className={styles.reset} onClick={() => navigateWithFilters({})} type="button">
+          <button
+            aria-label="Reset filters"
+            className={styles.reset}
+            onClick={() => navigateWithFilters({})}
+            type="button"
+          >
             Reset
           </button>
         </div>
       ) : null}
 
       <div className={styles.layout}>
-        <aside className={`${styles.panel}${filtersOpen ? ` ${styles.panelOpen}` : ''}`} id="bread-explore-filters">
+        <aside
+          className={`${styles.panel}${filtersOpen ? ` ${styles.panelOpen}` : ''}`}
+          id="bread-explore-filters"
+        >
           <div className={styles.panelHeading}>
-            <div><h2>Filters</h2><p>Refine the indexed feed.</p></div>
-            <button aria-label="Close filters" className={styles.close} onClick={() => setFiltersOpen(false)} type="button">×</button>
+            <div>
+              <h2>Filters</h2>
+              <p>Refine the indexed feed.</p>
+            </div>
+            <button
+              aria-label="Close filters"
+              className={styles.close}
+              onClick={() => setFiltersOpen(false)}
+              type="button"
+            >
+              ×
+            </button>
           </div>
-
           <label className={styles.field} htmlFor="bread-explore-age">
             <span>Age</span>
             <select
@@ -430,57 +411,19 @@ export function ExploreClient() {
                   creator,
                   volumeMinQuote,
                   volumeMaxQuote,
-                  marketCapMinQuote,
-                  marketCapMaxQuote,
                 });
                 setFiltersOpen(false);
               }}
               value={age ?? ''}
             >
               <option value="">Any</option>
-              {AGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              {AGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
-
-          <form
-            className={styles.holderForm}
-            key={`market-cap:${marketCapMinQuote ?? ''}:${marketCapMaxQuote ?? ''}`}
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              const rawMin = String(form.get('marketCapMin') ?? '').trim();
-              const rawMax = String(form.get('marketCapMax') ?? '').trim();
-              const nextMinQuote = usdcToQuoteBaseUnits(rawMin);
-              const nextMaxQuote = usdcToQuoteBaseUnits(rawMax);
-              if ((rawMin.length > 0 && nextMinQuote === undefined) || (rawMax.length > 0 && nextMaxQuote === undefined)) return;
-              if (nextMinQuote !== undefined && nextMaxQuote !== undefined && compareCanonicalIntegers(nextMinQuote, nextMaxQuote) > 0) return;
-              navigateWithFilters({
-                age,
-                holdersMin,
-                holdersMax,
-                progressMinBps,
-                progressMaxBps,
-                creator,
-                volumeMinQuote,
-                volumeMaxQuote,
-                marketCapMinQuote: nextMinQuote,
-                marketCapMaxQuote: nextMaxQuote,
-              });
-              setFiltersOpen(false);
-            }}
-          >
-            <div className={styles.rangeFields}>
-              <label className={styles.field} htmlFor="bread-explore-market-cap-min">
-                <span>Market cap min</span>
-                <input defaultValue={quoteBaseUnitsToUsdc(marketCapMinQuote)} id="bread-explore-market-cap-min" inputMode="decimal" name="marketCapMin" type="text" />
-              </label>
-              <label className={styles.field} htmlFor="bread-explore-market-cap-max">
-                <span>Market cap max</span>
-                <input defaultValue={quoteBaseUnitsToUsdc(marketCapMaxQuote)} id="bread-explore-market-cap-max" inputMode="decimal" name="marketCapMax" type="text" />
-              </label>
-            </div>
-            <button className={styles.apply} type="submit">Apply market cap filter</button>
-          </form>
 
           <form
             className={styles.holderForm}
@@ -492,8 +435,19 @@ export function ExploreClient() {
               const rawMax = String(form.get('volumeMax') ?? '').trim();
               const nextMinQuote = usdcToQuoteBaseUnits(rawMin);
               const nextMaxQuote = usdcToQuoteBaseUnits(rawMax);
-              if ((rawMin.length > 0 && nextMinQuote === undefined) || (rawMax.length > 0 && nextMaxQuote === undefined)) return;
-              if (nextMinQuote !== undefined && nextMaxQuote !== undefined && compareCanonicalIntegers(nextMinQuote, nextMaxQuote) > 0) return;
+              if (
+                (rawMin.length > 0 && nextMinQuote === undefined) ||
+                (rawMax.length > 0 && nextMaxQuote === undefined)
+              ) {
+                return;
+              }
+              if (
+                nextMinQuote !== undefined &&
+                nextMaxQuote !== undefined &&
+                compareCanonicalIntegers(nextMinQuote, nextMaxQuote) > 0
+              ) {
+                return;
+              }
               navigateWithFilters({
                 age,
                 holdersMin,
@@ -503,8 +457,6 @@ export function ExploreClient() {
                 creator,
                 volumeMinQuote: nextMinQuote,
                 volumeMaxQuote: nextMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
               });
               setFiltersOpen(false);
             }}
@@ -512,14 +464,28 @@ export function ExploreClient() {
             <div className={styles.rangeFields}>
               <label className={styles.field} htmlFor="bread-explore-volume-min">
                 <span>24h volume min</span>
-                <input defaultValue={quoteBaseUnitsToUsdc(volumeMinQuote)} id="bread-explore-volume-min" inputMode="decimal" name="volumeMin" type="text" />
+                <input
+                  defaultValue={quoteBaseUnitsToUsdc(volumeMinQuote)}
+                  id="bread-explore-volume-min"
+                  inputMode="decimal"
+                  name="volumeMin"
+                  type="text"
+                />
               </label>
               <label className={styles.field} htmlFor="bread-explore-volume-max">
                 <span>24h volume max</span>
-                <input defaultValue={quoteBaseUnitsToUsdc(volumeMaxQuote)} id="bread-explore-volume-max" inputMode="decimal" name="volumeMax" type="text" />
+                <input
+                  defaultValue={quoteBaseUnitsToUsdc(volumeMaxQuote)}
+                  id="bread-explore-volume-max"
+                  inputMode="decimal"
+                  name="volumeMax"
+                  type="text"
+                />
               </label>
             </div>
-            <button className={styles.apply} type="submit">Apply 24h volume filter</button>
+            <button className={styles.apply} type="submit">
+              Apply 24h volume filter
+            </button>
           </form>
 
           <form
@@ -539,8 +505,6 @@ export function ExploreClient() {
                 creator,
                 volumeMinQuote,
                 volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
               });
               setFiltersOpen(false);
             }}
@@ -548,14 +512,30 @@ export function ExploreClient() {
             <div className={styles.rangeFields}>
               <label className={styles.field} htmlFor="bread-explore-holders-min">
                 <span>Holders min</span>
-                <input defaultValue={holdersMin ?? ''} id="bread-explore-holders-min" inputMode="numeric" name="holdersMin" pattern="[0-9]*" type="text" />
+                <input
+                  defaultValue={holdersMin ?? ''}
+                  id="bread-explore-holders-min"
+                  inputMode="numeric"
+                  name="holdersMin"
+                  pattern="[0-9]*"
+                  type="text"
+                />
               </label>
               <label className={styles.field} htmlFor="bread-explore-holders-max">
                 <span>Holders max</span>
-                <input defaultValue={holdersMax ?? ''} id="bread-explore-holders-max" inputMode="numeric" name="holdersMax" pattern="[0-9]*" type="text" />
+                <input
+                  defaultValue={holdersMax ?? ''}
+                  id="bread-explore-holders-max"
+                  inputMode="numeric"
+                  name="holdersMax"
+                  pattern="[0-9]*"
+                  type="text"
+                />
               </label>
             </div>
-            <button className={styles.apply} type="submit">Apply holder filter</button>
+            <button className={styles.apply} type="submit">
+              Apply holder filter
+            </button>
           </form>
 
           <form
@@ -568,8 +548,19 @@ export function ExploreClient() {
               const rawMax = String(form.get('progressMax') ?? '').trim();
               const nextMinBps = percentToBps(rawMin);
               const nextMaxBps = percentToBps(rawMax);
-              if ((rawMin.length > 0 && nextMinBps === undefined) || (rawMax.length > 0 && nextMaxBps === undefined)) return;
-              if (nextMinBps !== undefined && nextMaxBps !== undefined && Number(nextMinBps) > Number(nextMaxBps)) return;
+              if (
+                (rawMin.length > 0 && nextMinBps === undefined) ||
+                (rawMax.length > 0 && nextMaxBps === undefined)
+              ) {
+                return;
+              }
+              if (
+                nextMinBps !== undefined &&
+                nextMaxBps !== undefined &&
+                Number(nextMinBps) > Number(nextMaxBps)
+              ) {
+                return;
+              }
               navigateWithFilters({
                 age,
                 holdersMin,
@@ -579,8 +570,6 @@ export function ExploreClient() {
                 creator,
                 volumeMinQuote,
                 volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
               });
               setFiltersOpen(false);
             }}
@@ -588,14 +577,34 @@ export function ExploreClient() {
             <div className={styles.rangeFields}>
               <label className={styles.field} htmlFor="bread-explore-progress-min">
                 <span>Baked progress min</span>
-                <input defaultValue={bpsToPercent(progressMinBps)} id="bread-explore-progress-min" inputMode="decimal" max="100" min="0" name="progressMin" step="0.01" type="number" />
+                <input
+                  defaultValue={bpsToPercent(progressMinBps)}
+                  id="bread-explore-progress-min"
+                  inputMode="decimal"
+                  max="100"
+                  min="0"
+                  name="progressMin"
+                  step="0.01"
+                  type="number"
+                />
               </label>
               <label className={styles.field} htmlFor="bread-explore-progress-max">
                 <span>Baked progress max</span>
-                <input defaultValue={bpsToPercent(progressMaxBps)} id="bread-explore-progress-max" inputMode="decimal" max="100" min="0" name="progressMax" step="0.01" type="number" />
+                <input
+                  defaultValue={bpsToPercent(progressMaxBps)}
+                  id="bread-explore-progress-max"
+                  inputMode="decimal"
+                  max="100"
+                  min="0"
+                  name="progressMax"
+                  step="0.01"
+                  type="number"
+                />
               </label>
             </div>
-            <button className={styles.apply} type="submit">Apply baked progress filter</button>
+            <button className={styles.apply} type="submit">
+              Apply baked progress filter
+            </button>
           </form>
 
           <form
@@ -615,31 +624,51 @@ export function ExploreClient() {
                 creator: rawCreator.length > 0 ? rawCreator.toLowerCase() : undefined,
                 volumeMinQuote,
                 volumeMaxQuote,
-                marketCapMinQuote,
-                marketCapMaxQuote,
               });
               setFiltersOpen(false);
             }}
           >
             <label className={styles.field} htmlFor="bread-explore-creator">
               <span>Creator wallet</span>
-              <input autoCapitalize="none" autoComplete="off" defaultValue={creator ?? ''} id="bread-explore-creator" name="creator" pattern="0x[0-9a-fA-F]{40}" spellCheck={false} type="text" />
+              <input
+                autoCapitalize="none"
+                autoComplete="off"
+                defaultValue={creator ?? ''}
+                id="bread-explore-creator"
+                name="creator"
+                pattern="0x[0-9a-fA-F]{40}"
+                spellCheck={false}
+                type="text"
+              />
             </label>
-            <button className={styles.apply} type="submit">Apply creator filter</button>
+            <button className={styles.apply} type="submit">
+              Apply creator filter
+            </button>
           </form>
         </aside>
 
         <section className={styles.feed} aria-label="Explore results">
           {latestMeta ? <FreshnessBanner meta={latestMeta} /> : null}
+
           {query.isPending ? (
             <div className="bread-token-grid" aria-label="Loading Explore feed">
-              {Array.from({ length: 6 }, (_, index) => <Skeleton key={index} label="Loading token" />)}
+              {Array.from({ length: 6 }, (_, index) => (
+                <Skeleton key={index} label="Loading token" />
+              ))}
             </div>
           ) : null}
-          {errorPresentation ? <ErrorState title={errorPresentation.title} detail={errorPresentation.detail} /> : null}
-          {!query.isPending && !query.isError && items.length === 0 ? (
-            <EmptyState title="No indexed launches yet" detail="New Bread launches will appear here after they are indexed." />
+
+          {errorPresentation ? (
+            <ErrorState title={errorPresentation.title} detail={errorPresentation.detail} />
           ) : null}
+
+          {!query.isPending && !query.isError && items.length === 0 ? (
+            <EmptyState
+              title="No indexed launches yet"
+              detail="New Bread launches will appear here after they are indexed."
+            />
+          ) : null}
+
           {items.length > 0 ? (
             <div className="bread-token-grid">
               {items.map((item) => (
@@ -651,9 +680,15 @@ export function ExploreClient() {
               ))}
             </div>
           ) : null}
+
           {query.hasNextPage ? (
             <div className="bread-explore-more">
-              <Button variant="secondary" loading={query.isFetchingNextPage} loadingLabel="Loading…" onClick={() => void query.fetchNextPage()}>
+              <Button
+                variant="secondary"
+                loading={query.isFetchingNextPage}
+                loadingLabel="Loading…"
+                onClick={() => void query.fetchNextPage()}
+              >
                 Load more
               </Button>
             </div>

@@ -67,10 +67,6 @@ export {
   type ExploreVolumeBounds,
 } from "./repositories/explore-volume.js";
 export {
-  parseExploreMarketCapBounds,
-  type ExploreMarketCapBounds,
-} from "./repositories/explore-market-cap.js";
-export {
   AlmostBakedRepository,
   type AlmostBakedLaunchCursorKey,
 } from "./repositories/almost-baked.js";

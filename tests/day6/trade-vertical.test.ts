@@ -252,7 +252,7 @@ describe.skipIf(!RUN_DB)('Day 6 Task 5 trade projections and read API', () => {
     return db;
   }
 
-  it('projects only CurveBuy/CurveSell as trades and builds 1m/5m/1h candles plus canonical token metrics', async () => {
+  it('projects only CurveBuy/CurveSell as trades and builds 1m/5m/1h candles plus token metrics', async () => {
     await applyFixture();
 
     const counts = await pool.query(`
@@ -263,13 +263,6 @@ describe.skipIf(!RUN_DB)('Day 6 Task 5 trade projections and read API', () => {
         (SELECT count(*)::int FROM token_metrics) AS metric_count
     `);
     expect(counts.rows[0]).toMatchObject({ journal_count: 4, trade_count: 2, candle_count: 3, metric_count: 1 });
-
-    const metrics = await pool.query(`
-      SELECT market_cap
-      FROM token_metrics
-      WHERE chain_id = $1 AND token_address = $2
-    `, [context.chainId, token.toLowerCase()]);
-    expect(metrics.rows).toEqual([expect.objectContaining({ market_cap: '8300' })]);
 
     const trades = await pool.query(`
       SELECT transaction_hash, log_index, side, quote_amount, base_amount, fee_amount, tax_amount

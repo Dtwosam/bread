@@ -32,8 +32,6 @@ export type FeedParams = Readonly<{
   creator?: string;
   volumeMinQuote?: string;
   volumeMaxQuote?: string;
-  marketCapMinQuote?: string;
-  marketCapMaxQuote?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -140,7 +138,6 @@ function assertFeedParams(params: FeedParams): void {
     throw new RangeError('creator must be a valid address.');
   }
   assertExactQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote, 'volumeMinQuote', 'volumeMaxQuote');
-  assertExactQuoteBounds(params.marketCapMinQuote, params.marketCapMaxQuote, 'marketCapMinQuote', 'marketCapMaxQuote');
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
 }
@@ -244,8 +241,6 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       addOptional(params, 'creator', input.creator);
       addOptional(params, 'volumeMinQuote', input.volumeMinQuote);
       addOptional(params, 'volumeMaxQuote', input.volumeMaxQuote);
-      addOptional(params, 'marketCapMinQuote', input.marketCapMinQuote);
-      addOptional(params, 'marketCapMaxQuote', input.marketCapMaxQuote);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);

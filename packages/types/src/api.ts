@@ -101,7 +101,6 @@ export type IndexedFeedItem = Readonly<{
   launchTransactionHash: string;
   launchLogIndex: number;
   holderCount: string | null;
-  marketCap: string | null;
   graduatedVenueKind: string | null;
   metrics: IndexedTradeMetricsSummary | null;
   progress: IndexedGraduationProgressSummary | null;
@@ -122,7 +121,6 @@ export type IndexedSearchResult = Readonly<{
   matchKind: string;
   ageSeconds: string | null;
   holderCount: string | null;
-  marketCap: string | null;
   lifecycleState: IndexedSearchLifecycleState | null;
 }>;
 
