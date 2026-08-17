@@ -79,6 +79,14 @@ export type IndexedLifecycleState =
   | "NEW"
   | "ACTIVE";
 
+export type IndexedDisplayMetadata = Readonly<{
+  image?: string;
+  description?: string;
+  website?: string;
+  x?: string;
+  telegram?: string;
+}>;
+
 export type IndexedFeedItem = Readonly<{
   tokenAddress: string;
   curveAddress: string;
@@ -92,7 +100,7 @@ export type IndexedFeedItem = Readonly<{
   launchTimestamp: string | null;
   name: string | null;
   symbol: string | null;
-  metadata: unknown;
+  metadata: IndexedDisplayMetadata;
   quoteAsset: string | null;
   initialSupply: string | null;
   phantomQuote: string | null;
