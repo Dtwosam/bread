@@ -175,7 +175,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
     const source = readFileSync(new URL('../../apps/web/components/search-surface.tsx', import.meta.url), 'utf8');
     expect(source).toContain('CreatorAttribution');
     expect(source).toContain('creatorAddress={result.deployerAddress}');
-    expect(source).toContain("result.matchKind === 'CONTRACT'");
+    expect(source).toMatch(/result\.matchKind\s*===\s*["']CONTRACT["']/);
     expect(source).toContain('Exact contract match');
     expect(source).toContain('shortAddress(result.tokenAddress)');
     expect(source).not.toContain('>{result.tokenAddress}</code>');
