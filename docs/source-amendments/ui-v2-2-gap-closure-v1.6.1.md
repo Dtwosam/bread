@@ -2,7 +2,7 @@
 
 **Project Source label:** `v1.6.1-pre-rc-ui-gap-closure`  
 **Date:** 17 Aug 2026  
-**Status:** RATIFIED — uploaded Project Source read back and reconciled on 17 Aug 2026; affected candidate implementation is subject to source-to-code conformance and fresh exact-head verification before acceptance.
+**Status:** RATIFIED — uploaded Project Source read back and reconciled on 17 Aug 2026. The bounded v1.6.1 implementation has passed source-to-code conformance and fresh exact-head automated verification at software head `67a405b8ee85552f05b3f1917edb6f0f9ff9a31f`; release-only physical-device, approved-legal-copy and public/mainnet gates remain open.
 
 ## Authority boundary
 
@@ -51,7 +51,13 @@ It does **not** change Solidity, protocol economics, supply, custody, graduation
 
 The user uploaded the controlling `v1.6.1-pre-rc-ui-gap-closure` Project Source on 17 Aug 2026. Active-chat readback confirms that its eight frozen decisions, cross-layer boundaries, acceptance requirements and non-goals agree with this repository note and directly supersede the matching unresolved-gap entries in CURRENT-BUILD-STATE v1.9. PR #94 remains based on `day9/synthra-arc-testnet-v3-candidate` at `18952b20a56021350000c0f5d89552380c883be3`.
 
-Candidate production code for these decisions already existed before final Project Source upload. Under the Bread recovery rule, that code is preserved but is not accepted merely by ratification. It is frozen for source-to-code conformance review and fresh exact-head integrated CI.
+Candidate production code for these decisions existed before final Project Source upload. Under the Bread recovery rule, it was preserved, then subjected to source-to-code conformance and fresh exact-head integrated verification rather than being accepted merely by ratification.
+
+## Automated acceptance record
+
+Exact-head run `32024924987` verified software head `67a405b8ee85552f05b3f1917edb6f0f9ff9a31f`. That run passed source validation, typecheck, focused static/format checks, build, full Day-6 PostgreSQL-backed regression, full Day-7 frontend/read regression, concentrated hot-launch regression, fixture-safe desktop/mobile Playwright journeys and the configured Chromium/Firefox/WebKit release matrix. The evidence is persisted at `docs/evidence/v1.6.1-gap-closure-exact-head.md`.
+
+The adjacent Day-8 frontend-security gate subsequently passed on the format-insensitive source guard in run `32025706745`. Service rollback passed on current test/continuity head in run `32025706667`, and the earlier transient rollback-build failure on the exact software SHA did not reproduce when the failed workflow was re-run on the same `67a405b8...` software head (run `32024925001`, attempt 2).
 
 ```text
 PROJECT_SOURCE_PACK = v1.6.1-pre-rc-ui-gap-closure
@@ -59,8 +65,10 @@ USER_DECISION_STATUS = APPROVED_IN_CHAT
 PROJECT_SOURCE_UPLOAD = UPLOADED
 PROJECT_SOURCE_READBACK = VERIFIED
 PROJECT_SOURCE_RATIFICATION = RATIFIED
-CANDIDATE_CODE_STATUS = RATIFIED_PENDING_CONFORMANCE_AND_EXACT_HEAD_CI
+CANDIDATE_CODE_STATUS = ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
+EXACT_VERIFIED_SOFTWARE_HEAD = 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+EXACT_HEAD_WORKFLOW = 32024924987
 DAY9 / RC = STILL INCOMPLETE
 ```
 
-Execute each area as bounded RED → GREEN/conformance slices under 06D, rerun focused + adjacent + security + performance/load + browser evidence, keep PR #94 draft/open/unmerged, and preserve the physical-device and approved-legal-copy blockers.
+The bounded v1.6.1 automated software scope is accepted. This does **not** establish Day-9 PASS, physical-device evidence, approved final legal copy, public/mainnet readiness or an RC tag. PR #94 remains draft/open/unmerged; Day 10 remains not started.

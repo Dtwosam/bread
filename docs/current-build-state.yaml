@@ -1,6 +1,6 @@
-schema_version: 1.92
+schema_version: 1.93
 project: Bread
-updated_at: 2026-08-17T10:53:00Z
+updated_at: 2026-08-17T11:40:00Z
 
 source_pack:
   current_ratified: v1.6.1-pre-rc-ui-gap-closure
@@ -9,7 +9,7 @@ source_pack:
   parent_ratified_pack: v1.6-pre-rc-ui-ux-v2.2
   current_uploaded_living_handoff: CURRENT-BUILD-STATE-v1.9-recovered
   proposed_living_handoff_replacement: null
-  continuation_state: V1_6_1_UPLOADED_READ_BACK_RATIFIED_CANDIDATE_PENDING_CONFORMANCE_AND_EXACT_HEAD_CI
+  continuation_state: V1_6_1_RATIFIED_IMPLEMENTATION_ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
   retired_only:
     - 04B-visual-design-system-component-specification
     - 04C-page-by-page-responsive-specification
@@ -39,10 +39,10 @@ legacy_ratifications:
     status: RETAINED_NON_CONFLICTING_PARENT_UI_AUTHORITY
 
 active_checkpoint: "Day 9 — Release Candidate & Rehearsal IN PROGRESS"
-active_lane: "v1.6.1 source-ratified candidate conformance and exact-head closure"
-active_gate: V1_6_1_CANDIDATE_CONFORMANCE_AND_EXACT_HEAD_CI
+active_lane: "v1.6.1 automated software closure accepted; external physical-device/legal/public-release gates remain"
+active_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 active_continuity_gate: NONE
-active_ui_gate: V1_6_1_CANDIDATE_CONFORMANCE_AND_EXACT_HEAD_CI
+active_ui_gate: PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
 day9_started: true
 day9_complete: false
 day9_rc_tag_created: false
@@ -66,7 +66,11 @@ integration_baseline:
   prior_exact_verified_ui_software_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
   prior_exact_verified_ui_software_status: ALL_AUTOMATED_REQUIRED_WORKFLOWS_GREEN
   v1_6_1_pre_ratification_candidate_head: 71218eedf197118c2ab76e5f3651fc1266ada498
-  v1_6_1_candidate_status: RATIFIED_PENDING_CONFORMANCE_AND_EXACT_HEAD_CI
+  v1_6_1_exact_verified_software_head: 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+  v1_6_1_exact_head_run: 32024924987
+  v1_6_1_exact_head_evidence_commit: 64c4a2c7a421b05b66bd77595a0ffe8fcbf531b2
+  v1_6_1_post_evidence_test_guard_head: 72e7fcd8ce9bce160b203b08a41e63a2db921a2b
+  v1_6_1_candidate_status: ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
   lan_environment: /tmp/bread-synthra-fork-proof
   lan_environment_rule: DO_NOT_TOUCH
 
@@ -84,6 +88,8 @@ repository:
   ui_pr_base_sha: 18952b20a56021350000c0f5d89552380c883be3
   prior_exact_verified_ui_software_head: b60318ef3417b9ec38354cc341cfdb69f9f18fca
   v1_6_1_pre_ratification_candidate_head: 71218eedf197118c2ab76e5f3651fc1266ada498
+  v1_6_1_exact_verified_software_head: 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+  v1_6_1_exact_head_evidence_commit: 64c4a2c7a421b05b66bd77595a0ffe8fcbf531b2
   day9_complete: false
   rc_tag_created: false
   day10_started: false
@@ -91,9 +97,9 @@ repository:
 accepted_state:
   lane1_foundations: COMPLETE
   lane2_global_shell_navigation: COMPLETE
-  lane3_explore_search: V1_6_1_SOURCE_RATIFIED_CANDIDATE_PENDING_EXACT_HEAD_ACCEPTANCE
+  lane3_explore_search: COMPLETE_FOR_RATIFIED_V1_6_1_AUTOMATED_SCOPE
   token_trade: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
-  create: V1_6_1_MEDIA_CANDIDATE_PENDING_EXACT_HEAD_ACCEPTANCE
+  create: COMPLETE_FOR_RATIFIED_V1_6_1_AUTOMATED_SCOPE
   portfolio_creator: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
   secondary_routes:
     docs_profile_error_states: COMPLETE_FOR_CURRENT_SOURCE_BACKED_SOFTWARE_SCOPE
@@ -103,7 +109,7 @@ accepted_state:
   source_conformance_repair: COMPLETE
   prior_automated_ui_software_closure: COMPLETE_AT_B60318EF
   v1_6_1_source_ratification: RATIFIED
-  v1_6_1_candidate_acceptance: PENDING_CONFORMANCE_AND_EXACT_HEAD_CI
+  v1_6_1_candidate_acceptance: ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
 
 v1_6_1_ratification:
   source_label: v1.6.1-pre-rc-ui-gap-closure
@@ -113,7 +119,10 @@ v1_6_1_ratification:
   active_chat_readback: VERIFIED
   project_source_ratification: RATIFIED
   repository_source_note: docs/source-amendments/ui-v2-2-gap-closure-v1.6.1.md
-  candidate_code_status: RATIFIED_PENDING_CONFORMANCE_AND_EXACT_HEAD_CI
+  candidate_code_status: ACCEPTED_EXACT_HEAD_AUTOMATED_GREEN
+  exact_verified_software_head: 67a405b8ee85552f05b3f1917edb6f0f9ff9a31f
+  exact_head_run: 32024924987
+  exact_head_evidence: docs/evidence/v1.6.1-gap-closure-exact-head.md
   reconciliation:
     - "Uploaded amendment and repository source note agree on canonical indexed market-cap authority."
     - "They agree on explicit sort direction, deterministic tie-break and null-last semantics."
@@ -157,15 +166,19 @@ verification:
   historical_rebuild_reconcile: PASS_RUN_31983756681
   historical_indexed_read_boundary: PASS_RUN_31983756664
   historical_day9_truthfulness_final_rc_gate: PASS_RUN_31983756751
-  v1_6_1_exact_head: PENDING
-  v1_6_1_root_ci: PENDING
-  v1_6_1_day6_indexed_read: PENDING
-  v1_6_1_day7_frontend: PENDING
-  v1_6_1_frontend_security: PENDING
-  v1_6_1_production_gates: PENDING
-  v1_6_1_browser_matrix: PENDING
-  v1_6_1_hot_launch_10k_capacity: PENDING
-  truthfulness_note: "Historical automated evidence remains valid for its exact historical SHA only. v1.6.1 candidate acceptance requires fresh exact-head evidence. The final-RC workflow never substitutes for physical-device/legal/public-release gates."
+  v1_6_1_exact_head: PASS_RUN_32024924987_SOFTWARE_HEAD_67A405B8
+  v1_6_1_root_ci: PASS_RUN_32025706737_TEST_GUARD_HEAD_72E7FCD8
+  v1_6_1_day6_indexed_read: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_day7_frontend: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_frontend_security: PASS_RUN_32025706745
+  v1_6_1_production_gates: PASS_RUN_32025706796
+  v1_6_1_browser_matrix: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_hot_launch_10k_capacity: PASS_IN_EXACT_RUN_32024924987
+  v1_6_1_service_rollback: PASS_RUN_32025706667_AND_SAME_SOFTWARE_SHA_RERUN_32024925001_ATTEMPT_2
+  v1_6_1_rebuild_reconcile: PASS_RUN_32025706738
+  v1_6_1_exact_evidence_file: docs/evidence/v1.6.1-gap-closure-exact-head.md
+  rollback_transient_note: "The first service-rollback attempt on 67a405b8 failed during a nested root build. The same workflow re-run on the unchanged 67a405b8 software SHA passed the rehearsal and post-rollback root build, and the fresh 72e7fcd8 run also passed; no product-code repair was required."
+  truthfulness_note: "v1.6.1 bounded automated software acceptance is complete. The final-RC workflow does not substitute for physical-device, approved-legal-copy or public/mainnet release gates."
   physical_device_gate: OPEN_EXTERNAL_EXECUTION_REQUIRED
 
 resolved_source_interface_gaps_v1_6_1:
@@ -183,8 +196,8 @@ unresolved_source_interface_gaps:
 
 final_day9_verification_release_gates:
   v1_6_1_source_ratification: PASS
-  v1_6_1_source_to_code_conformance: PENDING
-  v1_6_1_exact_head_automated_gate: PENDING
+  v1_6_1_source_to_code_conformance: PASS
+  v1_6_1_exact_head_automated_gate: PASS
   physical_current_branded_devices: OPEN_EXTERNAL_EXECUTION_REQUIRED
   approved_legal_copy: OPEN_EXTERNAL_CONTENT_DEPENDENCY
   one_exact_head_final_release_gate: BLOCKED_UNTIL_ALL_MANDATORY_GATES_PASS
@@ -192,7 +205,6 @@ final_day9_verification_release_gates:
   day10: NOT_STARTED
 
 blockers:
-  - V1_6_1_CANDIDATE_CONFORMANCE_AND_EXACT_HEAD_CI
   - PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED
   - APPROVED_LEGAL_COPY
   - CURRENT_PONS_FACTORY_SOURCE_PARITY
@@ -202,7 +214,6 @@ blockers:
   - ARC_MAINNET_VALUES
 
 blocker_scope:
-  V1_6_1_CANDIDATE_CONFORMANCE_AND_EXACT_HEAD_CI: "The gap-closure source is ratified, but candidate code written before final upload must pass source-to-code conformance and fresh exact-head integrated gates before acceptance."
   PHYSICAL_DEVICE_EXTERNAL_EXECUTION_REQUIRED: "Primary non-substitutable Day-9 release gate: final redesigned candidate still needs genuine required iOS Safari, representative Android Chrome and current branded Edge evidence."
   APPROVED_LEGAL_COPY: "Terms/privacy/risk public copy cannot be fabricated by implementation agent; real operator/jurisdiction/eligibility/contact/data-processing facts and approval remain required."
   CURRENT_PONS_FACTORY_SOURCE_PARITY: "Reference/parity-claim gap only; do not claim exact-current Pons parity."
@@ -218,7 +229,7 @@ tooling_status:
   rendered_visual_evidence: GITHUB_ACTIONS_PINNED_PLAYWRIGHT_EXACT_HEAD
 
 next_action: >-
-  Freeze the ratified v1.6.1 candidate and run source-to-code conformance plus fresh exact-head automated verification. Preserve conforming candidate work; repair only demonstrated divergences through focused RED -> GREEN TDD. On green exact-head evidence, record the verified software SHA and workflow run IDs, synchronize this YAML and PR #94, and retain physical-device, approved-legal-copy and public/mainnet blockers. Keep PR #94 draft/open/unmerged. Do not tag RC or begin Day 10 until every mandatory gate passes.
+  Preserve the accepted v1.6.1 automated software candidate and execute the remaining non-substitutable Day-9 release gates: genuine required physical/current-device evidence, approved final legal copy, and the still-open public/mainnet release facts. Keep PR #94 draft/open/unmerged. Do not tag RC, claim Day-9 PASS or begin Day 10 until every mandatory gate passes; after those external inputs are satisfied, rerun the one exact final release gate on the final release head.
 
 do_not_do:
   - "Do not touch, stop, restart, reconfigure, reset, prune or otherwise interfere with /tmp/bread-synthra-fork-proof."
@@ -227,4 +238,4 @@ do_not_do:
   - "Do not begin Day 10 or claim Day-9 PASS."
   - "Do not fabricate performance evidence, physical-device evidence, approved legal copy or live/runtime values."
   - "Do not change Solidity, protocol economics, supply, custody, admin authority, canonical USDC, graduation mechanics, DEX semantics, transaction construction or financial ledgers in this UI/runtime closure."
-  - "Do not accept the v1.6.1 candidate merely because the Project Source is now ratified; fresh source-conformance and exact-head evidence are required."
+  - "Do not reopen resolved v1.6.1 source/interface gaps unless a new controlling Project Source explicitly changes them."
