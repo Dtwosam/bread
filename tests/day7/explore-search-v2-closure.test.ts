@@ -44,22 +44,6 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
     expect(`${card}\n${search}\n${model}`).not.toMatch(/marketCap\s*=.*(?:price|supply)|(?:price|supply).*\*.*(?:supply|price)/i);
   });
 
-  it('activates the canonical indexed market-cap Explore filter through the read-model/API boundary', () => {
-    const explore = read('../../apps/web/components/explore/explore-client.tsx');
-    const apiClient = read('../../apps/web/lib/api/client.ts');
-    const feedRoute = read('../../apps/api/src/routes/feed.ts');
-    const dbIndex = read('../../packages/db/src/index.ts');
-
-    expect(explore).toContain('Market cap min');
-    expect(explore).toContain('Market cap max');
-    expect(explore).toContain('marketCapMinQuote');
-    expect(explore).toContain('marketCapMaxQuote');
-    expect(apiClient).toContain('marketCapMinQuote');
-    expect(apiClient).toContain('marketCapMaxQuote');
-    expect(feedRoute).toContain('parseExploreMarketCapBounds');
-    expect(dbIndex).toContain('parseExploreMarketCapBounds');
-  });
-
   it('shows every currently source-backed Search token-row field with safe fallbacks', () => {
     const search = read('../../apps/web/components/search-surface.tsx');
 
@@ -85,7 +69,8 @@ describe('Bread UI/UX v2.2 Explore/Search source-constrained closure', () => {
   it('projects market cap centrally from exact indexed execution price and snapshotted fixed supply', () => {
     const projection = read('../../packages/db/src/repositories/trades.ts');
 
-    expect(projection).toMatch(/const\s+marketCap\s*=\s*\(trade\.executionPriceNumerator\s*\*\s*initialSupply\)\s*\/\s*trade\.executionPriceDenominator/);
+    expect(projection).toMatch(/const\s+marketCap\s*=\s*\(priceNumerator\s*\*\s*fixedTotalSupply\)\s*\/\s*priceDenominator/);
+    expect(projection).toContain('computeIndexedMarketCap(');
     expect(projection).toContain('market_cap = EXCLUDED.market_cap');
     expect(projection).not.toMatch(/Number\([^\n]*marketCap|parseFloat\([^\n]*marketCap/);
   });

@@ -19,6 +19,7 @@ export type SearchLaunchRow = Readonly<{
   deployerAddress: string | null;
   creatorFeeRecipient: string | null;
   launchTimestamp: string | null;
+  marketCap: string | null;
   holderCount: string | null;
   lifecycleState: SearchLifecycleState | null;
   name: string | null;
@@ -49,6 +50,7 @@ export class SearchRepository {
           l.deployer_address AS "deployerAddress",
           l.creator_fee_recipient AS "creatorFeeRecipient",
           l.launch_timestamp::text AS "launchTimestamp",
+          m.market_cap::text AS "marketCap",
           m.holder_count::text AS "holderCount",
           CASE
             WHEN s.graduation_phase = 'POOL_CREATED' THEN 'GRADUATED'
@@ -99,6 +101,7 @@ export class SearchRepository {
         l.deployer_address AS "deployerAddress",
         l.creator_fee_recipient AS "creatorFeeRecipient",
         l.launch_timestamp::text AS "launchTimestamp",
+        m.market_cap::text AS "marketCap",
         m.holder_count::text AS "holderCount",
         CASE
           WHEN s.graduation_phase = 'POOL_CREATED' THEN 'GRADUATED'

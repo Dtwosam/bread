@@ -7,7 +7,7 @@ import type { IndexedSearchResult } from '../../../packages/types/src/index';
 import { Button, CreatorAttribution, Icon } from '@bread/ui';
 import { createBreadApiClient } from '../lib/api/client';
 import { breadQueryKeys } from '../lib/api/queries';
-import { searchIntent, shortAddress } from './explore/model';
+import { formatUsdcBaseUnits, searchIntent, shortAddress } from './explore/model';
 import { FreshnessBanner } from './freshness-banner';
 
 function SearchGlyph() {
@@ -66,7 +66,7 @@ function SearchResultLink({ result }: Readonly<{ result: IndexedSearchResult }>)
         </span>
       </span>
       <span className="bread-search-result__details">
-        <span>Market cap —</span>
+        <span>Market cap {formatUsdcBaseUnits(result.marketCap)}</span>
         <span>Age {age ?? '—'}</span>
         <span>Holders {result.holderCount ?? '—'}</span>
         <span>Lifecycle {lifecycle ?? '—'}</span>

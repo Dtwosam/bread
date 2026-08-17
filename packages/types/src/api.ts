@@ -49,6 +49,7 @@ export type IndexedPriceSummary = Readonly<{
 }>;
 
 export type IndexedTradeMetricsSummary = Readonly<{
+  marketCap: string | null;
   lastPrice: IndexedPriceSummary;
   quoteVolume: Readonly<{
     m5: string | null;
@@ -120,6 +121,7 @@ export type IndexedSearchResult = Readonly<{
   symbol: string | null;
   matchKind: string;
   ageSeconds: string | null;
+  marketCap: string | null;
   holderCount: string | null;
   lifecycleState: IndexedSearchLifecycleState | null;
 }>;

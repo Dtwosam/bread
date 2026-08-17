@@ -48,6 +48,7 @@ export function serializeTradeMetrics(row: NonNullable<TokenMetricRow> | undefin
     return null;
   }
   return {
+    marketCap: row.marketCap?.toString(10) ?? null,
     lastPrice: {
       numerator: row.lastPriceNumerator.toString(10),
       denominator: row.lastPriceDenominator.toString(10),

@@ -106,6 +106,7 @@ export function registerSearchRoute(app: FastifyInstance, deps: Readonly<{
         symbol: row.symbol,
         matchKind: row.matchKind,
         ageSeconds: ageSecondsAtIndexedHead(row.launchTimestamp, meta.indexedThroughBlockTimestamp),
+        marketCap: row.marketCap,
         holderCount: row.holderCount,
         lifecycleState: row.lifecycleState,
       })),

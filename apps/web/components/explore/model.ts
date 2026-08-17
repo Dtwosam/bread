@@ -23,6 +23,7 @@ export type TokenCardModel = Readonly<{
   name: string;
   symbol: string;
   price: IndexedPriceSummary | null;
+  marketCap: string | null;
   volume24h: string | null;
   holderCount: string | null;
   graduatedVenueKind: string | null;
@@ -87,6 +88,7 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     name: source.name?.trim() || 'Unnamed token',
     symbol: source.symbol?.trim() || '—',
     price: source.metrics?.lastPrice ?? null,
+    marketCap: source.metrics?.marketCap ?? null,
     volume24h: source.metrics?.quoteVolume.h24 ?? null,
     holderCount: source.holderCount,
     graduatedVenueKind: source.graduatedVenueKind,

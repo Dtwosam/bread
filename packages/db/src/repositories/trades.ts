@@ -98,6 +98,21 @@ function decimalNullable(value: bigint | null): string | null {
   return value === null ? null : decimal(value);
 }
 
+export function computeIndexedMarketCap(
+  priceNumerator: bigint,
+  priceDenominator: bigint,
+  fixedTotalSupply: bigint,
+): bigint {
+  if (priceNumerator < 0n || fixedTotalSupply < 0n) {
+    throw new Error("market-cap inputs must be non-negative");
+  }
+  if (priceDenominator <= 0n) {
+    throw new Error("market-cap price denominator must be positive");
+  }
+  const marketCap = (priceNumerator * fixedTotalSupply) / priceDenominator;
+  return marketCap;
+}
+
 function bucketStart(timestamp: bigint, intervalSeconds: bigint): bigint {
   return (timestamp / intervalSeconds) * intervalSeconds;
 }
@@ -267,6 +282,22 @@ async function projectMetrics(
   trade: CanonicalTradeProjection,
   executionSource: TradeExecutionSource,
 ): Promise<void> {
+  const launchResult = await db.execute(sql`
+    SELECT initial_supply
+    FROM launches
+    WHERE chain_id = ${trade.id.chainId}
+      AND token_address = ${trade.token.toLowerCase()}
+    LIMIT 1
+  `);
+  const launch = rows<Pick<LaunchRow, "initial_supply">>(launchResult)[0];
+  if (!launch) throw new Error(`trade launch snapshot missing for ${trade.token}`);
+  const initialSupply = exact(launch.initial_supply, "launch initial supply");
+  const marketCap = computeIndexedMarketCap(
+    trade.executionPriceNumerator,
+    trade.executionPriceDenominator,
+    initialSupply,
+  );
+
   const fiveMinutesAgo =
     trade.blockTimestamp > 300n ? trade.blockTimestamp - 300n : 0n;
   const oneHourAgo =
@@ -302,7 +333,7 @@ async function projectMetrics(
       last_activity_transaction_index, last_activity_log_index, updated_at
     ) VALUES (
       ${trade.id.chainId}, ${trade.token.toLowerCase()},
-      NULL, NULL, NULL,
+      NULL, ${decimal(marketCap)}, NULL,
       ${aggregate.total_trade_count}, ${aggregate.total_quote_volume}, ${decimal(trade.blockNumber)},
       ${decimal(trade.executionPriceNumerator)}, ${decimal(trade.executionPriceDenominator)}, ${executionSource},
       ${aggregate.quote_volume_5m}, ${aggregate.quote_volume_1h}, ${aggregate.quote_volume_24h},
@@ -310,6 +341,7 @@ async function projectMetrics(
       ${trade.transactionIndex}, ${trade.id.logIndex}, now()
     )
     ON CONFLICT (chain_id, token_address) DO UPDATE SET
+      market_cap = EXCLUDED.market_cap,
       trade_count = EXCLUDED.trade_count,
       quote_volume = EXCLUDED.quote_volume,
       latest_block_number = EXCLUDED.latest_block_number,
