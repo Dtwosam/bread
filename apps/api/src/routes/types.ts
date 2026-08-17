@@ -1,5 +1,6 @@
 import type {
   AlmostBakedRepository,
+  ExplicitSortRepository,
   ExploreAgeReadRepository,
   ReadRepository,
   TrendingRepository,
@@ -23,4 +24,5 @@ export type BreadFeedRouteDeps = BreadReadRouteDeps & Readonly<{
   exploreAgeRepository: ExploreAgeReadRepository;
   almostBakedRepository: AlmostBakedRepository;
   trendingRepository: TrendingRepository;
+  explicitSortRepository: ExplicitSortRepository;
 }>;
