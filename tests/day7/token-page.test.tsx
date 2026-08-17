@@ -10,8 +10,8 @@ describe('Day 7 Task 4 Token page consumer contract', () => {
   it('preserves distinct malformed-address and valid non-Bread token API states', () => {
     const tokenRoute = read('apps/api/src/routes/token.ts');
 
-    expect(tokenRoute).toContain("code: 'INVALID_ADDRESS'");
-    expect(tokenRoute).toContain("code: 'TOKEN_NOT_FOUND'");
+    expect(tokenRoute).toMatch(/code:\s*["']INVALID_ADDRESS["']/);
+    expect(tokenRoute).toMatch(/code:\s*["']TOKEN_NOT_FOUND["']/);
   });
 
   it('projects already-indexed graduation progress and canonical graduation evidence through token detail', () => {
