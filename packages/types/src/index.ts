@@ -27,6 +27,7 @@ export type {
   FreshnessMeta,
   FreshnessStatus,
   IndexedCurveStateSummary,
+  IndexedDisplayMetadata,
   IndexedFeedItem,
   IndexedGraduationProgressSummary,
   IndexedLifecycleState,
