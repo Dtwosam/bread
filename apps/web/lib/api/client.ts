@@ -32,6 +32,8 @@ export type FeedParams = Readonly<{
   creator?: string;
   volumeMinQuote?: string;
   volumeMaxQuote?: string;
+  marketCapMinQuote?: string;
+  marketCapMaxQuote?: string;
   limit?: number;
   cursor?: string;
 }>;
@@ -105,15 +107,20 @@ function compareCanonicalIntegers(left: string, right: string): number {
   return a < b ? -1 : 1;
 }
 
-function assertQuoteBounds(min: string | undefined, max: string | undefined): void {
+function assertExactQuoteBounds(
+  min: string | undefined,
+  max: string | undefined,
+  minLabel: string,
+  maxLabel: string,
+): void {
   if (min !== undefined && !EXACT_QUOTE_INTEGER.test(min)) {
-    throw new RangeError('volumeMinQuote must be a non-negative integer quote amount.');
+    throw new RangeError(`${minLabel} must be a non-negative integer quote amount.`);
   }
   if (max !== undefined && !EXACT_QUOTE_INTEGER.test(max)) {
-    throw new RangeError('volumeMaxQuote must be a non-negative integer quote amount.');
+    throw new RangeError(`${maxLabel} must be a non-negative integer quote amount.`);
   }
   if (min !== undefined && max !== undefined && compareCanonicalIntegers(min, max) > 0) {
-    throw new RangeError('volumeMinQuote must not exceed volumeMaxQuote.');
+    throw new RangeError(`${minLabel} must not exceed ${maxLabel}.`);
   }
 }
 
@@ -132,7 +139,13 @@ function assertFeedParams(params: FeedParams): void {
   if (params.creator !== undefined && !ADDRESS_SHAPE.test(params.creator)) {
     throw new RangeError('creator must be a valid address.');
   }
-  assertQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote);
+  assertExactQuoteBounds(params.volumeMinQuote, params.volumeMaxQuote, 'volumeMinQuote', 'volumeMaxQuote');
+  assertExactQuoteBounds(
+    params.marketCapMinQuote,
+    params.marketCapMaxQuote,
+    'marketCapMinQuote',
+    'marketCapMaxQuote',
+  );
   assertIntegerInRange(params.limit, 'limit', MAX_FEED_LIMIT);
   assertCursor(params.cursor);
 }
@@ -244,6 +257,8 @@ export function createBreadApiClient(options: BreadApiClientOptions = {}) {
       addOptional(params, 'creator', input.creator);
       addOptional(params, 'volumeMinQuote', input.volumeMinQuote);
       addOptional(params, 'volumeMaxQuote', input.volumeMaxQuote);
+      addOptional(params, 'marketCapMinQuote', input.marketCapMinQuote);
+      addOptional(params, 'marketCapMaxQuote', input.marketCapMaxQuote);
       addOptional(params, 'limit', input.limit);
       addOptional(params, 'cursor', input.cursor);
       return request<T>('/v1/feed', params);
