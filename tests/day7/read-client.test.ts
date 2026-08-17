@@ -120,7 +120,17 @@ describe('Day 7 indexed browser read boundary', () => {
       'bread',
       'feed',
       'new',
+      'default',
       'any',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
       25,
       'abc',
     ]);
@@ -128,9 +138,45 @@ describe('Day 7 indexed browser read boundary', () => {
       'bread',
       'feed',
       'new',
+      'default',
       'lt5m',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
       25,
       'abc',
+    ]);
+    expect(
+      breadQueryKeys.feed({
+        view: 'new',
+        sort: 'marketCap',
+        marketCapMinQuote: '1000000',
+        marketCapMaxQuote: '5000000',
+        limit: 25,
+      }),
+    ).toEqual([
+      'bread',
+      'feed',
+      'new',
+      'marketCap',
+      'any',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '1000000',
+      '5000000',
+      25,
+      '',
     ]);
     expect(breadQueryKeys.search({ q: 'bread', limit: 10 })).toEqual([
       'bread',
@@ -148,9 +194,9 @@ describe('Day 7 indexed browser read boundary', () => {
       '../../apps/web/lib/api/queries.ts',
     ]) {
       const source = readFileSync(new URL(path, import.meta.url), 'utf8');
-      expect(source).not.toMatch(/from ['"]viem['"]/);
-      expect(source).not.toMatch(/from ['"]wagmi['"]/);
-      expect(source).not.toMatch(/createPublicClient|eth_call|request\s*\(\s*\{\s*method:\s*['"]eth_/);
+      expect(source).not.toMatch(/from ['\"]viem['\"]/);
+      expect(source).not.toMatch(/from ['\"]wagmi['\"]/);
+      expect(source).not.toMatch(/createPublicClient|eth_call|request\s*\(\s*\{\s*method:\s*['\"]eth_/);
     }
   });
 });
