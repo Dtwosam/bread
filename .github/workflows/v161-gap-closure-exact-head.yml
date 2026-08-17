@@ -1,0 +1,80 @@
+name: v1.6.1-gap-closure-exact-head
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/v161-gap-closure-exact-head.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  exact-head:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.15.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Record exact software candidate
+        run: echo "SOFTWARE_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Source, static, type and build gates
+        run: |
+          pnpm validate
+          pnpm typecheck
+          pnpm lint
+          pnpm build
+      - name: Start exact Bread development infrastructure
+        run: docker compose -f infra/docker/compose.yaml up -d --wait --wait-timeout 60
+      - name: Full Day-6 indexed/read regression against PostgreSQL
+        env:
+          BREAD_DB_INTEGRATION: "1"
+          BREAD_DATABASE_URL: postgresql://bread:bread_local_only@127.0.0.1:5432/bread
+        run: pnpm test:day6
+      - name: Full Day-7 frontend/read regression
+        run: pnpm exec vitest run tests/day7
+      - name: Concentrated hot-launch regression
+        run: pnpm load:hot-launch
+      - name: Install release browsers
+        run: pnpm --filter @bread/web exec playwright install --with-deps chromium firefox webkit
+      - name: Chromium Firefox WebKit browser matrix
+        run: pnpm --filter @bread/web exec playwright test
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose -f infra/docker/compose.yaml down -v
+      - name: Persist exact-head software evidence and remove temporary workflow
+        if: success()
+        run: |
+          mkdir -p docs/evidence
+          cat > docs/evidence/v1.6.1-gap-closure-exact-head.md <<EOF
+          # Bread v1.6.1 gap-closure exact-head automated evidence
+
+          SOFTWARE_HEAD=${SOFTWARE_HEAD}
+          PROJECT_SOURCE_RATIFICATION=RATIFIED
+          MARKET_CAP=IMPLEMENTED
+          EXPLICIT_SORTS=IMPLEMENTED
+          LIFECYCLE_CLASSIFICATION=IMPLEMENTED
+          TOKEN_MEDIA=IMPLEMENTED
+          RECENT_SEARCH=IMPLEMENTED
+          TRENDING_SEARCH=IMPLEMENTED
+          SANITIZED_DISPLAY_METADATA=IMPLEMENTED
+
+          This exact software head passed source validation, typecheck, lint, build, the full Day-6 suite with PostgreSQL integration enabled, the full Day-7 Vitest suite, the concentrated hot-launch regression, and the configured Playwright Chromium/Firefox/WebKit suite in this workflow.
+
+          This evidence does not claim Day-9 PASS, physical-device evidence, legal-copy approval, public/mainnet readiness, or an RC tag.
+          EOF
+          rm -f .github/workflows/v161-gap-closure-exact-head.yml .github/workflows/gap-closure-focused-green.yml .github/workflows/search-gap-sync.yml .github/workflows/metadata-gap-sync.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(evidence): record v1.6.1 exact-head automated gate"
+          git push origin HEAD:${{ github.head_ref }}
