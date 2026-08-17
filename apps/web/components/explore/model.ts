@@ -99,7 +99,7 @@ export function toTokenCardModel(source: IndexedFeedCardFields): TokenCardModel 
     creatorAddress: source.deployerAddress,
     name: source.name?.trim() || 'Unnamed token',
     symbol: source.symbol?.trim() || '—',
-    image: source.metadata.image ?? null,
+    image: source.metadata?.image ?? null,
     price: source.metrics?.lastPrice ?? null,
     marketCap: source.metrics?.marketCap ?? null,
     volume24h: source.metrics?.quoteVolume.h24 ?? null,

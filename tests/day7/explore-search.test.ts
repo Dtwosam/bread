@@ -74,6 +74,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
         lifecycleState: 'ALMOST_BAKED',
         name: 'Bread',
         symbol: 'BRD',
+        metadata: {},
         metrics: {
           marketCap: '1250000000',
           lastPrice: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
@@ -88,13 +89,13 @@ describe('Day 7 Explore/Search interaction contract', () => {
       creatorAddress: CREATOR_ADDRESS,
       name: 'Bread',
       symbol: 'BRD',
+      image: null,
       price: { numerator: '1250000', denominator: '1000000', source: 'TRADE_EXECUTION' },
       marketCap: '1250000000',
       volume24h: '5000000',
       holderCount: '42',
       graduatedVenueKind: null,
       lifecycleState: 'ALMOST_BAKED',
-      priceChange24h: null,
       progress: { bps: 6250, percent: 62.5, state: 'CURVE_ACTIVE' },
     });
   });
@@ -108,6 +109,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
       lifecycleState: 'NEW',
       name: 'Fresh Bread',
       symbol: 'FRESH',
+      metadata: {},
       metrics: null,
       progress: { progressBps: '0', state: 'CURVE_ACTIVE' },
     } as IndexedFeedCardFields);
@@ -156,7 +158,7 @@ describe('Day 7 Explore/Search interaction contract', () => {
   it('uses the v2.2 decision-data hierarchy without fabricating unavailable market data', () => {
     const source = readFileSync(new URL('../../apps/web/components/token-card.tsx', import.meta.url), 'utf8');
     expect(source).toContain('<dt>Market cap</dt>');
-    expect(source).toContain('<dt>24h change</dt>');
+    expect(source).not.toContain('<dt>24h change</dt>');
     expect(source).toContain('<dt>24h volume</dt>');
     expect(source).toContain('<dt>Holders</dt>');
     expect(source).toContain("{model.holderCount ?? '—'}");

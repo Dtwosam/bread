@@ -220,6 +220,7 @@ function searchResult(item: IndexedFeedItem, matchKind: string): IndexedSearchRe
     creatorFeeRecipient: item.creatorFeeRecipient,
     name: item.name,
     symbol: item.symbol,
+    metadata: item.metadata,
     matchKind,
     ageSeconds: item.tokenAddress === ACTIVE_TOKEN ? '125' : '3600',
     marketCap: item.metrics?.marketCap ?? null,
